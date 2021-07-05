@@ -4,7 +4,6 @@ from typing import List, Optional
 from fastapi import (
     APIRouter,
     Body,
-    Depends,
     File,
     Header,
     HTTPException,
@@ -16,7 +15,7 @@ from fastapi import (
 )
 from fastapi.responses import FileResponse
 
-from saltapi.proposals.models import (
+from saltapi.web.schemas import (
     DataReleaseDate,
     DataReleaseDateUpdate,
     Observation,

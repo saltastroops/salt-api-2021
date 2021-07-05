@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-from saltapi.proposals.api import router as proposals_router
+from saltapi.web.api.proposals import router as proposals_router
 
 app = FastAPI()
 
