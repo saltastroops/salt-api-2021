@@ -134,18 +134,39 @@ chmod a+x .git/hooks/pre-push
 !!! note
     In particular the pre-commit hook is _not_ effective, as it formats _all_ files, not just the committed ones. Also, it does not commit any reformatted code; so after the commit you may have new changes to commit...
 
-## Using SQLAlchemy
+## Schemas and service models
 
-### Model classes
+The API input and response models are defined in terms of Pydantic models, which can be found in the module `saltapi.web.schemas`. They should not be used for handling business logic.
 
-SQLAlchemy's automap functionality is used for generating classes for all the tables in the SDB. The following naming conventions are used within these classes:
+The service classes instead use their own models, which are defined in a module in their package (such as in `saltapi.service.proposal` for proposal-related models). These models can just be vanilla Python classes (or, say, named tuples).
 
-* The class name is the table name without underscores. For example, the table `Proposal_Code` is represented by the class `ProposalCode`.
-* The column names are mapped to their 'uncamelized' version. For example, a column `ProposalCode_Id` is represented by a property `proposal_code_id`.
-* The name of a collection relationship is the "uncamelized" and pluralized version of the name of the referred table. For example, a relationship described by a foreign key to the table `BlockVisit` is represented by a property `block_visits`.
-* The name of a scalar relationship is "uncamelized" version of the name of the referred table. For example, a relationship described by a foreign key to the table `ProposalStatus` is represented by a property `proposal_status`.
+```python
+from typing import NamedTuple
 
-The relevant classes are explicitly exported in the module `saltapi.repository.model`. In some cases, additional properties are defined within the classes, which serve as shortcuts. For example, the `Proposal` class exposes the proposal status as a `status` property. These properties are all defined in the `saltapi.repository.database` module.
+class SomeDimension(NamedTuple):
+    height: float
+    width: float
+```
+
+All Pydantic models should use ORM mode, i.e., their Config property `orm_mode` should be set to True.
+
+```python
+from pydantic import BaseModel
+
+class Dimension(BaseModel):
+    height: float
+    width: float
+
+    class Config:
+        orm_mode = True
+```
+
+Their `from_orm` methods can then be used to convert the corresponding service model.
+
+```python
+some_dimension = SomeDimension(height=2.9, width=5.7)
+dimension = Dimension.from_orm(some_dimension)
+```
 
 ## Unit tests
 

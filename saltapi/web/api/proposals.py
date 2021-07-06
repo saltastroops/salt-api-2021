@@ -39,17 +39,17 @@ class PDFResponse(Response):
 
 @router.get("/", summary="List proposals", response_model=List[ProposalListItem])
 def get_proposals(
-        from_semester: Optional[Semester] = Query(
-            "2005-2",
-            alias="from",
-            description="Only include proposals for this semester and later.",
-        ),
-        to_semester: Optional[Semester] = Query(
-            "2099-2",
-            alias="to",
-            description="Only include proposals for this semester and earlier.",
-            title="To semester",
-        )
+    from_semester: Optional[Semester] = Query(
+        "2005-2",
+        alias="from",
+        description="Only include proposals for this semester and later.",
+    ),
+    to_semester: Optional[Semester] = Query(
+        "2099-2",
+        alias="to",
+        description="Only include proposals for this semester and earlier.",
+        title="To semester",
+    ),
 ) -> List[ProposalListItem]:
     """
     Lists all proposals the user may view. The proposals returned can be limited to those
@@ -67,23 +67,23 @@ def get_proposals(
     responses={200: {"content": {"application/pdf": {}, "application/zip": {}}}},
 )
 def get_proposal(
-        proposal_code: ProposalCode = Path(
-            ProposalCode,
-            title="Proposal code",
-            description="Proposal code of the returned proposal.",
-        ),
-        submission: Optional[int] = Query(
-            None,
-            title="Submission",
-            description="Return the proposal version for a specific submission. By default "
-                        "the latest version is returned.",
-            ge=1,
-        ),
-        accept: Optional[ProposalContentType] = Header(
-            ProposalContentType.JSON,
-            title="Accepted content type",
-            description="Content type that should be returned.",
-        ),
+    proposal_code: ProposalCode = Path(
+        ProposalCode,
+        title="Proposal code",
+        description="Proposal code of the returned proposal.",
+    ),
+    submission: Optional[int] = Query(
+        None,
+        title="Submission",
+        description="Return the proposal version for a specific submission. By default "
+        "the latest version is returned.",
+        ge=1,
+    ),
+    accept: Optional[ProposalContentType] = Header(
+        ProposalContentType.JSON,
+        title="Accepted content type",
+        description="Content type that should be returned.",
+    ),
 ) -> Response:
     """
     Returns the proposal with a given proposal code. The proposal can be requested in
@@ -127,12 +127,12 @@ def get_proposal(
     status_code=status.HTTP_202_ACCEPTED,
 )
 def submit_new_proposal(
-        proposal: UploadFile = File(
-            ...,
-            title="Proposal file",
-            description="Zip file containing the whole proposal content, including all "
-                        "required file attachments.",
-        )
+    proposal: UploadFile = File(
+        ...,
+        title="Proposal file",
+        description="Zip file containing the whole proposal content, including all "
+        "required file attachments.",
+    )
 ) -> SubmissionAcknowledgment:
     """
     Submits a new proposal. The proposal must be submitted as a zip file containing the
@@ -158,17 +158,17 @@ def submit_new_proposal(
     status_code=status.HTTP_202_ACCEPTED,
 )
 def resubmit_proposal(
-        proposal_code: ProposalCode = Path(
-            ...,
-            title="Proposal code",
-            description="Proposal code of the resubmitted proposal.",
-        ),
-        proposal: UploadFile = File(
-            ...,
-            title="Proposal file",
-            description="File containing the whole proposal content, including all "
-                        "required file attachments.",
-        ),
+    proposal_code: ProposalCode = Path(
+        ...,
+        title="Proposal code",
+        description="Proposal code of the resubmitted proposal.",
+    ),
+    proposal: UploadFile = File(
+        ...,
+        title="Proposal file",
+        description="File containing the whole proposal content, including all "
+        "required file attachments.",
+    ),
 ) -> SubmissionAcknowledgment:
     """
     Resubmits an existing proposal. The proposal must be submitted as a file in either
@@ -208,20 +208,20 @@ def resubmit_proposal(
     response_class=PDFResponse,
 )
 def get_scientific_justification(
-        proposal_code: ProposalCode = Path(
-            ProposalCode,
-            title="Proposal code",
-            description="Proposal code of the proposal whose scientific justification is "
-                        "requested.",
-        ),
-        submission: Optional[int] = Query(
-            None,
-            title="Submission",
-            description="Return the latest version of the scientific justification in this "
-                        "or an earlier submission. By default the latest version of the "
-                        "scientific justification is returned.",
-            ge=1,
-        ),
+    proposal_code: ProposalCode = Path(
+        ProposalCode,
+        title="Proposal code",
+        description="Proposal code of the proposal whose scientific justification is "
+        "requested.",
+    ),
+    submission: Optional[int] = Query(
+        None,
+        title="Submission",
+        description="Return the latest version of the scientific justification in this "
+        "or an earlier submission. By default the latest version of the "
+        "scientific justification is returned.",
+        ge=1,
+    ),
 ) -> FileResponse:
     """
     Returns the scientific justification for a proposal with a given proposal code. The
@@ -241,11 +241,11 @@ def get_scientific_justification(
     response_model=ProposalStatusContent,
 )
 def get_proposal_status(
-        proposal_code: ProposalCode = Path(
-            ProposalCode,
-            title="Proposal code",
-            description="Proposal code of the proposal whose status is requested.",
-        )
+    proposal_code: ProposalCode = Path(
+        ProposalCode,
+        title="Proposal code",
+        description="Proposal code of the proposal whose status is requested.",
+    )
 ) -> ProposalStatusContent:
     """
     Returns the current status of the proposal with a given proposal code.
@@ -276,14 +276,14 @@ def get_proposal_status(
     status_code=status.HTTP_200_OK,
 )
 def update_proposal_status(
-        proposal_code: ProposalCode = Path(
-            ...,
-            title="Proposal code",
-            description="Proposal code of the proposal whose status is requested.",
-        ),
-        proposal_status: ProposalStatusContent = Body(
-            ..., alias="status", title="Proposal status", description="New proposal status."
-        ),
+    proposal_code: ProposalCode = Path(
+        ...,
+        title="Proposal code",
+        description="Proposal code of the proposal whose status is requested.",
+    ),
+    proposal_status: ProposalStatusContent = Body(
+        ..., alias="status", title="Proposal status", description="New proposal status."
+    ),
 ) -> ProposalStatusContent:
     """
     Updates the status of the proposal with the given proposal code. See the
@@ -298,11 +298,11 @@ def update_proposal_status(
     response_model=List[ObservationComment],
 )
 def get_observation_comments(
-        proposal_code: ProposalCode = Path(
-            ...,
-            title="Proposal code",
-            description="Proposal code of the proposal whose observation comments are requested.",
-        )
+    proposal_code: ProposalCode = Path(
+        ...,
+        title="Proposal code",
+        description="Proposal code of the proposal whose observation comments are requested.",
+    )
 ) -> List[ObservationComment]:
     raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED)
 
@@ -313,12 +313,12 @@ def get_observation_comments(
     response_model=ObservationComment,
 )
 def post_observation_comment(
-        proposal_code: ProposalCode = Path(
-            ...,
-            title="Proposal code",
-            description="Proposal code of the proposal for which an observation comment is added.",
-        ),
-        comment: str = Body(..., title="Comment", description="Text of the comment."),
+    proposal_code: ProposalCode = Path(
+        ...,
+        title="Proposal code",
+        description="Proposal code of the proposal for which an observation comment is added.",
+    ),
+    comment: str = Body(..., title="Comment", description="Text of the comment."),
 ) -> ObservationComment:
     """
     Adds a new comment related to an observation. The user submitting the request is
@@ -334,12 +334,12 @@ def post_observation_comment(
     responses={200: {"content": {"application/pdf": {}}}},
 )
 def get_progress_report(
-        proposal_code: ProposalCode = Path(
-            ...,
-            title="Proposal code",
-            description="Proposal code of the proposal whose progress report is requested.",
-        ),
-        semester: Semester = Path(..., title="Semester", description="Semester"),
+    proposal_code: ProposalCode = Path(
+        ...,
+        title="Proposal code",
+        description="Proposal code of the proposal whose progress report is requested.",
+    ),
+    semester: Semester = Path(..., title="Semester", description="Semester"),
 ) -> Response:
     """
     Returns the progress report for a proposal and semester. The semester is the
@@ -372,12 +372,12 @@ def get_progress_report(
     response_model=ProgressReport,
 )
 def put_progress_report(
-        proposal_code: ProposalCode = Path(
-            ...,
-            title="Proposal code",
-            description="Proposal code of the proposal whose progress report is created or updated.",
-        ),
-        semester: Semester = Path(..., title="Semester", description="Semester"),
+    proposal_code: ProposalCode = Path(
+        ...,
+        title="Proposal code",
+        description="Proposal code of the proposal whose progress report is created or updated.",
+    ),
+    semester: Semester = Path(..., title="Semester", description="Semester"),
 ) -> ProgressReport:
     """
     Creates or updates the progress report for a proposal and semester. The semester
@@ -397,23 +397,23 @@ def put_progress_report(
     response_model=List[Observation],
 )
 def get_observations(
-        proposal_code: ProposalCode = Path(
-            ...,
-            title="Proposal code",
-            description="Proposal code of the proposal whose observations are requested.",
-        ),
-        from_date: Optional[date] = Query(
-            date(2000, 1, 1),
-            alias="from",
-            title="From date",
-            description="Only include observations for this night and later.",
-        ),
-        to_date: Optional[date] = Query(
-            date(2099, 12, 31),
-            alias="to",
-            title="From date",
-            description="Only include observations for this night and earlier.",
-        ),
+    proposal_code: ProposalCode = Path(
+        ...,
+        title="Proposal code",
+        description="Proposal code of the proposal whose observations are requested.",
+    ),
+    from_date: Optional[date] = Query(
+        date(2000, 1, 1),
+        alias="from",
+        title="From date",
+        description="Only include observations for this night and later.",
+    ),
+    to_date: Optional[date] = Query(
+        date(2099, 12, 31),
+        alias="to",
+        title="From date",
+        description="Only include observations for this night and earlier.",
+    ),
 ) -> List[Observation]:
     """
     Returns the list of observations for a proposal. The list of observations can be
@@ -446,23 +446,23 @@ def get_observations(
     response_model=DataReleaseDate,
 )
 def get_data_release_date(
-        proposal_code: ProposalCode = Path(
-            ...,
-            title="Proposal code",
-            description="Proposal code of the proposal whose data release date is requested.",
-        ),
-        from_date: Optional[date] = Query(
-            date(2000, 1, 1),
-            alias="from",
-            title="From date",
-            description="Only include observations for this night and later.",
-        ),
-        to_date: Optional[date] = Query(
-            date(2099, 12, 31),
-            alias="to",
-            title="From date",
-            description="Only include observations for this night and earlier.",
-        ),
+    proposal_code: ProposalCode = Path(
+        ...,
+        title="Proposal code",
+        description="Proposal code of the proposal whose data release date is requested.",
+    ),
+    from_date: Optional[date] = Query(
+        date(2000, 1, 1),
+        alias="from",
+        title="From date",
+        description="Only include observations for this night and later.",
+    ),
+    to_date: Optional[date] = Query(
+        date(2099, 12, 31),
+        alias="to",
+        title="From date",
+        description="Only include observations for this night and earlier.",
+    ),
 ) -> date:
     """
     Returns the date when the observation data for the proposal is scheduled to become public.
@@ -477,11 +477,11 @@ def get_data_release_date(
     status_code=status.HTTP_202_ACCEPTED,
 )
 def update_data_release_date(
-        proposal_code: ProposalCode = Path(
-            ...,
-            title="Proposal code",
-            description="Proposal code of the proposal for which a new data release date is requested.",
-        ),
+    proposal_code: ProposalCode = Path(
+        ...,
+        title="Proposal code",
+        description="Proposal code of the proposal for which a new data release date is requested.",
+    ),
 ) -> DataReleaseDate:
     """
     Requests a new date when the observation data can become public. It depends on
