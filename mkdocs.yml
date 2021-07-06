@@ -1,0 +1,23 @@
+extra:
+  api_base_url: https://www.salt.ac.za/wm/api
+
+markdown_extensions:
+  - admonition
+  - pymdownx.highlight
+  - pymdownx.superfences
+
+nav:
+  - Home: index.md
+  - API: api.md
+  - Development: development.md
+  - Implementation: implementation.md
+  - Develoment: development.md
+
+plugins:
+  - macros
+  - search
+
+site_name: SALT Web Manager
+
+theme:
+  name: material
