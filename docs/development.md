@@ -41,6 +41,9 @@ poetry install
 
 All settings for the Web Manager must be provided as environment variables or in a file. By default that file is the file `.env` in the server's root folder (i.e. in the `python` folder). However, you can choose another file by setting the environment variable `DOTENV_FILE`. _Remember that a file defining environment variables must **never** be put under version control._
 
+!!! warning
+    Note that the value of the variable `SDB_DSN` must be in a format understood by SQLAlchemy. In particular, the protocol must indicate the database driver. So instead of just `mysql` it must be `mysql+pymysql` (for PyMYSQL) or `mysql+pymysql`. Otherwise you might get a puzzling error like `ModuleNotFoundError: No module named 'MySQLdb'`.
+
 The unit tests always use the file `.env.test` in the server's root folder, and you cannot change this file.
 
 You can find the list of settings in the module `saltapi.settings`; each property of the `Settings` class corresponds to an environment variable. The names aren't case-sensitive; so, for example, the property `secret_key` can be defined in an environment variable `SECRET_KEY`. Talking of secret keys, any secret key should be generated with `openssl`.
@@ -130,6 +133,19 @@ chmod a+x .git/hooks/pre-push
 
 !!! note
     In particular the pre-commit hook is _not_ effective, as it formats _all_ files, not just the committed ones. Also, it does not commit any reformatted code; so after the commit you may have new changes to commit...
+
+## Using SQLAlchemy
+
+### Model classes
+
+SQLAlchemy's automap functionality is used for generating classes for all the tables in the SDB. The following naming conventions are used within these classes:
+
+* The class name is the table name without underscores. For example, the table `Proposal_Code` is represented by the class `ProposalCode`.
+* The column names are mapped to their 'uncamelized' version. For example, a column `ProposalCode_Id` is represented by a property `proposal_code_id`.
+* The name of a collection relationship is the "uncamelized" and pluralized version of the name of the referred table. For example, a relationship described by a foreign key to the table `BlockVisit` is represented by a property `block_visits`.
+* The name of a scalar relationship is "uncamelized" version of the name of the referred table. For example, a relationship described by a foreign key to the table `ProposalStatus` is represented by a property `proposal_status`.
+
+The relevant classes are explicitly exported in the module `saltapi.repository.model`. In some cases, additional properties are defined within the classes, which serve as shortcuts. For example, the `Proposal` class exposes the proposal status as a `status` property. These properties are all defined in the `saltapi.repository.database` module.
 
 ## Unit tests
 
