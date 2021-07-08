@@ -168,21 +168,31 @@ some_dimension = SomeDimension(height=2.9, width=5.7)
 dimension = Dimension.from_orm(some_dimension)
 ```
 
-## Unit tests
+## Tests
 
-`pytest` is used for the unit-testing, and all the test files are contained in the `tests` folder. The structure within this folder should mirror the structure within the `app` folder. The name of all files containing test functions must start with `test_`.
+`pytest` is used for the unit-testing, and all the test files are contained in the `tests` folder. The structure within this folder should mirror the structure within the `saltapi` folder. The name of all files containing test functions must start with `test_`.
 
-### Using a test database
+### Tests using a database
 
-If a unit test requires access to a (test) database, you should use the `db` fixture, which returns an `aiomysql` database pool. The DSN of the database must be set in the same environment variable `SDB_DSN` used by the server for setting the database connection parameters.
+Given the size of the database, it is unrealistic to populate it with dummy content for each and every test run (or even test). On the other hand, confidential data such as usernames, email addresses or target coordinates should not appear in test files.
 
-Any test function using the `db` fixture must be an async function and must be marked with `pytest.mark.asyncio`. This implies that you cannot use Starlette's test client (as, for example, provided by the `client` fixture) together with the `db` fixture.
+One solution would be to create a test database with fake content. However, this approach is arduous and brittle, and definitely violates the principle that testing should be easy.
 
-## End-to-end tests
+Instead, a fixture `testdata` for accessing test data is used. This fixture returns a function. This function is called with a filepath, which must be relative to the `testdata` folder and must denote a YAML file. The function then uses PyYAML to return the file content as a Python object.
 
-The end-to-end tests require the server to run, but the Makefile commands for running the tests (`cypress` and `end2end`) do not launch it. So you have to start the server yourself. The server must be listening on port 8001.
+The folder `testdata` is not under version control; you will have to create it (and the data files) yourself. It must be at root level in the project.
 
-In case you need to skip the end-to-end tests when running tox, you can set the environment variable SKIP_E2E to any non-empty value. This is done for the Github Action workflows.
+!!! warning
+    The reason that the folder is not under version control is of course that the test data should not end up in a public repository. But you should not rely on it. If you have highly sensitive data (such as, say, a password hash), you should not use it as test data. The bottom line is: If the data being public on the web gave you sleepless nights, don't use it.
+
+If you want to see the executed SQL statements, you have to set the `ECHO_SQL` environment variable to a non-empty value. Note that pytest will only output them for failing tests.
+
+## Debugging
+
+If you want to see the executed SQL statements, you have to set the `ECHO_SQL` environment variable to a non-empty value.
+
+!!! danger
+    SQL statements should never, ever, ever be logged in production.
 
 ## Documentation
 

@@ -1,8 +1,35 @@
+import os
+
+import dotenv
+
+# Make sure that the test database etc. are used.
+# IMPORTANT: These lines must be executed before any server-related package is imported.
+
+os.environ["DOTENV_FILE"] = ".env.test"
+dotenv.load_dotenv(os.environ["DOTENV_FILE"])
+
+
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Optional
 
 import pytest
 import yaml
+
+from sqlalchemy import create_engine
+from sqlalchemy.engine import Connection, Engine
+
+
+engine: Optional[Engine]
+sdb_dsn = os.environ.get("SDB_DSN")
+if sdb_dsn:
+    echo_sql = True if os.environ.get("ECHO_SQL") else False  # SQLAlchemy needs a bool
+    engine = create_engine(sdb_dsn, echo=True, future=True)
+
+
+@pytest.fixture(scope="function")
+def dbconnection() -> Connection:
+    with engine.connect() as connection:
+        yield connection
 
 
 @pytest.fixture(scope="session")
@@ -22,8 +49,8 @@ def testdata() -> Callable[[str], Any]:
         if Path(path).is_absolute():
             raise ValueError("The file path must be a relative path.")
 
-        tests_dir = Path(__file__).parent
-        datafile = tests_dir / "testdata" / path
+        root_dir = Path(__file__).parent.parent
+        datafile = root_dir / "testdata" / path
         if not datafile.exists():
             raise IOError(f"File does not exist: {datafile}")
 
