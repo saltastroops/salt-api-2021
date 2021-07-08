@@ -138,3 +138,4 @@ node_modules/
 /e2e/cypress/videos
 /e2e/cypress/screenshots
 /.env.deployment
+/tests/testdata
