@@ -3,6 +3,10 @@ from typing import Any
 from fastapi import FastAPI
 from pydantic import BaseModel
 
+from saltapi.repository.block_repository import BlockRepository
+from saltapi.repository.unit_of_work import UnitOfWork
+from saltapi.service.block_service import BlockService
+from saltapi.settings import Settings
 from saltapi.web.api.proposals import router as proposals_router
 
 app = FastAPI()
@@ -17,14 +21,10 @@ class P(BaseModel):
         orm_mode = True
 
 
-@app.get("/")
-def home() -> Any:
-    # with UnitOfWork() as unit_of_work:
-    # user_repository = UserRepository(unit_of_work.connection)
-    # user_service = UserService(user_repository)
-    # user = user_service.get_user("")
-    return {"success": True}
-    # proposal_repository = ProposalRepository(unit_of_work.connection)
-    # proposal_service = ProposalService(proposal_repository)
-    # v = proposal_service.list_proposal_summaries()
-    # return [ProposalListItem.from_orm(p) for p in v]
+@app.get("/{block_id}")
+def home(block_id: int) -> Any:
+    with UnitOfWork() as unit_of_work:
+        proposals_dir = Settings().proposals_dir
+        block_reopository = BlockRepository(unit_of_work.connection, proposals_dir)
+        block_service = BlockService(block_reopository)
+        return block_service.get_block(block_id)

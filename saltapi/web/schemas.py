@@ -327,10 +327,12 @@ class Phase1Target(BaseTarget):
         description="Number of nights for which the target is observable, given the requested observation time and observation constraints.",
     )
     # TODO: Comment on probabilities
-    moon_probability: Optional[int]
-    competition_probability: Optional[int]
-    observability_probability: Optional[int]
-    seeing_probability: Optional[int]
+    moon_probability: Optional[float]
+    competition_probability: Optional[float]
+    observability_probability: Optional[float]
+    seeing_probability: Optional[float]
+    average_ranking: Optional[float]
+    total_probability: Optional[float]
 
 
 class RequestedTime(BaseModel):
