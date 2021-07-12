@@ -10,14 +10,12 @@ dotenv.load_dotenv(os.environ["DOTENV_FILE"])
 
 
 from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Generator, Optional
 
 import pytest
 import yaml
-
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Connection, Engine
-
 
 engine: Optional[Engine]
 sdb_dsn = os.environ.get("SDB_DSN")
@@ -27,13 +25,18 @@ if sdb_dsn:
 
 
 @pytest.fixture(scope="function")
-def dbconnection() -> Connection:
+def dbconnection() -> Generator[Connection, None, None]:
+    if not engine:
+        raise ValueError(
+            "No SQLAlchemy engine set. Have you defined the SDB_DSN environment "
+            "variable?"
+        )
     with engine.connect() as connection:
         yield connection
 
 
 @pytest.fixture(scope="session")
-def testdata() -> Callable[[str], Any]:
+def testdata() -> Generator[Callable[[str], Any], None, None]:
     """
     Load test data from a YAML file.
 
@@ -52,7 +55,7 @@ def testdata() -> Callable[[str], Any]:
         root_dir = Path(__file__).parent.parent
         datafile = root_dir / "testdata" / path
         if not datafile.exists():
-            raise IOError(f"File does not exist: {datafile}")
+            raise FileNotFoundError(f"File does not exist: {datafile}")
 
         with open(datafile, "r") as f:
             return yaml.safe_load(f)

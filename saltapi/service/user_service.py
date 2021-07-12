@@ -6,5 +6,5 @@ class UserService:
     def __init__(self, repository: UserRepository):
         self.repository = repository
 
-    def get_user(self, user_id: int) -> User:
-        return self.repository.get(user_id)
+    def get_user(self, username: str) -> User:
+        return self.repository.get(username)

@@ -1,13 +1,9 @@
-from typing import List
+from typing import Any
 
 from fastapi import FastAPI
 from pydantic import BaseModel
 
-from saltapi.repository.proposal_repository import ProposalRepository
-from saltapi.repository.unit_of_work import UnitOfWork
-from saltapi.service.proposal_service import ProposalService
 from saltapi.web.api.proposals import router as proposals_router
-from saltapi.web.schemas import ProposalListItem
 
 app = FastAPI()
 
@@ -21,10 +17,14 @@ class P(BaseModel):
         orm_mode = True
 
 
-@app.get("/", response_model=List[ProposalListItem])
-def home() -> List[ProposalListItem]:
-    with UnitOfWork() as unit_of_work:
-        proposal_repository = ProposalRepository(unit_of_work.connection)
-        proposal_service = ProposalService(proposal_repository)
-        v = proposal_service.list_proposal_summaries()
-        return [ProposalListItem.from_orm(p) for p in v]
+@app.get("/")
+def home() -> Any:
+    # with UnitOfWork() as unit_of_work:
+    # user_repository = UserRepository(unit_of_work.connection)
+    # user_service = UserService(user_repository)
+    # user = user_service.get_user("")
+    return {"success": True}
+    # proposal_repository = ProposalRepository(unit_of_work.connection)
+    # proposal_service = ProposalService(proposal_repository)
+    # v = proposal_service.list_proposal_summaries()
+    # return [ProposalListItem.from_orm(p) for p in v]
