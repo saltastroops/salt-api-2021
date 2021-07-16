@@ -77,11 +77,3 @@ The following roles are defined.
 | SaltAstronomer        | SALT Astronomer.                              |
 | SaltEngineer          | Member of the SALT Technical Operations Team. |
 | SaltOperator          | SALT Operator.                                |
-
-## Error handling
-
-The default FastAPI error handler for HTTP exceptions is overridden. For Authorization (status code 401) errors on a web page a redirection response to the login page (with the currently requested page as a Base64 encoded string as a `redirect` query parameter). For other errors on a web page an error page is returned. In both cases the status code of the error is used in the response.
-
-For errors raised during an API call a JSON object with a `detail` property is returned. Again the error's status code is used.
-
-The error handler distinguishes between web pages and API calls by checking the request path. It assumes that a request is an API call if and only if the path starts with `api/` or `/api/`.
