@@ -483,7 +483,7 @@ class Phase2Proposal(BaseProposal):
         gt=1,
         lt=3,
         title="Proposal phase",
-        description="Proposal phase, which must be 1",
+        description="Proposal phase, which must be 2",
     )
     observations: List[Observation] = Field(
         ...,
