@@ -11,7 +11,7 @@ services:
     env_file:
       - .env
     environment:
-      - PROPOSALS_DIR=${PROPOSALS_DIR}
+      - PROPOSALS_DIR=/proposals
     ports:
       - 1234:80
     restart: always
