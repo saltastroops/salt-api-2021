@@ -36,7 +36,7 @@ def test_get_block_returns_block_content(
     block_content["overhead_time"] = data["overhead_time"]
     block_content["probabilities"] = data["probabilities"]
 
-    # check that the file content is read
+    # check that the correct block content is returned
     block_repository = BlockRepository(dbconnection, tmp_path)
     assert block_repository.get(block_id) == block_content
 

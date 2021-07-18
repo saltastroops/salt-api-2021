@@ -1,4 +1,4 @@
-from typing import NamedTuple
+from typing import Any, NamedTuple
 
 
 class ContactDetails(NamedTuple):
@@ -18,3 +18,6 @@ class ProposalSummary(NamedTuple):
     principal_investigator: ContactDetails
     principal_contact: ContactDetails
     liaison_astronomer: ContactDetails
+
+
+Proposal = Any

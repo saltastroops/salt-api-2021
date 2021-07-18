@@ -374,27 +374,10 @@ class Observation(BaseModel):
     id: int = Field(
         ..., title="Observation id", description="Unique identifier of the observation"
     )
-    observation_time: int = Field(
-        ...,
-        title="observation time",
-        description="Time charged for the observation, in seconds",
-    )
     block_id: int = Field(
         ..., title="Block id", description="Unique identifier of the observed block"
     )
-    priority: Priority = Field(
-        ..., title="Priority", description="Priority of the observed block"
-    )
-    max_lunar_phase: float = Field(
-        ...,
-        title="Maximum lunar phase",
-        description="Maximum lunar phase which was allowed for the observation, "
-        "as the percentage of lunar illumination",
-    )
-    targets: List[BaseTarget] = Field(
-        ..., title="Observed targets", description="Observed targets"
-    )
-    observation_night: date = Field(
+    night: date = Field(
         ...,
         title="Observation night",
         description="Start date of the night when the observation was made",
@@ -635,3 +618,72 @@ class DataReleaseDateUpdate(BaseModel):
         title="Motivation",
         description="Motivation why the request should be granted",
     )
+
+
+class Transparency(str, Enum):
+    """Sky transparency."""
+
+    ANY = "Any"
+    CLEAR = "Clear"
+    THICK_CLOUD = "Thick cloud"
+    THIN_CLOUD = "Thin cloud"
+
+
+class InstrumentSummary(BaseModel):
+    """Summary details of an instrument setup."""
+
+    name: str = Field(..., title="Name", description="Instrument name")
+    mode: str = Field(
+        ...,
+        title="Mode",
+        description="Instrument mode. For Salticam this is just an empty string.",
+    )
+
+
+class BlockSummary(BaseModel):
+    """Summary details about a block."""
+
+    id: int = Field(..., title="Block id", description="Unique identifier of the block")
+    name: str = Field(..., title="Name", description="Block name")
+    observation_time: int = Field(
+        ...,
+        title="Observation time",
+        description="Time required for an observation of the block",
+    )
+    priority: int = Field(..., title="Priority", description="Priority", ge=0, le=4)
+    requested_observations: int = Field(
+        ...,
+        title="Requested observations",
+        description="Number of requested observations for the block",
+        ge=0,
+    )
+    accepted_observations: int = Field(
+        ...,
+        title="Accepted observations",
+        description="Number of accepted observations of the block",
+        ge=0,
+    )
+    rejected_observations: int = Field(
+        ...,
+        title="Rejected observations",
+        description="Number of rejected observations of the block",
+    )
+    # observable_tonight: bool = Field(..., title="Visible tonight?", description="Whether the block can be observed tonight")
+    # remaining_nights: int = Field(..., title="Remaining nights", description="Number of nights (excluding tonight) when the block can still be observed")
+    max_seeing: float = Field(
+        ...,
+        title="Maximum seeing",
+        description="Maximum seeing allowed fopr an observation of the block",
+    )
+    transparency: Transparency = Field(
+        ...,
+        title="Transparency",
+        description="Sky transparency required for an observation of the block",
+    )
+    max_lunar_phase: float = Field(
+        ...,
+        title="Maximum lunar phase",
+        description="Maximum lunar phase which was allowed for the observation, as the percentage of lunar illumination",
+    )
+    # targets: Set[str] = Field(..., title="Targets", description="Names of the targets observed in the block. The order of targets is not defined. Apart from some legacy blocks, there is only one target in a block.")
+    # instrument_setups: Set[InstrumentSummary] = Field(..., title="Instrument setups", description="Instrument setups used in the block. The order of instrument setups is not defined.")
