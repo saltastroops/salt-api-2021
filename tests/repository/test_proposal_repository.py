@@ -1,5 +1,3 @@
-import json
-from pathlib import Path
 from typing import Any, Callable
 
 from sqlalchemy.engine import Connection
@@ -10,48 +8,80 @@ from tests.markers import nodatabase
 TEST_DATA = "repository/proposal_repository.yaml"
 
 
-def _setup_proposal_file(
-    proposal_code: str, submission: int, base_dir: Path, content: Any
+@nodatabase
+def test_get_returns_general_info(
+    dbconnection: Connection, testdata: Callable[[str], Any]
 ) -> None:
-    submission_dir = base_dir / proposal_code / str(submission)
-    submission_dir.mkdir(parents=True)
-    proposal_file = submission_dir / "Proposal.json"
-    with open(proposal_file, "w") as f:
-        json.dump(content, f)
+    data = testdata(TEST_DATA)["get"]
+    proposal_code = data["general_info"]["code"]
+    proposal_repository = ProposalRepository(dbconnection)
+    proposal = proposal_repository.get(proposal_code)
+    expected_general_info = data["general_info"]
+    general_info = proposal["general_info"]
+    assert len(general_info.keys()) == len(expected_general_info.keys())
+    for key in expected_general_info:
+        assert key in general_info
+        if key == "summary_for_salt_astronomer":
+            assert expected_general_info[key] in general_info[key]
+        else:
+            assert general_info[key] == expected_general_info[key]
 
 
 @nodatabase
-def test_get_returns_proposal_file_content(
-    tmp_path: Path, dbconnection: Connection, testdata: Callable[[str], Any]
+def test_get_returns_investigators(
+    dbconnection: Connection, testdata: Callable[[str], Any]
 ) -> None:
-    # set up fake proposal file
     data = testdata(TEST_DATA)["get"]
-    proposal_code = data["proposal_code"]
-    submission = data["submission"]
-    proposal_file_content = {"proposal_code": proposal_code}
-    _setup_proposal_file(proposal_code, submission, tmp_path, proposal_file_content)
-
-    # check that the file content is returned
-    proposal_repository = ProposalRepository(dbconnection, tmp_path)
+    proposal_code = data["general_info"]["code"]
+    expected_investigators = data["investigators"]
+    proposal_repository = ProposalRepository(dbconnection)
     proposal = proposal_repository.get(proposal_code)
-    for key in proposal_file_content:
-        assert key in proposal
-        assert proposal[key] == proposal_file_content[key]
+    investigators = proposal["investigators"]
+    assert len(investigators) == len(expected_investigators)
+    for i in range(len(investigators)):
+        assert investigators[i] == expected_investigators[i]
+
+
+def test_get_returns_correct_proposal_approval(
+    dbconnection: Connection, testdata: Callable[[str], Any]
+) -> None:
+    data = testdata(TEST_DATA)["proposal_approval"]
+    proposal_code = data["proposal_code"]
+
+    proposal_repository = ProposalRepository(dbconnection)
+    proposal = proposal_repository.get(proposal_code)
+    investigators = proposal["investigators"]
+
+    approved_investigators = [
+        i for i in investigators if i["approved_proposal"] is True
+    ]
+    rejected_investigators = [
+        i for i in investigators if i["approved_proposal"] is False
+    ]
+    undecided_investigators = [
+        i for i in investigators if i["approved_proposal"] is None
+    ]
+
+    assert len(approved_investigators) == data["approved_count"]
+    assert len(rejected_investigators) == data["rejected_count"]
+    assert len(undecided_investigators) == data["undecided_count"]
+
+    assert data["approved_investigator"] in [
+        i["family_name"] for i in approved_investigators
+    ]
+    assert data["rejected_investigator"] in [
+        i["family_name"] for i in rejected_investigators
+    ]
 
 
 @nodatabase
 def test_get_returns_blocks(
-    tmp_path: Path, dbconnection: Connection, testdata: Callable[[str], Any]
+    dbconnection: Connection, testdata: Callable[[str], Any]
 ) -> None:
-    # set up fake proposal file
     data = testdata(TEST_DATA)["get"]
-    proposal_code = data["proposal_code"]
-    submission = data["submission"]
-    proposal_file_content = {"proposal_code": proposal_code}
-    _setup_proposal_file(proposal_code, submission, tmp_path, proposal_file_content)
-
+    proposal_code = data["general_info"]["code"]
     expected_blocks = data["blocks"]
-    proposal_repository = ProposalRepository(dbconnection, tmp_path)
+    proposal_repository = ProposalRepository(dbconnection)
     proposal = proposal_repository.get(proposal_code)
     blocks = proposal["blocks"]
     for expected_block in expected_blocks:
@@ -76,20 +106,71 @@ def test_get_returns_blocks(
 
 
 @nodatabase
-def test_get_returns_observations(
-    dbconnection: Connection, tmp_path: Path, testdata: Callable[[str], Any]
+def test_get_returns_executed_observations(
+    dbconnection: Connection, testdata: Callable[[str], Any]
 ) -> None:
-    # set up fake proposal file
     data = testdata(TEST_DATA)["get"]
-    proposal_code = data["proposal_code"]
-    submission = data["submission"]
-    proposal_file_content = {"proposal_code": proposal_code}
-    _setup_proposal_file(proposal_code, submission, tmp_path, proposal_file_content)
-
-    expected_observations = data["observations"]
-    proposal_repository = ProposalRepository(dbconnection, tmp_path)
+    proposal_code = data["general_info"]["code"]
+    expected_observations = data["executed_observations"]
+    proposal_repository = ProposalRepository(dbconnection)
     proposal = proposal_repository.get(proposal_code)
-    observations = proposal["observations"]
-    assert set(tuple(o.items()) for o in observations) == set(
-        tuple(o.items()) for o in expected_observations
-    )
+    observations = proposal["executed_observations"]
+
+    assert len(observations) == len(expected_observations)
+    for i in range(len(observations)):
+        assert observations[i] == expected_observations[i]
+
+
+@nodatabase
+def test_get_returns_time_allocations(
+    dbconnection: Connection, testdata: Callable[[str], Any]
+) -> None:
+    data = testdata(TEST_DATA)["get_allocations"]
+    proposal_code = data["proposal_code"]
+    semester = data["semester"]
+
+    expected_allocations = data["time_allocations"]
+    expected_allocations.sort(key=lambda v: v["partner"])
+    proposal_repository = ProposalRepository(dbconnection)
+    proposal = proposal_repository.get(proposal_code, semester)
+    allocations = proposal["time_allocations"]
+    allocations.sort(key=lambda v: v["partner"])
+
+    assert len(expected_allocations) == len(allocations)
+    for i in range(len(allocations)):
+        allocation = allocations[i]
+        ea = expected_allocations[i]
+        expected_allocation = {
+            "partner": ea["partner"],
+            "priority_0": ea["allocations"][0],
+            "priority_1": ea["allocations"][1],
+            "priority_2": ea["allocations"][2],
+            "priority_3": ea["allocations"][3],
+            "priority_4": ea["allocations"][4],
+            "tac_comment": ea["tac_comment"],
+        }
+
+        # The test data contains a substring of the comment only
+        if expected_allocation["tac_comment"]:
+            assert expected_allocation["tac_comment"] in allocation["tac_comment"]
+            allocation["tac_comment"] = expected_allocation["tac_comment"]
+        assert allocation == expected_allocation
+
+
+@nodatabase
+def test_get_returns_charged_time(
+    dbconnection: Connection, testdata: Callable[[str], Any]
+) -> None:
+    data = testdata(TEST_DATA)["get_charged_time"]
+    proposal_code = data["proposal_code"]
+    semester = data["semester"]
+
+    proposal_repository = ProposalRepository(dbconnection)
+    proposal = proposal_repository.get(proposal_code, semester)
+    charged_time = proposal["charged_time"]
+
+    assert data["priority_0"] == charged_time["priority_0"]
+    assert data["priority_1"] == charged_time["priority_1"]
+    assert data["priority_2"] == charged_time["priority_2"]
+    assert data["priority_3"] == charged_time["priority_3"]
+    assert data["priority_4"] == charged_time["priority_4"]

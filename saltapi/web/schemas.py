@@ -399,7 +399,7 @@ class ProposalType(str, Enum):
     """Proposal type."""
 
     COMMISSIONING = "Commissioning"
-    DIRECTOR_DISCRETIONARY_TIME = "Director Discretionary Time (DDT)"
+    DIRECTOR_DISCRETIONARY_TIME = "Director’s Discretionary Time"
     ENGINEERING = "Engineering"
     GRAVITATIONAL_WAVE_EVENT = "Gravitational Wave Event"
     KEY_SCIENCE_PROGRAM = "Key Science Program"
