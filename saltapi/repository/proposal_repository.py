@@ -92,11 +92,10 @@ WHERE P.Current = 1
         """
         if semester is None:
             semester = self._latest_submission_semester(proposal_code)
-        submission = self._latest_submission(proposal_code, semester)
 
         block_targets = self._block_targets(proposal_code)
         proposal: Dict[str, Any] = {
-            "general_info": self._general_info(proposal_code, submission),
+            "general_info": self._general_info(proposal_code, semester),
             "investigators": self._investigators(proposal_code),
             "blocks": self._blocks(proposal_code, block_targets, semester),
             "executed_observations": self._executed_observations(
@@ -184,17 +183,15 @@ LIMIT 1
         )
         return cast(int, result.scalar())
 
-    def _general_info(
-        self, proposal_code: str, submission_number: int
-    ) -> Dict[str, Any]:
+    def _general_info(self, proposal_code: str, semester: str) -> Dict[str, Any]:
         """
-        Return general proposal information.
+        Return general proposal information for a semester.
         """
+        year, sem = semester.split("-")
         stmt = text(
             """
 SELECT P.Proposal_Id                       AS id,
        PC.Proposal_Code                    AS code,
-       CONCAT(S.Year, '-', S.Semester)     AS current_semester,
        PT.Title                            AS title,
        PT.Abstract                         AS abstract,
        PT.ReadMe                           AS summary_for_salt_astronomer,
@@ -218,18 +215,23 @@ FROM Proposal P
          JOIN ProposalContact C ON PC.ProposalCode_Id = C.ProposalCode_Id
          JOIN Investigator I ON C.Astronomer_Id = I.Investigator_Id
 WHERE PC.Proposal_Code = :proposal_code
-  AND P.Submission = :submission
+  AND P.Current = 1
+  AND S.Year = :year
+  AND S.Semester = :semester
         """
         )
         result = self.connection.execute(
-            stmt, {"proposal_code": proposal_code, "submission": submission_number}
+            stmt, {"proposal_code": proposal_code, "year": year, "semester": sem}
         )
         info = dict(result.one())
 
         if info["type"] == "Director Discretionary Time (DDT)":
             info["type"] = "Director's Discretionary Time"
 
+        info["semester"] = semester
         info["first_submission"] = self._first_submission_date(proposal_code)
+        info["submission_number"] = self._latest_submission(proposal_code, semester)
+
         info["semesters"] = self._semesters(proposal_code)
 
         return info
