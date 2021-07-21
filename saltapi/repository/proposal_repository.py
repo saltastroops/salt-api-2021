@@ -1,11 +1,20 @@
 from collections import defaultdict
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any, DefaultDict, Dict, List, Optional, cast
 
+import pytz
+from dateutil.relativedelta import relativedelta
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
 from saltapi.service.proposal import ContactDetails, Proposal, ProposalSummary
+from saltapi.util import (
+    TimeInterval,
+    partner_name,
+    semester_end,
+    semester_of_datetime,
+    tonight,
+)
 
 
 class ProposalRepository:
@@ -86,23 +95,44 @@ WHERE P.Current = 1
         """
         return self._list()
 
-    def get(self, proposal_code: str, semester: Optional[str] = None) -> Proposal:
+    def get(
+        self,
+        proposal_code: str,
+        semester: Optional[str] = None,
+        phase: Optional[int] = None,
+    ) -> Proposal:
         """
         Return the proposal content for a semester.
         """
         if semester is None:
             semester = self._latest_submission_semester(proposal_code)
+        if phase is None:
+            phase = self._latest_submission_phase(proposal_code)
 
-        block_targets = self._block_targets(proposal_code)
+        general_info = self._general_info(proposal_code, semester)
+
+        # Replace the proprietary period with the data release date
+        executed_observations = self._executed_observations(proposal_code)
+        proprietary_period = general_info["proprietary_period"]
+        first_submission_date = self._first_submission_date(proposal_code)
+        general_info["data_release_date"] = self._data_release_date(
+            executed_observations, proprietary_period, first_submission_date.date()
+        )
+        del general_info["proprietary_period"]
+
+        general_info["current_submission"] = self._latest_submission_date(proposal_code)
+
         proposal: Dict[str, Any] = {
-            "general_info": self._general_info(proposal_code, semester),
+            "proposal_code": proposal_code,
+            "semester": semester,
+            "phase": phase,
+            "general_info": general_info,
             "investigators": self._investigators(proposal_code),
-            "blocks": self._blocks(proposal_code, block_targets, semester),
-            "executed_observations": self._executed_observations(
-                proposal_code, block_targets
-            ),
+            "blocks": self._blocks(proposal_code, semester),
+            "executed_observations": executed_observations,
             "time_allocations": self.time_allocations(proposal_code, semester),
             "charged_time": self.charged_time(proposal_code, semester),
+            "comments": self._proposal_comments(proposal_code),
         }
         return proposal
 
@@ -143,6 +173,21 @@ LIMIT 1
         result = self.connection.execute(stmt, {"proposal_code": proposal_code})
         return cast(str, result.scalar_one())
 
+    def _latest_submission_phase(self, proposal_code: str) -> int:
+        """Return the proposal phase of the latest submission."""
+        stmt = text(
+            """
+SELECT P.Phase
+FROM Proposal P
+         JOIN ProposalCode PC ON P.ProposalCode_Id = PC.ProposalCode_Id
+WHERE Proposal_Code = :proposal_code
+ORDER BY P.Submission DESC
+LIMIT 1
+        """
+        )
+        result = self.connection.execute(stmt, {"proposal_code": proposal_code})
+        return cast(int, result.scalar_one())
+
     def _first_submission_date(self, proposal_code: str) -> datetime:
         """
         Return the date and time when the first submission was made.
@@ -159,29 +204,69 @@ WHERE PC.Proposal_Code = :proposal_code
         result = self.connection.execute(stmt, {"proposal_code": proposal_code})
         return cast(datetime, result.scalar_one())
 
-    def _latest_submission(self, proposal_code: str, semester: str) -> int:
+    def _latest_submission_date(self, proposal_code: str) -> datetime:
+        """Return the date and time when the latest submission was made."""
+        stmt = text(
+            """
+SELECT P.SubmissionDate
+FROM Proposal P
+         JOIN ProposalCode PC ON P.ProposalCode_Id = PC.ProposalCode_Id
+WHERE PC.Proposal_Code = :proposal_code
+ORDER BY P.Submission DESC
+LIMIT 1
         """
-        Return the submission number of the latest submission for a semester.
+        )
+        result = self.connection.execute(stmt, {"proposal_code": proposal_code})
+        return cast(datetime, result.scalar_one())
+
+    def _latest_submission(self, proposal_code: str) -> int:
         """
-        year, sem = semester.split("-")
+        Return the submission number of the latest submission for any semester.
+        """
         stmt = text(
             """
 SELECT Submission
 FROM Proposal P
          JOIN ProposalCode PC on P.ProposalCode_Id = PC.ProposalCode_Id
-         JOIN Semester S ON P.Semester_Id = S.Semester_Id
 WHERE P.Current = 1
   AND PC.Proposal_Code = :proposal_code
-  AND S.Year = :year
-  AND S.Semester = :semester
 ORDER BY Submission DESC
 LIMIT 1
         """
         )
-        result = self.connection.execute(
-            stmt, {"proposal_code": proposal_code, "year": year, "semester": sem}
-        )
+        result = self.connection.execute(stmt, {"proposal_code": proposal_code})
         return cast(int, result.scalar())
+
+    @staticmethod
+    def _data_release_date(
+        executed_observations: List[Dict[str, Any]],
+        proprietary_period: int,
+        first_submission: date,
+    ) -> date:
+        # find the latest observation
+        latest_observation = first_submission
+        for observation in executed_observations:
+            if observation["night"] > latest_observation:
+                latest_observation = observation["night"]
+
+        # find the end of the semester when the latest observation was made
+        latest_observation_datetime = datetime(
+            latest_observation.year,
+            latest_observation.month,
+            latest_observation.day,
+            12,
+            0,
+            0,
+            0,
+            tzinfo=pytz.utc,
+        )
+        latest_observation_semester = semester_of_datetime(latest_observation_datetime)
+        latest_observation_semester_end = semester_end(latest_observation_semester)
+
+        # add the proprietary period to get the data release date
+        return latest_observation_semester_end.date() + relativedelta(
+            months=proprietary_period
+        )
 
     def _general_info(self, proposal_code: str, semester: str) -> Dict[str, Any]:
         """
@@ -190,21 +275,17 @@ LIMIT 1
         year, sem = semester.split("-")
         stmt = text(
             """
-SELECT P.Proposal_Id                       AS id,
-       PC.Proposal_Code                    AS code,
-       PT.Title                            AS title,
+SELECT PT.Title                            AS title,
        PT.Abstract                         AS abstract,
        PT.ReadMe                           AS summary_for_salt_astronomer,
        PT.NightlogSummary                  AS summary_for_night_log,
-       P.SubmissionDate                    AS current_submission,
        P.Submission                        AS submission_number,
-       P.Phase                             AS phase,
        PS.Status                           AS status,
-       T.ProposalType                      AS type,
+       T.ProposalType                      AS proposal_type,
        PGI.ActOnAlert                      AS target_of_opportunity,
        P.TotalReqTime                      AS total_requested_time,
        PGI.ProprietaryPeriod               AS proprietary_period,
-       CONCAT(I.FirstName, ' ', I.Surname) AS responsible_salt_astronomer
+       CONCAT(I.FirstName, ' ', I.Surname) AS liaison_salt_astronomer
 FROM Proposal P
          JOIN Semester S ON P.Semester_Id = S.Semester_Id
          JOIN ProposalCode PC ON P.ProposalCode_Id = PC.ProposalCode_Id
@@ -213,7 +294,7 @@ FROM Proposal P
          JOIN ProposalType T ON PGI.ProposalType_Id = T.ProposalType_Id
          JOIN ProposalStatus PS ON PGI.ProposalStatus_Id = PS.ProposalStatus_Id
          JOIN ProposalContact C ON PC.ProposalCode_Id = C.ProposalCode_Id
-         JOIN Investigator I ON C.Astronomer_Id = I.Investigator_Id
+         LEFT JOIN Investigator I ON C.Astronomer_Id = I.Investigator_Id
 WHERE PC.Proposal_Code = :proposal_code
   AND P.Current = 1
   AND S.Year = :year
@@ -225,13 +306,11 @@ WHERE PC.Proposal_Code = :proposal_code
         )
         info = dict(result.one())
 
-        if info["type"] == "Director Discretionary Time (DDT)":
-            info["type"] = "Director's Discretionary Time"
+        if info["proposal_type"] == "Director Discretionary Time (DDT)":
+            info["proposal_type"] = "Director's Discretionary Time"
 
-        info["semester"] = semester
         info["first_submission"] = self._first_submission_date(proposal_code)
-        info["submission_number"] = self._latest_submission(proposal_code, semester)
-
+        info["submission_number"] = self._latest_submission(proposal_code)
         info["semesters"] = self._semesters(proposal_code)
 
         return info
@@ -244,10 +323,11 @@ WHERE PC.Proposal_Code = :proposal_code
         """
         stmt = text(
             """
-SELECT PU.PiptUser_Id          AS id,
+SELECT PU.PiptUser_Id          AS user_id,
        I.FirstName             AS given_name,
        I.Surname               AS family_name,
-       P.Partner_Name          AS partner,
+       I.Email                 AS email,
+       P.Partner_Code          AS partner_code,
        `IN`.InstituteName_Name AS institute,
        I2.Department           AS department,
        PI.InvestigatorOkay     AS approved,
@@ -270,18 +350,29 @@ ORDER BY I.Surname, I.FirstName
         pc_id = self._principal_contact_user_id(proposal_code)
 
         for investigator in investigators:
-            investigator["is_pi"] = investigator["id"] == pi_id
-            investigator["is_pc"] = investigator["id"] == pc_id
+            investigator["is_pi"] = investigator["user_id"] == pi_id
+            investigator["is_pc"] = investigator["user_id"] == pc_id
+
+            partner_code = investigator["partner_code"]
+            investigator["affiliation"] = {
+                "partner_code": partner_code,
+                "partner_name": partner_name(partner_code),
+                "institute": investigator["institute"],
+                "department": investigator["department"],
+            }
+            del investigator["partner_code"]
+            del investigator["institute"]
+            del investigator["department"]
 
             if investigator["approved"] == 1:
-                investigator["approved_proposal"] = True
+                investigator["has_approved_proposal"] = True
             elif (
                 investigator["approval_code"] is None
                 or investigator["approval_code"] == ""
             ):
-                investigator["approved_proposal"] = False
+                investigator["has_approved_proposal"] = False
             else:
-                investigator["approved_proposal"] = None
+                investigator["has_approved_proposal"] = None
 
             del investigator["approved"]
             del investigator["approval_code"]
@@ -320,9 +411,7 @@ WHERE P.Proposal_Code = :proposal_code
         result = self.connection.execute(stmt, {"proposal_code": proposal_code})
         return cast(int, result.scalar_one())
 
-    def _blocks(
-        self, proposal_code: str, block_targets: Dict[int, List[str]], semester: str
-    ) -> List[Dict[str, Any]]:
+    def _blocks(self, proposal_code: str, semester: str) -> List[Dict[str, Any]]:
         """
         Return the blocks for a semester.
         """
@@ -364,15 +453,28 @@ WHERE BS.BlockStatus NOT IN :excluded_status_values
 
         blocks = [dict(row) for row in result]
         block_instruments = self._block_instruments(proposal_code)
+
+        tonight_interval = tonight()
+        remaining_nights_start = tonight_interval.end
+        remaining_nights_end = semester_end(semester)
+        remaining_nights_interval = TimeInterval(
+            start=remaining_nights_start, end=remaining_nights_end
+        )
+        block_observable_tonight = self._block_observable_nights(
+            proposal_code, semester, tonight_interval
+        )
+        block_remaining_nights = self._block_observable_nights(
+            proposal_code, semester, remaining_nights_interval
+        )
+
         for b in blocks:
-            b["targets"] = block_targets[b["id"]]
             b["instruments"] = block_instruments[b["id"]]
+            b["is_observable_tonight"] = block_observable_tonight.get(b["id"], False)
+            b["remaining_nights"] = block_remaining_nights.get(b["id"], 0)
 
         return blocks
 
-    def _executed_observations(
-        self, proposal_code: str, block_targets: Dict[int, List[str]]
-    ) -> List[Dict[str, Any]]:
+    def _executed_observations(self, proposal_code: str) -> List[Dict[str, Any]]:
         """
         Return the executed observations (including observatiopns in the queue) for all
         semesters.
@@ -397,12 +499,14 @@ FROM BlockVisit BV
          JOIN Block B ON BV.Block_Id = B.Block_Id
          JOIN ProposalCode PC on B.ProposalCode_Id = PC.ProposalCode_Id
 WHERE PC.Proposal_Code = :proposal_code
+  AND BVS.BlockVisitStatus != 'Deleted'
 ORDER BY B.Block_Name, NI.Date
         """
         )
         result = self.connection.execute(stmt, {"proposal_code": proposal_code})
         observations = [dict(row) for row in result]
 
+        block_targets = self._block_targets(proposal_code)
         for observation in observations:
             observation["targets"] = block_targets[observation["block_id"]]
 
@@ -602,13 +706,14 @@ WHERE C.Proposal_Code = :proposal_code
         """
         allocations = self._allocations(proposal_code, semester)
         comments = self._tac_comments(proposal_code, semester)
-        partners = set([alloc["partner"] for alloc in allocations])
-        partners.update(comments.keys())
+        partner_codes = set([alloc["partner_code"] for alloc in allocations])
+        partner_codes.update(comments.keys())
 
         # combine the time allocations and comments by partner
         combined: Dict[str, Dict[str, Any]] = {
-            partner: {
-                "partner": partner,
+            partner_code: {
+                "partner_code": partner_code,
+                "partner_name": partner_name(partner_code),
                 "priority_0": 0,
                 "priority_1": 0,
                 "priority_2": 0,
@@ -616,12 +721,12 @@ WHERE C.Proposal_Code = :proposal_code
                 "priority_4": 0,
                 "tac_comment": None,
             }
-            for partner in partners
+            for partner_code in partner_codes
         }
-        for partner, comment in comments.items():
-            combined[partner]["tac_comment"] = comment
+        for partner_code, comment in comments.items():
+            combined[partner_code]["tac_comment"] = comment
         for alloc in allocations:
-            combined[alloc["partner"]][f"priority_{alloc['priority']}"] = alloc[
+            combined[alloc["partner_code"]][f"priority_{alloc['priority']}"] = alloc[
                 "time_allocation"
             ]
 
@@ -634,7 +739,9 @@ WHERE C.Proposal_Code = :proposal_code
         year, sem = semester.split("-")
         stmt = text(
             """
-SELECT P.Partner_Name AS partner, PA.Priority AS priority, SUM(PA.TimeAlloc) AS time_allocation
+SELECT P.Partner_Code    AS partner_code,
+       PA.Priority       AS priority,
+       SUM(PA.TimeAlloc) AS time_allocation
 FROM PriorityAlloc PA
          JOIN MultiPartner MP ON PA.MultiPartner_Id = MP.MultiPartner_Id
          JOIN ProposalCode PC ON MP.ProposalCode_Id = PC.ProposalCode_Id
@@ -658,7 +765,8 @@ GROUP BY PA.MultiPartner_Id, PA.Priority
         year, sem = semester.split("-")
         stmt = text(
             """
-SELECT P.Partner_Name AS partner, TPC.TacComment AS tac_comment
+SELECT P.Partner_Code AS partner_code,
+       TPC.TacComment AS tac_comment
 FROM TacProposalComment TPC
          JOIN MultiPartner MP ON TPC.MultiPartner_Id = MP.MultiPartner_Id
          JOIN Partner P ON MP.Partner_Id = P.Partner_Id
@@ -673,7 +781,8 @@ WHERE PC.Proposal_Code = :proposal_code
             stmt, {"proposal_code": proposal_code, "year": year, "semester": sem}
         )
         return {
-            row.partner: row.tac_comment if row.tac_comment else None for row in result
+            row.partner_code: row.tac_comment if row.tac_comment else None
+            for row in result
         }
 
     def charged_time(self, proposal_code: str, semester: str) -> Dict[str, int]:
@@ -700,3 +809,75 @@ GROUP BY B.Priority
             time[f"priority_{row.priority}"] = row.charged_time
 
         return time
+
+    def _block_observable_nights(
+        self, proposal_code: str, semester: str, interval: TimeInterval
+    ) -> Dict[int, int]:
+        """
+        Return the number of nights in an interval when blocks are observable.
+
+        The function returns a dictionary of block ids and number of nights. Blocks are
+        included if they belong to the specified proposal and semester.
+
+        The start and end time in the interval should be timezone sensitive and should
+        be given as UTC times.
+
+        This function check observability by checking whether the start times of
+        observing windows lie in the given interval.
+
+        Blocks may have multiple observing windows in a night. If so, only one of them
+        is counted.
+        """
+        year, sem = semester.split("-")
+
+        # There may be multiple observing windows for a block in a night. But if we
+        # shift all times by 12 hours, all windows in the same night end up with the
+        # same date. The number of nights is then the number of distinct dates.
+        stmt = text(
+            """
+SELECT B.Block_Id                                                            AS block_id,
+       COUNT(DISTINCT DATE(DATE_SUB(BVW.VisibilityStart, INTERVAL 12 HOUR))) AS nights
+FROM BlockVisibilityWindow BVW
+         JOIN BlockVisibilityWindowType BVWT ON BVW.BlockVisibilityWindowType_Id = BVWT.BlockVisibilityWindowType_Id
+         JOIN Block B ON BVW.Block_Id = B.Block_Id
+         JOIN Proposal P ON B.Proposal_Id = P.Proposal_Id
+         JOIN ProposalCode PC ON P.ProposalCode_Id = PC.ProposalCode_Id
+         JOIN Semester S ON P.Semester_Id = S.Semester_Id
+WHERE PC.Proposal_Code = :proposal_code
+  AND S.Year = :year
+  AND S.Semester = :semester
+  AND BVW.VisibilityStart BETWEEN :start AND :end
+  AND BVWT.BlockVisibilityWindowType='Strict'
+GROUP BY B.Block_Id
+        """
+        )
+        result = self.connection.execute(
+            stmt,
+            {
+                "proposal_code": proposal_code,
+                "year": year,
+                "semester": sem,
+                "start": interval.start,
+                "end": interval.end,
+            },
+        )
+        return {int(row.block_id): int(row.nights) for row in result}
+
+    def _proposal_comments(self, proposal_code: str) -> List[Dict[str, Any]]:
+        """
+        Return the proposal comments ordered by the time when they were made.
+        """
+        stmt = text(
+            """
+SELECT PC.CommentDate                      AS comment_date,
+       CONCAT(I.FirstName, ' ', I.Surname) AS author,
+       PC.ProposalComment                  AS comment
+FROM ProposalComment PC
+         JOIN Investigator I ON PC.Investigator_Id = I.Investigator_Id
+         JOIN ProposalCode P ON PC.ProposalCode_Id = P.ProposalCode_Id
+WHERE P.Proposal_Code = :proposal_code
+ORDER BY PC.CommentDate, PC.ProposalComment_Id
+        """
+        )
+        result = self.connection.execute(stmt, {"proposal_code": proposal_code})
+        return [dict(row) for row in result]
