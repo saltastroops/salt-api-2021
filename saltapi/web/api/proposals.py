@@ -15,18 +15,20 @@ from fastapi import (
 )
 from fastapi.responses import FileResponse
 
-from saltapi.web.schemas import (
+from saltapi.web.schema.common import (
+    ExecutedObservation,
+    ProposalCode,
+    Semester,
+)
+from saltapi.web.schema.proposal import (
     DataReleaseDate,
     DataReleaseDateUpdate,
-    Observation,
     ObservationComment,
     ProgressReport,
-    ProposalCode,
     ProposalContent,
     ProposalContentType,
     ProposalListItem,
     ProposalStatusContent,
-    Semester,
     SubmissionAcknowledgment,
 )
 
@@ -394,7 +396,7 @@ def put_progress_report(
 @router.get(
     "/{proposal_code}/observations",
     summary="List observations",
-    response_model=List[Observation],
+    response_model=List[ExecutedObservation],
 )
 def get_observations(
     proposal_code: ProposalCode = Path(
@@ -414,7 +416,7 @@ def get_observations(
         title="From date",
         description="Only include observations for this night and earlier.",
     ),
-) -> List[Observation]:
+) -> List[ExecutedObservation]:
     """
     Returns the list of observations for a proposal. The list of observations can be
     filtered by a from date or a to date or both. These dates refer to observation
