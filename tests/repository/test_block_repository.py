@@ -29,7 +29,7 @@ def test_get_block_returns_block_content(
     dbconnection: Connection, testdata: Callable[[str], Any]
 ) -> None:
     data = testdata(TEST_DATA)["general_block_details"]
-    block_id = data["block_id"]
+    block_id = data["id"]
     block_repository = create_block_repository(dbconnection)
     block = block_repository.get(block_id)
 

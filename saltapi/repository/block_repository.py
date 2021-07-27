@@ -35,6 +35,7 @@ class BlockRepository:
 SELECT B.Block_Id                      AS block_id,
        B.Block_Name                    AS name,
        PC.Proposal_Code                AS proposal_code,
+       P.SubmissionDate                AS submission_date,
        CONCAT(S.Year, '-', S.Semester) AS semester,
        BS.BlockStatus                  AS status,
        B.Priority                      AS priority,
@@ -43,14 +44,13 @@ SELECT B.Block_Id                      AS block_id,
        B.NVisits                       AS requested_observations,
        B.NDone                         AS accepted_observations,
        B.NAttempted                    AS rejected_observations,
-       B.Comments                      AS comments,
+       B.Comments                      AS comment,
        B.MinSeeing                     AS minimum_seeing,
        B.MaxSeeing                     AS maximum_seeing,
        T.Transparency                  AS transparency,
        B.MaxLunarPhase                 AS maximum_lunar_phase,
        B.MinLunarAngularDistance       AS minimum_lunar_distance,
        B.ObsTime                       AS observation_time,
-       B.ObsTime - B.OverheadTime      AS shutter_open_time,
        B.OverheadTime                  AS overhead_time,
        BP.MoonProbability              AS moon_probability,
        BP.CompetitionProbability       AS competition_probability,
@@ -60,7 +60,7 @@ SELECT B.Block_Id                      AS block_id,
        BP.TotalProbability             AS total_probability
 FROM Block B
          JOIN BlockStatus BS ON B.BlockStatus_Id = BS.BlockStatus_Id
-         JOIN  PiRanking PR ON B.PiRanking_Id = PR.PiRanking_Id
+         JOIN PiRanking PR ON B.PiRanking_Id = PR.PiRanking_Id
          JOIN Transparency T ON B.Transparency_Id = T.Transparency_Id
          JOIN Proposal P ON B.Proposal_Id = P.Proposal_Id
          JOIN ProposalCode PC ON P.ProposalCode_Id = PC.ProposalCode_Id
@@ -71,25 +71,46 @@ WHERE B.Block_Id = :block_id;
         )
         result = self.connection.execute(stmt, {"block_id": block_id})
 
-        block = dict(result.one())
+        row = result.one()
 
-        # move probabilities into their own dict
-        probability_keys = [
-            "moon_probability",
-            "competition_probability",
-            "observability_probability",
-            "seeing_probability",
-            "average_ranking",
-            "total_probability",
-        ]
-        probabilities = {key: block[key] for key in probability_keys}
-        for key in probability_keys:
-            del block[key]
-        block["probabilities"] = probabilities
+        observing_conditions = {
+            "minimum_seeing": row.minimum_seeing,
+            "maximum_seeing": row.maximum_seeing,
+            "transparency": row.transparency,
+            "minimum_lunar_distance": row.minimum_lunar_distance,
+            "maximum_lunar_phase": row.maximum_lunar_phase,
+        }
+        observation_probabilities = {
+            "moon": row.moon_probability,
+            "competition": row.competition_probability,
+            "observability": row.observability_probability,
+            "seeing": row.seeing_probability,
+            "average_ranking": row.average_ranking,
+            "total": row.total_probability,
+        }
 
-        block["observations"] = self._pointings(block_id)
-        block["executed_observations"] = self._executed_observations(block_id)
-        block["observing_windows"] = self._observing_windows(block_id)
+        block = {
+            "id": row.block_id,
+            "name": row.name,
+            "proposal_code": row.proposal_code,
+            "submission_date": pytz.utc.localize(row.submission_date),
+            "semester": row.semester,
+            "status": row.status,
+            "priority": row.priority,
+            "ranking": row.ranking,
+            "wait_period": row.wait_period,
+            "requested_observations": row.requested_observations,
+            "accepted_observations": row.accepted_observations,
+            "rejected_observations": row.rejected_observations,
+            "comment": row.comment,
+            "observing_conditions": observing_conditions,
+            "observation_time": row.observation_time,
+            "overhead_time": row.overhead_time,
+            "observation_probabilities": observation_probabilities,
+            "observing_windows": self._observing_windows(block_id),
+            "executed_observations": self._executed_observations(block_id),
+            "observations": self._pointings(block_id),
+        }
 
         return block
 

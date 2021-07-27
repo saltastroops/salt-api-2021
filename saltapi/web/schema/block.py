@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import List, Union
+from typing import List, Optional, Union
 
 from pydantic import BaseModel, Field
 
@@ -51,6 +51,38 @@ class BlockStatus(str, Enum):
     SUPERSEDED = "Superseded"
 
 
+class ObservingConditions(BaseModel):
+    minimum_seeing: float = Field(
+        ...,
+        title="Minimum seeing",
+        description="Minimum seeing allowed for an observation, in arcseconds",
+        ge=0,
+    )
+    maximum_seeing: float = Field(
+        ...,
+        title="Maximum seeing",
+        description="Maximum seeing allowed for an observation, in arcseconds",
+        ge=0,
+    )
+    transparency: Transparency = Field(
+        ...,
+        title="Transparency",
+        description="Sky transparency required for an observation",
+    )
+    maximum_lunar_phase: float = Field(
+        ...,
+        title="Maximum lunar phase",
+        description="Maximum lunar phase which was allowed for the observation, as the percentage of lunar illumination",
+        ge=0,
+        le=100,
+    )
+    minimum_lunar_distance: float = Field(
+        ...,
+        title="Minimum lunar distance",
+        description="Minimum required angular distance between the Moon and the target, in degrees",
+    )
+
+
 class BlockSummary(BaseModel):
     """Summary information about a block."""
 
@@ -92,23 +124,10 @@ class BlockSummary(BaseModel):
         title="Remaining nights",
         description="Number of nights (Julian days), excluding the current one, during which the block still can be observed",
     )
-    maximum_seeing: float = Field(
+    observing_conditions: ObservingConditions = Field(
         ...,
-        title="Maximum seeing",
-        description="Maximum seeing allowed for an observation, in arcseconds",
-        ge=0,
-    )
-    transparency: Transparency = Field(
-        ...,
-        title="Transparency",
-        description="Sky transparency required for an observation",
-    )
-    maximum_lunar_phase: float = Field(
-        ...,
-        title="Maximum lunar phase",
-        description="Maximum lunar phase which was allowed for the observation, as the percentage of lunar illumination",
-        ge=0,
-        le=100,
+        title="Observing conditions",
+        description="Conditions required for observing the block",
     )
     instruments: List[
         Union[SalticamSummary, RssSummary, HrsSummary, BvitSummary]
@@ -138,6 +157,11 @@ class Block(BaseModel):
         title="Wait period",
         description="Minimum number of days to wait between observations of the block",
     )
+    comment: Optional[str] = Field(
+        ...,
+        title="Comment",
+        description="Comment about the block by the Principal Investigator",
+    )
     requested_observations: int = Field(
         ...,
         title="Requested observations",
@@ -148,45 +172,16 @@ class Block(BaseModel):
         title="Executed observations",
         description="Observations made for the block",
     )
-    minimum_seeing: float = Field(
+    observing_conditions: ObservingConditions = Field(
         ...,
-        title="Minimum seeing",
-        description="Minimum seeing allowed for an observation, in arcseconds",
-        ge=0,
-    )
-    maximum_seeing: float = Field(
-        ...,
-        title="Maximum seeing",
-        description="Maximum seeing allowed for an observation, in arcseconds",
-        ge=0,
-    )
-    transparency: Transparency = Field(
-        ...,
-        title="Transparency",
-        description="Sky transparency required for an observation",
-    )
-    maximum_lunar_phase: float = Field(
-        ...,
-        title="Maximum lunar phase",
-        description="Maximum lunar phase which was allowed for the observation, as the percentage of lunar illumination",
-        ge=0,
-        le=100,
-    )
-    minimum_lunar_distance: float = Field(
-        ...,
-        title="Minimum lunar distance",
-        description="Minimum required angular distance between the Moon and the target, in degrees",
+        title="Observing conditions",
+        description="Conditions required for observing the block",
     )
     observation_time: int = Field(
         ...,
         title="Observation time",
         description="Time required for an observation of the block, including the overhead time, in seconds",
         gt=0,
-    )
-    shutter_open_time: int = Field(
-        ...,
-        title="Shutter open time",
-        description="Total exposure time for an observation of the block, in seconds",
     )
     overhead_time: int = Field(
         ..., title="Overhead time for an observation of the block, in seconds", gt=0
