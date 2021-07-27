@@ -426,8 +426,10 @@ SELECT B.Block_Id                      AS id,
        B.NVisits                       AS requested_observations,
        B.NDone                         AS accepted_observations,
        B.NAttempted                    AS rejected_observations,
+       B.MinSeeing                     AS minimum_seeing,
        B.MaxSeeing                     AS maximum_seeing,
        T.Transparency                  AS transparency,
+       B.MinLunarAngularDistance       AS minimum_lunar_distance,
        B.MaxLunarPhase                 AS maximum_lunar_phase
 FROM Block B
          JOIN Transparency T on B.Transparency_Id = T.Transparency_Id
@@ -451,7 +453,23 @@ WHERE BS.BlockStatus NOT IN :excluded_status_values
             },
         )
 
-        blocks = [dict(row) for row in result]
+        blocks = [{
+            "id": row.id,
+            "semester": row.semester,
+            "name": row.name,
+            "observation_time": row.observation_time,
+            "priority": row.priority,
+            "requested_observations": row.requested_observations,
+            "accepted_observations": row.accepted_observations,
+            "rejected_observations": row.rejected_observations,
+            "observing_conditions": {
+                "minimum_seeing": row.minimum_seeing,
+                "maximum_seeing": row.maximum_seeing,
+                "transparency": row.transparency,
+                "minimum_lunar_distance": row.minimum_lunar_distance,
+                "maximum_lunar_phase": row.maximum_lunar_phase
+            }
+        } for row in result]
         block_instruments = self._block_instruments(proposal_code)
 
         tonight_interval = tonight()
