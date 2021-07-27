@@ -14,14 +14,14 @@ TEST_DATA = "repository/block_repository.yaml"
 
 class FakeTargetRepository:
     def get(self, target_id: int) -> Target:
-        return {
-            "id": target_id,
-            "name": f"Target with id {target_id}"
-        }
+        return {"id": target_id, "name": f"Target with id {target_id}"}
 
 
 def create_block_repository(connection: Connection) -> BlockRepository:
-    return BlockRepository(target_repository=cast(TargetRepository, FakeTargetRepository()), connection=connection)
+    return BlockRepository(
+        target_repository=cast(TargetRepository, FakeTargetRepository()),
+        connection=connection,
+    )
 
 
 @nodatabase
@@ -97,7 +97,10 @@ def test_target(dbconnection: Connection, testdata: Callable[[str], Any]) -> Non
     block = block_repository.get(block_id)
     target = block["observations"][0]["target"]
 
-    assert target == {"id": expected_target_id, "name": f"Target with id {expected_target_id}"}
+    assert target == {
+        "id": expected_target_id,
+        "name": f"Target with id {expected_target_id}",
+    }
 
 
 @nodatabase

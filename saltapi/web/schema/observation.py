@@ -2,7 +2,7 @@ from typing import List, Optional
 
 from pydantic import BaseModel, Field
 
-from saltapi.web.schema.common import TimeInterval, TargetCoordinates
+from saltapi.web.schema.common import TargetCoordinates, TimeInterval
 
 
 class PhaseInterval(BaseModel):

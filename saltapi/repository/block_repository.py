@@ -11,7 +11,9 @@ from saltapi.service.block import Block
 
 
 class BlockRepository:
-    def __init__(self, target_repository: TargetRepository, connection: Connection) -> None:
+    def __init__(
+        self, target_repository: TargetRepository, connection: Connection
+    ) -> None:
         self.target_repository = target_repository
         self.connection = connection
 
@@ -72,7 +74,14 @@ WHERE B.Block_Id = :block_id;
         block = dict(result.one())
 
         # move probabilities into their own dict
-        probability_keys = ["moon_probability", "competition_probability", "observability_probability", "seeing_probability", "average_ranking", "total_probability"]
+        probability_keys = [
+            "moon_probability",
+            "competition_probability",
+            "observability_probability",
+            "seeing_probability",
+            "average_ranking",
+            "total_probability",
+        ]
         probabilities = {key: block[key] for key in probability_keys}
         for key in probability_keys:
             del block[key]

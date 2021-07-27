@@ -227,6 +227,7 @@ class ExecutedObservation(BaseExecutedObservation):
 
 class ObservingProbabilities(BaseModel):
     """Probabilities related to observing."""
+
     moon_probability: Optional[float] = Field(
         ...,
         title="Moon probability",

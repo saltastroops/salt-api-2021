@@ -1,16 +1,17 @@
 from enum import Enum
-from typing import List, Optional, Union
+from typing import List, Union
 
 from pydantic import BaseModel, Field
 
 from saltapi.web.schema.bvit import BvitSummary
 from saltapi.web.schema.common import (
     BaseExecutedObservation,
+    ObservingProbabilities,
     Priority,
     ProposalCode,
     Ranking,
     Semester,
-    TimeInterval, ObservingProbabilities,
+    TimeInterval,
 )
 from saltapi.web.schema.hrs import HrsSummary
 from saltapi.web.schema.observation import Observation
@@ -117,9 +118,7 @@ class BlockSummary(BaseModel):
 class Block(BaseModel):
     """A block, i.e. a smallest schedulable unit in a proposal."""
 
-    block_id: int = Field(
-        ..., title="Block id", description="Unique identifier of the block"
-    )
+    id: int = Field(..., title="Block id", description="Unique identifier of the block")
     name: str = Field(..., title="Name", description="Block name")
     proposal_code: ProposalCode = Field(
         ..., title="Proposal code of the proposal to which the block belongs"
@@ -197,7 +196,11 @@ class Block(BaseModel):
         title="Observing windows",
         description="Time windows during which the block can be observed",
     )
-    observing_probabilities: ObservingProbabilities = Field(..., title="Observing probabilities", description="Probabilities related to observing the block")
+    observing_probabilities: ObservingProbabilities = Field(
+        ...,
+        title="Observing probabilities",
+        description="Probabilities related to observing the block",
+    )
     observations: List[Observation] = Field(
         ...,
         title="Observations",
