@@ -1,13 +1,27 @@
-from typing import Any, Callable
+from typing import Any, Callable, cast
 
 import pytest
 from sqlalchemy.engine import Connection
 from sqlalchemy.exc import NoResultFound
 
 from saltapi.repository.block_repository import BlockRepository
+from saltapi.repository.target_repository import TargetRepository
+from saltapi.service.target import Target
 from tests.markers import nodatabase
 
 TEST_DATA = "repository/block_repository.yaml"
+
+
+class FakeTargetRepository:
+    def get(self, target_id: int) -> Target:
+        return {
+            "id": target_id,
+            "name": f"Target with id {target_id}"
+        }
+
+
+def create_block_repository(connection: Connection) -> BlockRepository:
+    return BlockRepository(target_repository=cast(TargetRepository, FakeTargetRepository()), connection=connection)
 
 
 @nodatabase
@@ -16,7 +30,7 @@ def test_get_block_returns_block_content(
 ) -> None:
     data = testdata(TEST_DATA)["general_block_details"]
     block_id = data["block_id"]
-    block_repository = BlockRepository(dbconnection)
+    block_repository = create_block_repository(dbconnection)
     block = block_repository.get(block_id)
 
     for key in data:
@@ -33,7 +47,7 @@ def test_get_raises_error_for_too_complicated_blocks(
 
     data = testdata(TEST_DATA)["too_complicated_blocks"]
     block_ids = data["block_ids"]
-    block_repository = BlockRepository(dbconnection)
+    block_repository = create_block_repository(dbconnection)
     for block_id in block_ids:
         with pytest.raises(ValueError) as excinfo:
             block_repository.get(block_id)
@@ -47,7 +61,7 @@ def test_get_returns_executed_observations(
     data = testdata(TEST_DATA)["executed_observations"]
     block_id = data["block_id"]
     expected_observations = data["observations"]
-    block_repository = BlockRepository(dbconnection)
+    block_repository = create_block_repository(dbconnection)
     block = block_repository.get(block_id)
     observations = block["executed_observations"]
 
@@ -62,7 +76,7 @@ def test_get_returns_observing_windows(
 ) -> None:
     data = testdata(TEST_DATA)["observing_windows"]
     block_id = data["block_id"]
-    block_repository = BlockRepository(dbconnection)
+    block_repository = create_block_repository(dbconnection)
     block = block_repository.get(block_id)
     observing_windows = block["observing_windows"]
 
@@ -75,13 +89,25 @@ def test_get_returns_observing_windows(
 
 
 @nodatabase
+def test_target(dbconnection: Connection, testdata: Callable[[str], Any]) -> None:
+    data = testdata(TEST_DATA)["target"]
+    block_id = data["block_id"]
+    expected_target_id = data["target_id"]
+    block_repository = create_block_repository(dbconnection)
+    block = block_repository.get(block_id)
+    target = block["observations"][0]["target"]
+
+    assert target == {"id": expected_target_id, "name": f"Target with id {expected_target_id}"}
+
+
+@nodatabase
 def test_time_restrictions(
     dbconnection: Connection, testdata: Callable[[str], Any]
 ) -> None:
     data = testdata(TEST_DATA)["time_restrictions"]
     block_id = data["block_id"]
     expected_restrictions = data["restrictions"]
-    block_repository = BlockRepository(dbconnection)
+    block_repository = create_block_repository(dbconnection)
     block = block_repository.get(block_id)
     restrictions = block["observations"][0]["time_restrictions"]
 
@@ -96,7 +122,7 @@ def test_no_time_restrictions(
 ) -> None:
     data = testdata(TEST_DATA)["no_time_restrictions"]
     block_id = data["block_id"]
-    block_repository = BlockRepository(dbconnection)
+    block_repository = create_block_repository(dbconnection)
     block = block_repository.get(block_id)
     restrictions = block["observations"][0]["time_restrictions"]
 
@@ -110,7 +136,7 @@ def test_phase_constraints(
     data = testdata(TEST_DATA)["phase_constraints"]
     block_id = data["block_id"]
     expected_constraints = data["constraints"]
-    block_repository = BlockRepository(dbconnection)
+    block_repository = create_block_repository(dbconnection)
     block = block_repository.get(block_id)
     constraints = block["observations"][0]["phase_constraints"]
 
@@ -123,7 +149,7 @@ def test_no_phase_constraints(
 ) -> None:
     data = testdata(TEST_DATA)["no_phase_constraints"]
     block_id = data["block_id"]
-    block_repository = BlockRepository(dbconnection)
+    block_repository = create_block_repository(dbconnection)
     block = block_repository.get(block_id)
     constraints = block["observations"][0]["phase_constraints"]
 
@@ -138,7 +164,7 @@ def test_telescope_configuration(
     for d in data:
         block_id = d["block_id"]
         expected_telescope_config = d["telescope_config"]
-        block_repository = BlockRepository(dbconnection)
+        block_repository = create_block_repository(dbconnection)
         block = block_repository.get(block_id)
         telescope_config = block["observations"][0]["telescope_configurations"][0]
 
@@ -154,7 +180,7 @@ def test_dither_pattern(
     data = testdata(TEST_DATA)["dither_pattern"]
     block_id = data["block_id"]
     expected_telescope_configs = data["telescope_configs"]
-    block_repository = BlockRepository(dbconnection)
+    block_repository = create_block_repository(dbconnection)
     block = block_repository.get(block_id)
     telescope_configs = block["observations"][0]["telescope_configurations"]
 
@@ -172,7 +198,7 @@ def test_guide_star(dbconnection: Connection, testdata: Callable[[str], Any]) ->
     for d in data:
         block_id = d["block_id"]
         expected_guide_star = d["star"]
-        block_repository = BlockRepository(dbconnection)
+        block_repository = create_block_repository(dbconnection)
         block = block_repository.get(block_id)
         guide_star = block["observations"][0]["telescope_configurations"][0][
             "guide_star"
@@ -193,7 +219,7 @@ def test_no_guide_star(
 ) -> None:
     data = testdata(TEST_DATA)["no_guide_star"]
     block_id = data["block_id"]
-    block_repository = BlockRepository(dbconnection)
+    block_repository = create_block_repository(dbconnection)
     block = block_repository.get(block_id)
     guide_star = block["observations"][0]["telescope_configurations"][0]["guide_star"]
     assert guide_star is None
@@ -201,6 +227,6 @@ def test_no_guide_star(
 
 @nodatabase
 def test_get_raises_error_for_non_existing_block(dbconnection: Connection) -> None:
-    block_repository = BlockRepository(dbconnection)
+    block_repository = create_block_repository(dbconnection)
     with pytest.raises(NoResultFound):
         block_repository.get(1234567)

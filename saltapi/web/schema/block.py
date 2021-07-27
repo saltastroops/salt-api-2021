@@ -10,7 +10,7 @@ from saltapi.web.schema.common import (
     ProposalCode,
     Ranking,
     Semester,
-    TimeInterval,
+    TimeInterval, ObservingProbabilities,
 )
 from saltapi.web.schema.hrs import HrsSummary
 from saltapi.web.schema.observation import Observation
@@ -197,42 +197,7 @@ class Block(BaseModel):
         title="Observing windows",
         description="Time windows during which the block can be observed",
     )
-    moon_probability: Optional[float] = Field(
-        ...,
-        title="Moon probability",
-        description="Moon probability, which is derived from the lunar phase cumulative distribution function during the semester. The moon probability is not used in the total probability calculation since the moon constraints are already incorporated in the visibility window calculations",
-    )
-    competition_probability: Optional[float] = Field(
-        ...,
-        title="Competition probability",
-        description="Competition probability, which is determined as P_comp(x) = 1 / (C + 1) where C is the number of targets that overlap with target x",
-        ge=0,
-        le=1,
-    )
-    observability_probability: Optional[float] = Field(
-        ...,
-        title="Observability probability",
-        description="Probability representing the likelihood of pointing to a target given the length of its visibility window and the time requested on target. The probability is represented by the ratio of the length of the observing window and the length of the visibility window",
-        ge=0,
-        le=1,
-    )
-    seeing_probability: Optional[float] = Field(
-        ...,
-        title="Seeing probability",
-        description="Seeing probability, whivh is derived from the cumulative distribution function of seeing measurements taken in Sutherland",
-        ge=0,
-        le=1,
-    )
-    average_ranking: Optional[float] = Field(
-        ..., title="Average ranking", description="Average ranking", ge=0
-    )
-    total_probability: Optional[float] = Field(
-        ...,
-        title="Total probability",
-        description="Total probability, which is derived using the binomial theorem, where the number of trials are the number of tracks available to observe a target, the number of successes is the number of visits requested and the probability per trial is the total probability per track",
-        ge=0,
-        le=1,
-    )
+    observing_probabilities: ObservingProbabilities = Field(..., title="Observing probabilities", description="Probabilities related to observing the block")
     observations: List[Observation] = Field(
         ...,
         title="Observations",

@@ -6,11 +6,13 @@ from astropy.coordinates import Angle
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
+from saltapi.repository.target_repository import TargetRepository
 from saltapi.service.block import Block
 
 
 class BlockRepository:
-    def __init__(self, connection: Connection) -> None:
+    def __init__(self, target_repository: TargetRepository, connection: Connection) -> None:
+        self.target_repository = target_repository
         self.connection = connection
 
     def get(self, block_id: int) -> Block:
@@ -68,6 +70,14 @@ WHERE B.Block_Id = :block_id;
         result = self.connection.execute(stmt, {"block_id": block_id})
 
         block = dict(result.one())
+
+        # move probabilities into their own dict
+        probability_keys = ["moon_probability", "competition_probability", "observability_probability", "seeing_probability", "average_ranking", "total_probability"]
+        probabilities = {key: block[key] for key in probability_keys}
+        for key in probability_keys:
+            del block[key]
+        block["probabilities"] = probabilities
+
         block["observations"] = self._pointings(block_id)
         block["executed_observations"] = self._executed_observations(block_id)
         block["observing_windows"] = self._observing_windows(block_id)
@@ -245,8 +255,7 @@ ORDER BY TCOC.Pointing_Id, TCOC.Observation_Order, TCOC.TelescopeConfig_Order,
         pointings: List[Dict[str, Any]] = []
         for pointing_rows in pointing_groups:
             pointing = {
-                "observation_time": pointing_rows[0].observation_time,
-                "overhead_time": pointing_rows[0].overhead_time,
+                "target": self.target_repository.get(pointing_rows[0].target_id),
                 "time_restrictions": self._time_restrictions(
                     pointing_rows[0].pointing_id
                 ),
@@ -256,6 +265,8 @@ ORDER BY TCOC.Pointing_Id, TCOC.Observation_Order, TCOC.TelescopeConfig_Order,
                 "telescope_configurations": self._telescope_configurations(
                     pointing_rows
                 ),
+                "observation_time": pointing_rows[0].observation_time,
+                "overhead_time": pointing_rows[0].overhead_time,
             }
             pointings.append(pointing)
 

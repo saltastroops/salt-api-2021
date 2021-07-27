@@ -2,7 +2,7 @@ from typing import List, Optional
 
 from pydantic import BaseModel, Field
 
-from saltapi.web.schema.common import TimeInterval
+from saltapi.web.schema.common import TimeInterval, TargetCoordinates
 
 
 class PhaseInterval(BaseModel):
@@ -44,20 +44,9 @@ class DitherPattern(BaseModel):
     )
 
 
-class GuideStar(BaseModel):
+class GuideStar(TargetCoordinates):
     """Guide star."""
 
-    right_ascension: float = Field(
-        ...,
-        title="Right ascension",
-        description="Right ascension, in degrees",
-        ge=0,
-        le=360,
-    )
-    declination: float = Field(
-        ..., tile="Declination", description="Declination, in degrees", ge=-90, le=90
-    )
-    equinox: float = Field(..., title="Equinox", description="Equinox", ge=0)
     magnitude: float = Field(..., title="Magnitude", description="Magnitude")
 
 

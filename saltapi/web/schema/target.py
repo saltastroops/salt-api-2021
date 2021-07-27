@@ -1,54 +1,63 @@
+from datetime import datetime
+from decimal import Decimal
+from enum import Enum
 from typing import Optional
 
 from pydantic import BaseModel, Field
 
-from saltapi.web.schema.common import Ranking
+from saltapi.web.schema.common import Ranking, TargetCoordinates, ObservingProbabilities
 
 
-class BaseTarget(BaseModel):
+class ProperMotion(BaseModel):
+    """Proper motion."""
+
+    right_ascension_speed: float = Field(..., title="Right ascension speed", description="Right ascension speed, in arcseconds per year")
+    declination_speed: float = Field(..., title="Declination speed", description="Declination speed, in arcseconds per year")
+    epoch: datetime = Field(..., title="Epoch", description="Time for which the target coordinates are given")
+
+
+class Magnitude(BaseModel):
+    """Apparent magnitude (range)."""
+
+    min_magnitude: float = Field(..., title="Minimum magnitude", description="Minimum (brightest) apparent magnitude")
+    max_magnitude: float = Field(..., title="Maximum magnitude", description="Maximum (faintest) apparent magnitude")
+    bandpass: str = Field(..., title="Bandpass", description="Bandpass (filter) fore the magnitude")
+
+
+class TimeBase(str, Enum):
+    BJD: "BJD"  # Barycentric Julian Date
+    HJD: "HJD"  # Heliocentric Julian Date
+    JD: "JD"    # Julian Date
+    UT: "UT"    # Universal Time
+
+
+class PeriodEphemeris(BaseModel):
+    """Period ephemeris for a variable target."""
+
+    t0: Decimal = Field(..., title="Zero point for the ephemeris", description="Zero point for the target ephemeris. The target phase is 0 at this time")
+    period: Decimal = Field(..., title="Target period", description="Period of the target at the zero point, in days")
+    period_change_rate: Decimal = Field(..., title="Period change rate", description="Rate of change of the period, in days per day")
+    time_base: TimeBase = Field(..., title="Time base", description="Time base for the ephemeris")
+
+
+class Target(BaseModel):
     """Base model for targets."""
 
     id: int = Field(
         ..., title="Target id", description="Unique identifier of the target"
     )
     name: str = Field(..., title="Target name", description="Target name")
+    coordinates: Optional[TargetCoordinates] = Field(..., title="Target coordinates", description="Target coordinates for a sidereal target")
+    proper_motion: Optional[ProperMotion] = Field(..., title="Proper motion", description="Proper motion")
+    magnitude: Optional[Magnitude] = Field(..., title="Magnitude", description="Apparent magnitude (range) of the target")
+    target_type: Optional[str] = Field(..., title="Target", description="Target type, based on the SIMBAD classification")
+    period_ephemeris: Optional[PeriodEphemeris] = Field(..., title="Period ephemeris", description="Ephemeris for the period of a variable target")
+    horizons_identifier: Optional[str] = Field(..., title="Horizons identifier", description="Identifier for the target in the JPL-Horizons database of solar-system targets")
 
 
-class Phase1Target(BaseTarget):
+class Phase1Target(Target):
     """A target in a Phase 1 proposal."""
 
-    right_ascension: float = Field(
-        ...,
-        title="Right ascension",
-        description="Right ascension, as an angle between 0 and 360 degrees (both inclusive)",
-    )
-    declination: float = Field(
-        ...,
-        title="Declination",
-        description="Declination, as an angle between -90 and 90 degrees (both inclusive)",
-    )
-    equinox: float = Field(
-        ...,
-        title="Equinox",
-        description="Equinox of the right ascension and declination",
-    )
-    horizons_identifier: Optional[str] = Field(
-        ...,
-        title="Horizons identifier",
-        description="Identifier of the target in the Horizons database for solar system targets",
-    )
-    minimum_magnitude: float = Field(
-        ..., title="Minimum magnitude", description="Minimum (brightest) magnitude"
-    )
-    maximum_magnitude: float = Field(
-        ..., title="Maximum magnitude", description="Minimum (faintest) magnitude"
-    )
-    target_type: str = Field(
-        ..., title="Target type", description="Target type (broad category)"
-    )
-    target_subtype: str = Field(
-        ..., title="Target subtype", description="Target subtype"
-    )
     is_optional: bool = Field(
         ...,
         title="Optional?",
@@ -76,10 +85,4 @@ class Phase1Target(BaseTarget):
         title="Number of nights",
         description="Number of nights for which the target is observable, given the requested observation time and observation constraints.",
     )
-    # TODO: Comment on probabilities
-    moon_probability: Optional[float]
-    competition_probability: Optional[float]
-    observability_probability: Optional[float]
-    seeing_probability: Optional[float]
-    average_ranking: Optional[float]
-    total_probability: Optional[float]
+    observing_probabilities: ObservingProbabilities = Field(..., title="Observing probabilities", description="Probabilities related to observing the block")
