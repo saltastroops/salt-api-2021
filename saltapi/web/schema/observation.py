@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import List, Optional
 
 from pydantic import BaseModel, Field
@@ -50,10 +51,79 @@ class GuideStar(TargetCoordinates):
     magnitude: float = Field(..., title="Magnitude", description="Magnitude")
 
 
+class Lamp(str, Enum):
+    """Calibration lamp(s)."""
+
+    AR = "Ar"
+    AR_AND_THAR = "Ar and ThAr"
+    CUAR = "CuAr"
+    CUAR_AND_XE = "CuAr and Xe"
+    HGAR = "HgAr"
+    HGAR_AND_NE = "HgAr and Ne"
+    NE = "Ne"
+    QTH1 = "QTH1"
+    QTH1_AND_QTH2 = "QTH1 and QTH2"
+    QTH2 = "QTH2"
+    THAR = "ThAr"
+    XE = "Xe"
+
+
+class CalibrationFilter(str, Enum):
+    """Calibration filter."""
+
+    BLUE_AND_RED = "Blue and Red"
+    CLEAR_AND_ND = "Clear and ND"
+    CLEAR_AND_UV = "Clear and UV"
+    ND_AND_CLEAR = "ND and Clear"
+    NONE = "None"
+    RED_AND_CLEAR = "Red and Clear"
+    UV_AND_BLUE = "UV and Blue"
+
+
+class GuideMethod(str, Enum):
+    """Guide method."""
+
+    HRS_PROBE = "HRS Probe"
+    MANUAL = "Manual"
+    NONE = "None"
+    QUACK = "QUACK"
+    RSS_PROBE = "RSS Probe"
+    SALTICAM = "SALTICAM"
+    SALTICAM_PROBE = "SALTICAM Probe"
+    SLITVIEWER = "Slitviewer"
+
+
+class PayloadConfigurationType(str, Enum):
+    """Payload configuration type."""
+
+    ACQUISITION = "Acquisition"
+    CALIBRATION = "Calibration"
+    INSTRUMENT_ACQUISITION = "Instrument Acquisition"
+    SCIENCE = "Science"
+
+
 class PayloadConfiguration(BaseModel):
     """Payload configuration."""
 
-    pass
+    payload_configuration_type: Optional[PayloadConfigurationType] = Field(
+        ...,
+        title="Payload configuration type",
+        description="Payload configuration type",
+    )
+    use_calibration_screen: Optional[bool] = Field(
+        ...,
+        title="Calibration screen used?",
+        description="Whether the calibration screen is used",
+    )
+    lamp: Optional[Lamp] = Field(
+        ..., title="Calibration lamp", description="Calibration lamp"
+    )
+    calibration_filter: Optional[CalibrationFilter] = Field(
+        ..., title="Calibration filter", description="Calibration filter"
+    )
+    guide_method: GuideMethod = Field(
+        ..., title="Guide method", description="Guide method"
+    )
 
 
 class TelescopeConfiguration(BaseModel):

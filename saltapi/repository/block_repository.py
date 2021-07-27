@@ -235,10 +235,10 @@ SELECT P.Pointing_Id                                                  AS pointin
        GS.Equinox                                                     AS gs_equinox,
        GS.Mag                                                         AS gs_magnitude,
        L.Lamp                                                         AS pc_lamp,
-       CF.CalFilter                                                   AS pc_calibratiomn_filter,
+       CF.CalFilter                                                   AS pc_calibration_filter,
        GM.GuideMethod                                                 AS pc_guide_method,
        PCT.Type                                                       AS pc_type,
-       PC.CalScreenIn                                                 AS pc_is_calibration_screen_in,
+       PC.CalScreenIn                                                 AS pc_calibration_screen_in,
        OC.SalticamPattern_Id                                          AS salticam_pattern_id,
        OC.RssPattern_Id                                               AS rss_pattern_id,
        OC.HrsPattern_Id                                               AS hrs_pattern_id,
@@ -379,7 +379,7 @@ ORDER BY TCOC.Pointing_Id, TCOC.Observation_Order, TCOC.TelescopeConfig_Order,
                 "dither_pattern": self._dither_pattern(row),
                 "guide_star": self._guide_star(row),
                 "payload_configurations": [
-                    self._payload_configuration(row) in tc_group
+                    self._payload_configuration(row) for row in tc_group
                 ],
             }
             telescope_configs.append(tc)
@@ -387,7 +387,17 @@ ORDER BY TCOC.Pointing_Id, TCOC.Observation_Order, TCOC.TelescopeConfig_Order,
         return telescope_configs
 
     def _payload_configuration(self, payload_config_row: Any) -> Dict[str, Any]:
-        return {}
+        payload_config = {
+            "payload_configuration_type": payload_config_row.pc_type,
+            "use_calibration_screen": True
+            if payload_config_row.pc_calibration_screen_in
+            else False,
+            "lamp": payload_config_row.pc_lamp,
+            "calibration_filter": payload_config_row.pc_calibration_filter,
+            "guide_method": payload_config_row.pc_guide_method,
+        }
+
+        return payload_config
 
     def _has_subblock_or_subsubblock_iterations(self, block_id: int) -> bool:
         """

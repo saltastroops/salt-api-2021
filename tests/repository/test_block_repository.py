@@ -14,7 +14,7 @@ TEST_DATA = "repository/block_repository.yaml"
 
 class FakeTargetRepository:
     def get(self, target_id: int) -> Target:
-        return {"id": target_id, "name": f"Target with id {target_id}"}
+        return f"Target with id {target_id}"
 
 
 def create_block_repository(connection: Connection) -> BlockRepository:
@@ -97,10 +97,7 @@ def test_target(dbconnection: Connection, testdata: Callable[[str], Any]) -> Non
     block = block_repository.get(block_id)
     target = block["observations"][0]["target"]
 
-    assert target == {
-        "id": expected_target_id,
-        "name": f"Target with id {expected_target_id}",
-    }
+    assert target == f"Target with id {expected_target_id}"
 
 
 @nodatabase
@@ -233,3 +230,22 @@ def test_get_raises_error_for_non_existing_block(dbconnection: Connection) -> No
     block_repository = create_block_repository(dbconnection)
     with pytest.raises(NoResultFound):
         block_repository.get(1234567)
+
+
+@nodatabase
+def test_payload_configurations(
+    dbconnection: Connection, testdata: Callable[[str], Any]
+) -> None:
+    data = testdata(TEST_DATA)["payload_configurations"]
+    block_id = data["block_id"]
+    expected_configs = data["configurations"]
+    block_repository = create_block_repository(dbconnection)
+    block = block_repository.get(block_id)
+    configs = block["observations"][0]["telescope_configurations"][0][
+        "payload_configurations"
+    ]
+
+    assert len(configs) == len(expected_configs)
+
+    for i in range(len(configs)):
+        assert configs[i] == expected_configs[i]
