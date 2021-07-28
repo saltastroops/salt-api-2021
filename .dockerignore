@@ -140,6 +140,5 @@ node_modules/
 .idea
 *.iml
 
-# Cypress
-/e2e/cypress/videos
-/e2e/cypress/screenshots
+# Test data
+testdata
