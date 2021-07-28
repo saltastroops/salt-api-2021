@@ -5,7 +5,9 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.exc import NoResultFound
 
 from saltapi.repository.block_repository import BlockRepository
+from saltapi.repository.instrument_repository import InstrumentRepository
 from saltapi.repository.target_repository import TargetRepository
+from saltapi.service.instrument import BVIT, HRS, RSS, Salticam
 from saltapi.service.target import Target
 from tests.markers import nodatabase
 
@@ -17,9 +19,24 @@ class FakeTargetRepository:
         return f"Target with id {target_id}"
 
 
+class FakeInstrumentRepository:
+    def get_salticam(self, salticam_id: int) -> Salticam:
+        return f"Salticam with id {salticam_id}"
+
+    def get_rss(self, rss_id: int) -> RSS:
+        return f"RSS with id {rss_id}"
+
+    def get_hrs(self, hrs_id: int) -> HRS:
+        return f"HRS with id {hrs_id}"
+
+    def get_bvit(self, bvit_id: int) -> BVIT:
+        return f"BVIT with id {bvit_id}"
+
+
 def create_block_repository(connection: Connection) -> BlockRepository:
     return BlockRepository(
         target_repository=cast(TargetRepository, FakeTargetRepository()),
+        instrument_repository=cast(InstrumentRepository, FakeInstrumentRepository()),
         connection=connection,
     )
 
@@ -249,3 +266,37 @@ def test_payload_configurations(
 
     for i in range(len(configs)):
         assert configs[i] == expected_configs[i]
+
+
+def test_get_block_instruments(
+    dbconnection: Connection, testdata: Callable[[str], Any]
+) -> None:
+    data = testdata(TEST_DATA)["block_instruments"]
+    for d in data:
+        block_id = d["block_id"]
+        expected_observations = d["observations"]
+        block_repository = create_block_repository(dbconnection)
+        block = block_repository.get(block_id)
+        observations = block["observations"]
+
+        assert len(observations) == len(expected_observations)
+        for i in range(len(observations)):
+            expected_telescope_configs = expected_observations[i][
+                "telescope_configurations"
+            ]
+            telescope_configs = observations[i]["telescope_configurations"]
+
+            assert len(expected_telescope_configs) == len(telescope_configs)
+            for j in range(len(telescope_configs)):
+                expected_payload_configs = expected_telescope_configs[j][
+                    "payload_configurations"
+                ]
+                payload_configs = telescope_configs[j]["payload_configurations"]
+
+                assert len(payload_configs) == len(expected_payload_configs)
+
+                for k in range(len(payload_configs)):
+                    assert (
+                        payload_configs[k]["instruments"]
+                        == expected_payload_configs[k]["instruments"]
+                    )

@@ -6,15 +6,20 @@ from astropy.coordinates import Angle
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
+from saltapi.repository.instrument_repository import InstrumentRepository
 from saltapi.repository.target_repository import TargetRepository
 from saltapi.service.block import Block
 
 
 class BlockRepository:
     def __init__(
-        self, target_repository: TargetRepository, connection: Connection
+        self,
+        target_repository: TargetRepository,
+        instrument_repository: InstrumentRepository,
+        connection: Connection,
     ) -> None:
         self.target_repository = target_repository
+        self.instrument_repository = instrument_repository
         self.connection = connection
 
     def get(self, block_id: int) -> Block:
@@ -60,7 +65,7 @@ SELECT B.Block_Id                      AS block_id,
        BP.TotalProbability             AS total_probability
 FROM Block B
          JOIN BlockStatus BS ON B.BlockStatus_Id = BS.BlockStatus_Id
-         JOIN PiRanking PR ON B.PiRanking_Id = PR.PiRanking_Id
+         LEFT JOIN PiRanking PR ON B.PiRanking_Id = PR.PiRanking_Id
          JOIN Transparency T ON B.Transparency_Id = T.Transparency_Id
          JOIN Proposal P ON B.Proposal_Id = P.Proposal_Id
          JOIN ProposalCode PC ON P.ProposalCode_Id = PC.ProposalCode_Id
@@ -395,9 +400,79 @@ ORDER BY TCOC.Pointing_Id, TCOC.Observation_Order, TCOC.TelescopeConfig_Order,
             "lamp": payload_config_row.pc_lamp,
             "calibration_filter": payload_config_row.pc_calibration_filter,
             "guide_method": payload_config_row.pc_guide_method,
+            "instruments": self._instruments(payload_config_row),
         }
 
         return payload_config
+
+    def _instruments(self, payload_config_row: Any) -> List[Dict[str, Any]]:
+        instruments: List[Dict[str, Any]] = []
+        if payload_config_row.salticam_pattern_id is not None:
+            instruments += self._salticam_setups(payload_config_row.salticam_pattern_id)
+        if payload_config_row.rss_pattern_id is not None:
+            instruments += self._rss_setups(payload_config_row.rss_pattern_id)
+        if payload_config_row.hrs_pattern_id is not None:
+            instruments += self._hrs_setups(payload_config_row.hrs_pattern_id)
+        if payload_config_row.bvit_pattern_id is not None:
+            instruments += self._bvit_setups(payload_config_row.bvit_pattern_id)
+
+        return instruments
+
+    def _salticam_setups(self, salticam_pattern_id: int) -> List[Dict[str, Any]]:
+        stmt = text(
+            """
+SELECT S.Salticam_Id AS salticam_id
+FROM Salticam S
+         JOIN SalticamPatternDetail SPD ON S.Salticam_Id = SPD.Salticam_Id
+WHERE SPD.SalticamPattern_Id = :salticam_pattern_id
+ORDER BY SPD.SalticamPattern_Order
+        """
+        )
+        result = self.connection.execute(
+            stmt, {"salticam_pattern_id": salticam_pattern_id}
+        )
+        return [
+            self.instrument_repository.get_salticam(row.salticam_id) for row in result
+        ]
+
+    def _rss_setups(self, rss_pattern_id: int) -> List[Dict[str, Any]]:
+        stmt = text(
+            """
+SELECT R.Rss_Id AS rss_id
+FROM Rss R
+         JOIN RssPatternDetail RPD ON R.Rss_Id = RPD.Rss_Id
+WHERE RPD.RssPattern_Id = :rss_pattern_id
+ORDER BY RPD.RssPattern_Order
+        """
+        )
+        result = self.connection.execute(stmt, {"rss_pattern_id": rss_pattern_id})
+        return [self.instrument_repository.get_rss(row.rss_id) for row in result]
+
+    def _hrs_setups(self, hrs_pattern_id: int) -> List[Dict[str, Any]]:
+        stmt = text(
+            """
+SELECT H.Hrs_Id AS hrs_id
+FROM Hrs H
+         JOIN HrsPatternDetail HPD ON H.Hrs_Id = HPD.Hrs_Id
+WHERE HPD.HrsPattern_Id = :hrs_pattern_id
+ORDER BY HPD.HrsPattern_Order
+        """
+        )
+        result = self.connection.execute(stmt, {"hrs_pattern_id": hrs_pattern_id})
+        return [self.instrument_repository.get_hrs(row.hrs_id) for row in result]
+
+    def _bvit_setups(self, bvit_pattern_id: int) -> List[Dict[str, Any]]:
+        stmt = text(
+            """
+SELECT B.Bvit_Id AS bvit_id
+FROM Bvit B
+         JOIN BvitPatternDetail BPD ON B.Bvit_Id = BPD.Bvit_Id
+WHERE BPD.BvitPattern_Id = :bvit_pattern_id
+ORDER BY BPD.BvitPattern_Order
+        """
+        )
+        result = self.connection.execute(stmt, {"bvit_pattern_id": bvit_pattern_id})
+        return [self.instrument_repository.get_bvit(row.bvit_id) for row in result]
 
     def _has_subblock_or_subsubblock_iterations(self, block_id: int) -> bool:
         """

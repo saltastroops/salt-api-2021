@@ -147,7 +147,7 @@ class Block(BaseModel):
     priority: Priority = Field(
         ..., title="Priority", description="Priority of the block"
     )
-    ranking: Ranking = Field(
+    ranking: Optional[Ranking] = Field(
         ...,
         title="Ranking",
         description="Ranking by the Principal Investigator relative to other blocks in the proposal",
