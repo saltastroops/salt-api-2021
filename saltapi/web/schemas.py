@@ -1,9 +1,18 @@
 import re
 from datetime import date, datetime
 from enum import Enum, IntEnum
-from typing import Any, Callable, Dict, Generator, List, Optional, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Generator,
+    List,
+    Literal,
+    Optional,
+    Union,
+)
 
-from pydantic import BaseModel, EmailStr, Field, HttpUrl
+from pydantic import BaseModel, EmailStr, Field
 
 
 class ProposalCode(str):
@@ -70,67 +79,53 @@ class Semester(str):
         return v
 
 
-class TextContent(BaseModel):
-    """
-    The text content of a proposal.
+class PartnerName(str, Enum):
+    """The past and current SALT partners."""
 
-    Fields
-    ------
-    semester:
-        Semester to which the text content belongs.
-    title:
-        Proposal title.
-    abstract:
-        Proposal abstract.
-    read_me:
-        Instructions for the observer.
-    nightlog_summary:
-        Brief (one-line) summary to include in the nightlog.
-    """
-
-    semester: Semester = Field(
-        ..., title="Semester", description="Semester to which the text content belongs"
-    )
-    title: str = Field(..., title="Title", description="Proposal title")
-    abstract: str = Field(..., title="Abstract", description="Proposal abstract")
-    read_me: str = Field(
-        ...,
-        title="Readme",
-        description="Instructions for the observing SALT Astronomer",
-    )
-    nightlog_summary: str = Field(
-        ...,
-        title="Nightlog summmary",
-        description="Brief (one-line) summary to include in the nightlog.",
-    )
+    AMNH = "American Museum of Natural History"
+    CMU = "Carnegie Mellon University"
+    DC = "Dartmouth College"
+    DUR = "Durham University"
+    GU = "Georg-August-Universität Göttingen"
+    HET = "Hobby Eberly Telescope Board"
+    IUCAA = "Inter-University Centre for Astronomy & Astrophysics"
+    OTH = "Other"
+    POL = "Poland"
+    RSA = "South Africa"
+    RU = "Rutgers University"
+    UC = "University of Canterbury"
+    UKSC = "UK SALT Consortium"
+    UNC = "University of North Carolina - Chapel Hill"
+    UW = "University of Wisconsin-Madison"
 
 
-class Partner(BaseModel):
-    """A SALT partner."""
+class PartnerCode(str, Enum):
+    """The partner codes of the past and current SALT partners."""
 
-    code: str = Field(
-        ..., title="Partner code", description="Partner code, such as IUCAA or RSA"
-    )
-    name: str = Field(..., title="Partner name", description="Partner name")
+    AMNH = "AMNH"
+    CMU = "CMU"
+    DC = "DC"
+    DUR = "DUR"
+    GU = "GU"
+    HET = "HET"
+    IUCAA = "IUCAA"
+    OTH = "OTH"
+    POL = "POL"
+    RSA = "RSA"
+    RU = "RU"
+    UC = "UC"
+    UKSC = "UKSC"
+    UNC = "UNC"
+    UW = "UW"
 
 
-class Institute(BaseModel):
-    """An institute."""
+class Transparency(str, Enum):
+    """Sky transparency."""
 
-    partner: Partner = Field(
-        ...,
-        title="SALT partner",
-        description="SALT Partner to which the institute belongs",
-    )
-    name: str = Field(..., title="Name", description="Institute name")
-    department: Optional[str] = Field(
-        None, title="Department", description="Department of the institute"
-    )
-    home_page: HttpUrl = Field(
-        ...,
-        title="Home page",
-        description="URL of the institute's (or department's) home page",
-    )
+    ANY = "Any"
+    CLEAR = "Clear"
+    THICK_CLOUD = "Thick cloud"
+    THIN_CLOUD = "Thin cloud"
 
 
 class ContactDetails(BaseModel):
@@ -144,9 +139,34 @@ class ContactDetails(BaseModel):
         orm_mode = True
 
 
+class Affiliation(BaseModel):
+    """An institute affiliation."""
+
+    partner_name: PartnerName = Field(
+        ...,
+        title="SALT partner name",
+        description="Name of the SALT Partner",
+    )
+    partner_code: PartnerCode = Field(
+        ...,
+        title="SALT partner code",
+        description="Code of the SALT Partner",
+    )
+    institute: str = Field(..., title="Institute", description="Institute")
+    department: Optional[str] = Field(
+        None, title="Department", description="Department of the institute"
+    )
+
+
 class Investigator(ContactDetails):
     """An investigator on a proposal."""
 
+    user_id: int = Field(
+        ..., title="User id", description="User id of the investigator"
+    )
+    affiliation: Affiliation = Field(
+        ..., title="Affiliation", description="Affiliation of the investigator"
+    )
     is_pc: bool = Field(
         ...,
         title="Principle Contact",
@@ -157,10 +177,10 @@ class Investigator(ContactDetails):
         title="Principle Investigator",
         description="Is this investigator the Principal Investigator?",
     )
-    affiliation: Institute = Field(
+    has_approved_proposal: Optional[bool] = Field(
         ...,
-        title="Affiliation",
-        description="Institution to which the investigator is affiliated",
+        title="Has approved proposal?",
+        description="Whether the investigator has approved the proposal. The value is null if the investigator has neither approved nor rejected the proposal yet",
     )
 
 
@@ -183,63 +203,62 @@ class Priority(IntEnum):
 class TimeAllocation(BaseModel):
     """A time allocation."""
 
-    semester: Semester = Field(
-        ..., title="Semester", description="Semester for which the time is allocated"
-    )
-    partner: Partner = Field(
+    partner_name: PartnerName = Field(
         ...,
-        title="SALT partner",
-        description="SALT partner whose Time Allocation Committee is allocating the time",
+        title="SALT partner name",
+        description="Name of the SALT partner whose Time Allocation Committee is allocating the time",
+    )
+    partner_code: PartnerCode = Field(
+        ...,
+        title="SALT partner code",
+        description="Code of the SALT partner whose Time Allocation Committee is allocating the time",
     )
     tac_comment: Optional[str] = Field(
         ...,
         title="TAC comment",
         description="Comment by the Time Allocation Committee allocating the time",
     )
-    priority_0: Priority = Field(
-        ..., title="P0 time", description="Allocated priority 0 time, in seconds"
+    priority_0: int = Field(
+        ..., title="P0 time", description="Allocated priority 0 time, in seconds", ge=0
     )
     priority_1: Priority = Field(
-        ..., title="P1 time", description="Allocated priority 1 time, in seconds"
+        ..., title="P1 time", description="Allocated priority 1 time, in seconds", ge=0
     )
     priority_2: Priority = Field(
-        ..., title="P2 time", description="Allocated priority 2 time, in seconds"
+        ..., title="P2 time", description="Allocated priority 2 time, in seconds", ge=0
     )
     priority_3: Priority = Field(
-        ..., title="P3 time", description="Allocated priority 3 time, in seconds"
+        ..., title="P3 time", description="Allocated priority 3 time, in seconds", ge=0
     )
     priority_4: Priority = Field(
-        ..., title="P4 time", description="Allocated priority 4 time, in seconds"
+        ..., title="P4 time", description="Allocated priority 4 time, in seconds", ge=0
     )
 
 
 class ChargedTime(BaseModel):
     """Charged time, broken down by priority."""
 
-    semester: Semester = Field(
-        ..., title="Semester", description="Semester for which the time is allocated"
+    priority_0: int = Field(
+        ..., title="P0 time", description="Charged priority 0 time, in seconds", ge=0
     )
-    priority_0: Priority = Field(
-        ..., title="P0 time", description="Charged priority 0 time, in seconds"
+    priority_1: int = Field(
+        ..., title="P1 time", description="Charged priority 1 time, in seconds", ge=0
     )
-    priority_1: Priority = Field(
-        ..., title="P1 time", description="Charged priority 1 time, in seconds"
+    priority_2: int = Field(
+        ..., title="P2 time", description="Charged priority 2 time, in seconds", ge=0
     )
-    priority_2: Priority = Field(
-        ..., title="P2 time", description="Charged priority 2 time, in seconds"
+    priority_3: int = Field(
+        ..., title="P3 time", description="Charged priority 3 time, in seconds", ge=0
     )
-    priority_3: Priority = Field(
-        ..., title="P3 time", description="Charged priority 3 time, in seconds"
-    )
-    priority_4: Priority = Field(
-        ..., title="P4 time", description="Charged priority 4 time, in seconds"
+    priority_4: int = Field(
+        ..., title="P4 time", description="Charged priority 4 time, in seconds", ge=0
     )
 
 
 class PartnerPercentage(BaseModel):
     """A percentage (for example of the requested time) for a partner."""
 
-    partner: Partner = Field(..., title="SALT partner", description="SALT partner")
+    partner: PartnerName = Field(..., title="SALT partner", description="SALT partner")
     percentage: float = Field(
         ...,
         ge=0,
@@ -315,6 +334,8 @@ class Phase1Target(BaseTarget):
         ...,
         title="Maximum lunar phase",
         description="Maximum lunar phase which was allowed for the observation, as the percentage of lunar illumination",
+        ge=0,
+        le=100,
     )
     ranking: Ranking = Field(
         ...,
@@ -368,33 +389,39 @@ class ObservationStatus(str, Enum):
     REJECTED = "Rejected"
 
 
-class Observation(BaseModel):
+class ExecutedObservation(BaseModel):
     """An observation made."""
 
     id: int = Field(
         ..., title="Observation id", description="Unique identifier of the observation"
     )
-    observation_time: int = Field(
-        ...,
-        title="observation time",
-        description="Time charged for the observation, in seconds",
-    )
     block_id: int = Field(
         ..., title="Block id", description="Unique identifier of the observed block"
     )
-    priority: Priority = Field(
-        ..., title="Priority", description="Priority of the observed block"
+    block_name: str = Field(
+        ..., title="Block name", description="Name of the observed block."
     )
-    max_lunar_phase: float = Field(
+    observation_time: int = Field(
+        ...,
+        title="Observation time",
+        description="Time charged for the observation, in seconds",
+    )
+    priority: Priority = Field(
+        ..., title="Block priority", description="Priority of the observed block"
+    )
+    targets: List[str] = Field(
+        ...,
+        title="Targets",
+        description="List of the names of the observed targets. With the exception of a few legacy observations, the list contains a single target",
+    )
+    maximum_lunar_phase: float = Field(
         ...,
         title="Maximum lunar phase",
-        description="Maximum lunar phase which was allowed for the observation, "
-        "as the percentage of lunar illumination",
+        description="Maximum lunar phase which was allowed for the observation, as the percentage of lunar illumination",
+        ge=0,
+        le=100,
     )
-    targets: List[BaseTarget] = Field(
-        ..., title="Observed targets", description="Observed targets"
-    )
-    observation_night: date = Field(
+    night: date = Field(
         ...,
         title="Observation night",
         description="Start date of the night when the observation was made",
@@ -416,7 +443,7 @@ class ProposalType(str, Enum):
     """Proposal type."""
 
     COMMISSIONING = "Commissioning"
-    DIRECTOR_DISCRETIONARY_TIME = "Director Discretionary Time (DDT)"
+    DIRECTOR_DISCRETIONARY_TIME = "Director’s Discretionary Time"
     ENGINEERING = "Engineering"
     GRAVITATIONAL_WAVE_EVENT = "Gravitational Wave Event"
     KEY_SCIENCE_PROGRAM = "Key Science Program"
@@ -442,13 +469,215 @@ class ProposalStatus(str, Enum):
     UNDER_TECHNICAL_REVIEW = "Under technical review"
 
 
+class SalticamSummary(BaseModel):
+    """Summary information for Salticam."""
+
+    name: Literal["Salticam"] = Field(
+        ..., title="Instrument name", description="Instrument name"
+    )
+    modes: List[Literal[""]] = Field(
+        ..., title="Instrument modes", description="Used instrument modes"
+    )
+
+
+class RssMode(str, Enum):
+    """RSS modes."""
+
+    FABRY_PEROT = "Fabry Perot"
+    FP_POLARIMETRY = "FP polarimetry"
+    IMAGING = "Imaging"
+    MOS = "MOS"
+    MOS_POLARIMETRY = "MOS polarimetry"
+    POLARIMETRIC_IMAGING = "Polarimetric imaging"
+    SPECTROPOLARIMETRY = "Spectropolarimetry"
+    SPECTROSCOPY = "Spectroscopy"
+
+
+class RssSummary(BaseModel):
+    """Summary information for RSS."""
+
+    name: Literal["RSS"] = Field(
+        ..., title="Instrument name", description="Instrument name"
+    )
+    modes: List[RssMode] = Field(
+        ..., title="Instrument modes", description="Used instrument modes"
+    )
+
+
+class HrsMode(str, Enum):
+    """HRS modes."""
+
+    HIGH_RESOLUTION = "High Resolution"
+    HIGH_STABILITY = "High Stability"
+    INT_CAL_FIBRE = "Int Cal Fibre"
+    LOW_RESOLUTION = "Low Resolution"
+    MEDIUM_RESOLUTION = "Medium Resolution"
+
+
+class HrsSummary(BaseModel):
+    """Summary information for RSS."""
+
+    name: Literal["HRS"] = Field(
+        ..., title="Instrument name", description="Instrument name"
+    )
+    modes: List[HrsMode] = Field(
+        ..., title="Instrument modes", description="Used instrument modes"
+    )
+
+
+class BvitSummary(BaseModel):
+    """Summary information for Salticam."""
+
+    name: Literal["BVIT"] = Field(
+        ..., title="Instrument name", description="Instrument name"
+    )
+    modes: List[Literal[""]] = Field(
+        ..., title="Instrument modes", description="Used instrument modes"
+    )
+
+
+class GeneralProposalInfo(BaseModel):
+    """General proposal information for a semester."""
+
+    title: str = Field(..., title="Title", description="Proposal title")
+    abstract: str = Field(..., title="Abstract", description="Proposal abstract")
+    current_submission: datetime = Field(
+        ...,
+        title="Current submission datetime",
+        description="Datetime of the latest submission for any semester",
+    )
+    first_submission: datetime = Field(
+        ...,
+        title="First submission datetime",
+        description="Datetime of the first submission for any semester",
+    )
+    submission_number: int = Field(
+        ...,
+        title="Submission number",
+        description="Current submission number for any semester",
+    )
+    semesters: List[Semester] = Field(
+        ...,
+        title="Semesters",
+        description="List of semesters for which the proposal has been submitted",
+    )
+    status: ProposalStatus = Field(
+        ..., title="Proposal status", description="Proposal status"
+    )
+    proposal_type: ProposalType = Field(
+        ..., title="Proposal type", description="Proposal type"
+    )
+    target_of_opportunity: bool = Field(
+        ...,
+        title="Target of opportunity?",
+        description="Whether thec proposal contains targets of opportunity",
+    )
+    total_requested_time: int = Field(
+        ...,
+        title="Total requested time",
+        description="Total requested time, in seconds",
+    )
+    data_release_date: date = Field(
+        ...,
+        title="Data release date",
+        description="Date when the proposal data is scheduled to become public",
+    )
+    liaison_salt_astronomer: str = Field(
+        ...,
+        title="Liaison astronomer",
+        description="SALT Astronomer who is the liaison astronomer for the proposal",
+    )
+    summary_for_salt_astronomer: str = Field(
+        ...,
+        title="Summary for the SALT Astronomer",
+        description="Brief summary with the essential information for the SALT Astronomer",
+    )
+    summary_for_night_log: str = Field(
+        ...,
+        title="Summary for the night log",
+        description="Brief (one-line) summary to include in the observing night log",
+    )
+
+
+class BlockSummary(BaseModel):
+    """Summary information about a block."""
+
+    id: int = Field(
+        ..., title="Block id", description="Unique identifier for the block"
+    )
+    name: str = Field(..., title="Name", description="Block name")
+    observation_time: int = Field(
+        ...,
+        title="Observation time",
+        description="Time required to make an observation of the block, in seconds",
+        ge=0,
+    )
+    priority: Priority = Field(
+        ..., title="Priority", description="Priority of the block"
+    )
+    requested_observations: int = Field(
+        ...,
+        title="Requested observations",
+        description="Number of observations requested for the block",
+    )
+    accepted_observations: int = Field(
+        ...,
+        title="Accepted observations",
+        description="Number of accepted observations made for the block so far",
+    )
+    rejected_observations: int = Field(
+        ...,
+        title="Rejected observations",
+        description="Number of rejected observations made for the block so far",
+    )
+    is_observable_tonight: bool = Field(
+        ...,
+        title="Observable tonight?",
+        description="Whether the block can be observed tonight (i.e. during the current Julian day)",
+    )
+    remaining_nights: int = Field(
+        ...,
+        title="Remaining nights",
+        description="Number of nights (Julian days), excluding the current one, during which the block still can be observed",
+    )
+    maximum_seeing: float = Field(
+        ...,
+        title="Maximum seeing",
+        description="Maximum seeing allowed for an observation, in arcseconds",
+        ge=0,
+    )
+    transparency: Transparency = Field(
+        ...,
+        title="Transparency",
+        description="Sky transparency required for an observation",
+    )
+    maximum_lunar_phase: float = Field(
+        ...,
+        title="Maximum lunar phase",
+        description="Maximum lunar phase which was allowed for the observation, as the percentage of lunar illumination",
+        ge=0,
+        le=100,
+    )
+    instruments: List[
+        Union[SalticamSummary, RssSummary, HrsSummary, BvitSummary]
+    ] = Field(..., title="Instruments", description="Instruments used for the block")
+
+
 class BaseProposal(BaseModel):
     """Base model for phase 1 and phase 2 proposals."""
 
-    text_contents: List[TextContent] = Field(
+    proposal_code: ProposalCode = Field(
+        ..., title="Proposal code", description="Proposal code"
+    )
+    semester: Semester = Field(
         ...,
-        title="Text contents",
-        description="Text contents for all semesters in the proposal",
+        title="Semester",
+        description="Semester for which the proposal details are given",
+    )
+    general_info: GeneralProposalInfo = Field(
+        ...,
+        title="General information",
+        description="General proposal information for a semester",
     )
     investigators: List[Investigator] = Field(
         ..., title="Investigators", description="Investigators on the proposal"
@@ -485,20 +714,23 @@ class Phase2Proposal(BaseProposal):
         title="Proposal phase",
         description="Proposal phase, which must be 2",
     )
-    observations: List[Observation] = Field(
+    blocks: List[BlockSummary] = Field(
+        ..., title="Blocks", description="Blocks for the semester"
+    )
+    executed_observations: List[ExecutedObservation] = Field(
         ...,
         title="Observations",
         description="Observations made for the proposal in any semester",
     )
-    charged_times: List[ChargedTime] = Field(
+    charged_time: ChargedTime = Field(
         ...,
-        title="Charged times",
-        description="Charged times for all semesters in the proposal",
+        title="Charged time, by priority",
+        description="Charged time, by priority, for the semester",
     )
     time_allocations: List[TimeAllocation] = Field(
         ...,
         title="Time allocations",
-        description="Time allocations for all semesters on the proposal",
+        description="Time allocations for the semester",
     )
 
 
@@ -634,4 +866,15 @@ class DataReleaseDateUpdate(BaseModel):
         ...,
         title="Motivation",
         description="Motivation why the request should be granted",
+    )
+
+
+class InstrumentSummary(BaseModel):
+    """Summary details of an instrument setup."""
+
+    name: str = Field(..., title="Name", description="Instrument name")
+    mode: str = Field(
+        ...,
+        title="Mode",
+        description="Instrument mode. For Salticam this is just an empty string.",
     )
