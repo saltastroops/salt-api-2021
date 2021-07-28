@@ -1,7 +1,6 @@
 from typing import Any
 
 from fastapi import FastAPI
-from pydantic import BaseModel
 
 from saltapi.repository.block_repository import BlockRepository
 from saltapi.repository.instrument_repository import InstrumentRepository
@@ -13,13 +12,6 @@ from saltapi.web.api.proposals import router as proposals_router
 app = FastAPI()
 
 app.include_router(proposals_router, prefix="/proposals")
-
-
-class P(BaseModel):
-    pc: str
-
-    class Config:
-        orm_mode = True
 
 
 @app.get("/{block_id}")
