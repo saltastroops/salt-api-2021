@@ -1,103 +1,436 @@
-import json
-from pathlib import Path
-from typing import Dict, NamedTuple, Union
+from datetime import datetime
+from typing import Any, Dict, Iterable, List, Optional, cast
 
+import pytz
+from astropy.coordinates import Angle
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
-from saltapi.exceptions import NotFoundError
+from saltapi.repository.target_repository import TargetRepository
 from saltapi.service.block import Block
 
 
-class BlockData(NamedTuple):
-    path: Path
-    status: str
-    observation_time: int
-    overhead_time: int
-    probabilities: Dict[str, Union[float, str]]
-
-
 class BlockRepository:
-    def __init__(self, connection: Connection, proposals_dir: Path) -> None:
+    def __init__(
+        self, target_repository: TargetRepository, connection: Connection
+    ) -> None:
+        self.target_repository = target_repository
         self.connection = connection
-        self.proposals_dir = proposals_dir
 
     def get(self, block_id: int) -> Block:
         """
         Return the block content for a block id.
         """
 
-        block_data = self._block_data(block_id)
-        block_path = block_data.path
+        # Avoid blocks with subblocks or subsubblocks.
+        if self._has_subblock_or_subsubblock_iterations(block_id):
+            error = (
+                "Blocks which have subblock or subsubblock iterations are not "
+                "supported"
+            )
+            raise ValueError(error)
 
-        if not block_path.exists():
-            raise FileNotFoundError()
-
-        with open(block_path) as f:
-            block = json.load(f)
-
-        block["status"] = block_data.status
-        block["observation_time"] = block_data.observation_time
-        block["overhead_time"] = block_data.overhead_time
-        block["probabilities"] = block_data.probabilities
-
-        return block
-
-    def _block_data(self, block_id: int) -> BlockData:
         stmt = text(
             """
-SELECT PC.Proposal_Code AS proposal_code,
-       BC.BlockCode AS block_code,
+SELECT B.Block_Id                      AS block_id,
+       B.Block_Name                    AS name,
+       PC.Proposal_Code                AS proposal_code,
+       P.SubmissionDate                AS submission_date,
        CONCAT(S.Year, '-', S.Semester) AS semester,
-       BS.BlockStatus AS status,
-       B.ObsTime AS observation_time,
-       B.OverheadTime AS overhead_time,
-       BP.MoonProbability AS moon_probability,
-       BP.CompetitionProbability AS competition_probability,
-       BP.ObservabilityProbability AS observability_probability,
-       BP.SeeingProbability AS seeing_probability,
-       BP.AveRanking AS average_ranking,
-       BP.TotalProbability AS total_probability
-FROM ProposalCode PC
-         JOIN Block B on PC.ProposalCode_Id = B.ProposalCode_Id
-         JOIN BlockCode BC on B.BlockCode_Id = BC.BlockCode_Id
+       BS.BlockStatus                  AS status,
+       B.Priority                      AS priority,
+       PR.Ranking                      AS ranking,
+       B.WaitDays                      AS wait_period,
+       B.NVisits                       AS requested_observations,
+       B.NDone                         AS accepted_observations,
+       B.NAttempted                    AS rejected_observations,
+       B.Comments                      AS comment,
+       B.MinSeeing                     AS minimum_seeing,
+       B.MaxSeeing                     AS maximum_seeing,
+       T.Transparency                  AS transparency,
+       B.MaxLunarPhase                 AS maximum_lunar_phase,
+       B.MinLunarAngularDistance       AS minimum_lunar_distance,
+       B.ObsTime                       AS observation_time,
+       B.OverheadTime                  AS overhead_time,
+       BP.MoonProbability              AS moon_probability,
+       BP.CompetitionProbability       AS competition_probability,
+       BP.ObservabilityProbability     AS observability_probability,
+       BP.SeeingProbability            AS seeing_probability,
+       BP.AveRanking                   AS average_ranking,
+       BP.TotalProbability             AS total_probability
+FROM Block B
          JOIN BlockStatus BS ON B.BlockStatus_Id = BS.BlockStatus_Id
+         JOIN PiRanking PR ON B.PiRanking_Id = PR.PiRanking_Id
+         JOIN Transparency T ON B.Transparency_Id = T.Transparency_Id
          JOIN Proposal P ON B.Proposal_Id = P.Proposal_Id
+         JOIN ProposalCode PC ON P.ProposalCode_Id = PC.ProposalCode_Id
          JOIN Semester S ON P.Semester_Id = S.Semester_Id
          LEFT JOIN BlockProbabilities BP ON B.Block_Id = BP.Block_Id
 WHERE B.Block_Id = :block_id;
-
         """
         )
         result = self.connection.execute(stmt, {"block_id": block_id})
-        row = result.one_or_none()
-        if not row:
-            raise NotFoundError(f"Unknown block id: {block_id}")
-        proposal_code = row["proposal_code"]
-        block_code = row["block_code"]
-        semester = row["semester"]
-        status = row["status"]
-        observation_time = row["observation_time"]
-        overhead_time = row["overhead_time"]
-        probabilities = {
-            "moon_probability": row["moon_probability"],
-            "competition_probability": row["competition_probability"],
-            "observability_probability": row["observability_probability"],
-            "seeing_probability": row["seeing_probability"],
-            "average_ranking": row["average_ranking"],
-            "total_probability": row["total_probability"],
-        }
-        path = (
-            self.proposals_dir
-            / proposal_code
-            / "Included"
-            / f"Block-{block_code}-{semester}.json"
-        )
 
-        return BlockData(
-            path=path,
-            status=status,
-            observation_time=observation_time,
-            overhead_time=overhead_time,
-            probabilities=probabilities,
+        row = result.one()
+
+        observing_conditions = {
+            "minimum_seeing": row.minimum_seeing,
+            "maximum_seeing": row.maximum_seeing,
+            "transparency": row.transparency,
+            "minimum_lunar_distance": row.minimum_lunar_distance,
+            "maximum_lunar_phase": row.maximum_lunar_phase,
+        }
+        observation_probabilities = {
+            "moon": row.moon_probability,
+            "competition": row.competition_probability,
+            "observability": row.observability_probability,
+            "seeing": row.seeing_probability,
+            "average_ranking": row.average_ranking,
+            "total": row.total_probability,
+        }
+
+        block = {
+            "id": row.block_id,
+            "name": row.name,
+            "proposal_code": row.proposal_code,
+            "submission_date": pytz.utc.localize(row.submission_date),
+            "semester": row.semester,
+            "status": row.status,
+            "priority": row.priority,
+            "ranking": row.ranking,
+            "wait_period": row.wait_period,
+            "requested_observations": row.requested_observations,
+            "accepted_observations": row.accepted_observations,
+            "rejected_observations": row.rejected_observations,
+            "comment": row.comment,
+            "observing_conditions": observing_conditions,
+            "observation_time": row.observation_time,
+            "overhead_time": row.overhead_time,
+            "observation_probabilities": observation_probabilities,
+            "observing_windows": self._observing_windows(block_id),
+            "executed_observations": self._executed_observations(block_id),
+            "observations": self._pointings(block_id),
+        }
+
+        return block
+
+    def _executed_observations(self, block_id: int) -> List[Dict[str, Any]]:
+        """
+        Return the executed observations.
+        """
+        stmt = text(
+            """
+SELECT BV.BlockVisit_Id     AS id,
+       NI.Date              AS night,
+       BVS.BlockVisitStatus AS status,
+       BRR.RejectedReason   AS rejection_reason
+FROM BlockVisit BV
+         JOIN BlockVisitStatus BVS ON BV.BlockVisitStatus_Id = BVS.BlockVisitStatus_Id
+         LEFT JOIN BlockRejectedReason BRR
+                   ON BV.BlockRejectedReason_Id = BRR.BlockRejectedReason_Id
+         JOIN NightInfo NI ON BV.NightInfo_Id = NI.NightInfo_Id
+         JOIN Block B ON BV.Block_Id IN (
+    SELECT B1.Block_Id
+    FROM Block B1
+    WHERE B1.BlockCode_Id = B.BlockCode_Id
+)
+WHERE B.Block_Id = :block_id
+  AND BVS.BlockVisitStatus IN ('Accepted', 'Rejected');
+        """
         )
+        result = self.connection.execute(stmt, {"block_id": block_id})
+        observations = []
+        for row in result:
+            observation = {
+                "id": row.id,
+                "night": row.night,
+                "accepted": row.status == "Accepted",
+                "rejection_reason": row.rejection_reason,
+            }
+            observations.append(observation)
+
+        return observations
+
+    def _observing_windows(self, block_id: int) -> List[Dict[str, datetime]]:
+        """
+        Return the observing windows.
+        """
+        stmt = text(
+            """
+SELECT BVW.VisibilityStart AS start, BVW.VisibilityEnd AS end
+FROM BlockVisibilityWindow BVW
+WHERE BVW.Block_Id = :block_id
+ORDER BY BVW.VisibilityStart;
+        """
+        )
+        result = self.connection.execute(stmt, {"block_id": block_id})
+        return [
+            {"start": pytz.utc.localize(row.start), "end": pytz.utc.localize(row.end)}
+            for row in result
+        ]
+
+    def _time_restrictions(
+        self, pointing_id: int
+    ) -> Optional[List[Dict[str, datetime]]]:
+        """
+        Return the time restrictions.
+        """
+        stmt = text(
+            """
+SELECT DISTINCT TR.ObsWindowStart AS start, TR.ObsWindowEnd AS end
+FROM TimeRestricted TR
+         JOIN Pointing P ON TR.Pointing_Id = P.Pointing_Id
+WHERE P.Pointing_Id = :pointing_id
+ORDER BY TR.ObsWindowStart;
+        """
+        )
+        result = self.connection.execute(stmt, {"pointing_id": pointing_id})
+        restrictions = [
+            {"start": pytz.utc.localize(row.start), "end": pytz.utc.localize(row.end)}
+            for row in result
+        ]
+
+        return restrictions if len(restrictions) else None
+
+    def _phase_constraints(self, pointing_id: int) -> Optional[List[Dict[str, float]]]:
+        """
+        Return the phase constraints.
+        """
+        stmt = text(
+            """
+SELECT PC.PhaseStart AS start, PC.PhaseEnd AS end
+FROM PhaseConstraint PC
+WHERE PC.Pointing_Id = :pointing_id
+ORDER BY PC.PhaseStart;
+        """
+        )
+        result = self.connection.execute(stmt, {"pointing_id": pointing_id})
+        constraints = [dict(row) for row in result]
+
+        return constraints if len(constraints) else None
+
+    def _pointings(self, block_id: int) -> List[Dict[str, Any]]:
+        """
+        Return the pointings.
+        """
+        stmt = text(
+            """
+SELECT P.Pointing_Id                                                  AS pointing_id,
+       P.ObsTime                                                      AS observation_time,
+       P.OverheadTime                                                 AS overhead_time,
+       TCOC.Observation_Order                                         AS observation_order,
+       TCOC.TelescopeConfig_Order                                     AS telescope_config_order,
+       TCOC.PlannedObsConfig_Order                                    AS planned_obsconfig_order,
+       O.Target_Id                                                    AS target_id,
+       TC.PositionAngle                                               AS position_angle,
+       TC.UseParallacticAngle                                         AS use_parallactic_angle,
+       TC.Iterations                                                  AS tc_iterations,
+       DP.DitherPatternDescription                                    AS dp_description,
+       DP.NHorizontalTiles                                            AS dp_horizontal_tiles,
+       DP.NVerticalTiles                                              AS dp_vertical_tiles,
+       DP.Offsetsize                                                  AS dp_offset_size,
+       DP.NSteps                                                      AS dp_steps,
+       CONCAT(GS.RaH, ':', GS.RaM, ':', GS.RaS / 1000)                AS gs_ra,
+       CONCAT(GS.DecSign, GS.DecD, ':', GS.DecM, ':', GS.DecS / 1000) AS gs_dec,
+       GS.Equinox                                                     AS gs_equinox,
+       GS.Mag                                                         AS gs_magnitude,
+       L.Lamp                                                         AS pc_lamp,
+       CF.CalFilter                                                   AS pc_calibration_filter,
+       GM.GuideMethod                                                 AS pc_guide_method,
+       PCT.Type                                                       AS pc_type,
+       PC.CalScreenIn                                                 AS pc_calibration_screen_in,
+       OC.SalticamPattern_Id                                          AS salticam_pattern_id,
+       OC.RssPattern_Id                                               AS rss_pattern_id,
+       OC.HrsPattern_Id                                               AS hrs_pattern_id,
+       OC.BvitPattern_Id                                              AS bvit_pattern_id
+FROM TelescopeConfigObsConfig TCOC
+         JOIN Pointing P ON TCOC.Pointing_Id = P.Pointing_Id
+         JOIN Block B ON P.Block_Id = B.Block_Id
+         JOIN TelescopeConfig TC ON TCOC.Pointing_Id = TC.Pointing_Id AND
+                                    TCOC.Observation_Order = TC.Observation_Order AND
+                                    TCOC.TelescopeConfig_Order =
+                                    TC.TelescopeConfig_Order
+         LEFT JOIN DitherPattern DP ON TC.DitherPattern_Id = DP.DitherPattern_Id
+         LEFT JOIN GuideStar GS ON TC.GuideStar_Id = GS.GuideStar_Id
+         JOIN Observation O ON TCOC.Pointing_Id = O.Pointing_Id AND
+                               TCOC.Observation_Order = O.Observation_Order
+         JOIN Target T ON O.Target_Id = T.Target_Id
+         JOIN ObsConfig OC ON TCOC.PlannedObsConfig_Id = OC.ObsConfig_Id
+         JOIN PayloadConfig PC ON OC.PayloadConfig_Id = PC.PayloadConfig_Id
+         LEFT JOIN Lamp L ON PC.Lamp_Id = L.Lamp_Id
+         LEFT JOIN CalFilter CF ON PC.CalFilter_Id = CF.CalFilter_Id
+         LEFT JOIN GuideMethod GM ON PC.GuideMethod_Id = GM.GuideMethod_Id
+         LEFT JOIN PayloadConfigType PCT
+                   ON PC.PayloadConfigType_Id = PCT.PayloadConfigType_Id
+WHERE B.Block_Id = :block_id
+ORDER BY TCOC.Pointing_Id, TCOC.Observation_Order, TCOC.TelescopeConfig_Order,
+         TCOC.PlannedObsConfig_Order;
+        """
+        )
+        result = self.connection.execute(stmt, {"block_id": block_id})
+
+        # collect the pointings
+        pointing_groups = self._group_by_pointing_id(result)
+
+        # avoid pointings with multiple observations
+        for pointing_rows in pointing_groups:
+            if self._has_multiple_observations(pointing_rows[0].pointing_id):
+                error = (
+                    "Blocks containing a pointing with multiple observations are "
+                    "not supported."
+                )
+                raise ValueError(error)
+
+        # create the pointings
+        pointings: List[Dict[str, Any]] = []
+        for pointing_rows in pointing_groups:
+            pointing = {
+                "target": self.target_repository.get(pointing_rows[0].target_id),
+                "time_restrictions": self._time_restrictions(
+                    pointing_rows[0].pointing_id
+                ),
+                "phase_constraints": self._phase_constraints(
+                    pointing_rows[0].pointing_id
+                ),
+                "telescope_configurations": self._telescope_configurations(
+                    pointing_rows
+                ),
+                "observation_time": pointing_rows[0].observation_time,
+                "overhead_time": pointing_rows[0].overhead_time,
+            }
+            pointings.append(pointing)
+
+        return pointings
+
+    def _group_by_pointing_id(self, rows: Iterable[Any]) -> List[List[Any]]:
+        """
+        Group rows obtained in the _pointings method by pointing order.
+        """
+        previous_pointing_id = None
+        current_pointing_rows: List[Any] = []
+        pointings = []
+        for row in rows:
+            if row.pointing_id != previous_pointing_id:
+                current_pointing_rows = []
+                pointings.append(current_pointing_rows)
+            current_pointing_rows.append(row)
+            previous_pointing_id = row.pointing_id
+
+        return pointings
+
+    def _dither_pattern(self, row: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """
+        Return the dither pattern.
+        """
+        if row["dp_horizontal_tiles"] is None:
+            return None
+
+        return {
+            "horizontal_tiles": row["dp_horizontal_tiles"],
+            "vertical_tiles": row["dp_vertical_tiles"],
+            "offset_size": row["dp_offset_size"],
+            "steps": row["dp_steps"],
+            "description": row["dp_description"],
+        }
+
+    def _guide_star(self, row: Any) -> Optional[Dict[str, Any]]:
+        """
+        Return the guide star.
+        """
+
+        ra = Angle(f"{row.gs_ra} hours").degree
+        dec = Angle(f"{row.gs_dec} degrees").degree
+
+        if ra == 0 and dec == 0:
+            return None
+
+        return {
+            "right_ascension": ra,
+            "declination": dec,
+            "equinox": row.gs_equinox,
+            "magnitude": row.gs_magnitude,
+        }
+
+    def _telescope_configurations(self, pointing_rows: List[Any]) -> List[Any]:
+        """
+        Get the list of telescope configurations for database rows belonging to a
+        pointing.
+        """
+        # Group the rows by telescope config
+        previous_telescope_config_order = None
+        current_telescope_config_rows: List[Any] = []
+        tc_groups = []
+        for row in pointing_rows:
+            if row.telescope_config_order != previous_telescope_config_order:
+                current_telescope_config_rows = []
+                tc_groups.append(current_telescope_config_rows)
+            current_telescope_config_rows.append(row)
+
+            previous_telescope_config_order = row.telescope_config_order
+
+        # Create the telescope configurations
+        telescope_configs = []
+        for tc_group in tc_groups:
+            row = tc_group[0]
+            tc = {
+                "iterations": row["tc_iterations"],
+                "position_angle": row["position_angle"],
+                "use_parallactic_angle": row["use_parallactic_angle"],
+                "dither_pattern": self._dither_pattern(row),
+                "guide_star": self._guide_star(row),
+                "payload_configurations": [
+                    self._payload_configuration(row) for row in tc_group
+                ],
+            }
+            telescope_configs.append(tc)
+
+        return telescope_configs
+
+    def _payload_configuration(self, payload_config_row: Any) -> Dict[str, Any]:
+        payload_config = {
+            "payload_configuration_type": payload_config_row.pc_type,
+            "use_calibration_screen": True
+            if payload_config_row.pc_calibration_screen_in
+            else False,
+            "lamp": payload_config_row.pc_lamp,
+            "calibration_filter": payload_config_row.pc_calibration_filter,
+            "guide_method": payload_config_row.pc_guide_method,
+        }
+
+        return payload_config
+
+    def _has_subblock_or_subsubblock_iterations(self, block_id: int) -> bool:
+        """
+        Check whether a block contains subblocks or subsubblocks with multiple
+        iterations.
+        """
+
+        stmt = text(
+            """
+SELECT COUNT(*) AS c
+FROM Pointing P
+         JOIN SubBlock SB ON P.Block_Id = SB.Block_Id
+         JOIN SubSubBlock SSB
+              ON P.Block_Id = SSB.Block_Id AND P.SubBlock_Order = SSB.SubBlock_Order AND
+                 P.SubSubBlock_Order = SSB.SubSubBlock_Order
+         JOIN Block B ON P.Block_Id = B.Block_Id
+WHERE B.Block_Id = :block_id
+  AND (SB.Iterations > 1 OR SSB.Iterations > 1)
+        """
+        )
+        result = self.connection.execute(stmt, {"block_id": block_id})
+        return cast(bool, result.scalar_one() > 0)
+
+    def _has_multiple_observations(self, pointing_id: int) -> bool:
+        """
+        Check whether a pointing contains multiple observations.
+        """
+        stmt = text(
+            """
+SELECT COUNT(DISTINCT Observation_Order) AS c
+FROM TelescopeConfigObsConfig TCOC
+WHERE TCOC.Pointing_Id = :pointing_id
+        """
+        )
+        result = self.connection.execute(stmt, {"pointing_id": pointing_id})
+        return cast(bool, result.scalar_one() > 1)
