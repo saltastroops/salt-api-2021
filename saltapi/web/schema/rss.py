@@ -225,7 +225,7 @@ class RssDetector(BaseModel):
         description="Number of CCD rows to combine during readout",
         ge=1,
     )
-    post_binned_columns: int = Field(
+    pre_binned_columns: int = Field(
         ...,
         title="Pre-binned rows",
         description="Number of CCD rows to combine during readout",
@@ -274,15 +274,24 @@ class RssProcedureType(str, Enum):
 class RssWaveplateAnglePair(BaseModel):
     """Half-wave plate and quarter-wave plate angle pair."""
 
-    half: float = Field(
+    half_wave: Optional[float] = Field(
         ...,
         title="Half-wave plate angle",
         description="Angle of the half-wave plate, in degrees",
     )
-    quarter: float = Field(
+    quarter_wave: Optional[float] = Field(
         ...,
         title="Quarter-wave plate angle",
         description="Angle of the quarter-wave plate, in degrees",
+    )
+
+
+class RssPolarimetryPattern(BaseModel):
+    name: str = Field(..., title="Name", description="Name of the pattern")
+    wave_plate_angles: List[RssWaveplateAnglePair] = Field(
+        ...,
+        title="Wave plate angles",
+        description="Sequence of angles for the half-wave and quarter-wave plate",
     )
 
 
@@ -292,15 +301,15 @@ class RssProcedure(BaseModel):
     procedure_type: RssProcedureType = Field(
         ..., title="Procedure type", description="Procedure type"
     )
-    etalon_pattern: Optional[List[float]] = Field(
+    etalon_wavelengths: Optional[List[float]] = Field(
         ...,
         title="Etalon wavelengths",
         description="Sequence of Fabry-Pérot etalon wavelengths, in Ångstroms",
     )
-    waveplate_angles: Optional[List[RssWaveplateAnglePair]] = Field(
+    polarimetry_pattern: Optional[List[RssWaveplateAnglePair]] = Field(
         ...,
-        title="Polarimetry waveplate angles",
-        description="Sequence of angles for the half-wave plate and the quarter-wave plate, in degrees",
+        title="Polarimetry pattern",
+        description="Polarimetry pattern",
     )
 
 

@@ -47,3 +47,52 @@ def test_configuration(
     config = rss["configuration"]
 
     assert config == expected_config
+
+
+def test_detector(dbconnection: Connection, testdata: Callable[[str], Any]) -> None:
+    data = testdata(TEST_DATA)["detector"]
+    for d in data:
+        rss_id = d["rss_id"]
+        expected_detector = d["detector"]
+        rss_repository = RssRepository(dbconnection)
+        rss = rss_repository.get(rss_id)
+        detector = rss["detector"]
+
+        assert detector == expected_detector
+
+
+@pytest.mark.parametrize(
+    "rss_id,calculation",
+    [
+        (20936, "FP Ring Radius"),
+        (23225, "MOS Acquisition"),
+        (24398, "MOS Mask Calibration"),
+        (24423, "None"),
+    ],
+)
+def test_detector_calculation(
+    rss_id: int, calculation: str, dbconnection: Connection
+) -> None:
+    rss_repository = RssRepository(dbconnection)
+    rss = rss_repository.get(rss_id)
+
+    assert rss["detector"]["detector_calculation"] == calculation
+
+
+def test_procedure_etalon_pattern(
+    dbconnection: Connection, testdata: Callable[[str], Any]
+) -> None:
+    data = testdata(TEST_DATA)["procedure"]
+    for d in data:
+        rss_id = d["rss_id"]
+        expected_procedure = d["procedure"]
+        rss_repository = RssRepository(dbconnection)
+        rss = rss_repository.get(rss_id)
+        procedure = rss["procedure"]
+
+        if procedure["etalon_wavelengths"]:
+            procedure["etalon_wavelengths"] = [
+                float(w) for w in procedure["etalon_wavelengths"]
+            ]
+
+        assert procedure == expected_procedure

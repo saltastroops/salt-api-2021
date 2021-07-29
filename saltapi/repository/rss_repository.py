@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
@@ -13,28 +13,46 @@ class RssRepository:
     def get(self, rss_id: int) -> RSS:
         stmt = text(
             """
-SELECT R.Rss_Id                        AS rss_id,
-       R.Iterations                    AS cycles,
-       R.TotalExposureTime / 1000      AS observation_time,
-       R.OverheadTime / 1000           AS overhead_time,
-       RM.Mode                         AS mode,
-       IF(RC.RssSpectroscopy_Id, 1, 0) AS has_spectroscopy,
-       IF(RC.RssFabryPerot_Id, 1, 0)   AS has_fp,
-       IF(RC.RssPolarimetry_Id, 1, 0)  AS has_polarimetry,
-       IF(RC.RssMask_Id, 1, 0)            has_mask,
-       IF(RMMD.RssMask_Id, 1, 0)       AS has_mos_mask,
-       RG.Grating                      AS grating,
-       RS.GratingAngle / 1000          AS grating_angle,
-       RAS.Location                    AS articulation_station,
-       RFPM.FabryPerot_Mode            AS fp_mode,
-       RBSO.BeamSplitterOrientation       beam_splitter_orientation,
-       RF.Barcode                      AS filter,
-       RMT.RssMaskType                 AS mask_type,
-       RMA.Barcode                     AS mask_barcode,
-       RMMD.Equinox                    AS mos_equinox,
-       RMMD.CutBy                      AS mos_cut_by,
-       RMMD.CutDate                    AS mos_cut_date,
-       RMMD.SaComment                  AS mos_comment
+SELECT R.Rss_Id                                          AS rss_id,
+       R.Iterations                                      AS cycles,
+       R.TotalExposureTime / 1000                        AS observation_time,
+       R.OverheadTime / 1000                             AS overhead_time,
+       RM.Mode                                           AS mode,
+       IF(RC.RssSpectroscopy_Id IS NOT NULL, 1, 0)       AS has_spectroscopy,
+       IF(RC.RssFabryPerot_Id IS NOT NULL, 1, 0)         AS has_fp,
+       IF(RC.RssPolarimetry_Id IS NOT NULL, 1, 0)        AS has_polarimetry,
+       IF(RC.RssMask_Id IS NOT NULL, 1, 0)                  has_mask,
+       IF(RMMD.RssMask_Id IS NOT NULL, 1, 0)             AS has_mos_mask,
+       IF(RDW.RssDetectorWindow_Id IS NOT NULL, 1, 0)    AS has_detector_window,
+       IF(RP.RssEtalonPattern_Id IS NOT NULL, 1, 0)      AS has_etalon_pattern,
+       IF(RP.RssPolarimetryPattern_Id IS NOT NULL, 1, 0) AS has_polarimetry_pattern,
+       RG.Grating                                        AS grating,
+       RS.GratingAngle / 1000                            AS grating_angle,
+       RAS.Location                                      AS articulation_station,
+       RFPM.FabryPerot_Mode                              AS fp_mode,
+       RBSO.BeamSplitterOrientation                      AS beam_splitter_orientation,
+       RF.Barcode                                        AS filter,
+       RMT.RssMaskType                                   AS mask_type,
+       RMA.Barcode                                       AS mask_barcode,
+       RMMD.Equinox                                      AS mos_equinox,
+       RMMD.CutBy                                        AS mos_cut_by,
+       RMMD.CutDate                                      AS mos_cut_date,
+       RMMD.SaComment                                    AS mos_comment,
+       RDM.DetectorMode                                  AS detector_mode,
+       RD.PreShuffle                                     AS pre_shuffle,
+       RD.PostShuffle                                    AS post_shuffle,
+       RD.PreBinRows                                     AS pre_binned_rows,
+       RD.PreBinCols                                     AS pre_binned_cols,
+       RD.ExposureTime / 1000                            AS exposure_time,
+       RD.Iterations                                     AS detector_iterations,
+       RET.ExposureType                                  AS exposure_type,
+       G.Gain                                            AS gain,
+       RRS.RoSpeed                                       AS readout_speed,
+       RDC.Calculation                                   AS detector_calculation,
+       RDW.Height                                        AS window_height,
+       RP.RssEtalonPattern_Id                            AS etalon_pattern_id,
+       RP.RssPolarimetryPattern_Id                       AS polarimetry_pattern_id,
+       RPP.PatternName                                   AS polarimetry_pattern_name
 FROM Rss R
          JOIN RssConfig RC ON R.RssConfig_Id = RC.RssConfig_Id
          JOIN RssMode RM ON RC.RssMode_Id = RM.RssMode_Id
@@ -55,6 +73,15 @@ FROM Rss R
          LEFT JOIN RssMosMaskDetails RMMD ON RMA.RssMask_Id = RMMD.RssMask_Id
          JOIN RssProcedure RP ON R.RssProcedure_Id = RP.RssProcedure_Id
          JOIN RssDetector RD ON R.RssDetector_Id = RD.RssDetector_Id
+         JOIN RssDetectorMode RDM ON RD.RssDetectorMode_Id = RDM.RssDetectorMode_Id
+         JOIN RssExposureType RET ON RD.RssExposureType_Id = RET.RssExposureType_Id
+         JOIN RssGain G ON RD.RssGain_Id = G.RssGain_Id
+         JOIN RssRoSpeed RRS ON RD.RssRoSpeed_Id = RRS.RssRoSpeed_Id
+         JOIN RssDetectorCalc RDC ON RD.RssDetectorCalc_Id = RDC.RssDetectorCalc_Id
+         LEFT JOIN RssDetectorWindow RDW
+                   ON RD.RssDetectorWindow_Id = RDW.RssDetectorWindow_Id
+         LEFT JOIN RssPolarimetryPattern RPP
+                   ON RP.RssPolarimetryPattern_Id = RPP.RssPolarimetryPattern_Id
 WHERE R.Rss_Id = :rss_id
 ORDER BY Rss_Id DESC;
         """
@@ -67,6 +94,8 @@ ORDER BY Rss_Id DESC;
             "name": "RSS",
             "cycles": row.cycles,
             "configuration": self._configuration(row),
+            "detector": self._detector(row),
+            "procedure": self._procedure(row),
             "observation_time": row.observation_time,
             "overhead_time": row.overhead_time,
         }
@@ -138,3 +167,165 @@ ORDER BY Rss_Id DESC;
             "mask": self._mask(row),
         }
         return config
+
+    def _detector_calculation(self, row: Any) -> str:
+        calculations = {
+            "Focus": "Focus",
+            "FPRingRadius": "FP Ring Radius",
+            "MOS acquisition": "MOS Acquisition",
+            "MOS mask calib": "MOS Mask Calibration",
+            "MOS scan": "MOS Scan",
+            "Nod & shuffle": "Nod & Shuffle",
+            "None": "None",
+        }
+        return calculations[row.detector_calculation]
+
+    def _detector(self, row: Any) -> Dict[str, Any]:
+        """Return a RSS detector setup."""
+
+        if row.has_detector_window:
+            window: Optional[Dict[str, int]] = {"height": row.window_height}
+        else:
+            window = None
+
+        detector = {
+            "mode": row.detector_mode.title(),
+            "pre_shuffled_rows": row.pre_shuffle,
+            "post_shuffled_rows": row.post_shuffle,
+            "pre_binned_rows": row.pre_binned_rows,
+            "pre_binned_columns": row.pre_binned_cols,
+            "exposure_time": row.exposure_time,
+            "iterations": row.detector_iterations,
+            "exposure_type": row.exposure_type,
+            "gain": row.gain,
+            "readout_speed": row.readout_speed,
+            "detector_calculation": self._detector_calculation(row),
+            "detector_window": window,
+        }
+
+        return detector
+
+    def _etalon_wavelengths(self, etalon_pattern_id: int) -> List[float]:
+        """
+        Return the list of etalon wavelengths in an etalon pattern.
+        """
+
+        stmt = text(
+            """
+SELECT REPD.Wavelength / 1000 AS wavelength
+FROM RssEtalonPatternDetail REPD
+         JOIN RssEtalonPattern REP ON REPD.RssEtalonPattern_Id = REP.RssEtalonPattern_Id
+WHERE REP.RssEtalonPattern_Id = :pattern_id
+ORDER BY REPD.RssEtalonPattern_Order
+        """
+        )
+        result = self.connection.execute(stmt, {"pattern_id": etalon_pattern_id})
+
+        return [row.wavelength for row in result]
+
+    def _half_wave_plate_angles(self, polarimetry_pattern_id: int) -> Dict[int, float]:
+        """
+        Return a dictionary of orders (step numbers) and corresponding half-wave plate
+        angles in a polarimetry pattern.
+        """
+
+        stmt = text(
+            """
+SELECT RHPD.RssHwPattern_Order AS `order`, RWS.RssWaveStation_Name AS station_name
+FROM RssHwPatternDetail RHPD
+         JOIN RssWaveStation RWS
+              ON RHPD.RssWaveStation_Number = RWS.RssWaveStation_Number
+         JOIN RssPolarimetryPattern RPP ON RHPD.RssHwPattern_Id = RPP.RssHwPattern_Id
+WHERE RPP.RssPolarimetryPattern_Id = :pattern_id
+        """
+        )
+        result = self.connection.execute(stmt, {"pattern_id": polarimetry_pattern_id})
+
+        return {row.order: row.station_name.split("_")[1] for row in result}
+
+    def _quarter_wave_plate_angles(
+        self, polarimetry_pattern_id: int
+    ) -> Dict[int, float]:
+        """
+        Return a dictionary of order (step number) and corresponding quarter-wave
+        plate angles in a polarimetry pattern.
+        """
+
+        stmt = text(
+            """
+SELECT RQPD.RssQwPattern_Order AS `order`, RWS.RssWaveStation_Name AS station_name
+FROM RssQwPatternDetail RQPD
+         JOIN RssWaveStation RWS
+              ON RQPD.RssWaveStation_Number = RWS.RssWaveStation_Number
+         JOIN RssPolarimetryPattern RPP ON RQPD.RssQwPattern_Id = RPP.RssQwPattern_Id
+WHERE RPP.RssPolarimetryPattern_Id = :pattern_id
+        """
+        )
+        result = self.connection.execute(stmt, {"pattern_id": polarimetry_pattern_id})
+
+        return {row.order: row.station_name.split("_")[1] for row in result}
+
+    def _wave_plate_angles(
+        self, polarimetry_pattern_id: int
+    ) -> List[Dict[str, Optional[float]]]:
+        """
+        Return the sequence of half-wave plate and quarter-wave plate angles in a
+        polarimetry pattern.
+        """
+
+        # Merge the orders may be used by the half-wave and the quarter-wave plate.
+        half_angles = self._half_wave_plate_angles(polarimetry_pattern_id)
+        quarter_angles = self._quarter_wave_plate_angles(polarimetry_pattern_id)
+        orders_set = set(half_angles.keys()).union(quarter_angles.keys())
+
+        # There should be at least one order.
+        if len(orders_set) == 0:
+            raise ValueError("No angles are defined for the polarimetry pattern.")
+
+        # Collect the angles
+        orders = list(orders_set)
+        orders.sort()
+        angles: List[Dict[str, Optional[float]]] = []
+        for order in orders:
+            angles.append(
+                {
+                    "half_wave": float(half_angles[order])
+                    if order in half_angles
+                    else None,
+                    "quarter_wave": float(quarter_angles[order])
+                    if order in quarter_angles
+                    else None,
+                }
+            )
+
+        return angles
+
+    def _polarimetry_pattern(self, row: Any) -> Dict[str, Any]:
+        """Return an RSS polarimetry pattern."""
+
+        return {
+            "name": row.polarimetry_pattern_name,
+            "wave_plate_angles": self._wave_plate_angles(row.polarimetry_pattern_id),
+        }
+
+    def _procedure(self, row: Any) -> Dict[str, Any]:
+        """Return an RSS procedure."""
+
+        if row.has_etalon_pattern:
+            etalon_wavelengths: Optional[List[float]] = self._etalon_wavelengths(
+                row.etalon_pattern_id
+            )
+        else:
+            etalon_wavelengths = None
+
+        if row.has_polarimetry_pattern:
+            polarimetry_pattern: Optional[Dict[str, Any]] = self._polarimetry_pattern(
+                row
+            )
+        else:
+            polarimetry_pattern = None
+
+        return {
+            "etalon_wavelengths": etalon_wavelengths,
+            "polarimetry_pattern": polarimetry_pattern,
+        }
