@@ -227,8 +227,8 @@ class RssDetector(BaseModel):
     )
     pre_binned_columns: int = Field(
         ...,
-        title="Pre-binned rows",
-        description="Number of CCD rows to combine during readout",
+        title="Pre-binned columns",
+        description="Number of CCD columns to combine during readout",
         ge=1,
     )
     exposure_time: float = Field(

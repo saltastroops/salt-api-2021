@@ -49,6 +49,16 @@ def test_configuration(
     assert config == expected_config
 
 
+def test_no_mask(dbconnection: Connection, testdata: Callable[[str], Any]) -> None:
+    data = testdata(TEST_DATA)["no_mask"]
+    rss_id = data["rss_id"]
+    rss_repository = RssRepository(dbconnection)
+    rss = rss_repository.get(rss_id)
+    mask = rss["configuration"]["mask"]
+
+    assert mask is None
+
+
 def test_detector(dbconnection: Connection, testdata: Callable[[str], Any]) -> None:
     data = testdata(TEST_DATA)["detector"]
     for d in data:
