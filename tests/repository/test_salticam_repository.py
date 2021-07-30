@@ -12,15 +12,16 @@ def test_top_level_values(
     dbconnection: Connection, testdata: Callable[[str], Any]
 ) -> None:
     data = testdata(TEST_DATA)["top_level_values"]
+    expected_salticam = data["salticam"]
     salticam_id = data["salticam_id"]
     salticam_repository = SalticamRepository(dbconnection)
     salticam = salticam_repository.get(salticam_id)
 
     assert salticam["id"] == salticam_id
     assert salticam["name"] == "Salticam"
-    assert salticam["minimum_signal_to_noise"] == data["minimum_signal_to_noise"]
-    assert salticam["observation_time"] == data["observation_time"]
-    assert salticam["overhead_time"] == data["overhead_time"]
+    assert salticam["minimum_signal_to_noise"] == expected_salticam["minimum_signal_to_noise"]
+    assert salticam["observation_time"] == expected_salticam["observation_time"]
+    assert salticam["overhead_time"] == expected_salticam["overhead_time"]
 
 
 def test_detector(dbconnection: Connection, testdata: Callable[[str], Any]) -> None:
