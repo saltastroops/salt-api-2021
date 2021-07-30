@@ -70,22 +70,16 @@ def test_detector(dbconnection: Connection, testdata: Callable[[str], Any]) -> N
         assert detector == expected_detector
 
 
-@pytest.mark.parametrize(
-    "rss_id,calculation",
-    [
-        (20936, "FP Ring Radius"),
-        (23225, "MOS Acquisition"),
-        (24398, "MOS Mask Calibration"),
-        (24423, "None"),
-    ],
-)
-def test_detector_calculation(
-    rss_id: int, calculation: str, dbconnection: Connection
-) -> None:
-    rss_repository = RssRepository(dbconnection)
-    rss = rss_repository.get(rss_id)
+def test_detector_calculation(dbconnection: Connection, testdata: Callable[[str], Any]) -> None:
+    data = testdata(TEST_DATA)["detector_calculations"]
+    for d in data:
+        rss_id = d["rss_id"]
+        expected_calculation = d["calculation"]
+        rss_repository = RssRepository(dbconnection)
+        rss = rss_repository.get(rss_id)
+        calculation = rss["detector"]["detector_calculation"]
 
-    assert rss["detector"]["detector_calculation"] == calculation
+        assert calculation == expected_calculation
 
 
 def test_procedure_etalon_pattern(
