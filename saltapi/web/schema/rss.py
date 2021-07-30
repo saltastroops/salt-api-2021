@@ -301,6 +301,11 @@ class RssProcedure(BaseModel):
     procedure_type: RssProcedureType = Field(
         ..., title="Procedure type", description="Procedure type"
     )
+    cycles: int = Field(
+        ...,
+        title="Cycles",
+        description="Number of cycles, i.e. how often to execute the procedure",
+    )
     etalon_wavelengths: Optional[List[float]] = Field(
         ...,
         title="Etalon wavelengths",
@@ -314,18 +319,13 @@ class RssProcedure(BaseModel):
 
 
 class Rss(BaseModel):
-    """Rss setup."""
+    """RSS setup."""
 
     id: int = Field(
         ..., title="RSS id", description="Unique identifier for the RSS setup"
     )
     name: Literal["RSS"] = Field(
         ..., title="Instrument name", description="Instrument name"
-    )
-    cycles: int = Field(
-        ...,
-        title="Cycles",
-        description="Number of cycles, i.e. how often to execute the procedure",
     )
     configuration: RssConfiguration = Field(
         ..., title="Instrument configuration", description="Instrument configuration"

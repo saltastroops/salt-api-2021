@@ -123,6 +123,11 @@ class SalticamExposure(BaseModel):
 
 
 class SalticamProcedure(BaseModel):
+    cycles: int = Field(
+        ...,
+        title="Cycles",
+        description="Number of cycles, i.e. how often to execute the procedure",
+    )
     exposures: List[SalticamExposure] = Field(
         ...,
         title="Exposures",
@@ -138,11 +143,6 @@ class Salticam(BaseModel):
     )
     name: Literal["Salticam"] = Field(
         ..., title="Instrument name", description="Instrument name"
-    )
-    cycles: int = Field(
-        ...,
-        title="Cycles",
-        description="Number of cycles, i.e. how often to execute the procedure",
     )
     detector: SalticamDetector = Field(
         ..., title="Detector setup", description="Detector setup"

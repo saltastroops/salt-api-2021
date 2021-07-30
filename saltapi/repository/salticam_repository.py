@@ -61,7 +61,6 @@ WHERE S.Salticam_Id = :salticam_id
         salticam = {
             "id": row.salticam_id,
             "name": "Salticam",
-            "cycles": row.cycles,
             "detector": detector,
             "procedure": procedure,
             "minimum_signal_to_noise": row.minimum_signal_to_noise,
@@ -151,6 +150,6 @@ WHERE SFPD.SalticamFilterPattern_Id = :pattern_id;
     def _procedure(self, row: Any) -> Dict[str, Any]:
         """Return a Salticam procedure."""
 
-        procedure = {"exposures": self._exposures(row.filter_pattern_id)}
+        procedure = {"cycles": row.cycles, "exposures": self._exposures(row.filter_pattern_id)}
 
         return procedure

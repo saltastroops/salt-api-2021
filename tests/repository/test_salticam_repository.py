@@ -8,17 +8,16 @@ from saltapi.repository.salticam_repository import SalticamRepository
 TEST_DATA = "repository/salticam_repository.yaml"
 
 
-def test_non_detector_non_procedure_values(
+def test_top_level_values(
     dbconnection: Connection, testdata: Callable[[str], Any]
 ) -> None:
-    data = testdata(TEST_DATA)["non_detector_non_procedure_values"]
+    data = testdata(TEST_DATA)["top_level_values"]
     salticam_id = data["salticam_id"]
     salticam_repository = SalticamRepository(dbconnection)
     salticam = salticam_repository.get(salticam_id)
 
     assert salticam["id"] == salticam_id
     assert salticam["name"] == "Salticam"
-    assert salticam["cycles"] == data["cycles"]
     assert salticam["minimum_signal_to_noise"] == data["minimum_signal_to_noise"]
     assert salticam["observation_time"] == data["observation_time"]
     assert salticam["overhead_time"] == data["overhead_time"]

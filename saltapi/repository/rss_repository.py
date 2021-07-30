@@ -92,7 +92,6 @@ ORDER BY Rss_Id DESC;
         rss = {
             "id": row.rss_id,
             "name": "RSS",
-            "cycles": row.cycles,
             "configuration": self._configuration(row),
             "detector": self._detector(row),
             "procedure": self._procedure(row),
@@ -326,6 +325,7 @@ WHERE RPP.RssPolarimetryPattern_Id = :pattern_id
             polarimetry_pattern = None
 
         return {
+            "cycles": row.cycles,
             "etalon_wavelengths": etalon_wavelengths,
             "polarimetry_pattern": polarimetry_pattern,
         }
