@@ -545,7 +545,7 @@ class GeneralProposalInfo(BaseModel):
         ...,
         title="Current submission datetime",
         description="Datetime of the latest submission for any semester",
-    )
+    )  # Todo add time zone on dates.
     first_submission: datetime = Field(
         ...,
         title="First submission datetime",
