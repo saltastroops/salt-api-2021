@@ -18,6 +18,9 @@ class Settings(BaseSettings):
     # Example: mysql+pymysql://user:password@database.server:3306/sdb
     sdb_dsn: str
 
+    # Echo all executed SQL statements?
+    echo_sql: bool
+
     # Secret key for encoding JWT tokens
     # Should be generated with openssl: openssl rand -hex 32
     secret_key: str
