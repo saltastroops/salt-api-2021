@@ -181,11 +181,10 @@ class BaseExecutedObservation(BaseModel):
         title="Observation night",
         description="Start date of the night when the observation was made",
     )
-    status: ObservationStatus = Field(
+    accepted: bool = Field(
         ...,
-        title="Observation status",
-        description="Status of the observation, "
-        "i.e. whether it has been accepted or rejected",
+        title="Accepted?",
+        description="Whether the observation has been accepted",
     )
     rejection_reason: Optional[str] = Field(
         None,

@@ -72,7 +72,7 @@ class RssFabryPerot(BaseModel):
     )
 
 
-class RssBeamSplitterOrientation(BaseModel):
+class RssBeamSplitterOrientation(str, Enum):
     """RSS beam splitter orientation."""
 
     NORMAL = "Normal"
@@ -311,7 +311,7 @@ class RssProcedure(BaseModel):
         title="Etalon wavelengths",
         description="Sequence of Fabry-Pérot etalon wavelengths, in Ångstroms",
     )
-    polarimetry_pattern: Optional[List[RssWaveplateAnglePair]] = Field(
+    polarimetry_pattern: Optional[RssPolarimetryPattern] = Field(
         ...,
         title="Polarimetry pattern",
         description="Polarimetry pattern",
