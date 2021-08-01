@@ -1,4 +1,5 @@
 import os
+from dataclasses import Field
 
 from pydantic import BaseSettings, DirectoryPath
 
@@ -19,7 +20,7 @@ class Settings(BaseSettings):
     sdb_dsn: str
 
     # Echo all executed SQL statements?
-    echo_sql: bool
+    echo_sql: bool = False
 
     # Secret key for encoding JWT tokens
     # Should be generated with openssl: openssl rand -hex 32

@@ -21,7 +21,7 @@ engine: Optional[Engine]
 sdb_dsn = os.environ.get("SDB_DSN")
 if sdb_dsn:
     echo_sql = True if os.environ.get("ECHO_SQL") else False  # SQLAlchemy needs a bool
-    engine = create_engine(sdb_dsn, echo=True, future=True)
+    engine = create_engine(sdb_dsn, echo=echo_sql, future=True)
 
 
 @pytest.fixture(scope="function")
