@@ -134,7 +134,7 @@ class TelescopeConfiguration(BaseModel):
         title="Iterations",
         description="Number of iterations. This should usually be 1",
     )
-    position_angle: float = Field(
+    position_angle: Optional[float] = Field(
         ...,
         title="Position angle",
         description="Position angle, measured from north to east, in degrees",

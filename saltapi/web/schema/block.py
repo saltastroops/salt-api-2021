@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 from saltapi.web.schema.bvit import BvitSummary
 from saltapi.web.schema.common import (
     BaseExecutedObservation,
-    ObservingProbabilities,
+    ObservationProbabilities,
     Priority,
     ProposalCode,
     Ranking,
@@ -52,7 +52,7 @@ class BlockStatus(str, Enum):
 
 
 class ObservingConditions(BaseModel):
-    minimum_seeing: float = Field(
+    minimum_seeing: Optional[float] = Field(
         ...,
         title="Minimum seeing",
         description="Minimum seeing allowed for an observation, in arcseconds",
@@ -184,14 +184,14 @@ class Block(BaseModel):
         gt=0,
     )
     overhead_time: int = Field(
-        ..., title="Overhead time for an observation of the block, in seconds", gt=0
+        ..., title="Overhead time for an observation of the block, in seconds", ge=0
     )
     observing_windows: List[TimeInterval] = Field(
         ...,
         title="Observing windows",
         description="Time windows during which the block can be observed",
     )
-    observing_probabilities: ObservingProbabilities = Field(
+    observation_probabilities: ObservationProbabilities = Field(
         ...,
         title="Observing probabilities",
         description="Probabilities related to observing the block",

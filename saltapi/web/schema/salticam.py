@@ -55,10 +55,10 @@ class SalticamDetectorWindow(BaseModel):
         title="Center right ascension",
         description="Right ascension of the detector window center, in degrees",
     )
-    center_right_declination: int = Field(
+    center_declination: int = Field(
         ...,
-        title="Center right ascension",
-        description="Right ascension of the detector window center, in degrees",
+        title="Center declination",
+        description="Declination of the detector window center, in degrees",
     )
     height: int = Field(
         ..., title="Height", description="Height of the detector window, in arcseconds"
@@ -99,7 +99,7 @@ class SalticamDetector(BaseModel):
     readout_speed: SalticamReadoutSpeed = Field(
         ..., title="Readout speed", description="Readout speed"
     )
-    detector_windows: Optional[SalticamDetectorWindow] = Field(
+    detector_windows: Optional[List[SalticamDetectorWindow]] = Field(
         ..., title="Detector window", description="Detector window"
     )
 

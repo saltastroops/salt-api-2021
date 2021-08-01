@@ -6,7 +6,7 @@ from typing import Optional
 from pydantic import BaseModel, Field
 
 from saltapi.web.schema.common import (
-    ObservingProbabilities,
+    ObservationProbabilities,
     Ranking,
     TargetCoordinates,
 )
@@ -145,7 +145,7 @@ class Phase1Target(Target):
         title="Number of nights",
         description="Number of nights for which the target is observable, given the requested observation time and observation constraints.",
     )
-    observing_probabilities: ObservingProbabilities = Field(
+    observing_probabilities: ObservationProbabilities = Field(
         ...,
         title="Observing probabilities",
         description="Probabilities related to observing the block",
