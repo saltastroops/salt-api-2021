@@ -18,7 +18,6 @@ def test_top_level_values(
     rss = rss_repository.get(rss_id)
 
     assert rss["id"] == rss_id
-    assert rss["name"] == "RSS"
     assert float(rss["observation_time"]) == expected_rss["observation_time"]
     assert float(rss["overhead_time"]) == expected_rss["overhead_time"]
 

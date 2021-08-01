@@ -170,9 +170,6 @@ class Hrs(BaseModel):
     id: int = Field(
         ..., title="HRS id", description="Unique identifier for the HRS setup"
     )
-    name: Literal["HRS"] = Field(
-        ..., title="Instrument name", description="Instrument name"
-    )
     configuration: HrsConfiguration = Field(
         ..., title="Instrument configuration", description="Instrument configuration"
     )

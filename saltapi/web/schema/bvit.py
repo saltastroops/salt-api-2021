@@ -51,9 +51,6 @@ class Bvit(BaseModel):
     id: int = Field(
         ..., title="BVIT id", description="Unique identifier for the BVIT setup"
     )
-    name: Literal["BVIT"] = Field(
-        ..., title="Instrument name", description="Instrument name"
-    )
     mode: BvitMode = Field(..., title="Instrument mode", description="Instrument mode")
     filter: BvitFilter = Field(..., title="Filter", description="Filter")
     neutral_density: BvitNeutralDensity = Field(

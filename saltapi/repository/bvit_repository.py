@@ -30,7 +30,6 @@ WHERE B.Bvit_Id = :bvit_id;
 
         bvit = {
             "id": row.bvit_id,
-            "name": "BVIT",
             "mode": row.mode,
             "filter": row.filter,
             "neutral_density": row.neutral_density,

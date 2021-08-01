@@ -91,7 +91,6 @@ ORDER BY Rss_Id DESC;
 
         rss = {
             "id": row.rss_id,
-            "name": "RSS",
             "configuration": self._configuration(row),
             "detector": self._detector(row),
             "procedure": self._procedure(row),

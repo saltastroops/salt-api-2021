@@ -3,7 +3,11 @@ from typing import List, Optional
 
 from pydantic import BaseModel, Field
 
+from saltapi.web.schema.bvit import Bvit
 from saltapi.web.schema.common import TargetCoordinates, TimeInterval
+from saltapi.web.schema.hrs import Hrs
+from saltapi.web.schema.rss import Rss
+from saltapi.web.schema.salticam import Salticam
 
 
 class PhaseInterval(BaseModel):
@@ -102,6 +106,15 @@ class PayloadConfigurationType(str, Enum):
     SCIENCE = "Science"
 
 
+class Instruments(BaseModel):
+    """Instrument setups."""
+
+    salticam: Optional[List[Salticam]] = Field(..., title="Salticam setups", description="Salticam setups")
+    rss: Optional[List[Rss]] = Field(..., title="RSS setups", description="RSS setups")
+    hrs: Optional[List[Hrs]] = Field(..., title="HRS setups", description="HRS setups")
+    bvit: Optional[List[Bvit]] = Field(..., title="BVIT setups", description="HRS setups")
+
+
 class PayloadConfiguration(BaseModel):
     """Payload configuration."""
 
@@ -124,6 +137,7 @@ class PayloadConfiguration(BaseModel):
     guide_method: GuideMethod = Field(
         ..., title="Guide method", description="Guide method"
     )
+    instruments: Instruments = Field(..., title="Instrument setups", description="Instrument setups")
 
 
 class TelescopeConfiguration(BaseModel):

@@ -60,7 +60,6 @@ WHERE S.Salticam_Id = :salticam_id
 
         salticam = {
             "id": row.salticam_id,
-            "name": "Salticam",
             "detector": detector,
             "procedure": procedure,
             "minimum_signal_to_noise": row.minimum_signal_to_noise,

@@ -16,7 +16,6 @@ def test_hrs(dbconnection: Connection, testdata: Callable[[str], Any]) -> None:
         bvit = bvit_repository.get(bvit_id)
 
         assert bvit["id"] == bvit_id
-        assert bvit["name"] == "BVIT"
         assert bvit["mode"] == expected_bvit["mode"]
         assert bvit["filter"] == expected_bvit["filter"]
         assert bvit["neutral_density"] == expected_bvit["neutral_density"]

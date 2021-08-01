@@ -72,7 +72,6 @@ WHERE H.Hrs_Id = :hrs_id
 
         hrs = {
             "id": hrs_id,
-            "name": "HRS",
             "configuration": self._configuration(row),
             "blue_detector": self._blue_detector(row),
             "red_detector": self._red_detector(row),

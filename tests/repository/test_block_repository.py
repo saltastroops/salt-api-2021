@@ -265,6 +265,13 @@ def test_payload_configurations(
     assert len(configs) == len(expected_configs)
 
     for i in range(len(configs)):
+        # instruments must be compared separately
+        instruments = set(configs[i]["instruments"].keys()).union(expected_configs[i]["instruments"].keys())
+        for instrument in instruments:
+            assert configs[i]["instruments"].get(instrument) == expected_configs[i]["instruments"].get(instrument)
+        del configs[i]["instruments"]
+        del expected_configs[i]["instruments"]
+
         assert configs[i] == expected_configs[i]
 
 
@@ -296,7 +303,9 @@ def test_get_block_instruments(
                 assert len(payload_configs) == len(expected_payload_configs)
 
                 for k in range(len(payload_configs)):
-                    assert (
-                        payload_configs[k]["instruments"]
-                        == expected_payload_configs[k]["instruments"]
-                    )
+                    instruments = set(payload_configs[k]["instruments"].keys()).union(expected_payload_configs[k]["instruments"].keys())
+                    for instrument in instruments:
+                        assert (
+                                payload_configs[k]["instruments"].get(instrument)
+                                == expected_payload_configs[k]["instruments"].get(instrument)
+                            )

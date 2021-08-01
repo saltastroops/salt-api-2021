@@ -324,9 +324,6 @@ class Rss(BaseModel):
     id: int = Field(
         ..., title="RSS id", description="Unique identifier for the RSS setup"
     )
-    name: Literal["RSS"] = Field(
-        ..., title="Instrument name", description="Instrument name"
-    )
     configuration: RssConfiguration = Field(
         ..., title="Instrument configuration", description="Instrument configuration"
     )

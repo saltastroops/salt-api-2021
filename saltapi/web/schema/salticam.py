@@ -141,9 +141,6 @@ class Salticam(BaseModel):
     id: int = Field(
         ..., title="Salticam id", description="Unique identifier for the Salticam setup"
     )
-    name: Literal["Salticam"] = Field(
-        ..., title="Instrument name", description="Instrument name"
-    )
     detector: SalticamDetector = Field(
         ..., title="Detector setup", description="Detector setup"
     )

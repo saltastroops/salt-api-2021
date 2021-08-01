@@ -18,7 +18,6 @@ def test_top_level_values(
     salticam = salticam_repository.get(salticam_id)
 
     assert salticam["id"] == salticam_id
-    assert salticam["name"] == "Salticam"
     assert (
         salticam["minimum_signal_to_noise"]
         == expected_salticam["minimum_signal_to_noise"]

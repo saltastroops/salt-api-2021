@@ -17,7 +17,6 @@ def test_top_level_values(
     hrs = hrs_repository.get(hrs_id)
 
     assert hrs["id"] == hrs_id
-    assert hrs["name"] == "HRS"
     assert hrs["observation_time"] == expected_hrs["observation_time"]
     assert hrs["overhead_time"] == expected_hrs["overhead_time"]
 
