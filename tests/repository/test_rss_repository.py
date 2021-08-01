@@ -70,7 +70,9 @@ def test_detector(dbconnection: Connection, testdata: Callable[[str], Any]) -> N
         assert detector == expected_detector
 
 
-def test_detector_calculation(dbconnection: Connection, testdata: Callable[[str], Any]) -> None:
+def test_detector_calculation(
+    dbconnection: Connection, testdata: Callable[[str], Any]
+) -> None:
     data = testdata(TEST_DATA)["detector_calculations"]
     for d in data:
         rss_id = d["rss_id"]

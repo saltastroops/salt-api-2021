@@ -150,6 +150,9 @@ WHERE SFPD.SalticamFilterPattern_Id = :pattern_id;
     def _procedure(self, row: Any) -> Dict[str, Any]:
         """Return a Salticam procedure."""
 
-        procedure = {"cycles": row.cycles, "exposures": self._exposures(row.filter_pattern_id)}
+        procedure = {
+            "cycles": row.cycles,
+            "exposures": self._exposures(row.filter_pattern_id),
+        }
 
         return procedure

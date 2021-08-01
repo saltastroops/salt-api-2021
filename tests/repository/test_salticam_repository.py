@@ -19,7 +19,10 @@ def test_top_level_values(
 
     assert salticam["id"] == salticam_id
     assert salticam["name"] == "Salticam"
-    assert salticam["minimum_signal_to_noise"] == expected_salticam["minimum_signal_to_noise"]
+    assert (
+        salticam["minimum_signal_to_noise"]
+        == expected_salticam["minimum_signal_to_noise"]
+    )
     assert salticam["observation_time"] == expected_salticam["observation_time"]
     assert salticam["overhead_time"] == expected_salticam["overhead_time"]
 
