@@ -50,6 +50,7 @@ SELECT R.Rss_Id                                          AS rss_id,
        RRS.RoSpeed                                       AS readout_speed,
        RDC.Calculation                                   AS detector_calculation,
        RDW.Height                                        AS window_height,
+       RPT.RssProcedureType                              AS procedure_type,
        RP.RssEtalonPattern_Id                            AS etalon_pattern_id,
        RP.RssPolarimetryPattern_Id                       AS polarimetry_pattern_id,
        RPP.PatternName                                   AS polarimetry_pattern_name
@@ -72,6 +73,7 @@ FROM Rss R
          LEFT JOIN RssMaskType RMT ON RMA.RssMaskType_Id = RMT.RssMaskType_Id
          LEFT JOIN RssMosMaskDetails RMMD ON RMA.RssMask_Id = RMMD.RssMask_Id
          JOIN RssProcedure RP ON R.RssProcedure_Id = RP.RssProcedure_Id
+         JOIN RssProcedureType RPT ON RP.RssProcedureType_Id = RPT.RssProcedureType_Id
          JOIN RssDetector RD ON R.RssDetector_Id = RD.RssDetector_Id
          JOIN RssDetectorMode RDM ON RD.RssDetectorMode_Id = RDM.RssDetectorMode_Id
          JOIN RssExposureType RET ON RD.RssExposureType_Id = RET.RssExposureType_Id
@@ -203,6 +205,25 @@ ORDER BY Rss_Id DESC;
 
         return detector
 
+    def _procedure_type(self, row: Any) -> str:
+        """Return the procedure type."""
+
+        procedure_types = {
+            "FABRY PEROT": "Fabry Perot",
+            "FOCUS": "Focus",
+            "FP CAL": "FP Cal",
+            "FP POLARIMETRY": "FP Polarimetry",
+            "FP RING": "FP Ring",
+            "MOS ACQUISITION": "MOS Acquisition",
+            "MOS CALIBRATION": "MOS Calibration",
+            "MOS PEAKUP": "MOS Peakup",
+            "NOD AND SHUFFLE": "Nod and Shuffle",
+            "NORMAL": "Normal",
+            "POLARIMETRY": "Polarimetry"
+        }
+
+        return procedure_types[row.procedure_type]
+
     def _etalon_wavelengths(self, etalon_pattern_id: int) -> List[float]:
         """
         Return the list of etalon wavelengths in an etalon pattern.
@@ -324,6 +345,7 @@ WHERE RPP.RssPolarimetryPattern_Id = :pattern_id
             polarimetry_pattern = None
 
         return {
+            "procedure_type": self._procedure_type(row),
             "cycles": row.cycles,
             "etalon_wavelengths": etalon_wavelengths,
             "polarimetry_pattern": polarimetry_pattern,
