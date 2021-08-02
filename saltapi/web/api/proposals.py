@@ -15,18 +15,20 @@ from fastapi import (
 )
 from fastapi.responses import FileResponse
 
-from saltapi.web.schemas import (
+from saltapi.web.schema.common import (
+    ExecutedObservation,
+    ProposalCode,
+    Semester,
+)
+from saltapi.web.schema.proposal import (
     DataReleaseDate,
     DataReleaseDateUpdate,
-    ExecutedObservation,
     ObservationComment,
     ProgressReport,
-    ProposalCode,
     ProposalContent,
     ProposalContentType,
     ProposalListItem,
     ProposalStatusContent,
-    Semester,
     SubmissionAcknowledgment,
 )
 

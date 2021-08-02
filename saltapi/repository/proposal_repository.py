@@ -453,23 +453,26 @@ WHERE BS.BlockStatus NOT IN :excluded_status_values
             },
         )
 
-        blocks = [{
-            "id": row.id,
-            "semester": row.semester,
-            "name": row.name,
-            "observation_time": row.observation_time,
-            "priority": row.priority,
-            "requested_observations": row.requested_observations,
-            "accepted_observations": row.accepted_observations,
-            "rejected_observations": row.rejected_observations,
-            "observing_conditions": {
-                "minimum_seeing": row.minimum_seeing,
-                "maximum_seeing": row.maximum_seeing,
-                "transparency": row.transparency,
-                "minimum_lunar_distance": row.minimum_lunar_distance,
-                "maximum_lunar_phase": row.maximum_lunar_phase
+        blocks = [
+            {
+                "id": row.id,
+                "semester": row.semester,
+                "name": row.name,
+                "observation_time": row.observation_time,
+                "priority": row.priority,
+                "requested_observations": row.requested_observations,
+                "accepted_observations": row.accepted_observations,
+                "rejected_observations": row.rejected_observations,
+                "observing_conditions": {
+                    "minimum_seeing": row.minimum_seeing,
+                    "maximum_seeing": row.maximum_seeing,
+                    "transparency": row.transparency,
+                    "minimum_lunar_distance": row.minimum_lunar_distance,
+                    "maximum_lunar_phase": row.maximum_lunar_phase,
+                },
             }
-        } for row in result]
+            for row in result
+        ]
         block_instruments = self._block_instruments(proposal_code)
 
         tonight_interval = tonight()
