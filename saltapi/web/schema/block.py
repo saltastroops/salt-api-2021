@@ -19,23 +19,72 @@ from saltapi.web.schema.rss import RssSummary
 from saltapi.web.schema.salticam import SalticamSummary
 
 
-class Transparency(str, Enum):
-    """Sky transparency."""
+class Block(BaseModel):
+    """A block, i.e. a smallest schedulable unit in a proposal."""
 
-    ANY = "Any"
-    CLEAR = "Clear"
-    THICK_CLOUD = "Thick cloud"
-    THIN_CLOUD = "Thin cloud"
-
-
-class InstrumentSummary(BaseModel):
-    """Summary details of an instrument setup."""
-
-    name: str = Field(..., title="Name", description="Instrument name")
-    mode: str = Field(
+    id: int = Field(..., title="Block id", description="Unique identifier of the block")
+    name: str = Field(..., title="Name", description="Block name")
+    proposal_code: ProposalCode = Field(
+        ..., title="Proposal code of the proposal to which the block belongs"
+    )
+    semester: Semester = Field(..., title="Semester to which the block belongs")
+    status: "BlockStatus" = Field(..., title="Block status", description="Block status")
+    priority: Priority = Field(
+        ..., title="Priority", description="Priority of the block"
+    )
+    ranking: Optional[Ranking] = Field(
         ...,
-        title="Mode",
-        description="Instrument mode. For Salticam this is just an empty string.",
+        title="Ranking",
+        description="Ranking by the Principal Investigator relative to other blocks in the proposal",
+    )
+    wait_period: int = Field(
+        ...,
+        title="Wait period",
+        description="Minimum number of days to wait between observations of the block",
+    )
+    comment: Optional[str] = Field(
+        ...,
+        title="Comment",
+        description="Comment about the block by the Principal Investigator",
+    )
+    requested_observations: int = Field(
+        ...,
+        title="Requested observations",
+        description="Number of observations requested for the block",
+    )
+    executed_observations: List[BaseExecutedObservation] = Field(
+        ...,
+        title="Executed observations",
+        description="Observations made for the block",
+    )
+    observing_conditions: "ObservingConditions" = Field(
+        ...,
+        title="Observing conditions",
+        description="Conditions required for observing the block",
+    )
+    observation_time: int = Field(
+        ...,
+        title="Observation time",
+        description="Time required for an observation of the block, including the overhead time, in seconds",
+        gt=0,
+    )
+    overhead_time: int = Field(
+        ..., title="Overhead time for an observation of the block, in seconds", ge=0
+    )
+    observing_windows: List[TimeInterval] = Field(
+        ...,
+        title="Observing windows",
+        description="Time windows during which the block can be observed",
+    )
+    observation_probabilities: ObservationProbabilities = Field(
+        ...,
+        title="Observing probabilities",
+        description="Probabilities related to observing the block",
+    )
+    observations: List[Observation] = Field(
+        ...,
+        title="Observations",
+        description="List of observations in the block. With the exception of some legacy proposals, there is always a single observation in the block",
     )
 
 
@@ -49,38 +98,6 @@ class BlockStatus(str, Enum):
     NOT_SET = "Not set"
     ON_HOLD = "On Hold"
     SUPERSEDED = "Superseded"
-
-
-class ObservingConditions(BaseModel):
-    minimum_seeing: Optional[float] = Field(
-        ...,
-        title="Minimum seeing",
-        description="Minimum seeing allowed for an observation, in arcseconds",
-        ge=0,
-    )
-    maximum_seeing: float = Field(
-        ...,
-        title="Maximum seeing",
-        description="Maximum seeing allowed for an observation, in arcseconds",
-        ge=0,
-    )
-    transparency: Transparency = Field(
-        ...,
-        title="Transparency",
-        description="Sky transparency required for an observation",
-    )
-    maximum_lunar_phase: float = Field(
-        ...,
-        title="Maximum lunar phase",
-        description="Maximum lunar phase which was allowed for the observation, as the percentage of lunar illumination",
-        ge=0,
-        le=100,
-    )
-    minimum_lunar_distance: float = Field(
-        ...,
-        title="Minimum lunar distance",
-        description="Minimum required angular distance between the Moon and the target, in degrees",
-    )
 
 
 class BlockSummary(BaseModel):
@@ -124,7 +141,7 @@ class BlockSummary(BaseModel):
         title="Remaining nights",
         description="Number of nights (Julian days), excluding the current one, during which the block still can be observed",
     )
-    observing_conditions: ObservingConditions = Field(
+    observing_conditions: "ObservingConditions" = Field(
         ...,
         title="Observing conditions",
         description="Conditions required for observing the block",
@@ -134,70 +151,53 @@ class BlockSummary(BaseModel):
     ] = Field(..., title="Instruments", description="Instruments used for the block")
 
 
-class Block(BaseModel):
-    """A block, i.e. a smallest schedulable unit in a proposal."""
+class InstrumentSummary(BaseModel):
+    """Summary details of an instrument setup."""
 
-    id: int = Field(..., title="Block id", description="Unique identifier of the block")
-    name: str = Field(..., title="Name", description="Block name")
-    proposal_code: ProposalCode = Field(
-        ..., title="Proposal code of the proposal to which the block belongs"
-    )
-    semester: Semester = Field(..., title="Semester to which the block belongs")
-    status: BlockStatus = Field(..., title="Block status", description="Block status")
-    priority: Priority = Field(
-        ..., title="Priority", description="Priority of the block"
-    )
-    ranking: Optional[Ranking] = Field(
+    name: str = Field(..., title="Name", description="Instrument name")
+    mode: str = Field(
         ...,
-        title="Ranking",
-        description="Ranking by the Principal Investigator relative to other blocks in the proposal",
+        title="Mode",
+        description="Instrument mode. For Salticam this is just an empty string.",
     )
-    wait_period: int = Field(
+
+
+class ObservingConditions(BaseModel):
+    minimum_seeing: Optional[float] = Field(
         ...,
-        title="Wait period",
-        description="Minimum number of days to wait between observations of the block",
+        title="Minimum seeing",
+        description="Minimum seeing allowed for an observation, in arcseconds",
+        ge=0,
     )
-    comment: Optional[str] = Field(
+    maximum_seeing: float = Field(
         ...,
-        title="Comment",
-        description="Comment about the block by the Principal Investigator",
+        title="Maximum seeing",
+        description="Maximum seeing allowed for an observation, in arcseconds",
+        ge=0,
     )
-    requested_observations: int = Field(
+    transparency: "Transparency" = Field(
         ...,
-        title="Requested observations",
-        description="Number of observations requested for the block",
+        title="Transparency",
+        description="Sky transparency required for an observation",
     )
-    executed_observations: List[BaseExecutedObservation] = Field(
+    maximum_lunar_phase: float = Field(
         ...,
-        title="Executed observations",
-        description="Observations made for the block",
+        title="Maximum lunar phase",
+        description="Maximum lunar phase which was allowed for the observation, as the percentage of lunar illumination",
+        ge=0,
+        le=100,
     )
-    observing_conditions: ObservingConditions = Field(
+    minimum_lunar_distance: float = Field(
         ...,
-        title="Observing conditions",
-        description="Conditions required for observing the block",
+        title="Minimum lunar distance",
+        description="Minimum required angular distance between the Moon and the target, in degrees",
     )
-    observation_time: int = Field(
-        ...,
-        title="Observation time",
-        description="Time required for an observation of the block, including the overhead time, in seconds",
-        gt=0,
-    )
-    overhead_time: int = Field(
-        ..., title="Overhead time for an observation of the block, in seconds", ge=0
-    )
-    observing_windows: List[TimeInterval] = Field(
-        ...,
-        title="Observing windows",
-        description="Time windows during which the block can be observed",
-    )
-    observation_probabilities: ObservationProbabilities = Field(
-        ...,
-        title="Observing probabilities",
-        description="Probabilities related to observing the block",
-    )
-    observations: List[Observation] = Field(
-        ...,
-        title="Observations",
-        description="List of observations in the block. With the exception of some legacy proposals, there is always a single observation in the block",
-    )
+
+
+class Transparency(str, Enum):
+    """Sky transparency."""
+
+    ANY = "Any"
+    CLEAR = "Clear"
+    THICK_CLOUD = "Thick cloud"
+    THIN_CLOUD = "Thin cloud"

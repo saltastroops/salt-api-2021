@@ -4,14 +4,70 @@ from typing import List, Literal, Optional
 from pydantic import BaseModel, Field
 
 
-class SalticamSummary(BaseModel):
-    """Summary information for Salticam."""
+class Salticam(BaseModel):
+    """Salticam setup."""
 
-    name: Literal["Salticam"] = Field(
-        ..., title="Instrument name", description="Instrument name"
+    id: int = Field(
+        ..., title="Salticam id", description="Unique identifier for the Salticam setup"
     )
-    modes: List[Literal[""]] = Field(
-        ..., title="Instrument modes", description="Used instrument modes"
+    detector: "SalticamDetector" = Field(
+        ..., title="Detector setup", description="Detector setup"
+    )
+    procedure: "SalticamProcedure" = Field(
+        ..., title="Instrument procedure", description="Instrument procedure"
+    )
+    minimum_signal_to_noise: int = Field(
+        ...,
+        title="Minimum signal-to-noise",
+        description="Minimum signal-to-noise ratio required",
+    )
+    observation_time: float = Field(
+        ...,
+        title="Observation time",
+        description="Total time required for the setup, in seconds",
+        ge=0,
+    )
+    overhead_time: float = Field(
+        ...,
+        title="Overhead time",
+        description="Overhead time for the setup, in seconds",
+        ge=0,
+    )
+
+
+class SalticamDetector(BaseModel):
+    """Salticam detector setup."""
+
+    mode: "SalticamDetectorMode" = Field(
+        ..., title="Detector mode", description="Detector mode"
+    )
+    pre_binned_rows: int = Field(
+        ...,
+        title="Pre-binned rows",
+        description="Number of CCD rows to combine during readout",
+        ge=1,
+    )
+    pre_binned_columns: int = Field(
+        ...,
+        title="Pre-binned columns",
+        description="Number of CCD columns to combine during readout",
+        ge=1,
+    )
+    iterations: int = Field(
+        ...,
+        title="Number of exposures",
+        description="Number of exposures per procedure step",
+        ge=1,
+    )
+    exposure_type: "SalticamExposureType" = Field(
+        ..., title="Exposure type", description="Exposure type"
+    )
+    gain: "SalticamGain" = Field(..., title="Gain", description="Gain")
+    readout_speed: "SalticamReadoutSpeed" = Field(
+        ..., title="Readout speed", description="Readout speed"
+    )
+    detector_windows: Optional[List["SalticamDetectorWindow"]] = Field(
+        ..., title="Detector window", description="Detector window"
     )
 
 
@@ -22,29 +78,6 @@ class SalticamDetectorMode(str, Enum):
     FRAME_TRANSFER = "Frame Transfer"
     NORMAL = "Normal"
     SLOT_MODE = "Slot Mode"
-
-
-class SalticamExposureType(str, Enum):
-    """Salticam exposure type."""
-
-    BIAS = "Bias"
-    FLAT_FIELD = "Flat Field"
-    SCIENCE = "Science"
-
-
-class SalticamGain(str, Enum):
-    """Salticam gain."""
-
-    BRIGHT = "Bright"
-    FAINT = "Faint"
-
-
-class SalticamReadoutSpeed(str, Enum):
-    """Salticam readout speed."""
-
-    FAST = "Fast"
-    NONE = "None"
-    SLOW = "Slow"
 
 
 class SalticamDetectorWindow(BaseModel):
@@ -68,40 +101,21 @@ class SalticamDetectorWindow(BaseModel):
     )
 
 
-class SalticamDetector(BaseModel):
-    """Salticam detector setup."""
+class SalticamExposure(BaseModel):
+    """Salticam filter and exposure time."""
 
-    mode: SalticamDetectorMode = Field(
-        ..., title="Detector mode", description="Detector mode"
+    filter: "SalticamFilter" = Field(..., title="Filter", description="Filter")
+    exposure_time: float = Field(
+        ..., title="Exposure time", description="Exposure time per exposure, in seconds"
     )
-    pre_binned_rows: int = Field(
-        ...,
-        title="Pre-binned rows",
-        description="Number of CCD rows to combine during readout",
-        ge=1,
-    )
-    pre_binned_columns: int = Field(
-        ...,
-        title="Pre-binned columns",
-        description="Number of CCD columns to combine during readout",
-        ge=1,
-    )
-    iterations: int = Field(
-        ...,
-        title="Number of exposures",
-        description="Number of exposures per procedure step",
-        ge=1,
-    )
-    exposure_type: SalticamExposureType = Field(
-        ..., title="Exposure type", description="Exposure type"
-    )
-    gain: SalticamGain = Field(..., title="Gain", description="Gain")
-    readout_speed: SalticamReadoutSpeed = Field(
-        ..., title="Readout speed", description="Readout speed"
-    )
-    detector_windows: Optional[List[SalticamDetectorWindow]] = Field(
-        ..., title="Detector window", description="Detector window"
-    )
+
+
+class SalticamExposureType(str, Enum):
+    """Salticam exposure type."""
+
+    BIAS = "Bias"
+    FLAT_FIELD = "Flat Field"
+    SCIENCE = "Science"
 
 
 class SalticamFilter(BaseModel):
@@ -113,13 +127,11 @@ class SalticamFilter(BaseModel):
     )
 
 
-class SalticamExposure(BaseModel):
-    """Salticam filter and exposure time."""
+class SalticamGain(str, Enum):
+    """Salticam gain."""
 
-    filter: SalticamFilter = Field(..., title="Filter", description="Filter")
-    exposure_time: float = Field(
-        ..., title="Exposure time", description="Exposure time per exposure, in seconds"
-    )
+    BRIGHT = "Bright"
+    FAINT = "Faint"
 
 
 class SalticamProcedure(BaseModel):
@@ -135,32 +147,20 @@ class SalticamProcedure(BaseModel):
     )
 
 
-class Salticam(BaseModel):
-    """Salticam setup."""
+class SalticamReadoutSpeed(str, Enum):
+    """Salticam readout speed."""
 
-    id: int = Field(
-        ..., title="Salticam id", description="Unique identifier for the Salticam setup"
+    FAST = "Fast"
+    NONE = "None"
+    SLOW = "Slow"
+
+
+class SalticamSummary(BaseModel):
+    """Summary information for Salticam."""
+
+    name: Literal["Salticam"] = Field(
+        ..., title="Instrument name", description="Instrument name"
     )
-    detector: SalticamDetector = Field(
-        ..., title="Detector setup", description="Detector setup"
-    )
-    procedure: SalticamProcedure = Field(
-        ..., title="Instrument procedure", description="Instrument procedure"
-    )
-    minimum_signal_to_noise: int = Field(
-        ...,
-        title="Minimum signal-to-noise",
-        description="Minimum signal-to-noise ratio required",
-    )
-    observation_time: float = Field(
-        ...,
-        title="Observation time",
-        description="Total time required for the setup, in seconds",
-        ge=0,
-    )
-    overhead_time: float = Field(
-        ...,
-        title="Overhead time",
-        description="Overhead time for the setup, in seconds",
-        ge=0,
+    modes: List[Literal[""]] = Field(
+        ..., title="Instrument modes", description="Used instrument modes"
     )

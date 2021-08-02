@@ -12,26 +12,6 @@ from saltapi.web.schema.common import (
 )
 
 
-class ProperMotion(BaseModel):
-    """Proper motion."""
-
-    right_ascension_speed: float = Field(
-        ...,
-        title="Right ascension speed",
-        description="Right ascension speed, in arcseconds per year",
-    )
-    declination_speed: float = Field(
-        ...,
-        title="Declination speed",
-        description="Declination speed, in arcseconds per year",
-    )
-    epoch: datetime = Field(
-        ...,
-        title="Epoch",
-        description="Time for which the target coordinates are given",
-    )
-
-
 class Magnitude(BaseModel):
     """Apparent magnitude (range)."""
 
@@ -48,13 +28,6 @@ class Magnitude(BaseModel):
     bandpass: str = Field(
         ..., title="Bandpass", description="Bandpass (filter) fore the magnitude"
     )
-
-
-class TimeBase(str, Enum):
-    BJD = "BJD"  # Barycentric Julian Date
-    HJD = "HJD"  # Heliocentric Julian Date
-    JD = "JD"  # Julian Date
-    UT = "UT"  # Universal Time
 
 
 class PeriodEphemeris(BaseModel):
@@ -75,7 +48,7 @@ class PeriodEphemeris(BaseModel):
         title="Period change rate",
         description="Rate of change of the period, in days per day",
     )
-    time_base: TimeBase = Field(
+    time_base: "TimeBase" = Field(
         ..., title="Time base", description="Time base for the ephemeris"
     )
 
@@ -92,7 +65,7 @@ class Target(BaseModel):
         title="Target coordinates",
         description="Target coordinates for a sidereal target",
     )
-    proper_motion: Optional[ProperMotion] = Field(
+    proper_motion: Optional["ProperMotion"] = Field(
         ..., title="Proper motion", description="Proper motion"
     )
     magnitude: Optional[Magnitude] = Field(
@@ -150,3 +123,32 @@ class Phase1Target(Target):
         title="Observing probabilities",
         description="Probabilities related to observing the block",
     )
+
+
+class ProperMotion(BaseModel):
+    """Proper motion."""
+
+    right_ascension_speed: float = Field(
+        ...,
+        title="Right ascension speed",
+        description="Right ascension speed, in arcseconds per year",
+    )
+    declination_speed: float = Field(
+        ...,
+        title="Declination speed",
+        description="Declination speed, in arcseconds per year",
+    )
+    epoch: datetime = Field(
+        ...,
+        title="Epoch",
+        description="Time for which the target coordinates are given",
+    )
+
+
+class TimeBase(str, Enum):
+    BJD = "BJD"  # Barycentric Julian Date
+    HJD = "HJD"  # Heliocentric Julian Date
+    JD = "JD"  # Julian Date
+    UT = "UT"  # Universal Time
+
+

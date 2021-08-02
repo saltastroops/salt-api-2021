@@ -10,15 +10,16 @@ from saltapi.web.schema.rss import Rss
 from saltapi.web.schema.salticam import Salticam
 
 
-class PhaseInterval(BaseModel):
-    """Phase interval."""
+class CalibrationFilter(str, Enum):
+    """Calibration filter."""
 
-    start: float = Field(
-        ..., title="Interval start", description="Start phase of the interval"
-    )
-    end: float = Field(
-        ..., title="Interval end", description="End phase of the interval"
-    )
+    BLUE_AND_RED = "Blue and Red"
+    CLEAR_AND_ND = "Clear and ND"
+    CLEAR_AND_UV = "Clear and UV"
+    ND_AND_CLEAR = "ND and Clear"
+    NONE = "None"
+    RED_AND_CLEAR = "Red and Clear"
+    UV_AND_BLUE = "UV and Blue"
 
 
 class DitherPattern(BaseModel):
@@ -42,17 +43,34 @@ class DitherPattern(BaseModel):
         description="Offset size, i.e. size of a dither step, in arcseconds",
     )
     steps: int = Field(..., title="Number of steps", description="Number of steps")
-    description: str = Field(
-        ...,
-        title="Description",
-        description="Human-friendly description of the dither pattern",
-    )
+
+
+class GuideMethod(str, Enum):
+    """Guide method."""
+
+    HRS_PROBE = "HRS Probe"
+    MANUAL = "Manual"
+    NONE = "None"
+    QUACK = "QUACK"
+    RSS_PROBE = "RSS Probe"
+    SALTICAM = "SALTICAM"
+    SALTICAM_PROBE = "SALTICAM Probe"
+    SLITVIEWER = "Slitviewer"
 
 
 class GuideStar(TargetCoordinates):
     """Guide star."""
 
     magnitude: float = Field(..., title="Magnitude", description="Magnitude")
+
+
+class Instruments(BaseModel):
+    """Instrument setups."""
+
+    salticam: Optional[List[Salticam]] = Field(..., title="Salticam setups", description="Salticam setups")
+    rss: Optional[List[Rss]] = Field(..., title="RSS setups", description="RSS setups")
+    hrs: Optional[List[Hrs]] = Field(..., title="HRS setups", description="HRS setups")
+    bvit: Optional[List[Bvit]] = Field(..., title="BVIT setups", description="HRS setups")
 
 
 class Lamp(str, Enum):
@@ -72,47 +90,31 @@ class Lamp(str, Enum):
     XE = "Xe"
 
 
-class CalibrationFilter(str, Enum):
-    """Calibration filter."""
+class Observation(BaseModel):
+    """Observation."""
 
-    BLUE_AND_RED = "Blue and Red"
-    CLEAR_AND_ND = "Clear and ND"
-    CLEAR_AND_UV = "Clear and UV"
-    ND_AND_CLEAR = "ND and Clear"
-    NONE = "None"
-    RED_AND_CLEAR = "Red and Clear"
-    UV_AND_BLUE = "UV and Blue"
-
-
-class GuideMethod(str, Enum):
-    """Guide method."""
-
-    HRS_PROBE = "HRS Probe"
-    MANUAL = "Manual"
-    NONE = "None"
-    QUACK = "QUACK"
-    RSS_PROBE = "RSS Probe"
-    SALTICAM = "SALTICAM"
-    SALTICAM_PROBE = "SALTICAM Probe"
-    SLITVIEWER = "Slitviewer"
-
-
-class PayloadConfigurationType(str, Enum):
-    """Payload configuration type."""
-
-    ACQUISITION = "Acquisition"
-    CALIBRATION = "Calibration"
-    INSTRUMENT_ACQUISITION = "Instrument Acquisition"
-    SCIENCE = "Science"
-
-
-class Instruments(BaseModel):
-    """Instrument setups."""
-
-    salticam: Optional[List[Salticam]] = Field(..., title="Salticam setups", description="Salticam setups")
-    rss: Optional[List[Rss]] = Field(..., title="RSS setups", description="RSS setups")
-    hrs: Optional[List[Hrs]] = Field(..., title="HRS setups", description="HRS setups")
-    bvit: Optional[List[Bvit]] = Field(..., title="BVIT setups", description="HRS setups")
+    observation_time: int = Field(
+        ...,
+        title="Observation time",
+        description="Time required for executing the observation, including the overhead time, in seconds",
+        gt=0,
+    )
+    overhead_time: int = Field(
+        ..., title="Overhead time for the observation, in seconds", gt=0
+    )
+    time_restrictions: Optional[List[TimeInterval]] = Field(
+        ...,
+        title="Time restrictions",
+        description="List of time intervals outside which the observation should not be made",
+    )
+    phase_constraints: Optional[List[PhaseInterval]] = Field(
+        ...,
+        title="Phase constraints",
+        description="List of phase constraints. An observation should only be made when the phase of the (periodic) target is one of these intervals",
+    )
+    telescope_configurations: List[TelescopeConfiguration] = Field(
+        ..., title="Telescope configurations", description="Telescope configurations"
+    )
 
 
 class PayloadConfiguration(BaseModel):
@@ -138,6 +140,26 @@ class PayloadConfiguration(BaseModel):
         ..., title="Guide method", description="Guide method"
     )
     instruments: Instruments = Field(..., title="Instrument setups", description="Instrument setups")
+
+
+class PayloadConfigurationType(str, Enum):
+    """Payload configuration type."""
+
+    ACQUISITION = "Acquisition"
+    CALIBRATION = "Calibration"
+    INSTRUMENT_ACQUISITION = "Instrument Acquisition"
+    SCIENCE = "Science"
+
+
+class PhaseInterval(BaseModel):
+    """Phase interval."""
+
+    start: float = Field(
+        ..., title="Interval start", description="Start phase of the interval"
+    )
+    end: float = Field(
+        ..., title="Interval end", description="End phase of the interval"
+    )
 
 
 class TelescopeConfiguration(BaseModel):
@@ -166,31 +188,4 @@ class TelescopeConfiguration(BaseModel):
     )
     payload_configurations: List[PayloadConfiguration] = Field(
         ..., title="Payload configurations", description="Payload configurations"
-    )
-
-
-class Observation(BaseModel):
-    """Observation."""
-
-    observation_time: int = Field(
-        ...,
-        title="Observation time",
-        description="Time required for executing the observation, including the overhead time, in seconds",
-        gt=0,
-    )
-    overhead_time: int = Field(
-        ..., title="Overhead time for the observation, in seconds", gt=0
-    )
-    time_restrictions: Optional[List[TimeInterval]] = Field(
-        ...,
-        title="Time restrictions",
-        description="List of time intervals outside which the observation should not be made",
-    )
-    phase_constraints: Optional[List[PhaseInterval]] = Field(
-        ...,
-        title="Phase constraints",
-        description="List of phase constraints. An observation should only be made when the phase of the (periodic) target is one of these intervals",
-    )
-    telescope_configurations: List[TelescopeConfiguration] = Field(
-        ..., title="Telescope configurations", description="Telescope configurations"
     )
