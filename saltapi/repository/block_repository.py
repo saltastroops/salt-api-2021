@@ -405,7 +405,7 @@ ORDER BY TCOC.Pointing_Id, TCOC.Observation_Order, TCOC.TelescopeConfig_Order,
 
         return payload_config
 
-    def _instruments(self, payload_config_row: Any) -> Dict[str, List[Dict[str, Any]]]:
+    def _instruments(self, payload_config_row: Any) -> Dict[str, Optional[List[Dict[str, Any]]]]:
         if payload_config_row.salticam_pattern_id is not None:
             salticam_setups: Optional[List[Dict[str, Any]]] = self._salticam_setups(payload_config_row.salticam_pattern_id)
         else:

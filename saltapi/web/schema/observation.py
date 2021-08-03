@@ -4,7 +4,7 @@ from typing import List, Optional
 from pydantic import BaseModel, Field
 
 from saltapi.web.schema.bvit import Bvit
-from saltapi.web.schema.common import TargetCoordinates, TimeInterval
+from saltapi.web.schema.common import TargetCoordinates, TimeInterval, Lamp
 from saltapi.web.schema.hrs import Hrs
 from saltapi.web.schema.rss import Rss
 from saltapi.web.schema.salticam import Salticam
@@ -73,23 +73,6 @@ class Instruments(BaseModel):
     bvit: Optional[List[Bvit]] = Field(..., title="BVIT setups", description="HRS setups")
 
 
-class Lamp(str, Enum):
-    """Calibration lamp(s)."""
-
-    AR = "Ar"
-    AR_AND_THAR = "Ar and ThAr"
-    CUAR = "CuAr"
-    CUAR_AND_XE = "CuAr and Xe"
-    HGAR = "HgAr"
-    HGAR_AND_NE = "HgAr and Ne"
-    NE = "Ne"
-    QTH1 = "QTH1"
-    QTH1_AND_QTH2 = "QTH1 and QTH2"
-    QTH2 = "QTH2"
-    THAR = "ThAr"
-    XE = "Xe"
-
-
 class Observation(BaseModel):
     """Observation."""
 
@@ -107,12 +90,12 @@ class Observation(BaseModel):
         title="Time restrictions",
         description="List of time intervals outside which the observation should not be made",
     )
-    phase_constraints: Optional[List[PhaseInterval]] = Field(
+    phase_constraints: Optional[List["PhaseInterval"]] = Field(
         ...,
         title="Phase constraints",
         description="List of phase constraints. An observation should only be made when the phase of the (periodic) target is one of these intervals",
     )
-    telescope_configurations: List[TelescopeConfiguration] = Field(
+    telescope_configurations: List["TelescopeConfiguration"] = Field(
         ..., title="Telescope configurations", description="Telescope configurations"
     )
 
@@ -120,7 +103,7 @@ class Observation(BaseModel):
 class PayloadConfiguration(BaseModel):
     """Payload configuration."""
 
-    payload_configuration_type: Optional[PayloadConfigurationType] = Field(
+    payload_configuration_type: Optional["PayloadConfigurationType"] = Field(
         ...,
         title="Payload configuration type",
         description="Payload configuration type",

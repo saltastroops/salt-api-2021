@@ -3,6 +3,16 @@ from typing import List, Literal, Optional, Union
 
 from pydantic import BaseModel, Field
 
+from saltapi.web.schema.common import Lamp
+
+
+class ArcBibleEntry(BaseModel):
+    """RSS arc bible entry."""
+
+    lamp: Lamp = Field(..., title="Lamp", description="Calibration lamp")
+    original_exposure_time: float = Field(..., title="Original exposure time", description="Original exposure time, in seconds")
+    preferred_exposure_time: float = Field(..., title="Preferred exposure time", description="Preferred exposure time, in seconds")
+
 
 class Rss(BaseModel):
     """RSS setup."""
@@ -19,6 +29,7 @@ class Rss(BaseModel):
     procedure: "RssProcedure" = Field(
         ..., title="Instrument procedure", description="Instrument procedure"
     )
+    arc_bible_entries: List[ArcBibleEntry] = Field(..., title="Arc bible entries", description="Arc bible entries for the RSS setup")
     observation_time: float = Field(
         ...,
         title="Observation time",
