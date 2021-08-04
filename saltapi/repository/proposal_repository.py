@@ -132,7 +132,7 @@ WHERE P.Current = 1
             "executed_observations": executed_observations,
             "time_allocations": self.time_allocations(proposal_code, semester),
             "charged_time": self.charged_time(proposal_code, semester),
-            "comments": self._proposal_comments(proposal_code),
+            "observation_comments": self._observation_comments(proposal_code),
         }
         return proposal
 
@@ -884,7 +884,7 @@ GROUP BY B.Block_Id
         )
         return {int(row.block_id): int(row.nights) for row in result}
 
-    def _proposal_comments(self, proposal_code: str) -> List[Dict[str, Any]]:
+    def _observation_comments(self, proposal_code: str) -> List[Dict[str, Any]]:
         """
         Return the proposal comments ordered by the time when they were made.
         """

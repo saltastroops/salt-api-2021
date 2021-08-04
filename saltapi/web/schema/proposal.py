@@ -215,10 +215,10 @@ class ObservationComment(BaseModel):
 
     author: str = Field(..., title="Author", description="Author of the comment")
     comment: str = Field(..., title="Comment", description="Text of the comment")
-    madeAt: datetime = Field(
+    comment_date: datetime = Field(
         ...,
         title="Time of creation",
-        description="Date amd time when the comment was made",
+        description="Date when the comment was made",
     )
 
     class Config:
@@ -358,6 +358,7 @@ class Proposal(BaseModel):
         title="Time allocations",
         description="Time allocations for the semester",
     )
+    observation_comments: List[ObservationComment] = Field(..., title="Observation comments", description="Comments related to observing the proposal")
 
 
 class ProgressReport(BaseModel):

@@ -211,16 +211,16 @@ def test_get_returns_block_observability(
                 assert block["remaining_nights"] == o["remaining_nights"]
 
 
-def test_get_returns_proposal_comments(
+def test_get_returns_observation_comments(
     dbconnection: Connection, testdata: Callable[[str], Any]
 ) -> None:
-    data = testdata(TEST_DATA)["proposal_comments"]
+    data = testdata(TEST_DATA)["observation_comments"]
     proposal_code = data["proposal_code"]
     expected_comments = data["comments"]
 
     proposal_repository = ProposalRepository(dbconnection)
     proposal = proposal_repository.get(proposal_code)
-    comments = proposal["comments"]
+    comments = proposal["observation_comments"]
 
     assert len(comments) == len(expected_comments)
     for i in range(len(comments)):
