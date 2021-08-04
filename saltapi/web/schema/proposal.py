@@ -1,6 +1,6 @@
 from datetime import date, datetime
 from enum import Enum
-from typing import List, Optional, Union, ForwardRef
+from typing import List, Optional, Union, ForwardRef, Literal
 
 from pydantic import BaseModel, EmailStr, Field
 
@@ -165,27 +165,6 @@ class Investigator(ContactDetails):
     )
 
 
-class BaseProposal(BaseModel):
-    """Base model for phase 1 and phase 2 proposals."""
-
-    proposal_code: ProposalCode = Field(
-        ..., title="Proposal code", description="Proposal code"
-    )
-    semester: Semester = Field(
-        ...,
-        title="Semester",
-        description="Semester for which the proposal details are given",
-    )
-    general_info: GeneralProposalInfo = Field(
-        ...,
-        title="General information",
-        description="General proposal information for a semester",
-    )
-    investigators: List[Investigator] = Field(
-        ..., title="Investigators", description="Investigators on the proposal"
-    )
-
-
 class ChargedTime(BaseModel):
     """Charged time, broken down by priority."""
 
@@ -291,26 +270,6 @@ class RequestedTime(BaseModel):
     )
 
 
-class Phase1Proposal(BaseProposal):
-    """A phase 1 proposal."""
-
-    phase: int = Field(
-        ...,
-        gt=0,
-        lt=2,
-        title="Proposal phase",
-        description="Proposal phase, which must be 1",
-    )
-    targets: List[Phase1Target] = Field(
-        ..., title="Targets", description="Targets for which observations are requested"
-    )
-    requested_times: List[RequestedTime] = Field(
-        ...,
-        title="Requested times",
-        description="Requested times for all semesters in the proposal",
-    )
-
-
 class TimeAllocation(BaseModel):
     """A time allocation."""
 
@@ -346,15 +305,40 @@ class TimeAllocation(BaseModel):
     )
 
 
-class Phase2Proposal(BaseProposal):
-    """A phase 2 proposal."""
+class Proposal(BaseModel):
+    """A proposal."""
 
-    phase: int = Field(
+    proposal_code: ProposalCode = Field(
+        ..., title="Proposal code", description="Proposal code"
+    )
+    phase: Literal[1, 2] = Field(
         ...,
-        gt=1,
-        lt=3,
         title="Proposal phase",
-        description="Proposal phase, which must be 2",
+        description="Proposal phase",
+    )
+    semester: Semester = Field(
+        ...,
+        title="Semester",
+        description="Semester for which the proposal details are given",
+    )
+    general_info: GeneralProposalInfo = Field(
+        ...,
+        title="General information",
+        description="General proposal information for a semester",
+    )
+    investigators: List[Investigator] = Field(
+        ..., title="Investigators", description="Investigators on the proposal"
+    )
+    targets: Optional[List[Phase1Target]] = Field(
+        ..., title="Targets",
+        description="Targets for which observations are requested. These are only "
+                    "included for phase 1 proposals."
+    )
+    requested_times: Optional[List[RequestedTime]] = Field(
+        ...,
+        title="Requested times",
+        description="Requested times for all semesters in the proposal. These are only "
+                    "included for a phase 1 proposal.",
     )
     blocks: List[BlockSummary] = Field(
         ..., title="Blocks", description="Blocks for the semester"
@@ -385,18 +369,6 @@ class ProgressReport(BaseModel):
     """
 
     dummy: str
-
-
-class ProposalContent(BaseModel):
-    """
-    Helper class.
-
-    mypy does not like a Union being used as the value of FastAPI's response_model in a
-    path operation's decorator, so Union[Phase1Proposal, Phase2Proposal] cannot be used.
-    This class can be used instead.
-    """
-
-    __root__: Union[Phase1Proposal, Phase2Proposal]
 
 
 class ProposalContentType(str, Enum):
