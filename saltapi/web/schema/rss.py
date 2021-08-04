@@ -10,6 +10,7 @@ class ArcBibleEntry(BaseModel):
     """RSS arc bible entry."""
 
     lamp: Lamp = Field(..., title="Lamp", description="Calibration lamp")
+    is_preferred_lamp: bool = Field(..., title="Preferred lamp?", description="Is the lamp of the entry the preferred one for the RSS setup?")
     original_exposure_time: float = Field(
         ...,
         title="Original exposure time",
