@@ -34,6 +34,7 @@ SELECT R.Rss_Id                                          AS rss_id,
        RF.Barcode                                        AS filter,
        RMT.RssMaskType                                   AS mask_type,
        RMA.Barcode                                       AS mask_barcode,
+       RPMD.Description                                  AS mask_description,
        RMMD.Equinox                                      AS mos_equinox,
        RMMD.CutBy                                        AS mos_cut_by,
        RMMD.CutDate                                      AS mos_cut_date,
@@ -70,6 +71,7 @@ FROM Rss R
                       RBSO.RssBeamSplitterOrientation_Id
          JOIN RssFilter RF ON RC.RssFilter_Id = RF.RssFilter_Id
          LEFT JOIN RssMask RMA ON RC.RssMask_Id = RMA.RssMask_Id
+         LEFT JOIN RssPredefinedMaskDetails RPMD ON RMA.RssMask_Id = RPMD.RssMask_Id
          LEFT JOIN RssMaskType RMT ON RMA.RssMaskType_Id = RMT.RssMaskType_Id
          LEFT JOIN RssMosMaskDetails RMMD ON RMA.RssMask_Id = RMMD.RssMask_Id
          JOIN RssProcedure RP ON R.RssProcedure_Id = RP.RssProcedure_Id
@@ -144,11 +146,13 @@ ORDER BY Rss_Id DESC;
             mask = {
                 "mask_type": row.mask_type,
                 "barcode": row.mask_barcode,
+                "description": row.mask_description
             }
         else:
             mask = {
                 "mask_type": row.mask_type,
                 "barcode": row.mask_barcode,
+                "description": row.mask_description,
                 "equinox": row.mos_equinox,
                 "cut_by": row.mos_cut_by,
                 "cut_date": row.mos_cut_date,
