@@ -31,7 +31,8 @@ from saltapi.web.schema.proposal import (
     ProposalContentType,
     ProposalListItem,
     ProposalStatusContent,
-    SubmissionAcknowledgment, ProposalContent,
+    SubmissionAcknowledgment,
+    Proposal,
 )
 
 router = APIRouter(prefix="/proposals", tags=["Proposals"])
@@ -67,7 +68,7 @@ def get_proposals(
 @router.get(
     "/{proposal_code}",
     summary="Get a proposal",
-    response_model=ProposalContent,
+    response_model=Proposal,
     responses={200: {"content": {"application/pdf": {}, "application/zip": {}}}},
 )
 def get_proposal(
