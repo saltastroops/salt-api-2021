@@ -387,6 +387,18 @@ class ProgressReport(BaseModel):
     dummy: str
 
 
+class ProposalContent(BaseModel):
+    """
+    Helper class.
+
+    mypy does not like a Union being used as the value of FastAPI's response_model in a
+    path operation's decorator, so Union[Phase1Proposal, Phase2Proposal] cannot be used.
+    This class can be used instead.
+    """
+
+    __root__: Union[Phase1Proposal, Phase2Proposal]
+
+
 class ProposalContentType(str, Enum):
     """Content type for a proposal."""
 

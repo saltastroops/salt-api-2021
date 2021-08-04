@@ -1,5 +1,5 @@
 from datetime import date
-from typing import List, Optional, Any
+from typing import List, Optional
 
 from fastapi import (
     APIRouter,
@@ -31,7 +31,7 @@ from saltapi.web.schema.proposal import (
     ProposalContentType,
     ProposalListItem,
     ProposalStatusContent,
-    SubmissionAcknowledgment,
+    SubmissionAcknowledgment, ProposalContent,
 )
 
 router = APIRouter(prefix="/proposals", tags=["Proposals"])
@@ -67,7 +67,7 @@ def get_proposals(
 @router.get(
     "/{proposal_code}",
     summary="Get a proposal",
-    response_model=Any,
+    response_model=ProposalContent,
     responses={200: {"content": {"application/pdf": {}, "application/zip": {}}}},
 )
 def get_proposal(
