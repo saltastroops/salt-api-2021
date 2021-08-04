@@ -1,8 +1,6 @@
 from typing import Any
 
-from fastapi import FastAPI
 from fastapi import FastAPI, Depends, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
 from starlette import status
 

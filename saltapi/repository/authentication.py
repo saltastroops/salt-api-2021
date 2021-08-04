@@ -1,9 +1,10 @@
 from typing import Dict, Any, Optional, cast
 from datetime import datetime, timedelta
 
-from fastapi import Depends
+from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.engine import Connection
+from starlette import status
 
 from saltapi.repository.unit_of_work import UnitOfWork
 from saltapi.repository.user_repository import UserRepository
@@ -65,14 +66,21 @@ class AuthenticationRepository:
 
 def is_user_admin_or_salt_astronomer(token: str = Depends(oauth2_scheme)):
     with UnitOfWork() as unit_of_work:
-        user_repository = UserRepository(unit_of_work.connection)
-        authentication_repository = AuthenticationRepository(
-            unit_of_work.connection,
-            user_repository)
+        try:
+            user_repository = UserRepository(unit_of_work.connection)
+            authentication_repository = AuthenticationRepository(
+                unit_of_work.connection,
+                user_repository)
 
-        user = authentication_repository.validate_auth_token(token)
-        if user_repository.is_administrator(user.username):
-            return True
-        if user_repository.is_salt_astronomer(user.username):
-            return True
-        return False
+            user = authentication_repository.validate_auth_token(token)
+            if user_repository.is_administrator(user.username):
+                return True
+            if user_repository.is_salt_astronomer(user.username):
+                return True
+            return False
+        except:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Could not validate token.",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
