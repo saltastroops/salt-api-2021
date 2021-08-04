@@ -67,10 +67,14 @@ class GuideStar(TargetCoordinates):
 class Instruments(BaseModel):
     """Instrument setups."""
 
-    salticam: Optional[List[Salticam]] = Field(..., title="Salticam setups", description="Salticam setups")
+    salticam: Optional[List[Salticam]] = Field(
+        ..., title="Salticam setups", description="Salticam setups"
+    )
     rss: Optional[List[Rss]] = Field(..., title="RSS setups", description="RSS setups")
     hrs: Optional[List[Hrs]] = Field(..., title="HRS setups", description="HRS setups")
-    bvit: Optional[List[Bvit]] = Field(..., title="BVIT setups", description="HRS setups")
+    bvit: Optional[List[Bvit]] = Field(
+        ..., title="BVIT setups", description="HRS setups"
+    )
 
 
 class PayloadConfigurationType(str, Enum):
@@ -115,7 +119,9 @@ class PayloadConfiguration(BaseModel):
     guide_method: GuideMethod = Field(
         ..., title="Guide method", description="Guide method"
     )
-    instruments: Instruments = Field(..., title="Instrument setups", description="Instrument setups")
+    instruments: Instruments = Field(
+        ..., title="Instrument setups", description="Instrument setups"
+    )
 
 
 class TelescopeConfiguration(BaseModel):

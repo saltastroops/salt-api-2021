@@ -330,15 +330,16 @@ class Proposal(BaseModel):
         ..., title="Investigators", description="Investigators on the proposal"
     )
     targets: Optional[List[Phase1Target]] = Field(
-        ..., title="Targets",
+        ...,
+        title="Targets",
         description="Targets for which observations are requested. These are only "
-                    "included for phase 1 proposals."
+        "included for phase 1 proposals.",
     )
     requested_times: Optional[List[RequestedTime]] = Field(
         ...,
         title="Requested times",
         description="Requested times for all semesters in the proposal. These are only "
-                    "included for a phase 1 proposal.",
+        "included for a phase 1 proposal.",
     )
     blocks: List[BlockSummary] = Field(
         ..., title="Blocks", description="Blocks for the semester"
@@ -358,7 +359,11 @@ class Proposal(BaseModel):
         title="Time allocations",
         description="Time allocations for the semester",
     )
-    observation_comments: List[ObservationComment] = Field(..., title="Observation comments", description="Comments related to observing the proposal")
+    observation_comments: List[ObservationComment] = Field(
+        ...,
+        title="Observation comments",
+        description="Comments related to observing the proposal",
+    )
 
 
 class ProgressReport(BaseModel):

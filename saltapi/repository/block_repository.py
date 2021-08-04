@@ -405,21 +405,31 @@ ORDER BY TCOC.Pointing_Id, TCOC.Observation_Order, TCOC.TelescopeConfig_Order,
 
         return payload_config
 
-    def _instruments(self, payload_config_row: Any) -> Dict[str, Optional[List[Dict[str, Any]]]]:
+    def _instruments(
+        self, payload_config_row: Any
+    ) -> Dict[str, Optional[List[Dict[str, Any]]]]:
         if payload_config_row.salticam_pattern_id is not None:
-            salticam_setups: Optional[List[Dict[str, Any]]] = self._salticam_setups(payload_config_row.salticam_pattern_id)
+            salticam_setups: Optional[List[Dict[str, Any]]] = self._salticam_setups(
+                payload_config_row.salticam_pattern_id
+            )
         else:
             salticam_setups = None
         if payload_config_row.rss_pattern_id is not None:
-            rss_setups: Optional[List[Dict[str, Any]]] = self._rss_setups(payload_config_row.rss_pattern_id)
+            rss_setups: Optional[List[Dict[str, Any]]] = self._rss_setups(
+                payload_config_row.rss_pattern_id
+            )
         else:
             rss_setups = None
         if payload_config_row.hrs_pattern_id is not None:
-            hrs_setups: Optional[List[Dict[str, Any]]] = self._hrs_setups(payload_config_row.hrs_pattern_id)
+            hrs_setups: Optional[List[Dict[str, Any]]] = self._hrs_setups(
+                payload_config_row.hrs_pattern_id
+            )
         else:
             hrs_setups = None
         if payload_config_row.bvit_pattern_id is not None:
-            bvit_setups: Optional[List[Dict[str, Any]]] = self._bvit_setups(payload_config_row.bvit_pattern_id)
+            bvit_setups: Optional[List[Dict[str, Any]]] = self._bvit_setups(
+                payload_config_row.bvit_pattern_id
+            )
         else:
             bvit_setups = None
 
@@ -427,7 +437,7 @@ ORDER BY TCOC.Pointing_Id, TCOC.Observation_Order, TCOC.TelescopeConfig_Order,
             "salticam": salticam_setups,
             "rss": rss_setups,
             "hrs": hrs_setups,
-            "bvit": bvit_setups
+            "bvit": bvit_setups,
         }
 
         return instruments

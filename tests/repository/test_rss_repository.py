@@ -83,7 +83,9 @@ def test_detector_calculation(
         assert calculation == expected_calculation
 
 
-def test_procedure_types(dbconnection: Connection, testdata: Callable[[str], Any]) -> None:
+def test_procedure_types(
+    dbconnection: Connection, testdata: Callable[[str], Any]
+) -> None:
     data = testdata(TEST_DATA)["procedure_types"]
     for d in data:
         rss_id = d["rss_id"]

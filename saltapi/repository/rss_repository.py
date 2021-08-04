@@ -219,7 +219,7 @@ ORDER BY Rss_Id DESC;
             "MOS PEAKUP": "MOS Peakup",
             "NOD AND SHUFFLE": "Nod and Shuffle",
             "NORMAL": "Normal",
-            "POLARIMETRY": "Polarimetry"
+            "POLARIMETRY": "Polarimetry",
         }
 
         return procedure_types[row.procedure_type]
