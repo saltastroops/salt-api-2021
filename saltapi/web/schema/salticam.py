@@ -16,12 +16,12 @@ class SalticamDetectorMode(str, Enum):
 class SalticamDetectorWindow(BaseModel):
     """Salticam detector window."""
 
-    center_right_ascension: int = Field(
+    center_right_ascension: float = Field(
         ...,
         title="Center right ascension",
         description="Right ascension of the detector window center, in degrees",
     )
-    center_declination: int = Field(
+    center_declination: float = Field(
         ...,
         title="Center declination",
         description="Declination of the detector window center, in degrees",
