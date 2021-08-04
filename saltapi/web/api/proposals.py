@@ -1,5 +1,5 @@
 from datetime import date
-from typing import List, Optional
+from typing import List, Optional, Any
 
 from fastapi import (
     APIRouter,
@@ -68,7 +68,7 @@ def get_proposals(
 @router.get(
     "/{proposal_code}",
     summary="Get a proposal",
-    response_model=Proposal,
+    response_model=Any,
     responses={200: {"content": {"application/pdf": {}, "application/zip": {}}}},
 )
 def get_proposal(
@@ -89,7 +89,7 @@ def get_proposal(
         title="Accepted content type",
         description="Content type that should be returned.",
     ),
-) -> Response:
+) -> Any:
     """
     Returns the proposal with a given proposal code. The proposal can be requested in
     either of three formats:
@@ -126,7 +126,7 @@ def get_proposal(
     with UnitOfWork() as unit_of_work:
         proposal_repository = ProposalRepository(unit_of_work.connection)
         proposal_service = ProposalService(proposal_repository)
-        return JSONResponse(proposal_service.get_proposal(proposal_code))
+        return proposal_service.get_proposal(proposal_code)
 
 
 @router.post(
