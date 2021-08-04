@@ -118,7 +118,9 @@ def test_target(dbconnection: Connection, testdata: Callable[[str], Any]) -> Non
 
 
 @nodatabase
-def test_finder_charts(dbconnection: Connection, testdata: Callable[[str], Any]) -> None:
+def test_finder_charts(
+    dbconnection: Connection, testdata: Callable[[str], Any]
+) -> None:
     data = testdata(TEST_DATA)["finder_charts"]
     for d in data:
         block_id = d["block_id"]
@@ -131,7 +133,9 @@ def test_finder_charts(dbconnection: Connection, testdata: Callable[[str], Any])
 
 
 @nodatabase
-def test_finder_charts_with_validity(dbconnection: Connection, testdata: Callable[[str], Any]) -> None:
+def test_finder_charts_with_validity(
+    dbconnection: Connection, testdata: Callable[[str], Any]
+) -> None:
     data = testdata(TEST_DATA)["finder_charts_with_validity"]
     block_id = data["block_id"]
     expected_last_finder_chart = data["last_finder_chart"]
@@ -140,6 +144,7 @@ def test_finder_charts_with_validity(dbconnection: Connection, testdata: Callabl
     finder_charts = block["observations"][0]["finder_charts"]
 
     assert finder_charts[-1] == expected_last_finder_chart
+
 
 @nodatabase
 def test_time_restrictions(

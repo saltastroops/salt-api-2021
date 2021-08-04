@@ -48,10 +48,18 @@ class DitherPattern(BaseModel):
 
 
 class FinderChart(BaseModel):
-    id: int = Field(..., title="Finder chart", description="Unique identifier for the finder chart")
-    comment: Optional[str] = Field(..., title="Comment by the Principal Investigator regarding the finder chart")
-    validFrom: datetime = Field(..., title="Time from when the finder chart may be used")
-    validUntil: datetime = Field(..., title="Time until when the finder chart may be used")
+    id: int = Field(
+        ..., title="Finder chart", description="Unique identifier for the finder chart"
+    )
+    comment: Optional[str] = Field(
+        ..., title="Comment by the Principal Investigator regarding the finder chart"
+    )
+    validFrom: datetime = Field(
+        ..., title="Time from when the finder chart may be used"
+    )
+    validUntil: datetime = Field(
+        ..., title="Time until when the finder chart may be used"
+    )
 
 
 class GuideMethod(str, Enum):
@@ -175,7 +183,9 @@ class Observation(BaseModel):
         ..., title="Overhead time for the observation, in seconds", gt=0
     )
     target: Target = Field(..., title="Target", description="Target to be observed")
-    finder_charts: List[FinderChart] = Field(..., title="Finder charts", description="Finder charts")
+    finder_charts: List[FinderChart] = Field(
+        ..., title="Finder charts", description="Finder charts"
+    )
     time_restrictions: Optional[List[TimeInterval]] = Field(
         ...,
         title="Time restrictions",

@@ -175,7 +175,8 @@ ORDER BY BVW.VisibilityStart;
         ]
 
     def _finder_charts(self, pointing_id: int) -> List[Dict[str, Any]]:
-        stmt = text("""
+        stmt = text(
+            """
 SELECT FC.FindingChart_Id AS finding_chart_id,
        FC.Comments        AS comments,
        FC.ValidFrom       AS valid_from,
@@ -183,10 +184,23 @@ SELECT FC.FindingChart_Id AS finding_chart_id,
 FROM FindingChart FC
 WHERE FC.Pointing_Id = :pointing_id
 ORDER BY ValidFrom, FindingChart_Id
-        """)
+        """
+        )
         result = self.connection.execute(stmt, {"pointing_id": pointing_id})
 
-        return [{"id": row.finding_chart_id, "comment": row.comments, "valid_from": pytz.utc.localize(row.valid_from) if row.valid_from else None, "valid_until": pytz.utc.localize(row.valid_until) if row.valid_until else None} for row in result]
+        return [
+            {
+                "id": row.finding_chart_id,
+                "comment": row.comments,
+                "valid_from": pytz.utc.localize(row.valid_from)
+                if row.valid_from
+                else None,
+                "valid_until": pytz.utc.localize(row.valid_until)
+                if row.valid_until
+                else None,
+            }
+            for row in result
+        ]
 
     def _time_restrictions(
         self, pointing_id: int

@@ -318,7 +318,7 @@ WHERE PC.Proposal_Code = :proposal_code
             "proposal_type": row.proposal_type,
             "target_of_opportunity": row.target_of_opportunity,
             "total_requested_time": row.total_requested_time,
-            "proprietary_period": row.proprietary_period
+            "proprietary_period": row.proprietary_period,
         }
 
         if info["proposal_type"] == "Director Discretionary Time (DDT)":
@@ -327,7 +327,7 @@ WHERE PC.Proposal_Code = :proposal_code
         info["liaison_salt_astronomer"] = {
             "given_name": row.astronomer_given_name,
             "family_name": row.astronomer_family_name,
-            "email": row.astronomer_email
+            "email": row.astronomer_email,
         }
 
         info["first_submission"] = self._first_submission_date(proposal_code)
