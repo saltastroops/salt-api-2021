@@ -1,3 +1,4 @@
+from datetime import datetime
 from enum import Enum
 from typing import List, Optional
 
@@ -8,6 +9,7 @@ from saltapi.web.schema.common import Lamp, TargetCoordinates, TimeInterval
 from saltapi.web.schema.hrs import Hrs
 from saltapi.web.schema.rss import Rss
 from saltapi.web.schema.salticam import Salticam
+from saltapi.web.schema.target import Target
 
 
 class CalibrationFilter(str, Enum):
@@ -43,6 +45,13 @@ class DitherPattern(BaseModel):
         description="Offset size, i.e. size of a dither step, in arcseconds",
     )
     steps: int = Field(..., title="Number of steps", description="Number of steps")
+
+
+class FinderChart(BaseModel):
+    id: int = Field(..., title="Finder chart", description="Unique identifier for the finder chart")
+    comment: Optional[str] = Field(..., title="Comment by the Principal Investigator regarding the finder chart")
+    validFrom: datetime = Field(..., title="Time from when the finder chart may be used")
+    validUntil: datetime = Field(..., title="Time until when the finder chart may be used")
 
 
 class GuideMethod(str, Enum):
@@ -165,6 +174,8 @@ class Observation(BaseModel):
     overhead_time: int = Field(
         ..., title="Overhead time for the observation, in seconds", gt=0
     )
+    target: Target = Field(..., title="Target", description="Target to be observed")
+    finder_charts: List[FinderChart] = Field(..., title="Finder charts", description="Finder charts")
     time_restrictions: Optional[List[TimeInterval]] = Field(
         ...,
         title="Time restrictions",
