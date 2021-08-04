@@ -106,10 +106,11 @@ ORDER BY Rss_Id DESC;
         if not row.has_spectroscopy:
             return None
 
-        camera_angle = row.articulation_station.split("_")[1]
+        camera_station, camera_angle = row.articulation_station.split("_")
         spectroscopy = {
             "grating": row.grating,
             "grating_angle": row.grating_angle,
+            "camera_station": int(camera_station),
             "camera_angle": float(camera_angle),
         }
         return spectroscopy

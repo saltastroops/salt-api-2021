@@ -54,6 +54,7 @@ class RssSpectroscopy(BaseModel):
     grating_angle: float = Field(
         ..., title="Grating angle", description="Grating angle, in degrees", ge=0
     )
+    camera_station: int = Field(..., title="Camera station", description="Camera (articulation) station number")
     camera_angle: float = Field(
         ...,
         title="Camera angle",
