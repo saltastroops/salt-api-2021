@@ -1,7 +1,7 @@
 from typing import List
 
 from saltapi.repository.proposal_repository import ProposalRepository
-from saltapi.service.proposal import ProposalSummary, Proposal
+from saltapi.service.proposal import Proposal, ProposalSummary
 
 
 class ProposalService:

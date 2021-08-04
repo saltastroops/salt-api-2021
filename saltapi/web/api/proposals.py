@@ -13,7 +13,7 @@ from fastapi import (
     UploadFile,
     status,
 )
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 
 from saltapi.repository.proposal_repository import ProposalRepository
 from saltapi.repository.unit_of_work import UnitOfWork
@@ -28,11 +28,11 @@ from saltapi.web.schema.proposal import (
     DataReleaseDateUpdate,
     ObservationComment,
     ProgressReport,
+    Proposal,
     ProposalContentType,
     ProposalListItem,
     ProposalStatusContent,
     SubmissionAcknowledgment,
-    Proposal,
 )
 
 router = APIRouter(prefix="/proposals", tags=["Proposals"])
@@ -126,7 +126,7 @@ def get_proposal(
     with UnitOfWork() as unit_of_work:
         proposal_repository = ProposalRepository(unit_of_work.connection)
         proposal_service = ProposalService(proposal_repository)
-        return proposal_service.get_proposal(proposal_code)
+        return JSONResponse(proposal_service.get_proposal(proposal_code))
 
 
 @router.post(

@@ -1,6 +1,4 @@
-from typing import Any
-
-from fastapi import Query, APIRouter
+from fastapi import APIRouter, Query
 
 from saltapi.repository.block_repository import BlockRepository
 from saltapi.repository.instrument_repository import InstrumentRepository
@@ -8,11 +6,10 @@ from saltapi.repository.target_repository import TargetRepository
 from saltapi.repository.unit_of_work import UnitOfWork
 from saltapi.service.block import Block
 
-
 router = APIRouter(prefix="/blocks", tags=["Block"])
 
 
-@router.get("/{block_id}", summary="Get a block", response_model=Any)
+@router.get("/{block_id}", summary="Get a block")
 def get_block(
     block_id: int = Query(
         ..., title="Block id", description="Unique identifier for the block"

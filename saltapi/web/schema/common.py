@@ -1,7 +1,7 @@
 import re
 from datetime import date, datetime
 from enum import Enum, IntEnum
-from typing import Any, Callable, Dict, Generator, List, Optional, ForwardRef
+from typing import Any, Callable, Dict, Generator, List, Optional
 
 from pydantic import BaseModel, Field
 

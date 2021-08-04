@@ -11,7 +11,6 @@ from saltapi.service.block_service import BlockService
 from saltapi.web.api.blocks import router as blocks_router
 from saltapi.web.api.proposals import router as proposals_router
 
-
 app = FastAPI()
 origins = ["http://127.0.0.1:4200", "http://localhost:4200"]
 
@@ -23,7 +22,7 @@ app.include_router(blocks_router)
 app.include_router(proposals_router)
 
 
-@app.get("/{block_id}", response_model=Any)
+@app.get("/{block_id}")
 def home(block_id: int) -> Any:
     with UnitOfWork() as unit_of_work:
         # proposals_dir = Settings().proposals_dir

@@ -1,10 +1,10 @@
 from enum import Enum
-from typing import List, Optional, ForwardRef
+from typing import List, Optional
 
 from pydantic import BaseModel, Field
 
 from saltapi.web.schema.bvit import Bvit
-from saltapi.web.schema.common import TargetCoordinates, TimeInterval, Lamp
+from saltapi.web.schema.common import Lamp, TargetCoordinates, TimeInterval
 from saltapi.web.schema.hrs import Hrs
 from saltapi.web.schema.rss import Rss
 from saltapi.web.schema.salticam import Salticam
