@@ -1,7 +1,7 @@
 import re
 from datetime import date, datetime
 from enum import Enum, IntEnum
-from typing import Any, Callable, Dict, Generator, List, Optional
+from typing import Any, Callable, Dict, Generator, List, Optional, ForwardRef
 
 from pydantic import BaseModel, Field
 
@@ -29,6 +29,22 @@ class BaseExecutedObservation(BaseModel):
     )
 
 
+class Priority(IntEnum):
+    """
+    A block priority.
+
+    Priority 0 is the highest priority and should only be used for a target of
+    opportunity. Priority 4 observations are only done if there are no other
+    observations with another priority.
+    """
+
+    P0 = 0
+    P1 = 1
+    P2 = 2
+    P3 = 3
+    P4 = 4
+
+
 class ExecutedObservation(BaseExecutedObservation):
     """An observation made."""
 
@@ -43,7 +59,7 @@ class ExecutedObservation(BaseExecutedObservation):
         title="Observation time",
         description="Time charged for the observation, in seconds",
     )
-    priority: "Priority" = Field(
+    priority: Priority = Field(
         ..., title="Block priority", description="Priority of the observed block"
     )
     targets: List[str] = Field(
@@ -163,22 +179,6 @@ class PartnerName(str, Enum):
     UKSC = "UK SALT Consortium"
     UNC = "University of North Carolina - Chapel Hill"
     UW = "University of Wisconsin-Madison"
-
-
-class Priority(IntEnum):
-    """
-    A block priority.
-
-    Priority 0 is the highest priority and should only be used for a target of
-    opportunity. Priority 4 observations are only done if there are no other
-    observations with another priority.
-    """
-
-    P0 = 0
-    P1 = 1
-    P2 = 2
-    P3 = 3
-    P4 = 4
 
 
 class ProposalCode(str):

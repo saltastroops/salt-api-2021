@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import List, Optional
+from typing import List, Optional, ForwardRef
 
 from pydantic import BaseModel, Field
 
@@ -73,37 +73,30 @@ class Instruments(BaseModel):
     bvit: Optional[List[Bvit]] = Field(..., title="BVIT setups", description="HRS setups")
 
 
-class Observation(BaseModel):
-    """Observation."""
+class PayloadConfigurationType(str, Enum):
+    """Payload configuration type."""
 
-    observation_time: int = Field(
-        ...,
-        title="Observation time",
-        description="Time required for executing the observation, including the overhead time, in seconds",
-        gt=0,
+    ACQUISITION = "Acquisition"
+    CALIBRATION = "Calibration"
+    INSTRUMENT_ACQUISITION = "Instrument Acquisition"
+    SCIENCE = "Science"
+
+
+class PhaseInterval(BaseModel):
+    """Phase interval."""
+
+    start: float = Field(
+        ..., title="Interval start", description="Start phase of the interval"
     )
-    overhead_time: int = Field(
-        ..., title="Overhead time for the observation, in seconds", gt=0
-    )
-    time_restrictions: Optional[List[TimeInterval]] = Field(
-        ...,
-        title="Time restrictions",
-        description="List of time intervals outside which the observation should not be made",
-    )
-    phase_constraints: Optional[List["PhaseInterval"]] = Field(
-        ...,
-        title="Phase constraints",
-        description="List of phase constraints. An observation should only be made when the phase of the (periodic) target is one of these intervals",
-    )
-    telescope_configurations: List["TelescopeConfiguration"] = Field(
-        ..., title="Telescope configurations", description="Telescope configurations"
+    end: float = Field(
+        ..., title="Interval end", description="End phase of the interval"
     )
 
 
 class PayloadConfiguration(BaseModel):
     """Payload configuration."""
 
-    payload_configuration_type: Optional["PayloadConfigurationType"] = Field(
+    payload_configuration_type: Optional[PayloadConfigurationType] = Field(
         ...,
         title="Payload configuration type",
         description="Payload configuration type",
@@ -123,26 +116,6 @@ class PayloadConfiguration(BaseModel):
         ..., title="Guide method", description="Guide method"
     )
     instruments: Instruments = Field(..., title="Instrument setups", description="Instrument setups")
-
-
-class PayloadConfigurationType(str, Enum):
-    """Payload configuration type."""
-
-    ACQUISITION = "Acquisition"
-    CALIBRATION = "Calibration"
-    INSTRUMENT_ACQUISITION = "Instrument Acquisition"
-    SCIENCE = "Science"
-
-
-class PhaseInterval(BaseModel):
-    """Phase interval."""
-
-    start: float = Field(
-        ..., title="Interval start", description="Start phase of the interval"
-    )
-    end: float = Field(
-        ..., title="Interval end", description="End phase of the interval"
-    )
 
 
 class TelescopeConfiguration(BaseModel):
@@ -171,4 +144,31 @@ class TelescopeConfiguration(BaseModel):
     )
     payload_configurations: List[PayloadConfiguration] = Field(
         ..., title="Payload configurations", description="Payload configurations"
+    )
+
+
+class Observation(BaseModel):
+    """Observation."""
+
+    observation_time: int = Field(
+        ...,
+        title="Observation time",
+        description="Time required for executing the observation, including the overhead time, in seconds",
+        gt=0,
+    )
+    overhead_time: int = Field(
+        ..., title="Overhead time for the observation, in seconds", gt=0
+    )
+    time_restrictions: Optional[List[TimeInterval]] = Field(
+        ...,
+        title="Time restrictions",
+        description="List of time intervals outside which the observation should not be made",
+    )
+    phase_constraints: Optional[List[PhaseInterval]] = Field(
+        ...,
+        title="Phase constraints",
+        description="List of phase constraints. An observation should only be made when the phase of the (periodic) target is one of these intervals",
+    )
+    telescope_configurations: List[TelescopeConfiguration] = Field(
+        ..., title="Telescope configurations", description="Telescope configurations"
     )

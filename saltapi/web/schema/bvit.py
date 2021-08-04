@@ -1,28 +1,7 @@
 from enum import Enum
-from typing import List, Literal
+from typing import List, Literal, ForwardRef
 
 from pydantic import BaseModel, Field
-
-
-class Bvit(BaseModel):
-    """BVIT setup."""
-
-    id: int = Field(
-        ..., title="BVIT id", description="Unique identifier for the BVIT setup"
-    )
-    mode: "BvitMode" = Field(..., title="Instrument mode", description="Instrument mode")
-    filter: "BvitFilter" = Field(..., title="Filter", description="Filter")
-    neutral_density: "BvitNeutralDensity" = Field(
-        ..., title="Neutral density", description="Neutral density setting"
-    )
-    iris_size: float = Field(
-        ..., title="Iris size", description="Iris size, in arcminutes"
-    )
-    shutter_open_time: float = Field(
-        ...,
-        title="Shutter open time",
-        description="Time for which the shutter must remain open, in seconds",
-    )
 
 
 class BvitFilter(str, Enum):
@@ -53,6 +32,27 @@ class BvitNeutralDensity(str, Enum):
     _3_0 = "3.0"
     _4_0 = "4.0"
     OPEN = "Open"
+
+
+class Bvit(BaseModel):
+    """BVIT setup."""
+
+    id: int = Field(
+        ..., title="BVIT id", description="Unique identifier for the BVIT setup"
+    )
+    mode: BvitMode = Field(..., title="Instrument mode", description="Instrument mode")
+    filter: BvitFilter = Field(..., title="Filter", description="Filter")
+    neutral_density: BvitNeutralDensity = Field(
+        ..., title="Neutral density", description="Neutral density setting"
+    )
+    iris_size: float = Field(
+        ..., title="Iris size", description="Iris size, in arcminutes"
+    )
+    shutter_open_time: float = Field(
+        ...,
+        title="Shutter open time",
+        description="Time for which the shutter must remain open, in seconds",
+    )
 
 
 class BvitSummary(BaseModel):

@@ -1,104 +1,7 @@
 from enum import Enum
-from typing import List, Literal, Optional
+from typing import List, Literal, Optional, ForwardRef
 
 from pydantic import BaseModel, Field
-
-
-class Hrs(BaseModel):
-    """An HRS setup."""
-
-    id: int = Field(
-        ..., title="HRS id", description="Unique identifier for the HRS setup"
-    )
-    configuration: "HrsConfiguration" = Field(
-        ..., title="Instrument configuration", description="Instrument configuration"
-    )
-    blue_detector: "HrsBlueDetector" = Field(
-        ..., title="Blue detector setup", description="Blue detector setup"
-    )
-    red_detector: "HrsRedDetector" = Field(
-        ..., title="Red detector setup", description="Red detector setup"
-    )
-    procedure: "HrsProcedure" = Field(
-        ..., title="Instrument procedure", description="Instrument procedure"
-    )
-    observation_time: float = Field(
-        ...,
-        title="Observation time",
-        description="Total time required for the setup, in seconds",
-        ge=0,
-    )
-    overhead_time: float = Field(
-        ...,
-        title="Overhead time",
-        description="Overhead time for the setup, in seconds",
-        ge=0,
-    )
-
-
-class HrsDetector(BaseModel):
-    """HRS detector setup common to the red and blue detector."""
-
-    pre_shuffled_rows: int = Field(
-        ...,
-        title="Pre-shuffled rows",
-        description="Number of rows to shuffle before an exposure",
-        ge=0,
-    )
-    post_shuffled_rows: int = Field(
-        ...,
-        title="Post-shuffled rows",
-        description="Number of rows to shuffle before an exposure",
-        ge=0,
-    )
-    pre_binned_rows: int = Field(
-        ...,
-        title="Pre-binned rows",
-        description="Number of CCD rows to combine during readout",
-        ge=1,
-    )
-    pre_binned_columns: int = Field(
-        ...,
-        title="Pre-binned columns",
-        description="Number of CCD columns to combine during readout",
-        ge=1,
-    )
-    iterations: int = Field(
-        ..., title="Number of exposures", description="Number of exposures", ge=1
-    )
-    readout_speed: "HrsReadoutSpeed" = Field(
-        ..., title="Readout speed", description="Readout speed"
-    )
-
-
-class HrsBlueDetector(HrsDetector):
-    """HRS blue detector setup."""
-
-    readout_amplifiers: Literal[1, 2] = Field(
-        ...,
-        title="Readout amplifiers",
-        description="Number of amplifiers tyo be used during readout",
-    )
-
-
-class HrsConfiguration(BaseModel):
-    """HRS configuration."""
-
-    mode: "HrsMode" = Field(..., title="Instrument mode", description="Instrument mode")
-    exposure_type: "HrsExposureType" = Field(
-        ..., title="Exposure type", description="Exposure type"
-    )
-    target_location: "HrsTargetLocation"
-    fiber_separation: float = Field(..., title="Fiber separation, in arcseconds")
-    iodine_cell_position: "HrsIodineCellPosition" = Field(
-        ..., title="Iodine cell position", description="Iodine cell position"
-    )
-    is_th_ar_lamp_on: bool = Field(
-        ..., title="ThAr lamp on?", description="Whether the ThAr lamp is on"
-    )
-    nod_and_shuffle: Optional["HrsNodAndShuffle"] = Field(
-        ..., title="Node and shuffle", description="Nod and shuffle settings"
-    )
 
 
 class HrsExposureType(str, Enum):
@@ -141,6 +44,95 @@ class HrsNodAndShuffle(BaseModel):
     )
 
 
+class HrsTargetLocation(str, Enum):
+    """HRS target location."""
+
+    BISECT = "The star and sky fiber are equidistant from the optical axis"
+    SKY = "The sky fiber is placed on the optical axis"
+    STAR = "The star fiber is placed on the optical axis"
+
+
+class HrsConfiguration(BaseModel):
+    """HRS configuration."""
+
+    mode: HrsMode = Field(..., title="Instrument mode", description="Instrument mode")
+    exposure_type: HrsExposureType = Field(
+        ..., title="Exposure type", description="Exposure type"
+    )
+    target_location: HrsTargetLocation
+    fiber_separation: float = Field(..., title="Fiber separation, in arcseconds")
+    iodine_cell_position: HrsIodineCellPosition = Field(
+        ..., title="Iodine cell position", description="Iodine cell position"
+    )
+    is_th_ar_lamp_on: bool = Field(
+        ..., title="ThAr lamp on?", description="Whether the ThAr lamp is on"
+    )
+    nod_and_shuffle: Optional[HrsNodAndShuffle] = Field(
+        ..., title="Node and shuffle", description="Nod and shuffle settings"
+    )
+
+
+class HrsReadoutSpeed(str, Enum):
+    FAST = "Fast"
+    NONE = "None"
+    SLOW = "Slow"
+
+
+class HrsDetector(BaseModel):
+    """HRS detector setup common to the red and blue detector."""
+
+    pre_shuffled_rows: int = Field(
+        ...,
+        title="Pre-shuffled rows",
+        description="Number of rows to shuffle before an exposure",
+        ge=0,
+    )
+    post_shuffled_rows: int = Field(
+        ...,
+        title="Post-shuffled rows",
+        description="Number of rows to shuffle before an exposure",
+        ge=0,
+    )
+    pre_binned_rows: int = Field(
+        ...,
+        title="Pre-binned rows",
+        description="Number of CCD rows to combine during readout",
+        ge=1,
+    )
+    pre_binned_columns: int = Field(
+        ...,
+        title="Pre-binned columns",
+        description="Number of CCD columns to combine during readout",
+        ge=1,
+    )
+    iterations: int = Field(
+        ..., title="Number of exposures", description="Number of exposures", ge=1
+    )
+    readout_speed: HrsReadoutSpeed = Field(
+        ..., title="Readout speed", description="Readout speed"
+    )
+
+
+class HrsBlueDetector(HrsDetector):
+    """HRS blue detector setup."""
+
+    readout_amplifiers: Literal[1, 2] = Field(
+        ...,
+        title="Readout amplifiers",
+        description="Number of amplifiers tyo be used during readout",
+    )
+
+
+class HrsRedDetector(HrsDetector):
+    """HRS blue detector setup."""
+
+    readout_amplifiers: Literal[1, 4] = Field(
+        ...,
+        title="Readout amplifiers",
+        description="Number of amplifiers tyo be used during readout",
+    )
+
+
 class HrsProcedure(BaseModel):
     """HRS procedure."""
 
@@ -161,19 +153,35 @@ class HrsProcedure(BaseModel):
     )
 
 
-class HrsReadoutSpeed(str, Enum):
-    FAST = "Fast"
-    NONE = "None"
-    SLOW = "Slow"
+class Hrs(BaseModel):
+    """An HRS setup."""
 
-
-class HrsRedDetector(HrsDetector):
-    """HRS blue detector setup."""
-
-    readout_amplifiers: Literal[1, 4] = Field(
+    id: int = Field(
+        ..., title="HRS id", description="Unique identifier for the HRS setup"
+    )
+    configuration: HrsConfiguration = Field(
+        ..., title="Instrument configuration", description="Instrument configuration"
+    )
+    blue_detector: HrsBlueDetector = Field(
+        ..., title="Blue detector setup", description="Blue detector setup"
+    )
+    red_detector: HrsRedDetector = Field(
+        ..., title="Red detector setup", description="Red detector setup"
+    )
+    procedure: HrsProcedure = Field(
+        ..., title="Instrument procedure", description="Instrument procedure"
+    )
+    observation_time: float = Field(
         ...,
-        title="Readout amplifiers",
-        description="Number of amplifiers tyo be used during readout",
+        title="Observation time",
+        description="Total time required for the setup, in seconds",
+        ge=0,
+    )
+    overhead_time: float = Field(
+        ...,
+        title="Overhead time",
+        description="Overhead time for the setup, in seconds",
+        ge=0,
     )
 
 
@@ -186,11 +194,3 @@ class HrsSummary(BaseModel):
     modes: List[HrsMode] = Field(
         ..., title="Instrument modes", description="Used instrument modes"
     )
-
-
-class HrsTargetLocation(str, Enum):
-    """HRS target location."""
-
-    BISECT = "The star and sky fiber are equidistant from the optical axis"
-    SKY = "The sky fiber is placed on the optical axis"
-    STAR = "The star fiber is placed on the optical axis"

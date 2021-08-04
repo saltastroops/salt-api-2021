@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import List, Optional, Union
+from typing import List, Optional, Union, ForwardRef
 
 from pydantic import BaseModel, Field
 
@@ -19,6 +19,59 @@ from saltapi.web.schema.rss import RssSummary
 from saltapi.web.schema.salticam import SalticamSummary
 
 
+class BlockStatus(str, Enum):
+    """Block status."""
+
+    ACTIVE = "Active"
+    COMPLETED = "Completed"
+    DELETED = "Deleted"
+    EXPIRED = "Expired"
+    NOT_SET = "Not set"
+    ON_HOLD = "On Hold"
+    SUPERSEDED = "Superseded"
+
+
+class Transparency(str, Enum):
+    """Sky transparency."""
+
+    ANY = "Any"
+    CLEAR = "Clear"
+    THICK_CLOUD = "Thick cloud"
+    THIN_CLOUD = "Thin cloud"
+
+
+class ObservingConditions(BaseModel):
+    minimum_seeing: Optional[float] = Field(
+        ...,
+        title="Minimum seeing",
+        description="Minimum seeing allowed for an observation, in arcseconds",
+        ge=0,
+    )
+    maximum_seeing: float = Field(
+        ...,
+        title="Maximum seeing",
+        description="Maximum seeing allowed for an observation, in arcseconds",
+        ge=0,
+    )
+    transparency: Transparency = Field(
+        ...,
+        title="Transparency",
+        description="Sky transparency required for an observation",
+    )
+    maximum_lunar_phase: float = Field(
+        ...,
+        title="Maximum lunar phase",
+        description="Maximum lunar phase which was allowed for the observation, as the percentage of lunar illumination",
+        ge=0,
+        le=100,
+    )
+    minimum_lunar_distance: float = Field(
+        ...,
+        title="Minimum lunar distance",
+        description="Minimum required angular distance between the Moon and the target, in degrees",
+    )
+
+
 class Block(BaseModel):
     """A block, i.e. a smallest schedulable unit in a proposal."""
 
@@ -28,7 +81,7 @@ class Block(BaseModel):
         ..., title="Proposal code of the proposal to which the block belongs"
     )
     semester: Semester = Field(..., title="Semester to which the block belongs")
-    status: "BlockStatus" = Field(..., title="Block status", description="Block status")
+    status: BlockStatus = Field(..., title="Block status", description="Block status")
     priority: Priority = Field(
         ..., title="Priority", description="Priority of the block"
     )
@@ -57,7 +110,7 @@ class Block(BaseModel):
         title="Executed observations",
         description="Observations made for the block",
     )
-    observing_conditions: "ObservingConditions" = Field(
+    observing_conditions: ObservingConditions = Field(
         ...,
         title="Observing conditions",
         description="Conditions required for observing the block",
@@ -86,18 +139,6 @@ class Block(BaseModel):
         title="Observations",
         description="List of observations in the block. With the exception of some legacy proposals, there is always a single observation in the block",
     )
-
-
-class BlockStatus(str, Enum):
-    """Block status."""
-
-    ACTIVE = "Active"
-    COMPLETED = "Completed"
-    DELETED = "Deleted"
-    EXPIRED = "Expired"
-    NOT_SET = "Not set"
-    ON_HOLD = "On Hold"
-    SUPERSEDED = "Superseded"
 
 
 class BlockSummary(BaseModel):
@@ -141,7 +182,7 @@ class BlockSummary(BaseModel):
         title="Remaining nights",
         description="Number of nights (Julian days), excluding the current one, during which the block still can be observed",
     )
-    observing_conditions: "ObservingConditions" = Field(
+    observing_conditions: ObservingConditions = Field(
         ...,
         title="Observing conditions",
         description="Conditions required for observing the block",
@@ -160,44 +201,3 @@ class InstrumentSummary(BaseModel):
         title="Mode",
         description="Instrument mode. For Salticam this is just an empty string.",
     )
-
-
-class ObservingConditions(BaseModel):
-    minimum_seeing: Optional[float] = Field(
-        ...,
-        title="Minimum seeing",
-        description="Minimum seeing allowed for an observation, in arcseconds",
-        ge=0,
-    )
-    maximum_seeing: float = Field(
-        ...,
-        title="Maximum seeing",
-        description="Maximum seeing allowed for an observation, in arcseconds",
-        ge=0,
-    )
-    transparency: "Transparency" = Field(
-        ...,
-        title="Transparency",
-        description="Sky transparency required for an observation",
-    )
-    maximum_lunar_phase: float = Field(
-        ...,
-        title="Maximum lunar phase",
-        description="Maximum lunar phase which was allowed for the observation, as the percentage of lunar illumination",
-        ge=0,
-        le=100,
-    )
-    minimum_lunar_distance: float = Field(
-        ...,
-        title="Minimum lunar distance",
-        description="Minimum required angular distance between the Moon and the target, in degrees",
-    )
-
-
-class Transparency(str, Enum):
-    """Sky transparency."""
-
-    ANY = "Any"
-    CLEAR = "Clear"
-    THICK_CLOUD = "Thick cloud"
-    THIN_CLOUD = "Thin cloud"
