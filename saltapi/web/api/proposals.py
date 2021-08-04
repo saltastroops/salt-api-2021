@@ -1,5 +1,5 @@
 from datetime import date
-from typing import List, Optional
+from typing import List, Optional, Any
 
 from fastapi import (
     APIRouter,
@@ -15,6 +15,9 @@ from fastapi import (
 )
 from fastapi.responses import FileResponse
 
+from saltapi.repository.proposal_repository import ProposalRepository
+from saltapi.repository.unit_of_work import UnitOfWork
+from saltapi.service.proposal_service import ProposalService
 from saltapi.web.schema.common import (
     ExecutedObservation,
     ProposalCode,
@@ -25,7 +28,6 @@ from saltapi.web.schema.proposal import (
     DataReleaseDateUpdate,
     ObservationComment,
     ProgressReport,
-    ProposalContent,
     ProposalContentType,
     ProposalListItem,
     ProposalStatusContent,
@@ -65,7 +67,7 @@ def get_proposals(
 @router.get(
     "/{proposal_code}",
     summary="Get a proposal",
-    response_model=ProposalContent,
+    response_model=Any,
     responses={200: {"content": {"application/pdf": {}, "application/zip": {}}}},
 )
 def get_proposal(
@@ -81,7 +83,7 @@ def get_proposal(
         "the latest version is returned.",
         ge=1,
     ),
-    accept: Optional[ProposalContentType] = Header(
+    accept: str = Header(
         ProposalContentType.JSON,
         title="Accepted content type",
         description="Content type that should be returned.",
@@ -119,7 +121,11 @@ def get_proposal(
     block details. You can use the endpoint `/blocks/{id}` to get a JSON representation
     of a specific block.
     """
-    raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED)
+
+    with UnitOfWork() as unit_of_work:
+        proposal_repository = ProposalRepository(unit_of_work.connection)
+        proposal_service = ProposalService(proposal_repository)
+        return proposal_service.get_proposal(proposal_code)
 
 
 @router.post(

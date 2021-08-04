@@ -1,7 +1,7 @@
 from typing import List
 
 from saltapi.repository.proposal_repository import ProposalRepository
-from saltapi.service.proposal import ProposalSummary
+from saltapi.service.proposal import ProposalSummary, Proposal
 
 
 class ProposalService:
@@ -10,3 +10,6 @@ class ProposalService:
 
     def list_proposal_summaries(self) -> List[ProposalSummary]:
         return self.repository.list()
+
+    def get_proposal(self, proposal_code: str) -> Proposal:
+        return self.repository.get(proposal_code)
