@@ -285,7 +285,9 @@ SELECT PT.Title                            AS title,
        PGI.ActOnAlert                      AS target_of_opportunity,
        P.TotalReqTime                      AS total_requested_time,
        PGI.ProprietaryPeriod               AS proprietary_period,
-       CONCAT(I.FirstName, ' ', I.Surname) AS liaison_salt_astronomer
+       I.FirstName                         AS astronomer_given_name,
+       I.Surname                           AS astronomer_family_name,
+       I.Email                             AS astronomer_email
 FROM Proposal P
          JOIN Semester S ON P.Semester_Id = S.Semester_Id
          JOIN ProposalCode PC ON P.ProposalCode_Id = PC.ProposalCode_Id
@@ -304,10 +306,29 @@ WHERE PC.Proposal_Code = :proposal_code
         result = self.connection.execute(
             stmt, {"proposal_code": proposal_code, "year": year, "semester": sem}
         )
-        info = dict(result.one())
+        row = result.one()
+
+        info = {
+            "title": row.title,
+            "abstract": row.abstract,
+            "summary_for_salt_astronomer": row.summary_for_salt_astronomer,
+            "summary_for_night_log": row.summary_for_night_log,
+            "submission_number": row.submission_number,
+            "status": row.status,
+            "proposal_type": row.proposal_type,
+            "target_of_opportunity": row.target_of_opportunity,
+            "total_requested_time": row.total_requested_time,
+            "proprietary_period": row.proprietary_period
+        }
 
         if info["proposal_type"] == "Director Discretionary Time (DDT)":
             info["proposal_type"] = "Director's Discretionary Time"
+
+        info["liaison_salt_astronomer"] = {
+            "given_name": row.astronomer_given_name,
+            "family_name": row.astronomer_family_name,
+            "email": row.astronomer_email
+        }
 
         info["first_submission"] = self._first_submission_date(proposal_code)
         info["submission_number"] = self._latest_submission(proposal_code)

@@ -35,6 +35,17 @@ class Affiliation(BaseModel):
     )
 
 
+class ContactDetails(BaseModel):
+    given_name: str = Field(..., title="Given name", description='Given ("first") name')
+    family_name: str = Field(
+        ..., title="Family name", description='Family ("last") name'
+    )
+    email: EmailStr = Field(..., title="Email address", description="Email address")
+
+    class Config:
+        orm_mode = True
+
+
 class ProposalStatus(str, Enum):
     """Proposal status."""
 
@@ -111,7 +122,7 @@ class GeneralProposalInfo(BaseModel):
         title="Data release date",
         description="Date when the proposal data is scheduled to become public",
     )
-    liaison_salt_astronomer: str = Field(
+    liaison_salt_astronomer: ContactDetails = Field(
         ...,
         title="Liaison astronomer",
         description="SALT Astronomer who is the liaison astronomer for the proposal",
@@ -126,17 +137,6 @@ class GeneralProposalInfo(BaseModel):
         title="Summary for the night log",
         description="Brief (one-line) summary to include in the observing night log",
     )
-
-
-class ContactDetails(BaseModel):
-    given_name: str = Field(..., title="Given name", description='Given ("first") name')
-    family_name: str = Field(
-        ..., title="Family name", description='Family ("last") name'
-    )
-    email: EmailStr = Field(..., title="Email address", description="Email address")
-
-    class Config:
-        orm_mode = True
 
 
 class Investigator(ContactDetails):
