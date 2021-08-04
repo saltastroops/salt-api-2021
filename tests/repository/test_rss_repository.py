@@ -4,10 +4,12 @@ import pytest
 from sqlalchemy.engine import Connection
 
 from saltapi.repository.rss_repository import RssRepository
+from tests.markers import nodatabase
 
 TEST_DATA = "repository/rss_repository.yaml"
 
 
+@nodatabase
 def test_top_level_values(
     dbconnection: Connection, testdata: Callable[[str], Any]
 ) -> None:
@@ -34,6 +36,7 @@ def test_top_level_values(
         "fabry_perot",
     ],
 )
+@nodatabase
 def test_configuration(
     name: str, dbconnection: Connection, testdata: Callable[[str], Any]
 ) -> None:
@@ -47,6 +50,7 @@ def test_configuration(
     assert config == expected_config
 
 
+@nodatabase
 def test_no_mask(dbconnection: Connection, testdata: Callable[[str], Any]) -> None:
     data = testdata(TEST_DATA)["no_mask"]
     rss_id = data["rss_id"]
@@ -57,6 +61,7 @@ def test_no_mask(dbconnection: Connection, testdata: Callable[[str], Any]) -> No
     assert mask is None
 
 
+@nodatabase
 def test_detector(dbconnection: Connection, testdata: Callable[[str], Any]) -> None:
     data = testdata(TEST_DATA)["detector"]
     for d in data:
@@ -69,6 +74,7 @@ def test_detector(dbconnection: Connection, testdata: Callable[[str], Any]) -> N
         assert detector == expected_detector
 
 
+@nodatabase
 def test_detector_calculation(
     dbconnection: Connection, testdata: Callable[[str], Any]
 ) -> None:
@@ -83,6 +89,7 @@ def test_detector_calculation(
         assert calculation == expected_calculation
 
 
+@nodatabase
 def test_procedure_types(
     dbconnection: Connection, testdata: Callable[[str], Any]
 ) -> None:
@@ -97,6 +104,7 @@ def test_procedure_types(
         assert procedure_type == expected_procedure_type
 
 
+@nodatabase
 def test_procedure_etalon_pattern(
     dbconnection: Connection, testdata: Callable[[str], Any]
 ) -> None:
@@ -114,3 +122,25 @@ def test_procedure_etalon_pattern(
             ]
 
         assert procedure == expected_procedure
+
+
+@nodatabase
+def test_arc_bible_entries(
+    dbconnection: Connection, testdata: Callable[[str], Any]
+) -> None:
+    # TODO: Add more test cases
+    data = testdata(TEST_DATA)["arc_bible_entries"]
+    rss_id = data["rss_id"]
+    expected_arc_bible_entries = data["arc_bible_entries"]
+    rss_repository = RssRepository(dbconnection)
+    rss = rss_repository.get(rss_id)
+    arc_bible_entries = rss["arc_bible_entries"]
+
+    assert len(arc_bible_entries) == len(expected_arc_bible_entries)
+    for i in range(len(arc_bible_entries)):
+        entry = arc_bible_entries[i]
+        entry["original_exposure_time"] = float(entry["original_exposure_time"])
+        entry["preferred_exposure_time"] = float(entry["preferred_exposure_time"])
+        expected_entry = expected_arc_bible_entries[i]
+
+        assert entry == expected_entry

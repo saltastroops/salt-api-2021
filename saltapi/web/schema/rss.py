@@ -10,7 +10,11 @@ class ArcBibleEntry(BaseModel):
     """RSS arc bible entry."""
 
     lamp: Lamp = Field(..., title="Lamp", description="Calibration lamp")
-    is_preferred_lamp: bool = Field(..., title="Preferred lamp?", description="Is the lamp of the entry the preferred one for the RSS setup?")
+    is_preferred_lamp: bool = Field(
+        ...,
+        title="Preferred lamp?",
+        description="Is the lamp of the entry the preferred one for the RSS setup?",
+    )
     original_exposure_time: float = Field(
         ...,
         title="Original exposure time",
@@ -19,7 +23,7 @@ class ArcBibleEntry(BaseModel):
     preferred_exposure_time: float = Field(
         ...,
         title="Preferred exposure time",
-        description="Preferred exposure time, in seconds",
+        description="Preferred (corrected) exposure time, in seconds",
     )
 
 
@@ -55,7 +59,9 @@ class RssSpectroscopy(BaseModel):
     grating_angle: float = Field(
         ..., title="Grating angle", description="Grating angle, in degrees", ge=0
     )
-    camera_station: int = Field(..., title="Camera station", description="Camera (articulation) station number")
+    camera_station: int = Field(
+        ..., title="Camera station", description="Camera (articulation) station number"
+    )
     camera_angle: float = Field(
         ...,
         title="Camera angle",

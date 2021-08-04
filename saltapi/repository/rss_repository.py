@@ -98,6 +98,7 @@ ORDER BY Rss_Id DESC;
             "procedure": self._procedure(row),
             "observation_time": row.observation_time,
             "overhead_time": row.overhead_time,
+            "arc_bible_entries": self._arc_bible_entries(row),
         }
         return rss
 
@@ -351,3 +352,46 @@ WHERE RPP.RssPolarimetryPattern_Id = :pattern_id
             "etalon_wavelengths": etalon_wavelengths,
             "polarimetry_pattern": polarimetry_pattern,
         }
+
+    def _arc_bible_entries(self, row: Any) -> List[Dict[str, Any]]:
+        """Return the arc bible entries."""
+
+        stmt = text(
+            """
+SELECT L.Lamp                                     AS lamp,
+       IF(AE.Lamp_Id = AB.PreferredLamp_Id, 1, 0) AS is_preferred_lamp,
+       AE.OrigExptime                             AS original_exposure_time,
+       arc_calculator(AE.Lamp_Id, AE.Exptime, SUBSTRING(RM.Barcode, 3, 4) / 100,
+                      :binned_rows,
+                      :binned_cols)               AS preferred_exposure_time
+FROM ArcExposure AE
+         JOIN Lamp L ON AE.Lamp_Id = L.Lamp_Id
+         JOIN ArcBible AB ON AE.ArcBible_Id = AB.ArcBible_Id
+         JOIN RssSpectroscopy RS ON AB.RssGrating_Id = RS.RssGrating_Id AND
+                                    AB.RssArtStation_Number = RS.RssArtStation_Number
+         JOIN RssConfig RC ON RS.RssSpectroscopy_Id = RC.RssSpectroscopy_Id
+         JOIN RssMask RM ON RC.RssMask_Id = RM.RssMask_Id
+         JOIN Rss R ON RC.RssConfig_Id = R.RssConfig_Id
+WHERE R.Rss_Id = :rss_id
+ORDER BY is_preferred_lamp DESC
+        """
+        )
+        result = self.connection.execute(
+            stmt,
+            {
+                "binned_rows": row.pre_binned_rows,
+                "binned_cols": row.pre_binned_cols,
+                "rss_id": row.rss_id,
+            },
+        )
+
+        entries = [
+            {
+                "lamp": row.lamp,
+                "is_preferred_lamp": True if row.is_preferred_lamp else False,
+                "original_exposure_time": row.original_exposure_time,
+                "preferred_exposure_time": row.preferred_exposure_time,
+            }
+            for row in result
+        ]
+        return entries
