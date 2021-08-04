@@ -190,14 +190,3 @@ class BlockSummary(BaseModel):
     instruments: List[
         Union[SalticamSummary, RssSummary, HrsSummary, BvitSummary]
     ] = Field(..., title="Instruments", description="Instruments used for the block")
-
-
-class InstrumentSummary(BaseModel):
-    """Summary details of an instrument setup."""
-
-    name: str = Field(..., title="Name", description="Instrument name")
-    mode: str = Field(
-        ...,
-        title="Mode",
-        description="Instrument mode. For Salticam this is just an empty string.",
-    )

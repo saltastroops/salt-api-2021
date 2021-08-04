@@ -174,6 +174,20 @@ ORDER BY BVW.VisibilityStart;
             for row in result
         ]
 
+    def _finder_charts(self, pointing_id: int) -> List[Dict[str, Any]]:
+        stmt = text("""
+SELECT FC.FindingChart_Id AS finding_chart_id,
+       FC.Comments        AS comments,
+       FC.ValidFrom       AS valid_from,
+       FC.ValidUntil      AS valid_until
+FROM FindingChart FC
+WHERE FC.Pointing_Id = :pointing_id
+ORDER BY ValidFrom, FindingChart_Id
+        """)
+        result = self.connection.execute(stmt, {"pointing_id": pointing_id})
+
+        return [{"id": row.finding_chart_id, "comment": row.comments, "valid_from": pytz.utc.localize(row.valid_from) if row.valid_from else None, "valid_until": pytz.utc.localize(row.valid_until) if row.valid_until else None} for row in result]
+
     def _time_restrictions(
         self, pointing_id: int
     ) -> Optional[List[Dict[str, datetime]]]:
@@ -291,6 +305,7 @@ ORDER BY TCOC.Pointing_Id, TCOC.Observation_Order, TCOC.TelescopeConfig_Order,
         for pointing_rows in pointing_groups:
             pointing = {
                 "target": self.target_repository.get(pointing_rows[0].target_id),
+                "finder_charts": self._finder_charts(pointing_rows[0].pointing_id),
                 "time_restrictions": self._time_restrictions(
                     pointing_rows[0].pointing_id
                 ),
