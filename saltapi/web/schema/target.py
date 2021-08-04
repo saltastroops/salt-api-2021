@@ -123,9 +123,9 @@ class Phase1Target(Target):
         title="Optional?",
         description="Whether the target is optional, i.e. whether it is part of a pool of targets from which only a subset needs to be observed.",
     )
-    n_visits: int = Field(
+    requested_observations: int = Field(
         ...,
-        title="Number of visits",
+        title="Number of requested observations",
         description="Number of observations requested for the target",
     )
     max_lunar_phase: float = Field(
