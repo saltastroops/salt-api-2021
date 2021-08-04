@@ -120,7 +120,9 @@ class RssMask(BaseModel):
     barcode: str = Field(
         ..., title="Barcode", description="Barcode identifying the mask"
     )
-    description: Optional[str] = Field(..., title="Mask description", description="Description of the mask")
+    description: Optional[str] = Field(
+        ..., title="Mask description", description="Description of the mask"
+    )
     mask_type: RssMaskType = Field(..., title="Mask type", description="Mask type")
 
 
@@ -166,7 +168,7 @@ class RssDetectorCalculation(str, Enum):
     """RSS detector calculation."""
 
     FOCUS = "Focus"
-    FPRINGRADIUS = "FP Ring Radius"
+    FP_RING_RADIUS = "FP Ring Radius"
     MOS_ACQUISITION = "MOS Acquisition"
     MOS_MASK_CALIB = "MOS Mask Calibration"
     MOS_SCAN = "MOS Scan"

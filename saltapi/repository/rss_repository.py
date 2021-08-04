@@ -146,7 +146,7 @@ ORDER BY Rss_Id DESC;
             mask = {
                 "mask_type": row.mask_type,
                 "barcode": row.mask_barcode,
-                "description": row.mask_description
+                "description": row.mask_description,
             }
         else:
             mask = {
