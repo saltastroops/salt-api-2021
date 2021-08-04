@@ -134,13 +134,6 @@ class ObservationProbabilities(BaseModel):
     )
 
 
-class ObservationStatus(str, Enum):
-    """Observation status."""
-
-    ACCEPTED = "Accepted"
-    REJECTED = "Rejected"
-
-
 class PartnerCode(str, Enum):
     """The partner codes of the past and current SALT partners."""
 
