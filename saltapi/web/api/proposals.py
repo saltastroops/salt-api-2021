@@ -11,10 +11,11 @@ from fastapi import (
     Query,
     Response,
     UploadFile,
-    status,
+    status, Depends,
 )
 from fastapi.responses import FileResponse
 
+from saltapi.repository.authentication import is_user_admin_or_salt_astronomer
 from saltapi.web.schema.common import (
     ExecutedObservation,
     ProposalCode,
@@ -52,6 +53,7 @@ def get_proposals(
         description="Only include proposals for this semester and earlier.",
         title="To semester",
     ),
+    user=Depends(is_user_admin_or_salt_astronomer)
 ) -> List[ProposalListItem]:
     """
     Lists all proposals the user may view. The proposals returned can be limited to those
@@ -86,6 +88,7 @@ def get_proposal(
         title="Accepted content type",
         description="Content type that should be returned.",
     ),
+    user=Depends(is_user_admin_or_salt_astronomer)
 ) -> Response:
     """
     Returns the proposal with a given proposal code. The proposal can be requested in
