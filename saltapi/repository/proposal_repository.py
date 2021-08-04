@@ -532,7 +532,7 @@ SELECT BV.BlockVisit_Id     AS id,
        B.Priority AS priority,
        B.MaxLunarPhase AS maximum_lunar_phase,
        NI.Date              AS night,
-       BVS.BlockVisitStatus AS status,
+       IF(BVS.BlockVisitStatus = 'Accepted', 1, 0) AS is_accepted,
        BRR.RejectedReason   AS rejection_reason
 FROM BlockVisit BV
          JOIN BlockVisitStatus BVS ON BV.BlockVisitStatus_Id = BVS.BlockVisitStatus_Id
@@ -546,7 +546,20 @@ ORDER BY B.Block_Name, NI.Date
         """
         )
         result = self.connection.execute(stmt, {"proposal_code": proposal_code})
-        observations = [dict(row) for row in result]
+        observations = [
+            {
+                "id": row.id,
+                "block_id": row.block_id,
+                "block_name": row.block_name,
+                "observation_time": row.observation_time,
+                "priority": row.priority,
+                "maximum_lunar_phase": row.maximum_lunar_phase,
+                "night": row.night,
+                "accepted": True if row.is_accepted else False,
+                "rejection_reason": row.rejection_reason,
+            }
+            for row in result
+        ]
 
         block_targets = self._block_targets(proposal_code)
         for observation in observations:
