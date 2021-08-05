@@ -1,5 +1,5 @@
 from datetime import date
-from typing import Any, List, Optional
+from typing import List, Optional
 
 from fastapi import (
     APIRouter,
@@ -17,7 +17,8 @@ from fastapi.responses import FileResponse
 
 from saltapi.repository.proposal_repository import ProposalRepository
 from saltapi.repository.unit_of_work import UnitOfWork
-from saltapi.service.proposal import ProposalSummary
+from saltapi.service.proposal import Proposal as _Proposal
+from saltapi.service.proposal import ProposalListItem as _ProposalListItem
 from saltapi.service.proposal_service import ProposalService
 from saltapi.web.schema.common import (
     ExecutedObservation,
@@ -29,6 +30,7 @@ from saltapi.web.schema.proposal import (
     DataReleaseDateUpdate,
     ObservationComment,
     ProgressReport,
+    Proposal,
     ProposalContentType,
     ProposalListItem,
     ProposalStatusContent,
@@ -42,7 +44,7 @@ class PDFResponse(Response):
     media_type = "application/pdf"
 
 
-@router.get("/", summary="List proposals")
+@router.get("/", summary="List proposals", response_model=List[ProposalListItem])
 def get_proposals(
     from_semester: Optional[Semester] = Query(
         "2005-2",
@@ -55,7 +57,7 @@ def get_proposals(
         description="Only include proposals for this semester and earlier.",
         title="To semester",
     ),
-) -> List[ProposalSummary]:
+) -> List[_ProposalListItem]:
     """
     Lists all proposals the user may view. The proposals returned can be limited to those
     with submissions within a semester range by supplying a from or a to semester (or
@@ -71,6 +73,7 @@ def get_proposals(
 @router.get(
     "/{proposal_code}",
     summary="Get a proposal",
+    response_model=Proposal,
     responses={200: {"content": {"application/pdf": {}, "application/zip": {}}}},
 )
 def get_proposal(
@@ -91,7 +94,7 @@ def get_proposal(
         title="Accepted content type",
         description="Content type that should be returned.",
     ),
-) -> Any:
+) -> _Proposal:
     """
     Returns the proposal with a given proposal code. The proposal can be requested in
     either of three formats:

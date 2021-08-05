@@ -7,7 +7,7 @@ from dateutil.relativedelta import relativedelta
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
-from saltapi.service.proposal import ContactDetails, Proposal, ProposalSummary
+from saltapi.service.proposal import Proposal, ProposalListItem
 from saltapi.util import (
     TimeInterval,
     partner_name,
@@ -23,7 +23,7 @@ class ProposalRepository:
     def __init__(self, connection: Connection):
         self.connection = connection
 
-    def _list(self) -> List[Dict[str, Any]]:
+    def _list(self) -> List[ProposalListItem]:
         """
         Return a list of proposal summaries.
         """
@@ -72,11 +72,11 @@ LIMIT 500
                 "title": row.title,
                 "phase": row.phase,
                 "status": row.status,
-                "proposal_type": row.proposal_type,
+                "proposal_type": self._map_proposal_type(row.proposal_type),
                 "principal_investigator": {
                     "given_name": row["pi_given_name"],
                     "family_name": row["pi_family_name"],
-                    "email": row["pi_email"]
+                    "email": row["pi_email"],
                 },
                 "principal_contact": {
                     "given_name": row["pc_given_name"],
@@ -87,12 +87,12 @@ LIMIT 500
                     "given_name": row["la_given_name"],
                     "family_name": row["la_family_name"],
                     "email": row["la_email"],
-                }
+                },
             }
             for row in result
         ]
 
-    def list(self) -> List[ProposalSummary]:
+    def list(self) -> List[Dict[str, Any]]:
         """
         Return a list of proposal summaries.
         """
@@ -136,6 +136,8 @@ LIMIT 500
             "time_allocations": self.time_allocations(proposal_code, semester),
             "charged_time": self.charged_time(proposal_code, semester),
             "observation_comments": self._observation_comments(proposal_code),
+            "targets": None,
+            "requested_times": None,
         }
         return proposal
 
@@ -241,6 +243,13 @@ LIMIT 1
         return cast(int, result.scalar())
 
     @staticmethod
+    def _map_proposal_type(db_proposal_type: str) -> str:
+        if db_proposal_type == "Director Discretionary Time (DDT)":
+            return "Director's Discretionary Time"
+
+        return db_proposal_type
+
+    @staticmethod
     def _data_release_date(
         executed_observations: List[Dict[str, Any]],
         proprietary_period: int,
@@ -318,7 +327,7 @@ WHERE PC.Proposal_Code = :proposal_code
             "summary_for_night_log": row.summary_for_night_log,
             "submission_number": row.submission_number,
             "status": row.status,
-            "proposal_type": row.proposal_type,
+            "proposal_type": self._map_proposal_type(row.proposal_type),
             "target_of_opportunity": row.target_of_opportunity,
             "total_requested_time": row.total_requested_time,
             "proprietary_period": row.proprietary_period,

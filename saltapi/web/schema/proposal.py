@@ -66,7 +66,7 @@ class ProposalType(str, Enum):
     """Proposal type."""
 
     COMMISSIONING = "Commissioning"
-    DIRECTOR_DISCRETIONARY_TIME = "Director’s Discretionary Time"
+    DIRECTOR_DISCRETIONARY_TIME = "Director's Discretionary Time"
     ENGINEERING = "Engineering"
     GRAVITATIONAL_WAVE_EVENT = "Gravitational Wave Event"
     KEY_SCIENCE_PROGRAM = "Key Science Program"
@@ -416,10 +416,6 @@ class ProposalListItem(BaseModel):
     liaison_astronomer: ContactDetails = Field(
         ..., title="Liaison Astronomer", description="Liaison Astronomer"
     )
-
-    class Config:
-        schema_extra = {"example": {"proposal_code": "2021-1-SCI-074"}}
-        orm_mode = True
 
 
 class ProposalStatusContent(BaseModel):
