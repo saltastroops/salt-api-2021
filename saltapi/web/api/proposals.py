@@ -17,6 +17,7 @@ from fastapi.responses import FileResponse
 
 from saltapi.repository.proposal_repository import ProposalRepository
 from saltapi.repository.unit_of_work import UnitOfWork
+from saltapi.service.proposal import ProposalSummary
 from saltapi.service.proposal_service import ProposalService
 from saltapi.web.schema.common import (
     ExecutedObservation,
@@ -41,7 +42,7 @@ class PDFResponse(Response):
     media_type = "application/pdf"
 
 
-@router.get("/", summary="List proposals", response_model=List[ProposalListItem])
+@router.get("/", summary="List proposals")
 def get_proposals(
     from_semester: Optional[Semester] = Query(
         "2005-2",
@@ -54,14 +55,17 @@ def get_proposals(
         description="Only include proposals for this semester and earlier.",
         title="To semester",
     ),
-) -> List[ProposalListItem]:
+) -> List[ProposalSummary]:
     """
     Lists all proposals the user may view. The proposals returned can be limited to those
     with submissions within a semester range by supplying a from or a to semester (or
     both).
     """
 
-    raise NotImplementedError()
+    with UnitOfWork() as unit_of_work:
+        proposal_repository = ProposalRepository(unit_of_work.connection)
+        proposal_service = ProposalService(proposal_repository)
+        return proposal_service.list_proposal_summaries()
 
 
 @router.get(
