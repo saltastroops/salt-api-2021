@@ -1,3 +1,4 @@
+import re
 from collections import defaultdict
 from datetime import date, datetime
 from typing import Any, DefaultDict, Dict, List, Optional, cast
@@ -6,7 +7,9 @@ import pytz
 from dateutil.relativedelta import relativedelta
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
+from sqlalchemy.exc import NoResultFound
 
+from saltapi.exceptions import NotFoundError
 from saltapi.service.proposal import Proposal, ProposalListItem
 from saltapi.util import (
     TimeInterval,
@@ -23,7 +26,9 @@ class ProposalRepository:
     def __init__(self, connection: Connection):
         self.connection = connection
 
-    def _list(self) -> List[ProposalListItem]:
+    def _list(
+        self, first_semester: str, last_semester: str, limit: int
+    ) -> List[ProposalListItem]:
         """
         Return a list of proposal summaries.
         """
@@ -43,8 +48,7 @@ SELECT P.Proposal_Id                   AS id,
        Contact.Surname                 AS pc_family_name,
        Contact.Email                   AS pc_email,
        Astronomer.FirstName            AS la_given_name,
-       Astronomer.Surname              AS la_family_name,
-       Astronomer.Email                AS la_email
+       Astronomer.Surname              AS la_family_name
 FROM Proposal P
          JOIN ProposalCode PC ON P.ProposalCode_Id = PC.ProposalCode_Id
          JOIN ProposalGeneralInfo PGI ON PC.ProposalCode_Id = PGI.ProposalCode_Id
@@ -54,17 +58,29 @@ FROM Proposal P
          JOIN ProposalStatus PS ON PGI.ProposalStatus_Id = PS.ProposalStatus_Id
          JOIN ProposalType T ON PGI.ProposalType_Id = T.ProposalType_Id
          JOIN ProposalContact C ON PC.ProposalCode_Id = C.ProposalCode_Id
-         JOIN Investigator Astronomer ON C.Astronomer_Id = Astronomer.Investigator_Id
+         LEFT JOIN Investigator Astronomer
+                   ON C.Astronomer_Id = Astronomer.Investigator_Id
          JOIN Investigator Contact ON C.Contact_Id = Contact.Investigator_Id
          JOIN Investigator Leader ON C.Leader_Id = Leader.Investigator_Id
 WHERE P.Current = 1
+  AND S.Semester_Id IN (SELECT S2.Semester_Id
+                        FROM Semester AS S2
+                        WHERE CONCAT(S2.Year, '-', S2.Semester)
+                            BETWEEN :first_semester AND :last_semester)
 ORDER BY P.Proposal_Id DESC
-LIMIT 500
+LIMIT :limit
         """
         )
-        result = self.connection.execute(stmt)
+        result = self.connection.execute(
+            stmt,
+            {
+                "first_semester": first_semester,
+                "last_semester": last_semester,
+                "limit": limit,
+            },
+        )
 
-        return [
+        proposals = [
             {
                 "id": row.id,
                 "proposal_code": row.proposal_code,
@@ -74,35 +90,61 @@ LIMIT 500
                 "status": row.status,
                 "proposal_type": self._map_proposal_type(row.proposal_type),
                 "principal_investigator": {
-                    "given_name": row["pi_given_name"],
-                    "family_name": row["pi_family_name"],
-                    "email": row["pi_email"],
+                    "given_name": row.pi_given_name,
+                    "family_name": row.pi_family_name,
+                    "email": row.pi_email,
                 },
                 "principal_contact": {
-                    "given_name": row["pc_given_name"],
-                    "family_name": row["pc_family_name"],
-                    "email": row["pc_email"],
+                    "given_name": row.pc_given_name,
+                    "family_name": row.pc_family_name,
+                    "email": row.pc_email,
                 },
-                "liaison_astronomer": {
-                    "given_name": row["la_given_name"],
-                    "family_name": row["la_family_name"],
-                    "email": row["la_email"],
-                },
+                "liaison_astronomer": self._liaison_astronomer(row),
             }
             for row in result
         ]
 
-    def list(self) -> List[Dict[str, Any]]:
+        return proposals
+
+    def _liaison_astronomer(self, row: Any) -> Optional[Dict[str, str]]:
+        if row.la_given_name is None:
+            return None
+
+        astronomer = {
+            "given_name": row.la_given_name,
+            "family_name": row.la_family_name,
+            "email": "salthelp@salt.ac.za",
+        }
+
+        return astronomer
+
+    def list(
+        self,
+        first_semester: str = "2000-1",
+        last_semester: str = "2099-2",
+        limit: int = 100000,
+    ) -> List[Dict[str, Any]]:
         """
         Return a list of proposal summaries.
         """
-        return self._list()
 
-    def get(
+        if not re.match(r"^\d{4}-\d$", first_semester):
+            raise ValueError(f"Illegal semester format: {first_semester}")
+        if not re.match(r"^\d{4}-\d$", last_semester):
+            raise ValueError(f"Illegal semester format: {last_semester}")
+
+        if limit < 0:
+            raise ValueError("The limit must be a non-negative integer.")
+
+        return self._list(
+            first_semester=first_semester, last_semester=last_semester, limit=limit
+        )
+
+    def _get(
         self,
         proposal_code: str,
-        semester: Optional[str] = None,
-        phase: Optional[int] = None,
+        semester: Optional[str],
+        phase: Optional[int],
     ) -> Proposal:
         """
         Return the proposal content for a semester.
@@ -140,6 +182,19 @@ LIMIT 500
             "requested_times": None,
         }
         return proposal
+
+    def get(
+        self,
+        proposal_code: str,
+        semester: Optional[str] = None,
+        phase: Optional[int] = None,
+    ) -> Proposal:
+        try:
+            return self._get(
+                proposal_code=proposal_code, semester=semester, phase=phase
+            )
+        except NoResultFound:
+            raise NotFoundError()
 
     def _semesters(self, proposal_code: str) -> List[str]:
         """
@@ -252,9 +307,13 @@ LIMIT 1
     @staticmethod
     def _data_release_date(
         executed_observations: List[Dict[str, Any]],
-        proprietary_period: int,
+        proprietary_period: Optional[int],
         first_submission: date,
-    ) -> date:
+    ) -> Optional[date]:
+        # no proprietary period - no release date
+        if proprietary_period is None:
+            return None
+
         # find the latest observation
         latest_observation = first_submission
         for observation in executed_observations:
@@ -948,3 +1007,61 @@ ORDER BY PC.CommentDate, PC.ProposalComment_Id
         )
         result = self.connection.execute(stmt, {"proposal_code": proposal_code})
         return [dict(row) for row in result]
+
+    def get_proposal_status(self, proposal_code: str) -> str:
+        """
+        Return the proposal status for a proposal.
+        """
+        stmt = text(
+            """
+SELECT PS.Status
+FROM ProposalStatus PS
+         JOIN ProposalGeneralInfo PGI ON PS.ProposalStatus_Id = PGI.ProposalStatus_Id
+         JOIN ProposalCode PC ON PGI.ProposalCode_Id = PC.ProposalCode_Id
+WHERE PC.Proposal_Code = :proposal_code
+        """
+        )
+        result = self.connection.execute(stmt, {"proposal_code": proposal_code})
+        try:
+            return cast(str, result.scalar_one())
+        except NoResultFound:
+            raise NotFoundError()
+
+    def update_proposal_status(self, proposal_code: str, status: str) -> None:
+        """
+        Update the status of a proposal.
+        """
+
+        # We copuld query for the status id within the UPDATE query, but then it would
+        # not be clear whether a failing query is due to a wrong proposal code or a
+        # wrong status value.
+        try:
+            status_id = self._proposal_status_id(status)
+        except NoResultFound:
+            raise ValueError(f"Unknown proposal status: {status}")
+
+        stmt = text(
+            """
+UPDATE ProposalGeneralInfo
+SET ProposalStatus_Id = :status_id
+WHERE ProposalCode_Id = (SELECT PC.ProposalCode_Id
+                         FROM ProposalCode PC
+                         WHERE PC.Proposal_Code = :proposal_code);
+        """
+        )
+        result = self.connection.execute(
+            stmt, {"proposal_code": proposal_code, "status_id": status_id}
+        )
+        if not result.rowcount:
+            raise NotFoundError()
+
+    def _proposal_status_id(self, status: str) -> int:
+        stmt = text(
+            """
+SELECT PS.ProposalStatus_Id
+FROM ProposalStatus PS
+WHERE PS.Status = :status
+        """
+        )
+        result = self.connection.execute(stmt, {"status": status})
+        return cast(int, result.scalar_one())

@@ -82,13 +82,6 @@ def get_proposal(
         title="Proposal code",
         description="Proposal code of the returned proposal.",
     ),
-    submission: Optional[int] = Query(
-        None,
-        title="Submission",
-        description="Return the proposal version for a specific submission. By default "
-        "the latest version is returned.",
-        ge=1,
-    ),
     accept: str = Header(
         ProposalContentType.JSON,
         title="Accepted content type",
@@ -118,9 +111,6 @@ def get_proposal(
 
     An error with status code 406 (Not Acceptable) is returned if an unsupported value
     is given in the `Accept` header.
-
-    The `submission` query parameter lets you request a specific version of the
-    proposal. By default the latest submission is returned.
 
     The different formats do not contain the same information. Most importantly, while
     JSON string includes a list of block ids and names, it does not include any further

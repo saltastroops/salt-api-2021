@@ -117,7 +117,7 @@ class GeneralProposalInfo(BaseModel):
         title="Total requested time",
         description="Total requested time, in seconds",
     )
-    data_release_date: date = Field(
+    data_release_date: Optional[date] = Field(
         ...,
         title="Data release date",
         description="Date when the proposal data is scheduled to become public",
@@ -215,7 +215,7 @@ class ObservationComment(BaseModel):
 
     author: str = Field(..., title="Author", description="Author of the comment")
     comment: str = Field(..., title="Comment", description="Text of the comment")
-    comment_date: datetime = Field(
+    comment_date: date = Field(
         ...,
         title="Time of creation",
         description="Date when the comment was made",
