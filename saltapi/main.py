@@ -3,9 +3,10 @@ from typing import Any
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from starlette import status
+from starlette.middleware.cors import CORSMiddleware
 
 from saltapi.repository.authentication import AuthenticationRepository, \
-    is_user_admin_or_salt_astronomer
+    token_authentication
 from saltapi.repository.block_repository import BlockRepository
 from saltapi.repository.instrument_repository import InstrumentRepository
 from saltapi.repository.target_repository import TargetRepository
@@ -19,13 +20,21 @@ from saltapi.web.schema.block import Block
 app = FastAPI()
 origins = [
     "http://127.0.0.1:4200",
+    "http://localhost:4200",
 ]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.include_router(proposals_router, prefix="/proposals")
 
 
 @app.get("/{block_id}", response_model=Block)
-def home(block_id: int, user=Depends(is_user_admin_or_salt_astronomer)) -> Any:
+def home(block_id: int, user=Depends(token_authentication)) -> Any:
     with UnitOfWork() as unit_of_work:
         # proposals_dir = Settings().proposals_dir
         target_repository = TargetRepository(unit_of_work.connection)
@@ -72,10 +81,3 @@ def token(form_data: OAuth2PasswordRequestForm = Depends()) -> AccessToken:
                 detail="Could not validate credentials.",
                 headers={"WWW-Authenticate": "Bearer"},
             )
-
-
-@app.get("/secret/{value}")
-def secret(value: str, user=Depends(is_user_admin_or_salt_astronomer)):
-    return {"new_value": user}
-
-

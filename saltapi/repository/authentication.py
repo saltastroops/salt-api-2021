@@ -1,5 +1,5 @@
 from typing import Dict, Any, Optional, cast
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
@@ -32,7 +32,11 @@ class AuthenticationRepository:
             expires_delta=token_expires,
         )
 
-        return AccessToken(access_token=token, token_type="bearer")  # nosec
+        return AccessToken(
+            access_token=token,
+            token_type="bearer",
+            expires_at= date.today() + timedelta(hours=ACCESS_TOKEN_LIFETIME_HOURS)
+        )  # nosec
 
     @staticmethod
     def jwt_token(payload: Dict[str, Any],
@@ -64,7 +68,7 @@ class AuthenticationRepository:
         return user
 
 
-def is_user_admin_or_salt_astronomer(token: str = Depends(oauth2_scheme)):
+def token_authentication(token: str = Depends(oauth2_scheme)) -> User:
     with UnitOfWork() as unit_of_work:
         try:
             user_repository = UserRepository(unit_of_work.connection)
@@ -72,12 +76,7 @@ def is_user_admin_or_salt_astronomer(token: str = Depends(oauth2_scheme)):
                 unit_of_work.connection,
                 user_repository)
 
-            user = authentication_repository.validate_auth_token(token)
-            if user_repository.is_administrator(user.username):
-                return True
-            if user_repository.is_salt_astronomer(user.username):
-                return True
-            return False
+            return authentication_repository.validate_auth_token(token)
         except:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
