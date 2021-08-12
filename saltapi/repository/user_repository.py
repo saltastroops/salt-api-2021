@@ -15,6 +15,7 @@ pwd_context = CryptContext(
     schemes=["bcrypt", "md5_crypt"], default="bcrypt", deprecated="auto"
 )
 
+
 class UserRepository:
     def __init__(self, connection: Connection) -> None:
         self.connection = connection
@@ -124,9 +125,7 @@ FROM PiptUser PU
 WHERE PU.Username = :username
         """
         )
-        result = self.connection.execute(
-            stmt, {"username": username}
-        )
+        result = self.connection.execute(stmt, {"username": username})
         return cast(int, result.scalar()) > 0
 
     def is_administrator(self, username: str) -> bool:
@@ -146,9 +145,7 @@ WHERE PS.PiptSetting_Name = 'RightAdmin'
     AND PU.Username = :username
         """
         )
-        result = self.connection.execute(
-            stmt, {"username": username}
-        )
+        result = self.connection.execute(stmt, {"username": username})
         return cast(int, result.scalar()) > 0
 
     @staticmethod
@@ -166,7 +163,7 @@ ON DUPLICATE KEY UPDATE Password = :password
         """
         )
         self.connection.execute(
-            stmt, { "username": username, "password": new_password_hash}
+            stmt, {"username": username, "password": new_password_hash}
         )
 
     @staticmethod
@@ -182,7 +179,9 @@ ON DUPLICATE KEY UPDATE Password = :password
         password_hash = self.get_password_hash(password)
         return secrets.compare_digest(password_hash, hashed_password)
 
-    def find_user_with_username_and_password(self, username, password) -> Optional[User]:
+    def find_user_with_username_and_password(
+        self, username: str, password: str
+    ) -> Optional[User]:
         """
         Find a user with a username and password.
 

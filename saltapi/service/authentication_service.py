@@ -34,12 +34,13 @@ class AuthenticationService:
         return AccessToken(
             access_token=token,
             token_type="bearer",
-            expires_at= date.today() + timedelta(hours=ACCESS_TOKEN_LIFETIME_HOURS)
+            expires_at=date.today() + timedelta(hours=ACCESS_TOKEN_LIFETIME_HOURS),
         )  # nosec
 
     @staticmethod
-    def jwt_token(payload: Dict[str, Any],
-                  expires_delta: Optional[timedelta] = None) -> str:
+    def jwt_token(
+        payload: Dict[str, Any], expires_delta: Optional[timedelta] = None
+    ) -> str:
         """Create a JWT token."""
         to_encode = payload.copy()
         if expires_delta:
@@ -52,7 +53,9 @@ class AuthenticationService:
         return cast(str, encoded_jwt)
 
     def authenticate_user(self, username: str, password: str) -> User:
-        user = self.user_repository.find_user_with_username_and_password(username, password)
+        user = self.user_repository.find_user_with_username_and_password(
+            username, password
+        )
         if not user:
             raise ValueError("User not found or password doesn't match.")
         return user

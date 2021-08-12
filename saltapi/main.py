@@ -5,9 +5,7 @@ from saltapi.web.api.proposals import router as proposals_router
 from saltapi.web.api.authentication import router as authentication_router
 
 app = FastAPI()
-origins = [
-    Settings().frontend_uri
-]
+origins = [Settings().frontend_uri]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -18,4 +16,3 @@ app.add_middleware(
 
 app.include_router(proposals_router, prefix="/proposals")
 app.include_router(authentication_router, prefix="/authentication")
-

@@ -11,10 +11,12 @@ from saltapi.service.authentication import AccessToken
 router = APIRouter(tags=["Authentication"])
 
 
-@router.post('/token',
-             summary="Request an authentication token",
-             response_description="An authentication token",
-             response_model=AccessToken)
+@router.post(
+    "/token",
+    summary="Request an authentication token",
+    response_description="An authentication token",
+    response_model=AccessToken,
+)
 def token(form_data: OAuth2PasswordRequestForm = Depends()) -> AccessToken:
     """
     Request an authentication token.
@@ -33,8 +35,9 @@ def token(form_data: OAuth2PasswordRequestForm = Depends()) -> AccessToken:
         try:
             user_repository = UserRepository(unit_of_work.connection)
             authentication_repository = AuthenticationService(user_repository)
-            user = authentication_repository.authenticate_user(form_data.username,
-                                                               form_data.password)
+            user = authentication_repository.authenticate_user(
+                form_data.username, form_data.password
+            )
             if user:
                 return authentication_repository.access_token(user)
         except:
