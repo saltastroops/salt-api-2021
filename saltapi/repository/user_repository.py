@@ -56,7 +56,7 @@ SELECT COUNT(*)
 FROM ProposalCode PC
          JOIN ProposalInvestigator PI ON PC.ProposalCode_Id = PI.ProposalCode_Id
          JOIN Investigator I on PI.Investigator_Id = I.Investigator_Id
-         JOIN PiptUser PU ON I.Investigator_Id = PU.Investigator_Id
+         JOIN PiptUser PU ON I.PiptUser_Id = PU.PiptUser_Id
 WHERE PC.Proposal_Code = :proposal_code AND PU.Username = :username
         """
         )
@@ -111,15 +111,16 @@ WHERE PCode.Proposal_Code = :proposal_code AND PU.Username = :username
 
     def is_salt_astronomer(self, username: str) -> bool:
         """
-        Check whether a user is the Principal Contact of a proposal.
+        Check whether the user is a SALT Astronomer.
 
-        If the user does not exist, it is assumed they are no Principal Contact.
+        If the user does not exist, it is assumed the are no SALT Astronomer.
         """
         stmt = text(
             """
 SELECT COUNT(*)
-FROM PiptUser PU 
-    JOIN SaltAstronomers SA ON SA.Investigator_Id = PU.Investigator_Id
+FROM PiptUser PU
+    JOIN Investigator I ON PU.PiptUser_Id = I.PiptUser_Id
+    JOIN SaltAstronomers SA ON I.Investigator_Id = SA.Investigator_Id
 WHERE PU.Username = :username
         """
         )
@@ -130,16 +131,19 @@ WHERE PU.Username = :username
 
     def is_administrator(self, username: str) -> bool:
         """
-        Check whether a user is the Principal Contact of a proposal.
+        Check whether the user is an administrator.
 
-        If the user does not exist, it is assumed they are no Principal Contact.
+        If the user does not exist, it is assumed they are no administrator.
         """
         stmt = text(
             """
 SELECT COUNT(*)
-FROM PiptUser PU 
+FROM PiptUser PU
     JOIN PiptUserSetting PUS ON PU.PiptUser_Id = PUS.PiptUser_Id
-WHERE PUS.PiptSetting_Id = 22 AND PU.Username = :username
+    JOIN PiptSetting PS ON PUS.PiptSetting_Id = PS.PiptSetting_Id
+WHERE PS.PiptSetting_Name = 'RightAdmin'
+    AND PUS.Value > 1
+    AND PU.Username = :username
         """
         )
         result = self.connection.execute(
@@ -156,9 +160,9 @@ WHERE PUS.PiptSetting_Id = 22 AND PU.Username = :username
         new_password_hash = self.get_new_password_hash(password)
         stmt = text(
             """
-INSERT INTO Password(Username, Password)
+INSERT INTO Password (Username, Password)
 VALUES (:username, :password)
-ON DUPLICATE KEY UPDATE Username= :username
+ON DUPLICATE KEY UPDATE Password = :password
         """
         )
         self.connection.execute(

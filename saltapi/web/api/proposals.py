@@ -15,7 +15,7 @@ from fastapi import (
 )
 from fastapi.responses import FileResponse
 
-from saltapi.repository.authentication import token_authentication
+from saltapi.service.authentication_service import get_current_user
 from saltapi.web.schema.common import (
     ExecutedObservation,
     ProposalCode,
@@ -53,7 +53,7 @@ def get_proposals(
         description="Only include proposals for this semester and earlier.",
         title="To semester",
     ),
-    user=Depends(token_authentication)
+    user=Depends(get_current_user)
 ) -> List[ProposalListItem]:
     """
     Lists all proposals the user may view. The proposals returned can be limited to those
@@ -88,7 +88,7 @@ def get_proposal(
         title="Accepted content type",
         description="Content type that should be returned.",
     ),
-    user=Depends(token_authentication)
+    user=Depends(get_current_user)
 ) -> Response:
     """
     Returns the proposal with a given proposal code. The proposal can be requested in

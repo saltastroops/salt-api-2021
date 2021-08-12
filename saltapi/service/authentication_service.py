@@ -3,25 +3,24 @@ from datetime import datetime, timedelta, date
 
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
-from sqlalchemy.engine import Connection
 from starlette import status
 
 from saltapi.repository.unit_of_work import UnitOfWork
 from saltapi.repository.user_repository import UserRepository
-from saltapi.service.authenticate import AccessToken
+from saltapi.service.authentication import AccessToken
 from saltapi.service.user import User
 from jose import jwt, JWTError
 
+from saltapi.settings import Settings
 
 ALGORITHM = "HS256"
 ACCESS_TOKEN_LIFETIME_HOURS = 7 * 24
-SECRET_KEY = ""
+SECRET_KEY = Settings().secret_key
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
-class AuthenticationRepository:
-    def __init__(self, connection: Connection, user_repository: UserRepository) -> None:
-        self.connection = connection
+class AuthenticationService:
+    def __init__(self, user_repository: UserRepository) -> None:
         self.user_repository = user_repository
 
     def access_token(self, user: User) -> AccessToken:
@@ -68,13 +67,11 @@ class AuthenticationRepository:
         return user
 
 
-def token_authentication(token: str = Depends(oauth2_scheme)) -> User:
+def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
     with UnitOfWork() as unit_of_work:
         try:
             user_repository = UserRepository(unit_of_work.connection)
-            authentication_repository = AuthenticationRepository(
-                unit_of_work.connection,
-                user_repository)
+            authentication_repository = AuthenticationService(user_repository)
 
             return authentication_repository.validate_auth_token(token)
         except:
