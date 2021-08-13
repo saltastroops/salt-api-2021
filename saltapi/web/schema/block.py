@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 from saltapi.web.schema.bvit import BvitSummary
 from saltapi.web.schema.common import (
     BaseExecutedObservation,
-    ObservingProbabilities,
+    ObservationProbabilities,
     Priority,
     ProposalCode,
     Ranking,
@@ -17,26 +17,6 @@ from saltapi.web.schema.hrs import HrsSummary
 from saltapi.web.schema.observation import Observation
 from saltapi.web.schema.rss import RssSummary
 from saltapi.web.schema.salticam import SalticamSummary
-
-
-class Transparency(str, Enum):
-    """Sky transparency."""
-
-    ANY = "Any"
-    CLEAR = "Clear"
-    THICK_CLOUD = "Thick cloud"
-    THIN_CLOUD = "Thin cloud"
-
-
-class InstrumentSummary(BaseModel):
-    """Summary details of an instrument setup."""
-
-    name: str = Field(..., title="Name", description="Instrument name")
-    mode: str = Field(
-        ...,
-        title="Mode",
-        description="Instrument mode. For Salticam this is just an empty string.",
-    )
 
 
 class BlockStatus(str, Enum):
@@ -51,8 +31,17 @@ class BlockStatus(str, Enum):
     SUPERSEDED = "Superseded"
 
 
+class Transparency(str, Enum):
+    """Sky transparency."""
+
+    ANY = "Any"
+    CLEAR = "Clear"
+    THICK_CLOUD = "Thick cloud"
+    THIN_CLOUD = "Thin cloud"
+
+
 class ObservingConditions(BaseModel):
-    minimum_seeing: float = Field(
+    minimum_seeing: Optional[float] = Field(
         ...,
         title="Minimum seeing",
         description="Minimum seeing allowed for an observation, in arcseconds",
@@ -80,6 +69,75 @@ class ObservingConditions(BaseModel):
         ...,
         title="Minimum lunar distance",
         description="Minimum required angular distance between the Moon and the target, in degrees",
+    )
+
+
+class Block(BaseModel):
+    """A block, i.e. a smallest schedulable unit in a proposal."""
+
+    id: int = Field(..., title="Block id", description="Unique identifier of the block")
+    name: str = Field(..., title="Name", description="Block name")
+    proposal_code: ProposalCode = Field(
+        ..., title="Proposal code of the proposal to which the block belongs"
+    )
+    semester: Semester = Field(..., title="Semester to which the block belongs")
+    status: BlockStatus = Field(..., title="Block status", description="Block status")
+    priority: Priority = Field(
+        ..., title="Priority", description="Priority of the block"
+    )
+    ranking: Optional[Ranking] = Field(
+        ...,
+        title="Ranking",
+        description="Ranking by the Principal Investigator relative to other blocks in the proposal",
+    )
+    wait_period: int = Field(
+        ...,
+        title="Wait period",
+        description="Minimum number of days to wait between observations of the block",
+    )
+    comment: Optional[str] = Field(
+        ...,
+        title="Comment",
+        description="Comment about the block by the Principal Investigator",
+    )
+    requested_observations: int = Field(
+        ...,
+        title="Requested observations",
+        description="Number of observations requested for the block",
+    )
+    executed_observations: List[BaseExecutedObservation] = Field(
+        ...,
+        title="Executed observations",
+        description="Observations made for the block",
+    )
+    observing_conditions: ObservingConditions = Field(
+        ...,
+        title="Observing conditions",
+        description="Conditions required for observing the block",
+    )
+    observation_time: int = Field(
+        ...,
+        title="Observation time",
+        description="Time required for an observation of the block, including the overhead time, in seconds",
+        gt=0,
+    )
+    overhead_time: int = Field(
+        ..., title="Overhead time for an observation of the block, in seconds", ge=0
+    )
+    observing_windows: List[TimeInterval] = Field(
+        ...,
+        title="Observing windows",
+        description="Time windows during which the block can be observed",
+    )
+    observation_probabilities: ObservationProbabilities = Field(
+        ...,
+        title="Observing probabilities",
+        description="Probabilities related to observing the block",
+    )
+    observations: List[Observation] = Field(
+        ...,
+        title="Observations",
+        description="List of observations in the block. With the exception of some legacy proposals, there is always a single observation in the block",
     )
 
 
@@ -132,72 +190,3 @@ class BlockSummary(BaseModel):
     instruments: List[
         Union[SalticamSummary, RssSummary, HrsSummary, BvitSummary]
     ] = Field(..., title="Instruments", description="Instruments used for the block")
-
-
-class Block(BaseModel):
-    """A block, i.e. a smallest schedulable unit in a proposal."""
-
-    id: int = Field(..., title="Block id", description="Unique identifier of the block")
-    name: str = Field(..., title="Name", description="Block name")
-    proposal_code: ProposalCode = Field(
-        ..., title="Proposal code of the proposal to which the block belongs"
-    )
-    semester: Semester = Field(..., title="Semester to which the block belongs")
-    status: BlockStatus = Field(..., title="Block status", description="Block status")
-    priority: Priority = Field(
-        ..., title="Priority", description="Priority of the block"
-    )
-    ranking: Ranking = Field(
-        ...,
-        title="Ranking",
-        description="Ranking by the Principal Investigator relative to other blocks in the proposal",
-    )
-    wait_period: int = Field(
-        ...,
-        title="Wait period",
-        description="Minimum number of days to wait between observations of the block",
-    )
-    comment: Optional[str] = Field(
-        ...,
-        title="Comment",
-        description="Comment about the block by the Principal Investigator",
-    )
-    requested_observations: int = Field(
-        ...,
-        title="Requested observations",
-        description="Number of observations requested for the block",
-    )
-    executed_observations: List[BaseExecutedObservation] = Field(
-        ...,
-        title="Executed observations",
-        description="Observations made for the block",
-    )
-    observing_conditions: ObservingConditions = Field(
-        ...,
-        title="Observing conditions",
-        description="Conditions required for observing the block",
-    )
-    observation_time: int = Field(
-        ...,
-        title="Observation time",
-        description="Time required for an observation of the block, including the overhead time, in seconds",
-        gt=0,
-    )
-    overhead_time: int = Field(
-        ..., title="Overhead time for an observation of the block, in seconds", gt=0
-    )
-    observing_windows: List[TimeInterval] = Field(
-        ...,
-        title="Observing windows",
-        description="Time windows during which the block can be observed",
-    )
-    observing_probabilities: ObservingProbabilities = Field(
-        ...,
-        title="Observing probabilities",
-        description="Probabilities related to observing the block",
-    )
-    observations: List[Observation] = Field(
-        ...,
-        title="Observations",
-        description="List of observations in the block. With the exception of some legacy proposals, there is always a single observation in the block",
-    )

@@ -5,7 +5,9 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.exc import NoResultFound
 
 from saltapi.repository.block_repository import BlockRepository
+from saltapi.repository.instrument_repository import InstrumentRepository
 from saltapi.repository.target_repository import TargetRepository
+from saltapi.service.instrument import BVIT, HRS, RSS, Salticam
 from saltapi.service.target import Target
 from tests.markers import nodatabase
 
@@ -17,9 +19,24 @@ class FakeTargetRepository:
         return f"Target with id {target_id}"
 
 
+class FakeInstrumentRepository:
+    def get_salticam(self, salticam_id: int) -> Salticam:
+        return f"Salticam with id {salticam_id}"
+
+    def get_rss(self, rss_id: int) -> RSS:
+        return f"RSS with id {rss_id}"
+
+    def get_hrs(self, hrs_id: int) -> HRS:
+        return f"HRS with id {hrs_id}"
+
+    def get_bvit(self, bvit_id: int) -> BVIT:
+        return f"BVIT with id {bvit_id}"
+
+
 def create_block_repository(connection: Connection) -> BlockRepository:
     return BlockRepository(
         target_repository=cast(TargetRepository, FakeTargetRepository()),
+        instrument_repository=cast(InstrumentRepository, FakeInstrumentRepository()),
         connection=connection,
     )
 
@@ -98,6 +115,35 @@ def test_target(dbconnection: Connection, testdata: Callable[[str], Any]) -> Non
     target = block["observations"][0]["target"]
 
     assert target == f"Target with id {expected_target_id}"
+
+
+@nodatabase
+def test_finder_charts(
+    dbconnection: Connection, testdata: Callable[[str], Any]
+) -> None:
+    data = testdata(TEST_DATA)["finder_charts"]
+    for d in data:
+        block_id = d["block_id"]
+        expected_finder_charts = d["finder_charts"]
+        block_repository = create_block_repository(dbconnection)
+        block = block_repository.get(block_id)
+        finder_charts = block["observations"][0]["finder_charts"]
+
+        assert finder_charts == expected_finder_charts
+
+
+@nodatabase
+def test_finder_charts_with_validity(
+    dbconnection: Connection, testdata: Callable[[str], Any]
+) -> None:
+    data = testdata(TEST_DATA)["finder_charts_with_validity"]
+    block_id = data["block_id"]
+    expected_last_finder_chart = data["last_finder_chart"]
+    block_repository = create_block_repository(dbconnection)
+    block = block_repository.get(block_id)
+    finder_charts = block["observations"][0]["finder_charts"]
+
+    assert finder_charts[-1] == expected_last_finder_chart
 
 
 @nodatabase
@@ -248,4 +294,52 @@ def test_payload_configurations(
     assert len(configs) == len(expected_configs)
 
     for i in range(len(configs)):
+        # instruments must be compared separately
+        instruments = set(configs[i]["instruments"].keys()).union(
+            expected_configs[i]["instruments"].keys()
+        )
+        for instrument in instruments:
+            assert configs[i]["instruments"].get(instrument) == expected_configs[i][
+                "instruments"
+            ].get(instrument)
+        del configs[i]["instruments"]
+        del expected_configs[i]["instruments"]
+
         assert configs[i] == expected_configs[i]
+
+
+def test_get_block_instruments(
+    dbconnection: Connection, testdata: Callable[[str], Any]
+) -> None:
+    data = testdata(TEST_DATA)["block_instruments"]
+    for d in data:
+        block_id = d["block_id"]
+        expected_observations = d["observations"]
+        block_repository = create_block_repository(dbconnection)
+        block = block_repository.get(block_id)
+        observations = block["observations"]
+
+        assert len(observations) == len(expected_observations)
+        for i in range(len(observations)):
+            expected_telescope_configs = expected_observations[i][
+                "telescope_configurations"
+            ]
+            telescope_configs = observations[i]["telescope_configurations"]
+
+            assert len(expected_telescope_configs) == len(telescope_configs)
+            for j in range(len(telescope_configs)):
+                expected_payload_configs = expected_telescope_configs[j][
+                    "payload_configurations"
+                ]
+                payload_configs = telescope_configs[j]["payload_configurations"]
+
+                assert len(payload_configs) == len(expected_payload_configs)
+
+                for k in range(len(payload_configs)):
+                    instruments = set(payload_configs[k]["instruments"].keys()).union(
+                        expected_payload_configs[k]["instruments"].keys()
+                    )
+                    for instrument in instruments:
+                        assert payload_configs[k]["instruments"].get(
+                            instrument
+                        ) == expected_payload_configs[k]["instruments"].get(instrument)
