@@ -118,6 +118,35 @@ def test_target(dbconnection: Connection, testdata: Callable[[str], Any]) -> Non
 
 
 @nodatabase
+def test_finder_charts(
+    dbconnection: Connection, testdata: Callable[[str], Any]
+) -> None:
+    data = testdata(TEST_DATA)["finder_charts"]
+    for d in data:
+        block_id = d["block_id"]
+        expected_finder_charts = d["finder_charts"]
+        block_repository = create_block_repository(dbconnection)
+        block = block_repository.get(block_id)
+        finder_charts = block["observations"][0]["finder_charts"]
+
+        assert finder_charts == expected_finder_charts
+
+
+@nodatabase
+def test_finder_charts_with_validity(
+    dbconnection: Connection, testdata: Callable[[str], Any]
+) -> None:
+    data = testdata(TEST_DATA)["finder_charts_with_validity"]
+    block_id = data["block_id"]
+    expected_last_finder_chart = data["last_finder_chart"]
+    block_repository = create_block_repository(dbconnection)
+    block = block_repository.get(block_id)
+    finder_charts = block["observations"][0]["finder_charts"]
+
+    assert finder_charts[-1] == expected_last_finder_chart
+
+
+@nodatabase
 def test_time_restrictions(
     dbconnection: Connection, testdata: Callable[[str], Any]
 ) -> None:
@@ -266,9 +295,13 @@ def test_payload_configurations(
 
     for i in range(len(configs)):
         # instruments must be compared separately
-        instruments = set(configs[i]["instruments"].keys()).union(expected_configs[i]["instruments"].keys())
+        instruments = set(configs[i]["instruments"].keys()).union(
+            expected_configs[i]["instruments"].keys()
+        )
         for instrument in instruments:
-            assert configs[i]["instruments"].get(instrument) == expected_configs[i]["instruments"].get(instrument)
+            assert configs[i]["instruments"].get(instrument) == expected_configs[i][
+                "instruments"
+            ].get(instrument)
         del configs[i]["instruments"]
         del expected_configs[i]["instruments"]
 
@@ -303,9 +336,10 @@ def test_get_block_instruments(
                 assert len(payload_configs) == len(expected_payload_configs)
 
                 for k in range(len(payload_configs)):
-                    instruments = set(payload_configs[k]["instruments"].keys()).union(expected_payload_configs[k]["instruments"].keys())
+                    instruments = set(payload_configs[k]["instruments"].keys()).union(
+                        expected_payload_configs[k]["instruments"].keys()
+                    )
                     for instrument in instruments:
-                        assert (
-                                payload_configs[k]["instruments"].get(instrument)
-                                == expected_payload_configs[k]["instruments"].get(instrument)
-                            )
+                        assert payload_configs[k]["instruments"].get(
+                            instrument
+                        ) == expected_payload_configs[k]["instruments"].get(instrument)

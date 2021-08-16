@@ -21,7 +21,7 @@ SELECT R.Rss_Id                                          AS rss_id,
        IF(RC.RssSpectroscopy_Id IS NOT NULL, 1, 0)       AS has_spectroscopy,
        IF(RC.RssFabryPerot_Id IS NOT NULL, 1, 0)         AS has_fp,
        IF(RC.RssPolarimetry_Id IS NOT NULL, 1, 0)        AS has_polarimetry,
-       IF(RC.RssMask_Id IS NOT NULL, 1, 0)                  has_mask,
+       IF(RC.RssMask_Id IS NOT NULL, 1, 0)               AS has_mask,
        IF(RMMD.RssMask_Id IS NOT NULL, 1, 0)             AS has_mos_mask,
        IF(RDW.RssDetectorWindow_Id IS NOT NULL, 1, 0)    AS has_detector_window,
        IF(RP.RssEtalonPattern_Id IS NOT NULL, 1, 0)      AS has_etalon_pattern,
@@ -34,6 +34,7 @@ SELECT R.Rss_Id                                          AS rss_id,
        RF.Barcode                                        AS filter,
        RMT.RssMaskType                                   AS mask_type,
        RMA.Barcode                                       AS mask_barcode,
+       RPMD.Description                                  AS mask_description,
        RMMD.Equinox                                      AS mos_equinox,
        RMMD.CutBy                                        AS mos_cut_by,
        RMMD.CutDate                                      AS mos_cut_date,
@@ -70,6 +71,7 @@ FROM Rss R
                       RBSO.RssBeamSplitterOrientation_Id
          JOIN RssFilter RF ON RC.RssFilter_Id = RF.RssFilter_Id
          LEFT JOIN RssMask RMA ON RC.RssMask_Id = RMA.RssMask_Id
+         LEFT JOIN RssPredefinedMaskDetails RPMD ON RMA.RssMask_Id = RPMD.RssMask_Id
          LEFT JOIN RssMaskType RMT ON RMA.RssMaskType_Id = RMT.RssMaskType_Id
          LEFT JOIN RssMosMaskDetails RMMD ON RMA.RssMask_Id = RMMD.RssMask_Id
          JOIN RssProcedure RP ON R.RssProcedure_Id = RP.RssProcedure_Id
@@ -98,6 +100,7 @@ ORDER BY Rss_Id DESC;
             "procedure": self._procedure(row),
             "observation_time": row.observation_time,
             "overhead_time": row.overhead_time,
+            "arc_bible_entries": self._arc_bible_entries(row),
         }
         return rss
 
@@ -106,10 +109,11 @@ ORDER BY Rss_Id DESC;
         if not row.has_spectroscopy:
             return None
 
-        camera_angle = row.articulation_station.split("_")[1]
+        camera_station, camera_angle = row.articulation_station.split("_")
         spectroscopy = {
             "grating": row.grating,
             "grating_angle": row.grating_angle,
+            "camera_station": int(camera_station),
             "camera_angle": float(camera_angle),
         }
         return spectroscopy
@@ -142,11 +146,13 @@ ORDER BY Rss_Id DESC;
             mask = {
                 "mask_type": row.mask_type,
                 "barcode": row.mask_barcode,
+                "description": row.mask_description,
             }
         else:
             mask = {
                 "mask_type": row.mask_type,
                 "barcode": row.mask_barcode,
+                "description": row.mask_description,
                 "equinox": row.mos_equinox,
                 "cut_by": row.mos_cut_by,
                 "cut_date": row.mos_cut_date,
@@ -219,7 +225,7 @@ ORDER BY Rss_Id DESC;
             "MOS PEAKUP": "MOS Peakup",
             "NOD AND SHUFFLE": "Nod and Shuffle",
             "NORMAL": "Normal",
-            "POLARIMETRY": "Polarimetry"
+            "POLARIMETRY": "Polarimetry",
         }
 
         return procedure_types[row.procedure_type]
@@ -350,3 +356,46 @@ WHERE RPP.RssPolarimetryPattern_Id = :pattern_id
             "etalon_wavelengths": etalon_wavelengths,
             "polarimetry_pattern": polarimetry_pattern,
         }
+
+    def _arc_bible_entries(self, row: Any) -> List[Dict[str, Any]]:
+        """Return the arc bible entries."""
+
+        stmt = text(
+            """
+SELECT L.Lamp                                     AS lamp,
+       IF(AE.Lamp_Id = AB.PreferredLamp_Id, 1, 0) AS is_preferred_lamp,
+       AE.OrigExptime                             AS original_exposure_time,
+       arc_calculator(AE.Lamp_Id, AE.Exptime, SUBSTRING(RM.Barcode, 3, 4) / 100,
+                      :binned_rows,
+                      :binned_cols)               AS preferred_exposure_time
+FROM ArcExposure AE
+         JOIN Lamp L ON AE.Lamp_Id = L.Lamp_Id
+         JOIN ArcBible AB ON AE.ArcBible_Id = AB.ArcBible_Id
+         JOIN RssSpectroscopy RS ON AB.RssGrating_Id = RS.RssGrating_Id AND
+                                    AB.RssArtStation_Number = RS.RssArtStation_Number
+         JOIN RssConfig RC ON RS.RssSpectroscopy_Id = RC.RssSpectroscopy_Id
+         JOIN RssMask RM ON RC.RssMask_Id = RM.RssMask_Id
+         JOIN Rss R ON RC.RssConfig_Id = R.RssConfig_Id
+WHERE R.Rss_Id = :rss_id
+ORDER BY is_preferred_lamp DESC
+        """
+        )
+        result = self.connection.execute(
+            stmt,
+            {
+                "binned_rows": row.pre_binned_rows,
+                "binned_cols": row.pre_binned_cols,
+                "rss_id": row.rss_id,
+            },
+        )
+
+        entries = [
+            {
+                "lamp": row.lamp,
+                "is_preferred_lamp": True if row.is_preferred_lamp else False,
+                "original_exposure_time": row.original_exposure_time,
+                "preferred_exposure_time": row.preferred_exposure_time,
+            }
+            for row in result
+        ]
+        return entries

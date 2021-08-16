@@ -19,26 +19,6 @@ from saltapi.web.schema.rss import RssSummary
 from saltapi.web.schema.salticam import SalticamSummary
 
 
-class Transparency(str, Enum):
-    """Sky transparency."""
-
-    ANY = "Any"
-    CLEAR = "Clear"
-    THICK_CLOUD = "Thick cloud"
-    THIN_CLOUD = "Thin cloud"
-
-
-class InstrumentSummary(BaseModel):
-    """Summary details of an instrument setup."""
-
-    name: str = Field(..., title="Name", description="Instrument name")
-    mode: str = Field(
-        ...,
-        title="Mode",
-        description="Instrument mode. For Salticam this is just an empty string.",
-    )
-
-
 class BlockStatus(str, Enum):
     """Block status."""
 
@@ -49,6 +29,15 @@ class BlockStatus(str, Enum):
     NOT_SET = "Not set"
     ON_HOLD = "On Hold"
     SUPERSEDED = "Superseded"
+
+
+class Transparency(str, Enum):
+    """Sky transparency."""
+
+    ANY = "Any"
+    CLEAR = "Clear"
+    THICK_CLOUD = "Thick cloud"
+    THIN_CLOUD = "Thin cloud"
 
 
 class ObservingConditions(BaseModel):
@@ -81,57 +70,6 @@ class ObservingConditions(BaseModel):
         title="Minimum lunar distance",
         description="Minimum required angular distance between the Moon and the target, in degrees",
     )
-
-
-class BlockSummary(BaseModel):
-    """Summary information about a block."""
-
-    id: int = Field(
-        ..., title="Block id", description="Unique identifier for the block"
-    )
-    name: str = Field(..., title="Name", description="Block name")
-    observation_time: int = Field(
-        ...,
-        title="Observation time",
-        description="Time required to make an observation of the block, in seconds",
-        ge=0,
-    )
-    priority: Priority = Field(
-        ..., title="Priority", description="Priority of the block"
-    )
-    requested_observations: int = Field(
-        ...,
-        title="Requested observations",
-        description="Number of observations requested for the block",
-    )
-    accepted_observations: int = Field(
-        ...,
-        title="Accepted observations",
-        description="Number of accepted observations made for the block so far",
-    )
-    rejected_observations: int = Field(
-        ...,
-        title="Rejected observations",
-        description="Number of rejected observations made for the block so far",
-    )
-    is_observable_tonight: bool = Field(
-        ...,
-        title="Observable tonight?",
-        description="Whether the block can be observed tonight (i.e. during the current Julian day)",
-    )
-    remaining_nights: int = Field(
-        ...,
-        title="Remaining nights",
-        description="Number of nights (Julian days), excluding the current one, during which the block still can be observed",
-    )
-    observing_conditions: ObservingConditions = Field(
-        ...,
-        title="Observing conditions",
-        description="Conditions required for observing the block",
-    )
-    instruments: List[
-        Union[SalticamSummary, RssSummary, HrsSummary, BvitSummary]
-    ] = Field(..., title="Instruments", description="Instruments used for the block")
 
 
 class Block(BaseModel):
@@ -201,3 +139,54 @@ class Block(BaseModel):
         title="Observations",
         description="List of observations in the block. With the exception of some legacy proposals, there is always a single observation in the block",
     )
+
+
+class BlockSummary(BaseModel):
+    """Summary information about a block."""
+
+    id: int = Field(
+        ..., title="Block id", description="Unique identifier for the block"
+    )
+    name: str = Field(..., title="Name", description="Block name")
+    observation_time: int = Field(
+        ...,
+        title="Observation time",
+        description="Time required to make an observation of the block, in seconds",
+        ge=0,
+    )
+    priority: Priority = Field(
+        ..., title="Priority", description="Priority of the block"
+    )
+    requested_observations: int = Field(
+        ...,
+        title="Requested observations",
+        description="Number of observations requested for the block",
+    )
+    accepted_observations: int = Field(
+        ...,
+        title="Accepted observations",
+        description="Number of accepted observations made for the block so far",
+    )
+    rejected_observations: int = Field(
+        ...,
+        title="Rejected observations",
+        description="Number of rejected observations made for the block so far",
+    )
+    is_observable_tonight: bool = Field(
+        ...,
+        title="Observable tonight?",
+        description="Whether the block can be observed tonight (i.e. during the current Julian day)",
+    )
+    remaining_nights: int = Field(
+        ...,
+        title="Remaining nights",
+        description="Number of nights (Julian days), excluding the current one, during which the block still can be observed",
+    )
+    observing_conditions: ObservingConditions = Field(
+        ...,
+        title="Observing conditions",
+        description="Conditions required for observing the block",
+    )
+    instruments: List[
+        Union[SalticamSummary, RssSummary, HrsSummary, BvitSummary]
+    ] = Field(..., title="Instruments", description="Instruments used for the block")

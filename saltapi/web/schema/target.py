@@ -12,26 +12,6 @@ from saltapi.web.schema.common import (
 )
 
 
-class ProperMotion(BaseModel):
-    """Proper motion."""
-
-    right_ascension_speed: float = Field(
-        ...,
-        title="Right ascension speed",
-        description="Right ascension speed, in arcseconds per year",
-    )
-    declination_speed: float = Field(
-        ...,
-        title="Declination speed",
-        description="Declination speed, in arcseconds per year",
-    )
-    epoch: datetime = Field(
-        ...,
-        title="Epoch",
-        description="Time for which the target coordinates are given",
-    )
-
-
 class Magnitude(BaseModel):
     """Apparent magnitude (range)."""
 
@@ -80,6 +60,26 @@ class PeriodEphemeris(BaseModel):
     )
 
 
+class ProperMotion(BaseModel):
+    """Proper motion."""
+
+    right_ascension_speed: float = Field(
+        ...,
+        title="Right ascension speed",
+        description="Right ascension speed, in arcseconds per year",
+    )
+    declination_speed: float = Field(
+        ...,
+        title="Declination speed",
+        description="Declination speed, in arcseconds per year",
+    )
+    epoch: datetime = Field(
+        ...,
+        title="Epoch",
+        description="Time for which the target coordinates are given",
+    )
+
+
 class Target(BaseModel):
     """Base model for targets."""
 
@@ -123,9 +123,9 @@ class Phase1Target(Target):
         title="Optional?",
         description="Whether the target is optional, i.e. whether it is part of a pool of targets from which only a subset needs to be observed.",
     )
-    n_visits: int = Field(
+    requested_observations: int = Field(
         ...,
-        title="Number of visits",
+        title="Number of requested observations",
         description="Number of observations requested for the target",
     )
     max_lunar_phase: float = Field(

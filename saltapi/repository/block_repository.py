@@ -174,6 +174,34 @@ ORDER BY BVW.VisibilityStart;
             for row in result
         ]
 
+    def _finder_charts(self, pointing_id: int) -> List[Dict[str, Any]]:
+        stmt = text(
+            """
+SELECT FC.FindingChart_Id AS finding_chart_id,
+       FC.Comments        AS comments,
+       FC.ValidFrom       AS valid_from,
+       FC.ValidUntil      AS valid_until
+FROM FindingChart FC
+WHERE FC.Pointing_Id = :pointing_id
+ORDER BY ValidFrom, FindingChart_Id
+        """
+        )
+        result = self.connection.execute(stmt, {"pointing_id": pointing_id})
+
+        return [
+            {
+                "id": row.finding_chart_id,
+                "comment": row.comments,
+                "valid_from": pytz.utc.localize(row.valid_from)
+                if row.valid_from
+                else None,
+                "valid_until": pytz.utc.localize(row.valid_until)
+                if row.valid_until
+                else None,
+            }
+            for row in result
+        ]
+
     def _time_restrictions(
         self, pointing_id: int
     ) -> Optional[List[Dict[str, datetime]]]:
@@ -291,6 +319,7 @@ ORDER BY TCOC.Pointing_Id, TCOC.Observation_Order, TCOC.TelescopeConfig_Order,
         for pointing_rows in pointing_groups:
             pointing = {
                 "target": self.target_repository.get(pointing_rows[0].target_id),
+                "finder_charts": self._finder_charts(pointing_rows[0].pointing_id),
                 "time_restrictions": self._time_restrictions(
                     pointing_rows[0].pointing_id
                 ),
@@ -405,21 +434,31 @@ ORDER BY TCOC.Pointing_Id, TCOC.Observation_Order, TCOC.TelescopeConfig_Order,
 
         return payload_config
 
-    def _instruments(self, payload_config_row: Any) -> Dict[str, List[Dict[str, Any]]]:
+    def _instruments(
+        self, payload_config_row: Any
+    ) -> Dict[str, Optional[List[Dict[str, Any]]]]:
         if payload_config_row.salticam_pattern_id is not None:
-            salticam_setups: Optional[List[Dict[str, Any]]] = self._salticam_setups(payload_config_row.salticam_pattern_id)
+            salticam_setups: Optional[List[Dict[str, Any]]] = self._salticam_setups(
+                payload_config_row.salticam_pattern_id
+            )
         else:
             salticam_setups = None
         if payload_config_row.rss_pattern_id is not None:
-            rss_setups: Optional[List[Dict[str, Any]]] = self._rss_setups(payload_config_row.rss_pattern_id)
+            rss_setups: Optional[List[Dict[str, Any]]] = self._rss_setups(
+                payload_config_row.rss_pattern_id
+            )
         else:
             rss_setups = None
         if payload_config_row.hrs_pattern_id is not None:
-            hrs_setups: Optional[List[Dict[str, Any]]] = self._hrs_setups(payload_config_row.hrs_pattern_id)
+            hrs_setups: Optional[List[Dict[str, Any]]] = self._hrs_setups(
+                payload_config_row.hrs_pattern_id
+            )
         else:
             hrs_setups = None
         if payload_config_row.bvit_pattern_id is not None:
-            bvit_setups: Optional[List[Dict[str, Any]]] = self._bvit_setups(payload_config_row.bvit_pattern_id)
+            bvit_setups: Optional[List[Dict[str, Any]]] = self._bvit_setups(
+                payload_config_row.bvit_pattern_id
+            )
         else:
             bvit_setups = None
 
@@ -427,7 +466,7 @@ ORDER BY TCOC.Pointing_Id, TCOC.Observation_Order, TCOC.TelescopeConfig_Order,
             "salticam": salticam_setups,
             "rss": rss_setups,
             "hrs": hrs_setups,
-            "bvit": bvit_setups
+            "bvit": bvit_setups,
         }
 
         return instruments

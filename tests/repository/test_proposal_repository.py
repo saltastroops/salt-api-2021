@@ -1,12 +1,126 @@
 from typing import Any, Callable
 
 import freezegun
+import pytest
 from sqlalchemy.engine import Connection
 
+from saltapi.exceptions import NotFoundError
 from saltapi.repository.proposal_repository import ProposalRepository
 from tests.markers import nodatabase
 
 TEST_DATA = "repository/proposal_repository.yaml"
+
+
+@nodatabase
+def test_list_returns_correct_content(
+    dbconnection: Connection, testdata: Callable[[str], Any]
+) -> None:
+    data = testdata(TEST_DATA)["proposal_list_content"]
+    for d in data:
+        semester = d["semester"]
+        expected_proposal = d["proposal"]
+        proposal_repository = ProposalRepository(dbconnection)
+        proposals = proposal_repository.list(semester, semester)
+        proposal = [
+            p
+            for p in proposals
+            if p["proposal_code"] == expected_proposal["proposal_code"]
+        ][0]
+
+        assert proposal == expected_proposal
+
+
+def test_list_returns_correct_count(
+    dbconnection: Connection, testdata: Callable[[str], Any]
+) -> None:
+    data = testdata(TEST_DATA)["proposal_list_count"]
+    for d in data:
+        first_semester = d["first_semester"]
+        last_semester = d["last_semester"]
+        expected_proposal_count = d["proposal_count"]
+        proposal_repository = ProposalRepository(dbconnection)
+        proposals = proposal_repository.list(
+            first_semester=first_semester, last_semester=last_semester
+        )
+        proposal_count = len(proposals)
+
+        assert proposal_count == expected_proposal_count
+
+
+@nodatabase
+def test_list_handles_omitted_semester_limits(dbconnection: Connection) -> None:
+    proposal_repository = ProposalRepository(dbconnection)
+
+    assert len(proposal_repository.list(last_semester="2015-1")) == len(
+        proposal_repository.list(first_semester="2000-1", last_semester="2015-1")
+    )
+    assert len(proposal_repository.list(first_semester="2020-1")) == len(
+        proposal_repository.list(first_semester="2020-1")
+    )
+    assert len(proposal_repository.list()) == len(
+        proposal_repository.list(first_semester="2000-1", last_semester="2100-1")
+    )
+
+
+@nodatabase
+def test_list_results_can_be_limited(
+    dbconnection: Connection, testdata: Callable[[str], Any]
+) -> None:
+    data = testdata(TEST_DATA)["proposal_list_limit"]
+    for d in data:
+        semester = d["semester"]
+        expected_proposal_codes = d["proposal_codes"]
+        limit = len(expected_proposal_codes)
+        proposal_repository = ProposalRepository(dbconnection)
+        proposals = proposal_repository.list(
+            first_semester=semester, last_semester=semester, limit=limit
+        )
+
+        assert [p["proposal_code"] for p in proposals] == expected_proposal_codes
+
+
+@nodatabase
+def test_list_handles_omitted_limit(dbconnection: Connection) -> None:
+    proposal_repository = ProposalRepository(dbconnection)
+    assert proposal_repository.list(
+        first_semester="2018-2", last_semester="2019-2"
+    ) == proposal_repository.list(
+        first_semester="2018-2", last_semester="2019-2", limit=100000
+    )
+
+
+def test_list_raises_error_for_negative_limit(dbconnection: Connection) -> None:
+    with pytest.raises(ValueError) as excinfo:
+        proposal_repository = ProposalRepository(dbconnection)
+        proposal_repository.list(limit=-1)
+
+    assert "negative" in str(excinfo)
+
+
+@pytest.mark.parametrize(
+    "incorrect_semester",
+    ["200-1", "20212-1", "2020-", "2020-11", "2020", "20202", "abcd-1", "2021-a"],
+)
+@nodatabase
+def test_list_raises_error_for_wrong_semester_format(
+    incorrect_semester: str, dbconnection: Connection
+) -> None:
+    proposal_repository = ProposalRepository(dbconnection)
+
+    with pytest.raises(ValueError) as excinfo:
+        proposal_repository.list(first_semester=incorrect_semester)
+    assert "format" in str(excinfo)
+
+    with pytest.raises(ValueError) as excinfo:
+        proposal_repository.list(last_semester=incorrect_semester)
+    assert "format" in str(excinfo)
+
+
+@nodatabase
+def test_get_raises_error_for_wrong_proposal_code(dbconnection: Connection) -> None:
+    proposal_repository = ProposalRepository(dbconnection)
+    with pytest.raises(NotFoundError):
+        proposal_repository.get(proposal_code="idontexist")
 
 
 @nodatabase
@@ -211,19 +325,75 @@ def test_get_returns_block_observability(
                 assert block["remaining_nights"] == o["remaining_nights"]
 
 
-def test_get_returns_proposal_comments(
+def test_get_returns_observation_comments(
     dbconnection: Connection, testdata: Callable[[str], Any]
 ) -> None:
-    data = testdata(TEST_DATA)["proposal_comments"]
+    data = testdata(TEST_DATA)["observation_comments"]
     proposal_code = data["proposal_code"]
     expected_comments = data["comments"]
 
     proposal_repository = ProposalRepository(dbconnection)
     proposal = proposal_repository.get(proposal_code)
-    comments = proposal["comments"]
+    comments = proposal["observation_comments"]
 
     assert len(comments) == len(expected_comments)
     for i in range(len(comments)):
         assert comments[i]["comment_date"] == expected_comments[i]["comment_date"]
         assert comments[i]["author"] == expected_comments[i]["author"]
         assert expected_comments[i]["comment"] in comments[i]["comment"]
+
+
+def test_get_proposal_status(
+    dbconnection: Connection, testdata: Callable[[str], Any]
+) -> None:
+    data = testdata(TEST_DATA)["get_proposal_status"]
+    for d in data:
+        proposal_code = d["proposal_code"]
+        expected_status = d["status"]
+        proposal_repository = ProposalRepository(dbconnection)
+        status = proposal_repository.get_proposal_status(proposal_code)
+
+        assert expected_status == status
+
+
+def test_get_proposal_status_raises_error_for_wring_proposal_code(
+    dbconnection: Connection,
+) -> None:
+    proposal_repository = ProposalRepository(dbconnection)
+    with pytest.raises(NotFoundError):
+        proposal_repository.get_proposal_status("idontexist")
+
+
+def test_update_proposal_status(dbconnection: Connection) -> None:
+    # Set the status to "Active"
+    proposal_repository = ProposalRepository(dbconnection)
+    proposal_code = "2020-2-SCI-043"
+    proposal_repository.update_proposal_status(proposal_code, "Active")
+    assert proposal_repository.get_proposal_status(proposal_code) == "Active"
+
+    # Now set it to "Under technical review"
+    proposal_repository.update_proposal_status(proposal_code, "Under technical review")
+    assert (
+        proposal_repository.get_proposal_status(proposal_code)
+        == "Under technical review"
+    )
+
+
+def test_update_proposal_status_raises_error_for_wrong_proposal_code(
+    dbconnection: Connection,
+) -> None:
+    proposal_repository = ProposalRepository(dbconnection)
+    with pytest.raises(NotFoundError):
+        proposal_repository.get_proposal_status("idontexist")
+
+
+def test_update_proposal_status_raises_error_for_wrong_status(
+    dbconnection: Connection,
+) -> None:
+    proposal_repository = ProposalRepository(dbconnection)
+    with pytest.raises(ValueError) as excinfo:
+        proposal_repository.update_proposal_status(
+            "2020-2-SCIO-043", "Wrong proposal status"
+        )
+
+    assert "proposal status" in str(excinfo)
