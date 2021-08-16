@@ -4,17 +4,6 @@ from typing import List, Literal, Optional
 from pydantic import BaseModel, Field
 
 
-class SalticamSummary(BaseModel):
-    """Summary information for Salticam."""
-
-    name: Literal["Salticam"] = Field(
-        ..., title="Instrument name", description="Instrument name"
-    )
-    modes: List[Literal[""]] = Field(
-        ..., title="Instrument modes", description="Used instrument modes"
-    )
-
-
 class SalticamDetectorMode(str, Enum):
     """Salticam detector mode."""
 
@@ -22,6 +11,27 @@ class SalticamDetectorMode(str, Enum):
     FRAME_TRANSFER = "Frame Transfer"
     NORMAL = "Normal"
     SLOT_MODE = "Slot Mode"
+
+
+class SalticamDetectorWindow(BaseModel):
+    """Salticam detector window."""
+
+    center_right_ascension: float = Field(
+        ...,
+        title="Center right ascension",
+        description="Right ascension of the detector window center, in degrees",
+    )
+    center_declination: float = Field(
+        ...,
+        title="Center declination",
+        description="Declination of the detector window center, in degrees",
+    )
+    height: int = Field(
+        ..., title="Height", description="Height of the detector window, in arcseconds"
+    )
+    width: int = Field(
+        ..., title="Width", description="Width of the detector window, in arcseconds"
+    )
 
 
 class SalticamExposureType(str, Enum):
@@ -45,27 +55,6 @@ class SalticamReadoutSpeed(str, Enum):
     FAST = "Fast"
     NONE = "None"
     SLOW = "Slow"
-
-
-class SalticamDetectorWindow(BaseModel):
-    """Salticam detector window."""
-
-    center_right_ascension: int = Field(
-        ...,
-        title="Center right ascension",
-        description="Right ascension of the detector window center, in degrees",
-    )
-    center_declination: int = Field(
-        ...,
-        title="Center declination",
-        description="Declination of the detector window center, in degrees",
-    )
-    height: int = Field(
-        ..., title="Height", description="Height of the detector window, in arcseconds"
-    )
-    width: int = Field(
-        ..., title="Width", description="Width of the detector window, in arcseconds"
-    )
 
 
 class SalticamDetector(BaseModel):
@@ -163,4 +152,15 @@ class Salticam(BaseModel):
         title="Overhead time",
         description="Overhead time for the setup, in seconds",
         ge=0,
+    )
+
+
+class SalticamSummary(BaseModel):
+    """Summary information for Salticam."""
+
+    name: Literal["Salticam"] = Field(
+        ..., title="Instrument name", description="Instrument name"
+    )
+    modes: List[Literal[""]] = Field(
+        ..., title="Instrument modes", description="Used instrument modes"
     )

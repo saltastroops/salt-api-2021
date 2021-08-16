@@ -4,27 +4,6 @@ from typing import List, Literal, Optional
 from pydantic import BaseModel, Field
 
 
-class HrsMode(str, Enum):
-    """HRS modes."""
-
-    HIGH_RESOLUTION = "High Resolution"
-    HIGH_STABILITY = "High Stability"
-    INT_CAL_FIBER = "Int Cal Fiber"
-    LOW_RESOLUTION = "Low Resolution"
-    MEDIUM_RESOLUTION = "Medium Resolution"
-
-
-class HrsSummary(BaseModel):
-    """Summary information for RSS."""
-
-    name: Literal["HRS"] = Field(
-        ..., title="Instrument name", description="Instrument name"
-    )
-    modes: List[HrsMode] = Field(
-        ..., title="Instrument modes", description="Used instrument modes"
-    )
-
-
 class HrsExposureType(str, Enum):
     """HRS exposure type."""
 
@@ -44,12 +23,14 @@ class HrsIodineCellPosition(str, Enum):
     TH_AR_IN_STAR = "ThAr in star fiber"
 
 
-class HrsTargetLocation(str, Enum):
-    """HRS target location."""
+class HrsMode(str, Enum):
+    """HRS modes."""
 
-    BISECT = "The star and sky fiber are equidistant from the optical axis"
-    SKY = "The sky fiber is placed on the optical axis"
-    STAR = "The star fiber is placed on the optical axis"
+    HIGH_RESOLUTION = "High Resolution"
+    HIGH_STABILITY = "High Stability"
+    INT_CAL_FIBER = "Int Cal Fiber"
+    LOW_RESOLUTION = "Low Resolution"
+    MEDIUM_RESOLUTION = "Medium Resolution"
 
 
 class HrsNodAndShuffle(BaseModel):
@@ -58,9 +39,17 @@ class HrsNodAndShuffle(BaseModel):
     nod_interval: int = Field(
         ..., title="Nod interval", description="Time per nod interval, in seconds"
     )
-    nod__count: int = Field(
+    nod_count: int = Field(
         ..., title="Nod count", description="Number of nods required"
     )
+
+
+class HrsTargetLocation(str, Enum):
+    """HRS target location."""
+
+    BISECT = "The star and sky fiber are equidistant from the optical axis"
+    SKY = "The sky fiber is placed on the optical axis"
+    STAR = "The star fiber is placed on the optical axis"
 
 
 class HrsConfiguration(BaseModel):
@@ -193,4 +182,15 @@ class Hrs(BaseModel):
         title="Overhead time",
         description="Overhead time for the setup, in seconds",
         ge=0,
+    )
+
+
+class HrsSummary(BaseModel):
+    """Summary information for RSS."""
+
+    name: Literal["HRS"] = Field(
+        ..., title="Instrument name", description="Instrument name"
+    )
+    modes: List[HrsMode] = Field(
+        ..., title="Instrument modes", description="Used instrument modes"
     )

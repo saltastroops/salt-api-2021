@@ -4,24 +4,6 @@ from typing import List, Literal
 from pydantic import BaseModel, Field
 
 
-class BvitSummary(BaseModel):
-    """Summary information for Salticam."""
-
-    name: Literal["BVIT"] = Field(
-        ..., title="Instrument name", description="Instrument name"
-    )
-    modes: List[Literal[""]] = Field(
-        ..., title="Instrument modes", description="Used instrument modes"
-    )
-
-
-class BvitMode(str, Enum):
-    """BVIT instrument mode."""
-
-    IMAGING = "Imaging"
-    STREAMING = "Streaming"
-
-
 class BvitFilter(str, Enum):
     """BVIT filter."""
 
@@ -31,6 +13,13 @@ class BvitFilter(str, Enum):
     R = "R"
     U = "U"
     V = "V"
+
+
+class BvitMode(str, Enum):
+    """BVIT instrument mode."""
+
+    IMAGING = "Imaging"
+    STREAMING = "Streaming"
 
 
 class BvitNeutralDensity(str, Enum):
@@ -63,4 +52,15 @@ class Bvit(BaseModel):
         ...,
         title="Shutter open time",
         description="Time for which the shutter must remain open, in seconds",
+    )
+
+
+class BvitSummary(BaseModel):
+    """Summary information for Salticam."""
+
+    name: Literal["BVIT"] = Field(
+        ..., title="Instrument name", description="Instrument name"
+    )
+    modes: List[Literal[""]] = Field(
+        ..., title="Instrument modes", description="Used instrument modes"
     )

@@ -3,6 +3,29 @@ from typing import List, Literal, Optional, Union
 
 from pydantic import BaseModel, Field
 
+from saltapi.web.schema.common import Lamp
+
+
+class ArcBibleEntry(BaseModel):
+    """RSS arc bible entry."""
+
+    lamp: Lamp = Field(..., title="Lamp", description="Calibration lamp")
+    is_preferred_lamp: bool = Field(
+        ...,
+        title="Preferred lamp?",
+        description="Is the lamp of the entry the preferred one for the RSS setup?",
+    )
+    original_exposure_time: float = Field(
+        ...,
+        title="Original exposure time",
+        description="Original exposure time, in seconds",
+    )
+    preferred_exposure_time: float = Field(
+        ...,
+        title="Preferred exposure time",
+        description="Preferred (corrected) exposure time, in seconds",
+    )
+
 
 class RssMode(str, Enum):
     """RSS modes."""
@@ -15,17 +38,6 @@ class RssMode(str, Enum):
     POLARIMETRIC_IMAGING = "Polarimetric imaging"
     SPECTROPOLARIMETRY = "Spectropolarimetry"
     SPECTROSCOPY = "Spectroscopy"
-
-
-class RssSummary(BaseModel):
-    """Summary information for RSS."""
-
-    name: Literal["RSS"] = Field(
-        ..., title="Instrument name", description="Instrument name"
-    )
-    modes: List[RssMode] = Field(
-        ..., title="Instrument modes", description="Used instrument modes"
-    )
 
 
 class RssGrating(str, Enum):
@@ -47,6 +59,9 @@ class RssSpectroscopy(BaseModel):
     grating_angle: float = Field(
         ..., title="Grating angle", description="Grating angle, in degrees", ge=0
     )
+    camera_station: int = Field(
+        ..., title="Camera station", description="Camera (articulation) station number"
+    )
     camera_angle: float = Field(
         ...,
         title="Camera angle",
@@ -58,9 +73,9 @@ class RssSpectroscopy(BaseModel):
 class RssFabryPerotMode(str, Enum):
     """RSS Fabry-Pérot mode."""
 
-    HR = ("High Resolution",)
-    LR = ("Low Resolution",)
-    MR = ("Medium Resolution",)
+    HR = "High Resolution"
+    LR = "Low Resolution"
+    MR = "Medium Resolution"
     TF = "Tunable Filter"
 
 
@@ -105,6 +120,9 @@ class RssMask(BaseModel):
     barcode: str = Field(
         ..., title="Barcode", description="Barcode identifying the mask"
     )
+    description: Optional[str] = Field(
+        ..., title="Mask description", description="Description of the mask"
+    )
     mask_type: RssMaskType = Field(..., title="Mask type", description="Mask type")
 
 
@@ -146,6 +164,18 @@ class RssConfiguration(BaseModel):
     )
 
 
+class RssDetectorCalculation(str, Enum):
+    """RSS detector calculation."""
+
+    FOCUS = "Focus"
+    FP_RING_RADIUS = "FP Ring Radius"
+    MOS_ACQUISITION = "MOS Acquisition"
+    MOS_MASK_CALIB = "MOS Mask Calibration"
+    MOS_SCAN = "MOS Scan"
+    NOD_AND_SHUFFLE = "Nod & Shuffle"
+    NONE = "None"
+
+
 class RssDetectorMode(str, Enum):
     """RSS detector mode."""
 
@@ -154,6 +184,14 @@ class RssDetectorMode(str, Enum):
     NORMAL = "Normal"
     SHUFFLE = "Shuffle"
     SLOT_MODE = "Slot Mode"
+
+
+class RssDetectorWindow(BaseModel):
+    """RSS detector window."""
+
+    height: int = Field(
+        ..., title="Height", description="Height of the window, in arcseconds", gt=0
+    )
 
 
 class RssExposureType(str, Enum):
@@ -181,43 +219,11 @@ class RssReadoutSpeed(str, Enum):
     SLOW = "Slow"
 
 
-class RssDetectorCalculation(str, Enum):
-    """RSS detector calculation."""
-
-    FOCUS = "Focus"
-    FPRINGRADIUS = "FP Ring Radius"
-    MOS_ACQUISITION = "MOS Acquisition"
-    MOS_MASK_CALIB = "MOS Mask Calibration"
-    MOS_SCAN = "MOS Scan"
-    NOD_AND_SHUFFLE = "Nod & Shuffle"
-    NONE = "None"
-
-
-class RssDetectorWindow(BaseModel):
-    """RSS detector window."""
-
-    height: int = Field(
-        ..., title="Height", description="Height of the window, in arcseconds", gt=0
-    )
-
-
 class RssDetector(BaseModel):
     """Rss detector setup."""
 
     mode: RssDetectorMode = Field(
         ..., title="Detector mode", description="Detector mode"
-    )
-    pre_shuffled_rows: int = Field(
-        ...,
-        title="Pre-shuffled rows",
-        description="Number of rows to shuffle before an exposure",
-        ge=0,
-    )
-    post_shuffled_rows: int = Field(
-        ...,
-        title="Post-shuffled rows",
-        description="Number of rows to shuffle before an exposure",
-        ge=0,
     )
     pre_binned_rows: int = Field(
         ...,
@@ -255,22 +261,6 @@ class RssDetector(BaseModel):
     )
 
 
-class RssProcedureType(str, Enum):
-    """RSS procedure type."""
-
-    FABRY_PEROT = "Fabry Perot"
-    FOCUS = "Focus"
-    FP_CAL = "FP Cal"
-    FP_POLARIMETRY = "FP Polarimetry"
-    FP_RING = "FP Ring"
-    MOS_ACQUISITION = "MOS Acquisition"
-    MOS_CALIBRATION = "MOS Calibration"
-    MOS_PEAKUP = "MOS Peakup"
-    NOD_AND_SHUFFLE = "Node and Shuffle"
-    NORMAL = "Normal"
-    POLARIMETRY = "Polarimetry"
-
-
 class RssWaveplateAnglePair(BaseModel):
     """Half-wave plate and quarter-wave plate angle pair."""
 
@@ -293,6 +283,22 @@ class RssPolarimetryPattern(BaseModel):
         title="Wave plate angles",
         description="Sequence of angles for the half-wave and quarter-wave plate",
     )
+
+
+class RssProcedureType(str, Enum):
+    """RSS procedure type."""
+
+    FABRY_PEROT = "Fabry Perot"
+    FOCUS = "Focus"
+    FP_CAL = "FP Cal"
+    FP_POLARIMETRY = "FP Polarimetry"
+    FP_RING = "FP Ring"
+    MOS_ACQUISITION = "MOS Acquisition"
+    MOS_CALIBRATION = "MOS Calibration"
+    MOS_PEAKUP = "MOS Peakup"
+    NOD_AND_SHUFFLE = "Node and Shuffle"
+    NORMAL = "Normal"
+    POLARIMETRY = "Polarimetry"
 
 
 class RssProcedure(BaseModel):
@@ -333,6 +339,11 @@ class Rss(BaseModel):
     procedure: RssProcedure = Field(
         ..., title="Instrument procedure", description="Instrument procedure"
     )
+    arc_bible_entries: List[ArcBibleEntry] = Field(
+        ...,
+        title="Arc bible entries",
+        description="Arc bible entries for the RSS setup",
+    )
     observation_time: float = Field(
         ...,
         title="Observation time",
@@ -344,4 +355,15 @@ class Rss(BaseModel):
         title="Overhead time",
         description="Overhead time for the setup, in seconds",
         ge=0,
+    )
+
+
+class RssSummary(BaseModel):
+    """Summary information for RSS."""
+
+    name: Literal["RSS"] = Field(
+        ..., title="Instrument name", description="Instrument name"
+    )
+    modes: List[RssMode] = Field(
+        ..., title="Instrument modes", description="Used instrument modes"
     )

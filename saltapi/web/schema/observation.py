@@ -1,24 +1,27 @@
+from datetime import datetime
 from enum import Enum
 from typing import List, Optional
 
 from pydantic import BaseModel, Field
 
 from saltapi.web.schema.bvit import Bvit
-from saltapi.web.schema.common import TargetCoordinates, TimeInterval
+from saltapi.web.schema.common import Lamp, TargetCoordinates, TimeInterval
 from saltapi.web.schema.hrs import Hrs
 from saltapi.web.schema.rss import Rss
 from saltapi.web.schema.salticam import Salticam
+from saltapi.web.schema.target import Target
 
 
-class PhaseInterval(BaseModel):
-    """Phase interval."""
+class CalibrationFilter(str, Enum):
+    """Calibration filter."""
 
-    start: float = Field(
-        ..., title="Interval start", description="Start phase of the interval"
-    )
-    end: float = Field(
-        ..., title="Interval end", description="End phase of the interval"
-    )
+    BLUE_AND_RED = "Blue and Red"
+    CLEAR_AND_ND = "Clear and ND"
+    CLEAR_AND_UV = "Clear and UV"
+    ND_AND_CLEAR = "ND and Clear"
+    NONE = "None"
+    RED_AND_CLEAR = "Red and Clear"
+    UV_AND_BLUE = "UV and Blue"
 
 
 class DitherPattern(BaseModel):
@@ -42,46 +45,21 @@ class DitherPattern(BaseModel):
         description="Offset size, i.e. size of a dither step, in arcseconds",
     )
     steps: int = Field(..., title="Number of steps", description="Number of steps")
-    description: str = Field(
-        ...,
-        title="Description",
-        description="Human-friendly description of the dither pattern",
+
+
+class FinderChart(BaseModel):
+    id: int = Field(
+        ..., title="Finder chart", description="Unique identifier for the finder chart"
     )
-
-
-class GuideStar(TargetCoordinates):
-    """Guide star."""
-
-    magnitude: float = Field(..., title="Magnitude", description="Magnitude")
-
-
-class Lamp(str, Enum):
-    """Calibration lamp(s)."""
-
-    AR = "Ar"
-    AR_AND_THAR = "Ar and ThAr"
-    CUAR = "CuAr"
-    CUAR_AND_XE = "CuAr and Xe"
-    HGAR = "HgAr"
-    HGAR_AND_NE = "HgAr and Ne"
-    NE = "Ne"
-    QTH1 = "QTH1"
-    QTH1_AND_QTH2 = "QTH1 and QTH2"
-    QTH2 = "QTH2"
-    THAR = "ThAr"
-    XE = "Xe"
-
-
-class CalibrationFilter(str, Enum):
-    """Calibration filter."""
-
-    BLUE_AND_RED = "Blue and Red"
-    CLEAR_AND_ND = "Clear and ND"
-    CLEAR_AND_UV = "Clear and UV"
-    ND_AND_CLEAR = "ND and Clear"
-    NONE = "None"
-    RED_AND_CLEAR = "Red and Clear"
-    UV_AND_BLUE = "UV and Blue"
+    comment: Optional[str] = Field(
+        ..., title="Comment by the Principal Investigator regarding the finder chart"
+    )
+    validFrom: datetime = Field(
+        ..., title="Time from when the finder chart may be used"
+    )
+    validUntil: datetime = Field(
+        ..., title="Time until when the finder chart may be used"
+    )
 
 
 class GuideMethod(str, Enum):
@@ -97,6 +75,25 @@ class GuideMethod(str, Enum):
     SLITVIEWER = "Slitviewer"
 
 
+class GuideStar(TargetCoordinates):
+    """Guide star."""
+
+    magnitude: float = Field(..., title="Magnitude", description="Magnitude")
+
+
+class Instruments(BaseModel):
+    """Instrument setups."""
+
+    salticam: Optional[List[Salticam]] = Field(
+        ..., title="Salticam setups", description="Salticam setups"
+    )
+    rss: Optional[List[Rss]] = Field(..., title="RSS setups", description="RSS setups")
+    hrs: Optional[List[Hrs]] = Field(..., title="HRS setups", description="HRS setups")
+    bvit: Optional[List[Bvit]] = Field(
+        ..., title="BVIT setups", description="HRS setups"
+    )
+
+
 class PayloadConfigurationType(str, Enum):
     """Payload configuration type."""
 
@@ -106,13 +103,15 @@ class PayloadConfigurationType(str, Enum):
     SCIENCE = "Science"
 
 
-class Instruments(BaseModel):
-    """Instrument setups."""
+class PhaseInterval(BaseModel):
+    """Phase interval."""
 
-    salticam: Optional[List[Salticam]] = Field(..., title="Salticam setups", description="Salticam setups")
-    rss: Optional[List[Rss]] = Field(..., title="RSS setups", description="RSS setups")
-    hrs: Optional[List[Hrs]] = Field(..., title="HRS setups", description="HRS setups")
-    bvit: Optional[List[Bvit]] = Field(..., title="BVIT setups", description="HRS setups")
+    start: float = Field(
+        ..., title="Interval start", description="Start phase of the interval"
+    )
+    end: float = Field(
+        ..., title="Interval end", description="End phase of the interval"
+    )
 
 
 class PayloadConfiguration(BaseModel):
@@ -137,7 +136,9 @@ class PayloadConfiguration(BaseModel):
     guide_method: GuideMethod = Field(
         ..., title="Guide method", description="Guide method"
     )
-    instruments: Instruments = Field(..., title="Instrument setups", description="Instrument setups")
+    instruments: Instruments = Field(
+        ..., title="Instrument setups", description="Instrument setups"
+    )
 
 
 class TelescopeConfiguration(BaseModel):
@@ -180,6 +181,10 @@ class Observation(BaseModel):
     )
     overhead_time: int = Field(
         ..., title="Overhead time for the observation, in seconds", gt=0
+    )
+    target: Target = Field(..., title="Target", description="Target to be observed")
+    finder_charts: List[FinderChart] = Field(
+        ..., title="Finder charts", description="Finder charts"
     )
     time_restrictions: Optional[List[TimeInterval]] = Field(
         ...,

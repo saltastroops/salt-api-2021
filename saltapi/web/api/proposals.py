@@ -16,8 +16,11 @@ from fastapi import (
 )
 from fastapi.responses import FileResponse
 
-from saltapi.service.authentication_service import get_current_user
-from saltapi.service.user import User
+from saltapi.repository.proposal_repository import ProposalRepository
+from saltapi.repository.unit_of_work import UnitOfWork
+from saltapi.service.proposal import Proposal as _Proposal
+from saltapi.service.proposal import ProposalListItem as _ProposalListItem
+from saltapi.service.proposal_service import ProposalService
 from saltapi.web.schema.common import (
     ExecutedObservation,
     ProposalCode,
@@ -28,7 +31,7 @@ from saltapi.web.schema.proposal import (
     DataReleaseDateUpdate,
     ObservationComment,
     ProgressReport,
-    ProposalContent,
+    Proposal,
     ProposalContentType,
     ProposalListItem,
     ProposalStatusContent,
@@ -55,21 +58,23 @@ def get_proposals(
         description="Only include proposals for this semester and earlier.",
         title="To semester",
     ),
-    user: User = Depends(get_current_user),
-) -> List[ProposalListItem]:
+) -> List[_ProposalListItem]:
     """
     Lists all proposals the user may view. The proposals returned can be limited to those
     with submissions within a semester range by supplying a from or a to semester (or
     both).
     """
 
-    raise NotImplementedError()
+    with UnitOfWork() as unit_of_work:
+        proposal_repository = ProposalRepository(unit_of_work.connection)
+        proposal_service = ProposalService(proposal_repository)
+        return proposal_service.list_proposal_summaries()
 
 
 @router.get(
     "/{proposal_code}",
     summary="Get a proposal",
-    response_model=ProposalContent,
+    response_model=Proposal,
     responses={200: {"content": {"application/pdf": {}, "application/zip": {}}}},
 )
 def get_proposal(
@@ -78,20 +83,12 @@ def get_proposal(
         title="Proposal code",
         description="Proposal code of the returned proposal.",
     ),
-    submission: Optional[int] = Query(
-        None,
-        title="Submission",
-        description="Return the proposal version for a specific submission. By default "
-        "the latest version is returned.",
-        ge=1,
-    ),
-    accept: Optional[ProposalContentType] = Header(
+    accept: str = Header(
         ProposalContentType.JSON,
         title="Accepted content type",
         description="Content type that should be returned.",
     ),
-    user: User = Depends(get_current_user),
-) -> Response:
+) -> _Proposal:
     """
     Returns the proposal with a given proposal code. The proposal can be requested in
     either of three formats:
@@ -116,15 +113,16 @@ def get_proposal(
     An error with status code 406 (Not Acceptable) is returned if an unsupported value
     is given in the `Accept` header.
 
-    The `submission` query parameter lets you request a specific version of the
-    proposal. By default the latest submission is returned.
-
     The different formats do not contain the same information. Most importantly, while
     JSON string includes a list of block ids and names, it does not include any further
     block details. You can use the endpoint `/blocks/{id}` to get a JSON representation
     of a specific block.
     """
-    raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED)
+
+    with UnitOfWork() as unit_of_work:
+        proposal_repository = ProposalRepository(unit_of_work.connection)
+        proposal_service = ProposalService(proposal_repository)
+        return proposal_service.get_proposal(proposal_code)
 
 
 @router.post(

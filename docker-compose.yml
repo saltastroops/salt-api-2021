@@ -13,7 +13,7 @@ services:
     environment:
       - PROPOSALS_DIR=/proposals
     ports:
-      - 1234:80
+      - 8001:80
     restart: always
     volumes:
       - ${PROPOSALS_DIR}:/proposals
