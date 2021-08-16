@@ -25,5 +25,8 @@ class Settings(BaseSettings):
     # Should be generated with openssl: openssl rand -hex 32
     secret_key: str
 
+    # URI which is allowed to connect to the API
+    frontend_uri: str
+
     class Config:
         env_file = os.getenv("DOTENV_FILE", ".env")
