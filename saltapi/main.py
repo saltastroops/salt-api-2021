@@ -1,3 +1,7 @@
+import os
+import sys
+sys.path.append(os.path.dirname(os.path.abspath('.')))
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -10,9 +14,10 @@ from saltapi.service.block_service import BlockService
 from saltapi.web.api.blocks import router as blocks_router
 from saltapi.web.api.proposals import router as proposals_router
 
+
 app = FastAPI()
 
-setup_logging()
+setup_logging(app)
 
 origins = ["http://127.0.0.1:4200", "http://localhost:4200"]
 

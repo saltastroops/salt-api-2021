@@ -1,25 +1,27 @@
 import os
 import logging
-
 import sentry_sdk
+
 from dotenv import load_dotenv
 
 from loguru import logger
 
+from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
+
 from sentry_sdk.integrations.logging import (
-    LoggingIntegration,
     BreadcrumbHandler,
     EventHandler,
 )
 
-load_dotenv()
 
-LOG_LEVEL = logging.getLevelName(os.environ.get("LOG_LEVEL", "DEBUG"))
-JSON_LOGS = True if os.environ.get("JSON_LOGS", "0") == "1" else False
+load_dotenv()
 
 
 class InterceptHandler(logging.Handler):
-    """Intercepts builtin logging messages and routes them to Loguru"""
+    """Intercepts builtin logging messages and routes them to Loguru
+
+    reference: https://loguru.readthedocs.io/en/stable/overview.html#customizable-levels
+    """
 
     def emit(self, record) -> None:
 
@@ -29,7 +31,7 @@ class InterceptHandler(logging.Handler):
         except ValueError:
             level = record.levelno
 
-        # find calle from where the message originated
+        # Find caller from where the message originated
         frame, depth = logging.currentframe(), 2
         while frame.f_code.co_filename == logging.__file__:
             frame = frame.f_back
@@ -38,23 +40,24 @@ class InterceptHandler(logging.Handler):
         logger.opt(depth=depth, exception=record.exc_info).log(level, record.getMessage())
 
 
-def setup_logging():
+def setup_logging(app):
     if os.getenv('SENTRY_DSN'):
-        _ = logger.add(
+        logger.add(
             BreadcrumbHandler(level=logging.DEBUG),
             level=logging.DEBUG,
         )
 
-        _ = logger.add(
+        logger.add(
             EventHandler(level=logging.ERROR),
             level=logging.ERROR,
         )
 
-        sentry_sdk.init(dsn=os.getenv('SENTRY_DSN'),
-                        integrations=[
-                            LoggingIntegration(level=None, event_level=None)
-                        ])
+        sentry_sdk.init(dsn=os.getenv('SENTRY_DSN'))
+        sentry_app = SentryAsgiMiddleware(app)
 
-    # enable inteceptor
+    else:
+        logging.warning('SENTRY_DSN variable is not set.')
+
+    # Enable interceptor
     logging.basicConfig(handlers=[InterceptHandler()], level=0)
 
