@@ -1,7 +1,14 @@
+import logging
+import os
+import sys
+sys.path.append(os.path.dirname(os.path.abspath('.')))
+
+
 from typing import Any
 
 from fastapi import FastAPI
 
+from saltapi.logging_config import setup_logging
 from saltapi.repository.block_repository import BlockRepository
 from saltapi.repository.instrument_repository import InstrumentRepository
 from saltapi.repository.target_repository import TargetRepository
@@ -12,8 +19,9 @@ from saltapi.web.schema.block import Block
 
 app = FastAPI()
 
-app.include_router(proposals_router, prefix="/proposals")
+setup_logging()
 
+app.include_router(proposals_router, prefix="/proposals")
 
 @app.get("/{block_id}", response_model=Block)
 def home(block_id: int) -> Any:
