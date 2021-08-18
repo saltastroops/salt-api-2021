@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import datetime
 
 from pydantic import BaseModel
 
@@ -6,4 +6,4 @@ from pydantic import BaseModel
 class AccessToken(BaseModel):
     access_token: str
     token_type: str
-    expires_at: date
+    expires_at: datetime
