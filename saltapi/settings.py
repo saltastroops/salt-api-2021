@@ -1,4 +1,5 @@
 import os
+from typing import Optional
 
 from pydantic import BaseSettings, DirectoryPath
 
@@ -27,6 +28,9 @@ class Settings(BaseSettings):
 
     # URI which is allowed to connect to the API
     frontend_uri: str
+
+    # DSN for Sentry
+    sentry_dsn: Optional[str]
 
     class Config:
         env_file = os.getenv("DOTENV_FILE", ".env")
