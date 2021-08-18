@@ -8,6 +8,8 @@ from saltapi.web.api.blocks import router as blocks_router
 from saltapi.web.api.proposals import router as proposals_router
 
 app = FastAPI()
+settings = Settings()
+origins = [settings.frontend_uri]
 
 setup_logging(app)
 

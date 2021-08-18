@@ -7,6 +7,7 @@ from saltapi.repository.user_repository import UserRepository
 from saltapi.service.authentication import AccessToken
 from saltapi.service.authentication_service import AuthenticationService
 
+
 router = APIRouter(tags=["Authentication"])
 
 
