@@ -34,7 +34,7 @@ class AuthenticationService:
         return AccessToken(
             access_token=token,
             token_type="bearer",
-            expires_at=date.today() + timedelta(hours=ACCESS_TOKEN_LIFETIME_HOURS),
+            expires_at=datetime.now() + timedelta(hours=ACCESS_TOKEN_LIFETIME_HOURS),
         )  # nosec
 
     @staticmethod
