@@ -1,16 +1,15 @@
-from typing import Dict, Any, Optional, cast
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta
+from typing import Any, Dict, Optional, cast
 
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
+from jose import JWTError, jwt
 from starlette import status
 
 from saltapi.repository.unit_of_work import UnitOfWork
 from saltapi.repository.user_repository import UserRepository
 from saltapi.service.authentication import AccessToken
 from saltapi.service.user import User
-from jose import jwt, JWTError
-
 from saltapi.settings import Settings
 
 ALGORITHM = "HS256"
@@ -31,11 +30,12 @@ class AuthenticationService:
             expires_delta=token_expires,
         )
 
+        token_type = "bearer"  # nosec
         return AccessToken(
             access_token=token,
-            token_type="bearer",
-            expires_at=date.today() + timedelta(hours=ACCESS_TOKEN_LIFETIME_HOURS),
-        )  # nosec
+            token_type=token_type,
+            expires_at=datetime.now() + timedelta(hours=ACCESS_TOKEN_LIFETIME_HOURS),
+        )
 
     @staticmethod
     def jwt_token(
@@ -77,7 +77,7 @@ def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
             authentication_repository = AuthenticationService(user_repository)
 
             return authentication_repository.validate_auth_token(token)
-        except:
+        except Exception:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Could not validate token.",
