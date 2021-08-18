@@ -2,8 +2,6 @@ import os
 import logging
 import sentry_sdk
 
-from dotenv import load_dotenv
-
 from loguru import logger
 
 from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
@@ -14,9 +12,6 @@ from sentry_sdk.integrations.logging import (
 )
 
 from saltapi.settings import Settings
-
-
-load_dotenv()
 
 
 class InterceptHandler(logging.Handler):
