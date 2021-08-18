@@ -1,4 +1,3 @@
-import os
 import logging
 import sentry_sdk
 
@@ -38,7 +37,8 @@ class InterceptHandler(logging.Handler):
 
 
 def setup_logging(app):
-    if Settings().sentry_dsn:
+    sentry_dsn = Settings().sentry_dsn
+    if sentry_dsn:
         logger.add(
             BreadcrumbHandler(level=logging.DEBUG),
             level=logging.DEBUG,
@@ -49,7 +49,7 @@ def setup_logging(app):
             level=logging.ERROR,
         )
 
-        sentry_sdk.init(dsn=Settings().sentry_dsn)
+        sentry_sdk.init(dsn=sentry_dsn)
         sentry_app = SentryAsgiMiddleware(app)
 
     else:
