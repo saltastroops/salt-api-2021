@@ -1,4 +1,5 @@
 import os
+from typing import Optional
 
 from pydantic import BaseSettings, DirectoryPath
 
@@ -29,7 +30,7 @@ class Settings(BaseSettings):
     frontend_uri: str
 
     # DSN for Sentry
-    sentry_dsn: str
+    sentry_dsn: Optional[str]
 
     class Config:
         env_file = os.getenv("DOTENV_FILE", ".env")
