@@ -19,7 +19,7 @@ from saltapi.web.schema.block import Block
 
 app = FastAPI()
 
-setup_logging()
+setup_logging(app)
 
 app.include_router(proposals_router, prefix="/proposals")
 
