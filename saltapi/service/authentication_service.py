@@ -23,9 +23,12 @@ class AuthenticationService:
     def __init__(self, user_repository: UserRepository) -> None:
         self.user_repository = user_repository
 
-    def access_token(self, user: User) -> AccessToken:
+    def access_token(self, user: User, token_lifetime_days: Optional[int] = None) -> AccessToken:
         """Generate an authentication token."""
-        token_expires = timedelta(hours=ACCESS_TOKEN_LIFETIME_HOURS)
+        if token_lifetime_days or token_lifetime_days == 0:
+            token_expires = timedelta(hours=token_lifetime_days * 24)
+        else:
+            token_expires = timedelta(hours=ACCESS_TOKEN_LIFETIME_HOURS)
         token = self.jwt_token(
             payload={"sub": user.username},
             expires_delta=token_expires,
@@ -35,7 +38,7 @@ class AuthenticationService:
         return AccessToken(
             access_token=token,
             token_type=token_type,
-            expires_at=datetime.now() + timedelta(hours=ACCESS_TOKEN_LIFETIME_HOURS),
+            expires_at=datetime.now() + token_expires,
         )
 
     @staticmethod

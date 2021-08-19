@@ -2,15 +2,13 @@ from datetime import datetime, timedelta
 from typing import Any, Callable
 
 import pytest
-from jose import JWTError, jwt
+from freezegun import freeze_time
 from sqlalchemy.engine import Connection
 
 from saltapi.exceptions import NotFoundError
-from saltapi.repository.user_repository import UserRepository
 from saltapi.settings import Settings
 
-from saltapi.service.authentication_service import AuthenticationService, \
-    get_current_user
+from saltapi.service.authentication_service import AuthenticationService
 from saltapi.service.user import User
 from tests.repository.fake_user_repository import FakeUserRepository
 
@@ -27,31 +25,54 @@ USER = User(
     password_hash="PasswordHash"
 )
 
+# tested by mypy
+# def test_access_token_returns_access_token(
+#         dbconnection: Connection
+# ) -> None:
+#     user_repository = FakeUserRepository(dbconnection)
+#     authentication_service = AuthenticationService(user_repository)
+#     access_token = authentication_service.access_token(USER)
+#     assert str(type(access_token)) == \
+#            "<class 'saltapi.service.authentication.AccessToken'>"
 
-def test_access_token_returns_access_token(
-        dbconnection: Connection, testdata: Callable[[str], Any]
+
+def test_access_token_expire_in_seven_days_default(
+        dbconnection: Connection
 ) -> None:
-    user_repository = UserRepository(dbconnection)
-    authentication_service = AuthenticationService(user_repository)
-    access_token = authentication_service.access_token(USER)
-    assert str(type(access_token)) == \
-           "<class 'saltapi.service.authentication.AccessToken'>"
-
-
-def test_access_token_expire_in_seven_days(
-        dbconnection: Connection, testdata: Callable[[str], Any]
-) -> None:
-    user_repository = UserRepository(dbconnection)
+    freezer = freeze_time("2021-10-17 12:00:01")
+    freezer.start()
+    user_repository = FakeUserRepository(dbconnection)
     authentication_service = AuthenticationService(user_repository)
     access_token = authentication_service.access_token(USER)
     today = datetime.today()
+    # you can use something like freeze gut to set a time static
     assert access_token.expires_at.date() == (today + timedelta(days=7)).date()
+    freezer.stop()
+
+
+def test_access_token_expire_in_given_days(
+        dbconnection: Connection
+) -> None:
+    freezer = freeze_time("2021-10-17 12:00:01")
+    freezer.start()
+    today = datetime.today()
+    user_repository = FakeUserRepository(dbconnection)
+    authentication_service = AuthenticationService(user_repository)
+    access_token = authentication_service.access_token(USER, 10)
+    assert access_token.expires_at == (today + timedelta(days=10))
+    access_token = authentication_service.access_token(USER, 15)
+    assert access_token.expires_at == (today + timedelta(days=15))
+    access_token = authentication_service.access_token(USER, 3)
+    assert access_token.expires_at == (today + timedelta(days=3))
+    access_token = authentication_service.access_token(USER, 0)
+    assert access_token.expires_at == (today)
+    freezer.stop()
 
 
 def test_access_token_has_type_bearer(
-        dbconnection: Connection, testdata: Callable[[str], Any]
+        dbconnection: Connection
 ) -> None:
-    user_repository = UserRepository(dbconnection)
+    user_repository = FakeUserRepository(dbconnection)
     authentication_service = AuthenticationService(user_repository)
     access_token = authentication_service.access_token(USER)
     assert access_token.token_type == 'bearer'
@@ -82,41 +103,21 @@ def test_authenticate_user_raise_error_for_no_user(
         "noUser", "noPassword")
 
 
-def test_jwt_token_encode_correct_payload(dbconnection: Connection) -> None:
+def test_authenticate_user_raise_error_for_wrong_password(
+    dbconnection: Connection
+) -> None:
     user_repository = FakeUserRepository(dbconnection)
     authentication_service = AuthenticationService(user_repository)
-    payload = {"id": 9, "name": "John"}
-    token = authentication_service.jwt_token(payload)
-    decoded = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    with pytest.raises(NotFoundError):
+        authentication_service.authenticate_user(
+        "jdoe", "wrongpassword")
 
-    assert decoded["id"] == 9
-    assert decoded["name"] == "John"
+    with pytest.raises(NotFoundError):
+        authentication_service.authenticate_user(
+        "jdoe", '')
 
-
-def test_jwt_token_can_not_be_decoded_with_wrong_key(dbconnection: Connection) -> None:
-    user_repository = FakeUserRepository(dbconnection)
-    authentication_service = AuthenticationService(user_repository)
-    payload = {"id": 9, "name": "John"}
-    token = authentication_service.jwt_token(payload)
-    with pytest.raises(JWTError):
-        jwt.decode(token, FAKE_SECRET_KEY, algorithms=[ALGORITHM])
+    with pytest.raises(NotFoundError):
+        authentication_service.authenticate_user(
+        "jdoe", None)
 
 
-def test_validate_auth_token_can_verify_token(dbconnection: Connection) -> None:
-    user_repository = FakeUserRepository(dbconnection)
-    authentication_service = AuthenticationService(user_repository)
-    access_token = authentication_service.access_token(USER)
-    token = access_token.access_token
-
-    # Test valid token. For valid token User is returned
-    user = authentication_service.validate_auth_token(token)
-    assert user.username == "jdoe"
-    assert user.given_name == "John"
-
-    #  Test if token is tempered error is raise
-    with pytest.raises(JWTError):
-        authentication_service.validate_auth_token(token+'i')
-
-    # Test error raised for invalid token
-    with pytest.raises(JWTError):
-        authentication_service.validate_auth_token('invalidToken')
