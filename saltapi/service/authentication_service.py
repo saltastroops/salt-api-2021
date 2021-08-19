@@ -5,6 +5,7 @@ from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from starlette import status
 
+from saltapi.exceptions import NotFoundError
 from saltapi.repository.unit_of_work import UnitOfWork
 from saltapi.repository.user_repository import UserRepository
 from saltapi.service.authentication import AccessToken
@@ -13,7 +14,7 @@ from jose import jwt, JWTError
 
 from saltapi.settings import Settings
 
-ALGORITHM = "HS256"
+ALGORITHM = Settings().algorithm
 ACCESS_TOKEN_LIFETIME_HOURS = 7 * 24
 SECRET_KEY = Settings().secret_key
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
@@ -57,7 +58,7 @@ class AuthenticationService:
             username, password
         )
         if not user:
-            raise ValueError("User not found or password doesn't match.")
+            raise NotFoundError("User not found or password doesn't match.")
         return user
 
     def validate_auth_token(self, token: str) -> User:

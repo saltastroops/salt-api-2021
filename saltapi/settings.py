@@ -28,5 +28,7 @@ class Settings(BaseSettings):
     # URI which is allowed to connect to the API
     frontend_uri: str
 
+    algorithm: str
+
     class Config:
         env_file = os.getenv("DOTENV_FILE", ".env")
