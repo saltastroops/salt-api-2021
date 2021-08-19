@@ -5,7 +5,9 @@ import pytz
 from astropy.coordinates import Angle
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
+from sqlalchemy.exc import NoResultFound
 
+from saltapi.exceptions import NotFoundError
 from saltapi.repository.instrument_repository import InstrumentRepository
 from saltapi.repository.target_repository import TargetRepository
 from saltapi.service.block import Block
@@ -110,7 +112,7 @@ WHERE B.Block_Id = :block_id;
             "comment": row.comment,
             "observing_conditions": observing_conditions,
             "observation_time": row.observation_time,
-            "overhead_time": row.overhead_time,
+            "overhead_time": row.overhead_time if row.overhead_time else None,
             "observation_probabilities": observation_probabilities,
             "observing_windows": self._observing_windows(block_id),
             "executed_observations": self._executed_observations(block_id),
@@ -118,6 +120,42 @@ WHERE B.Block_Id = :block_id;
         }
 
         return block
+
+    def get_block_status(self, block_id: int) -> str:
+        """
+        Return the block status for a proposal.
+        """
+        stmt = text(
+            """
+SELECT BS.BlockStatus
+FROM BlockStatus BS
+         JOIN Block B ON BS.BlockStatus_Id = B.BlockStatus_Id
+WHERE B.Block_Id = :block_id
+        """
+        )
+        result = self.connection.execute(stmt, {"block_id": block_id})
+        try:
+            return cast(str, result.scalar_one())
+        except NoResultFound:
+            raise NotFoundError()
+
+    def update_block_status(self, block_id: str, status: str) -> None:
+        """
+        Update the status of a proposal.
+        """
+        stmt = text(
+            """
+UPDATE BlockStatus
+SET BlockStatus = :status
+    JOIN Block B ON BlockStatus_Id = B.BlockStatus_Id
+WHERE B.Block_Id = :block_id;
+    """
+        )
+        result = self.connection.execute(
+            stmt, {"block_id": block_id, "status": status}
+        )
+        if not result.rowcount:
+            raise NotFoundError()
 
     def _executed_observations(self, block_id: int) -> List[Dict[str, Any]]:
         """
@@ -192,12 +230,8 @@ ORDER BY ValidFrom, FindingChart_Id
             {
                 "id": row.finding_chart_id,
                 "comment": row.comments,
-                "valid_from": pytz.utc.localize(row.valid_from)
-                if row.valid_from
-                else None,
-                "valid_until": pytz.utc.localize(row.valid_until)
-                if row.valid_until
-                else None,
+                "valid_from": pytz.utc.localize(row.valid_from) if row.valid_from else None,
+                "valid_until": pytz.utc.localize(row.valid_until) if row.valid_until else None,
             }
             for row in result
         ]
@@ -330,7 +364,7 @@ ORDER BY TCOC.Pointing_Id, TCOC.Observation_Order, TCOC.TelescopeConfig_Order,
                     pointing_rows
                 ),
                 "observation_time": pointing_rows[0].observation_time,
-                "overhead_time": pointing_rows[0].overhead_time,
+                "overhead_time": pointing_rows[0].overhead_time if pointing_rows[0].overhead_time else None,
             }
             pointings.append(pointing)
 
