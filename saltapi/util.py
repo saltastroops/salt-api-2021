@@ -31,7 +31,7 @@ _partners = dict(
 
 def partner_name(partner_code: str) -> str:
     """
-    Return the partner namew for a SALT partner code.
+    Return the partner name for a SALT partner code.
     """
 
     if partner_code not in _partners:

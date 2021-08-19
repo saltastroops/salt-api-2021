@@ -1,11 +1,11 @@
-from fastapi import Depends, HTTPException, APIRouter
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from starlette import status
 
-from saltapi.service.authentication_service import AuthenticationService
 from saltapi.repository.unit_of_work import UnitOfWork
 from saltapi.repository.user_repository import UserRepository
 from saltapi.service.authentication import AccessToken
+from saltapi.service.authentication_service import AuthenticationService
 
 
 router = APIRouter(tags=["Authentication"])
@@ -40,7 +40,7 @@ def token(form_data: OAuth2PasswordRequestForm = Depends()) -> AccessToken:
             )
             if user:
                 return authentication_repository.access_token(user)
-        except:
+        except Exception:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Could not validate credentials.",

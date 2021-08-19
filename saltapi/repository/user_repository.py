@@ -1,14 +1,18 @@
 import hashlib
 import secrets
-from typing import cast, Optional
+from typing import Optional, cast
 
-from fastapi.security import OAuth2PasswordBearer
+from passlib.context import CryptContext
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
 from passlib.context import CryptContext
 
 from saltapi.exceptions import NotFoundError
 from saltapi.service.user import User
+
+pwd_context = CryptContext(
+    schemes=["bcrypt", "md5_crypt"], default="bcrypt", deprecated="auto"
+)
 
 
 pwd_context = CryptContext(
@@ -151,7 +155,7 @@ WHERE PS.PiptSetting_Name = 'RightAdmin'
     @staticmethod
     def get_password_hash(password: str) -> str:
         """Hash a plain text password."""
-        return hashlib.md5(password.encode("utf-8")).hexdigest()
+        return hashlib.md5(password.encode("utf-8")).hexdigest()  # nosec
 
     def update_password_hash(self, username: str, password: str) -> None:
         new_password_hash = self.get_new_password_hash(password)
