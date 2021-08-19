@@ -32,6 +32,7 @@ class Settings(BaseSettings):
     # DSN for Sentry
     sentry_dsn: Optional[str]
 
+    # Hashing algorithm.
     algorithm: str
 
     class Config:
