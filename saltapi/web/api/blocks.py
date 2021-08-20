@@ -66,7 +66,7 @@ def get_block_status(
         return block_repository.get_block_status(block_id)
 
 
-@router.put("/{block_id}/status", summary="Update a block status", response_model=BlockStatus)
+@router.put("/{block_id}/status", summary="Update a block status", response_model=Block)
 def update_block_status(
         block_id: int = Path(
             ..., title="Block id", description="Unique identifier for the block"
@@ -74,7 +74,7 @@ def update_block_status(
         block_status: BlockStatus = Body(
             ..., alias="status", title="Block status", description="New block status."
         ),
-) -> BlockStatus:
+) -> None:
     """
     Updates the status of the block with the given the block id. See the
     corresponding GET request for a description of the available status values.

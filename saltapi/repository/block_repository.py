@@ -139,7 +139,7 @@ WHERE B.Block_Id = :block_id
         except NoResultFound:
             raise NotFoundError()
 
-    def update_block_status(self, block_id: str, status: str) -> None:
+    def update_block_status(self, block_id: int, status: str) -> None:
         """
         Update the status of a proposal.
         """
