@@ -13,3 +13,6 @@ class ProposalService:
 
     def get_proposal(self, proposal_code: str) -> Proposal:
         return self.repository.get(proposal_code)
+
+    def list_salt_astronomers(self) -> List[ProposalListItem]:
+        return self.repository.list_salt_astronomers()
