@@ -6,6 +6,7 @@ from astropy.coordinates import Angle
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
+from saltapi.exceptions import NotFoundError
 from saltapi.repository.instrument_repository import InstrumentRepository
 from saltapi.repository.target_repository import TargetRepository
 from saltapi.service.block import Block
@@ -118,6 +119,47 @@ WHERE B.Block_Id = :block_id;
         }
 
         return block
+
+    def get_statuses_of_observations(self, block_id: int) -> List[Block]:
+        """
+        Return th status of observations for a proposal.
+        """
+        stmt = text(
+            """
+SELECT BlockVisitStatus
+FROM BlockVisitStatus
+         JOIN BlockVisit BV ON BlockVisitStatus_Id = BV.BlockVisitStatus_Id
+         JOIN Block B ON BV.Block_Id IN (
+    SELECT B1.Block_Id
+    FROM Block B1
+    WHERE B1.BlockCode_Id = B.BlockCode_Id
+)
+WHERE B.Block_Id = :block_id;
+        """
+        )
+        result = self.connection.execute(stmt, {"block_id": block_id})
+        return list(result.scalars())
+
+    def update_statuses_of_observations(self, block_id: int, status: str) -> None:
+        """
+        Return the proposal status for a proposal.
+        """
+        stmt = text(
+            """
+UPDATE BlockVisitStatus
+SET BlockVisitStatus = :status
+         JOIN BlockVisit BV ON BlockVisitStatus_Id = BV.BlockVisitStatus_Id
+         JOIN Block B ON BV.Block_Id IN (
+    SELECT B1.Block_Id
+    FROM Block B1
+    WHERE B1.BlockCode_Id = B.BlockCode_Id
+)
+WHERE B.Block_Id = :block_id;
+        """
+        )
+        result = self.connection.execute(stmt, {"block_id": block_id, "status": status})
+        if not result.rowcount:
+            raise NotFoundError()
 
     def _executed_observations(self, block_id: int) -> List[Dict[str, Any]]:
         """

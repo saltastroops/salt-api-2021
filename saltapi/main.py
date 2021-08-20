@@ -1,3 +1,7 @@
+import os
+import sys
+sys.path.append(os.path.dirname(os.path.abspath(".")))
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -6,6 +10,7 @@ from saltapi.settings import Settings
 from saltapi.web.api.authentication import router as authentication_router
 from saltapi.web.api.blocks import router as blocks_router
 from saltapi.web.api.proposals import router as proposals_router
+from saltapi.web.api.observations import router as observations_router
 
 app = FastAPI()
 settings = Settings()
@@ -27,3 +32,4 @@ app.add_middleware(
 app.include_router(blocks_router)
 app.include_router(proposals_router)
 app.include_router(authentication_router)
+app.include_router(observations_router)
