@@ -120,44 +120,34 @@ WHERE B.Block_Id = :block_id;
 
         return block
 
-    def get_statuses_of_observations(self, block_id: int) -> List[Block]:
+    def get_observation_status(self, block_visit_id: int) -> str:
         """
         Return th status of observations for a proposal.
         """
         stmt = text(
             """
-SELECT BlockVisitStatus
-FROM BlockVisitStatus
-         JOIN BlockVisit BV ON BlockVisitStatus_Id = BV.BlockVisitStatus_Id
-         JOIN Block B ON BV.Block_Id IN (
-    SELECT B1.Block_Id
-    FROM Block B1
-    WHERE B1.BlockCode_Id = B.BlockCode_Id
-)
-WHERE B.Block_Id = :block_id;
+SELECT BVS.BlockVisitStatus
+FROM BlockVisitStatus BVS
+JOIN BlockVisit BV ON BVS.BlockVisitStatus_Id = BV.BlockVisitStatus_Id
+AND BV.BlockVisit_Id = :block_visit_id;
         """
         )
-        result = self.connection.execute(stmt, {"block_id": block_id})
-        return list(result.scalars())
+        result = self.connection.execute(stmt, {"block_visit_id": block_visit_id})
+        return cast(str, result.scalar_one())
 
-    def update_statuses_of_observations(self, block_id: int, status: str) -> None:
+    def update_observation_status(self, block_visit_id: int, status: str) -> None:
         """
         Return the proposal status for a proposal.
         """
         stmt = text(
             """
-UPDATE BlockVisitStatus
-SET BlockVisitStatus = :status
-         JOIN BlockVisit BV ON BlockVisitStatus_Id = BV.BlockVisitStatus_Id
-         JOIN Block B ON BV.Block_Id IN (
-    SELECT B1.Block_Id
-    FROM Block B1
-    WHERE B1.BlockCode_Id = B.BlockCode_Id
-)
-WHERE B.Block_Id = :block_id;
+UPDATE BVS.BlockVisitStatus
+SET BVS.BlockVisitStatus= :status
+JOIN BlockVisit BV ON BlockVisitStatus_Id = BV.BlockVisitStatus_Id
+AND BV.BlockVisit_Id = :block_visit_id;
         """
         )
-        result = self.connection.execute(stmt, {"block_id": block_id, "status": status})
+        result = self.connection.execute(stmt, {"block_visit_id": block_visit_id, "status": status})
         if not result.rowcount:
             raise NotFoundError()
 

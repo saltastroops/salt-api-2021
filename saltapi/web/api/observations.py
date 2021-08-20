@@ -34,12 +34,12 @@ def get_observations(
         return block['observations']
 
 
-@router.get("/{block_id}/status", summary="Get observations' statuses of a block", response_model=BlockVisitStatus)
-def get_statuses_of_observations(
-        block_id: int = Path(
+@router.get("/{block_visit_id}/status", summary="Get observations' statuses of a block", response_model=BlockVisitStatus)
+def get_observation_status(
+        block_visit_id: int = Path(
             ..., title="Block id", description="Unique identifier for a block"
         )
-) -> List[BlockVisitStatus]:
+) -> BlockVisitStatus:
     """
     Returns statuses of observations of a given block id.
 
@@ -61,12 +61,12 @@ def get_statuses_of_observations(
             target_repository=target_repository,
             connection=unit_of_work.connection,
         )
-        return block_repository.get_statuses_of_observations(block_id)
+        return block_repository.get_observation_status(block_visit_id)
 
 
 @router.put("/{block_id}/status", summary="Update observations' statuses of a block")
 def update_statuses_of_observations(
-        block_id: int = Path(
+        block_visit_id: int = Path(
             ..., title="Block id", description="Unique identifier for a block"
         ),
         status: str = Body(
@@ -86,4 +86,4 @@ def update_statuses_of_observations(
             target_repository=target_repository,
             connection=unit_of_work.connection,
         )
-        block_repository.update_statuses_of_observations(block_id, status)
+        block_repository.update_observation_status(block_visit_id, status)
