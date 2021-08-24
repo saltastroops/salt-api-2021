@@ -129,7 +129,7 @@ WHERE B.Block_Id = :block_id;
             """
 SELECT BS.BlockStatus
 FROM BlockStatus BS
-         JOIN Block B ON BS.BlockStatus_Id = B.BlockStatus_Id
+JOIN Block B ON BS.BlockStatus_Id = B.BlockStatus_Id
 WHERE B.Block_Id = :block_id
         """
         )

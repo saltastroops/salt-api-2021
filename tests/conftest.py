@@ -5,7 +5,7 @@ import dotenv
 # Make sure that the test database etc. are used.
 # IMPORTANT: These lines must be executed before any server-related package is imported.
 
-os.environ["DOTENV_FILE"] = ".env.test"
+os.environ["DOTENV_FILE"] = os.path.join(os.path.dirname(__file__), ".env.test")
 dotenv.load_dotenv(os.environ["DOTENV_FILE"])
 
 
@@ -17,7 +17,7 @@ import yaml
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Connection, Engine
 
-engine: Optional[Engine]
+engine: Optional[Engine] = None
 sdb_dsn = os.environ.get("SDB_DSN")
 if sdb_dsn:
     echo_sql = True if os.environ.get("ECHO_SQL") else False  # SQLAlchemy needs a bool
@@ -26,6 +26,7 @@ if sdb_dsn:
 
 @pytest.fixture(scope="function")
 def dbconnection() -> Generator[Connection, None, None]:
+    #print(sdb_dsn)
     if not engine:
         raise ValueError(
             "No SQLAlchemy engine set. Have you defined the SDB_DSN environment "
