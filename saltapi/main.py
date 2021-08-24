@@ -13,9 +13,6 @@ origins = [settings.frontend_uri]
 
 setup_logging(app)
 
-settings = Settings()
-origins = [settings.frontend_uri]
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,

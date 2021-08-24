@@ -13,7 +13,7 @@ from saltapi.service.authentication import AccessToken
 from saltapi.service.user import User
 from saltapi.settings import Settings
 
-ALGORITHM = Settings().algorithm
+ALGORITHM = "HS256"
 ACCESS_TOKEN_LIFETIME_HOURS = 7 * 24
 SECRET_KEY = Settings().secret_key
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
@@ -23,10 +23,10 @@ class AuthenticationService:
     def __init__(self, user_repository: UserRepository) -> None:
         self.user_repository = user_repository
 
-    def access_token(self, user: User, token_lifetime_days: Optional[int] = None) -> AccessToken:
+    def access_token(self, user: User, token_lifetime_hours: Optional[int] = None) -> AccessToken:
         """Generate an authentication token."""
-        if token_lifetime_days or token_lifetime_days == 0:
-            token_expires = timedelta(hours=token_lifetime_days * 24)
+        if token_lifetime_hours or token_lifetime_hours == 0:
+            token_expires = timedelta(hours=token_lifetime_hours)
         else:
             token_expires = timedelta(hours=ACCESS_TOKEN_LIFETIME_HOURS)
         token = self.jwt_token(
