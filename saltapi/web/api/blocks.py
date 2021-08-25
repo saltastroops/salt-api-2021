@@ -49,9 +49,9 @@ def get_block_status(
     Active | The block is active
     Completed | The block has been completed.
     Deleted | The block has been deleted.
-    Expired | The proposal was submitted in a previous semester and will not be observed any longer.
+    Expired | The block was submitted in a previous semester and will not be observed any longer.
     Not set | The block currently is not in the queue and will not be observed.
-    On Hold | The block is currently on hold..
+    On Hold | The block is currently on hold.
     Superseded | The block has been superseded. This is a legacy status that should not be used any longer.
     """
 
