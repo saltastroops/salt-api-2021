@@ -146,8 +146,8 @@ WHERE B.Block_Id = :block_id
         stmt = text(
             """
 UPDATE BlockStatus
-SET BlockStatus = :status
-    JOIN Block B ON BlockStatus_Id = B.BlockStatus_Id
+JOIN Block B ON BlockStatus.BlockStatus_Id = B.BlockStatus_Id
+SET BlockStatus.BlockStatus = :status
 WHERE B.Block_Id = :block_id;
     """
         )

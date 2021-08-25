@@ -4,6 +4,7 @@ import pytest
 from sqlalchemy.engine import Connection
 from sqlalchemy.exc import NoResultFound
 
+from saltapi.exceptions import NotFoundError
 from saltapi.repository.block_repository import BlockRepository
 from saltapi.repository.instrument_repository import InstrumentRepository
 from saltapi.repository.target_repository import TargetRepository
@@ -260,6 +261,7 @@ def test_guide_star(dbconnection: Connection, testdata: Callable[[str], Any]) ->
         assert guide_star["magnitude"] == expected_guide_star["magnitude"]
 
 
+@nodatabase
 def test_no_guide_star(
     dbconnection: Connection, testdata: Callable[[str], Any]
 ) -> None:
@@ -307,7 +309,7 @@ def test_payload_configurations(
 
         assert configs[i] == expected_configs[i]
 
-
+@nodatabase
 def test_get_block_instruments(
     dbconnection: Connection, testdata: Callable[[str], Any]
 ) -> None:
@@ -343,3 +345,72 @@ def test_get_block_instruments(
                         assert payload_configs[k]["instruments"].get(
                             instrument
                         ) == expected_payload_configs[k]["instruments"].get(instrument)
+
+
+@nodatabase
+def test_get_block_status(
+        dbconnection: Connection, testdata: Callable[[str], Any]
+) -> None:
+    data = testdata(TEST_DATA)["block_status"]
+    for d in data:
+        block_id = d["block_id"]
+        expected_status = d["status"]
+        target_repository = TargetRepository(dbconnection)
+        instrument_repository = InstrumentRepository(dbconnection)
+        block_repository = BlockRepository(target_repository, instrument_repository, dbconnection)
+        status = block_repository.get_block_status(block_id)
+
+        assert expected_status == status
+
+
+@nodatabase
+def test_get_block_status_raises_error_for_wrong_block_id(
+        dbconnection: Connection,
+) -> None:
+    target_repository = TargetRepository(dbconnection)
+    instrument_repository = InstrumentRepository(dbconnection)
+    block_repository = BlockRepository(target_repository, instrument_repository, dbconnection)
+    with pytest.raises(NotFoundError):
+        block_repository.get_block_status(0)
+
+
+@nodatabase
+def test_update_block_status(dbconnection: Connection) -> None:
+    # Set the status to "On Hold"
+    target_repository = TargetRepository(dbconnection)
+    instrument_repository = InstrumentRepository(dbconnection)
+    block_repository = BlockRepository(target_repository, instrument_repository, dbconnection)
+    block_id = 2339
+    block_repository.update_block_status(block_id, "On Hold")
+    assert block_repository.get_block_status(block_id) == "On Hold"
+
+    # Now set it to "Active"
+    block_repository.update_block_status(block_id, "Active")
+    assert (
+            block_repository.get_block_status(block_id)
+            == "Active"
+    )
+
+
+@nodatabase
+def test_update_block_status_raises_error_for_wrong_block_id(
+        dbconnection: Connection,
+) -> None:
+    target_repository = TargetRepository(dbconnection)
+    instrument_repository = InstrumentRepository(dbconnection)
+    block_repository = BlockRepository(target_repository, instrument_repository, dbconnection)
+    with pytest.raises(NoResultFound):
+        block_repository.update_block_status(0, "Active")
+
+
+@nodatabase
+def test_update_block_status_raises_error_for_wrong_status(
+        dbconnection: Connection,
+) -> None:
+    block_repository = create_block_repository(dbconnection)
+    with pytest.raises(ValueError) as excinfo:
+        block_repository.update_block_status(
+            1, "Wrong block status"
+        )
+
+    assert "block status" in str(excinfo)
