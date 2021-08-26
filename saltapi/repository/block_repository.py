@@ -120,31 +120,31 @@ WHERE B.Block_Id = :block_id;
 
         return block
 
-    def get_observation_status(self, block_visit_id: int) -> str:
+    def get_observations_status(self, block_visit_id: int) -> str:
         """
-        Return th status of observations for a proposal.
+        Return th status of observations for a block id.
         """
         stmt = text(
             """
 SELECT BVS.BlockVisitStatus
 FROM BlockVisitStatus BVS
 JOIN BlockVisit BV ON BVS.BlockVisitStatus_Id = BV.BlockVisitStatus_Id
-AND BV.BlockVisit_Id = :block_visit_id;
+WHERE BV.BlockVisit_Id = :block_visit_id;
         """
         )
         result = self.connection.execute(stmt, {"block_visit_id": block_visit_id})
         return cast(str, result.scalar_one())
 
-    def update_observation_status(self, block_visit_id: int, status: str) -> None:
+    def update_observations_status(self, block_visit_id: int, status: str) -> None:
         """
         Return the proposal status for a proposal.
         """
         stmt = text(
             """
 UPDATE BVS.BlockVisitStatus
+JOIN BlockVisit BV ON BVS.BlockVisitStatus_Id = BV.BlockVisitStatus_Id
 SET BVS.BlockVisitStatus= :status
-JOIN BlockVisit BV ON BlockVisitStatus_Id = BV.BlockVisitStatus_Id
-AND BV.BlockVisit_Id = :block_visit_id;
+WHERE BV.BlockVisit_Id = :block_visit_id;
         """
         )
         result = self.connection.execute(stmt, {"block_visit_id": block_visit_id, "status": status})

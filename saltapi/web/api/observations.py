@@ -34,23 +34,25 @@ def get_observations(
         return block['observations']
 
 
-@router.get("/{block_visit_id}/status", summary="Get observations' statuses of a block", response_model=BlockVisitStatus)
-def get_observation_status(
-        block_visit_id: int = Path(
+@router.get("/{block_visit_id}/status",
+            summary="Get the status observations of a block",
+            response_model=BlockVisitStatus)
+def get_observations_status(
+        block_id: int = Path(
             ..., title="Block id", description="Unique identifier for a block"
         )
-) -> BlockVisitStatus:
+) -> Block:
     """
-    Returns statuses of observations of a given block id.
+    Returns the status of observations of a given block id.
 
     The following status values are possible.
 
     Status | Description
     --- | ---
-    Accepted | The block is active
-    Deleted | The block has been deleted.
-    In queue | The proposal was submitted in a previous semester and will not be observed any longer.
-    Rejected | The block currently is not in the queue and will not be observed.
+    Accepted | The block observations are accepted.
+    Deleted | The block observations has been deleted.
+    In queue | The block observations are in a queue.
+    Rejected | The block observations are rejected.
     """
 
     with UnitOfWork() as unit_of_work:
@@ -61,16 +63,16 @@ def get_observation_status(
             target_repository=target_repository,
             connection=unit_of_work.connection,
         )
-        return block_repository.get_observation_status(block_visit_id)
+        return block_repository.get_observations_status(block_id)
 
 
-@router.put("/{block_id}/status", summary="Update observations' statuses of a block")
-def update_statuses_of_observations(
-        block_visit_id: int = Path(
+@router.put("/{block_id}/status", summary="Update the status of observations of a block")
+def update_status_of_observations(
+        block_id: int = Path(
             ..., title="Block id", description="Unique identifier for a block"
         ),
-        status: str = Body(
-        ..., title="Block id", description="Unique identifier for a block"
+        status: BlockVisitStatus = Body(
+            ..., alias="status", title="Observations status", description="New observations status."
         )
 ) -> Block:
     """
@@ -86,4 +88,4 @@ def update_statuses_of_observations(
             target_repository=target_repository,
             connection=unit_of_work.connection,
         )
-        block_repository.update_observation_status(block_visit_id, status)
+        block_repository.update_observations_status(block_id, status)

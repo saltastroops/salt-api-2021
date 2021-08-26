@@ -343,3 +343,71 @@ def test_get_block_instruments(
                         assert payload_configs[k]["instruments"].get(
                             instrument
                         ) == expected_payload_configs[k]["instruments"].get(instrument)
+
+@nodatabase
+def test_get_observations_status(
+        dbconnection: Connection, testdata: Callable[[str], Any]
+) -> None:
+    data = testdata(TEST_DATA)["observations_status"]
+    for d in data:
+        block_id = d["block_id"]
+        expected_status = d["status"]
+        target_repository = TargetRepository(dbconnection)
+        instrument_repository = InstrumentRepository(dbconnection)
+        block_repository = BlockRepository(target_repository, instrument_repository, dbconnection)
+        status = block_repository.get_observations_status(block_id)
+
+        assert expected_status == status
+
+@nodatabase
+def test_get_observations_status_raises_error_for_wrong_block_id(
+        dbconnection: Connection,
+) -> None:
+    target_repository = TargetRepository(dbconnection)
+    instrument_repository = InstrumentRepository(dbconnection)
+    block_repository = BlockRepository(target_repository, instrument_repository, dbconnection)
+    with pytest.raises(NoResultFound):
+        block_repository.get_observations_status(0)
+
+
+@nodatabase
+def test_update_observations_status(dbconnection: Connection) -> None:
+    # Set the status to "Accepted"
+    target_repository = TargetRepository(dbconnection)
+    instrument_repository = InstrumentRepository(dbconnection)
+    block_repository = BlockRepository(target_repository, instrument_repository, dbconnection)
+    block_id = 2339
+    block_repository.update_observations_status(block_id, "Accepted")
+    assert block_repository.get_observations_status(block_id) == "Accepted"
+
+    # Now set it to "Rejected"
+    block_repository.update_observations_status(block_id, "Rejected")
+    assert (
+            block_repository.get_observations_status(block_id)
+            == "Active"
+    )
+
+
+@nodatabase
+def test_update_observations_status_raises_error_for_wrong_block_id(
+        dbconnection: Connection,
+) -> None:
+    target_repository = TargetRepository(dbconnection)
+    instrument_repository = InstrumentRepository(dbconnection)
+    block_repository = BlockRepository(target_repository, instrument_repository, dbconnection)
+    with pytest.raises(NoResultFound):
+        block_repository.update_observations_status(0, "Accepted")
+
+
+@nodatabase
+def test_update_observations_status_raises_error_for_wrong_status(
+        dbconnection: Connection,
+) -> None:
+    block_repository = create_block_repository(dbconnection)
+    with pytest.raises(ValueError) as excinfo:
+        block_repository.update_observations_status(
+            1, "Wrong observations status"
+        )
+
+    assert "observations status" in str(excinfo)
+

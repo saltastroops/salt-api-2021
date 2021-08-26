@@ -5,7 +5,7 @@ import dotenv
 # Make sure that the test database etc. are used.
 # IMPORTANT: These lines must be executed before any server-related package is imported.
 
-os.environ["DOTENV_FILE"] = ".env.test"
+os.environ["DOTENV_FILE"] = os.path.join(os.path.dirname(__file__), ".env.test")
 dotenv.load_dotenv(os.environ["DOTENV_FILE"])
 
 
