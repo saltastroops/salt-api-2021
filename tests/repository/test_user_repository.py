@@ -99,7 +99,7 @@ def test_is_principal_investigator_returns_false_for_non_pi(
 
 
 @nodatabase
-def test_is_principal_contact_returns_true_for_pi(
+def test_is_principal_contact_returns_true_for_pc(
     dbconnection: Connection, testdata: Callable[[str], Any]
 ) -> None:
     data = testdata(TEST_DATA_PATH)["is_principal_contact"]
@@ -108,8 +108,8 @@ def test_is_principal_contact_returns_true_for_pi(
     assert proposal_code
     assert pc
     user_repository = UserRepository(dbconnection)
-    assert user_repository.is_principal_contact(
-        pc, proposal_code
+    assert (
+        user_repository.is_principal_contact(pc, proposal_code) is True
     ), f"Should be true for PC username '{pc}', proposal code {proposal_code}"
 
 
@@ -124,10 +124,48 @@ def test_is_principal_contact_returns_false_for_non_pc(
     assert len(non_pcs)
     user_repository = UserRepository(dbconnection)
     for non_pc in non_pcs:
-        assert not user_repository.is_principal_contact(non_pc, proposal_code), (
-            f"TrShould be false for non-PC username '{non_pc}', proposal code "
+        assert user_repository.is_principal_contact(non_pc, proposal_code) is False, (
+            f"Should be false for non-PC username '{non_pc}', proposal code "
             f"{proposal_code}"
         )
+
+
+@nodatabase
+def test_is_activating_investigator_returns_true_for_activating_investigator(
+    dbconnection: Connection, testdata: Callable[[str], Any]
+) -> None:
+    data = testdata(TEST_DATA_PATH)["is_activating_investigator"]
+    user_repository = UserRepository(dbconnection)
+    for d in data:
+        proposal_code = d["proposal_code"]
+        activating_investigators = d["activating_investigators"]
+        for username in activating_investigators:
+            assert (
+                user_repository.is_activating_investigator(username, proposal_code)
+                is True
+            ), (
+                f"Should be true for activating investigator username {username} and "
+                f"proposal code {proposal_code}"
+            )
+
+
+@nodatabase
+def test_is_activating_investigator_returns_false_for_non_activating_investigator(
+    dbconnection: Connection, testdata: Callable[[str], Any]
+) -> None:
+    data = testdata(TEST_DATA_PATH)["is_activating_investigator"]
+    user_repository = UserRepository(dbconnection)
+    for d in data:
+        proposal_code = d["proposal_code"]
+        activating_investigators = d["non_activating_investigators"]
+        for username in activating_investigators:
+            assert (
+                user_repository.is_activating_investigator(username, proposal_code)
+                is False
+            ), (
+                f"Should be false for activating investigator username {username} and "
+                f"proposal code {proposal_code}"
+            )
 
 
 @nodatabase
@@ -264,6 +302,30 @@ def test_is_administrator_returns_false_for_administrator(
         assert not user_repository.is_administrator(
             astronomer
         ), f"Should be true for {astronomer}"
+
+
+@nodatabase
+@pytest.mark.parametrize(
+    "role",
+    [
+        "investigator",
+        "principal_investigator",
+        "principal_contact",
+        "activating_investigator",
+        "tac_member",
+        "tac_chair",
+    ],
+)
+def test_role_checks_return_false_for_non_existing_proposal(
+    dbconnection: Connection, role: str
+) -> None:
+    user_repository = UserRepository(dbconnection)
+    assert (
+        getattr(user_repository, f"is_{role}")(
+            username="gw", proposal_code="idontexist"
+        )
+        is False
+    )
 
 
 @nodatabase
