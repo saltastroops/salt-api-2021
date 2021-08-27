@@ -1,5 +1,6 @@
 from typing import Any, Iterable, List, Tuple, cast
 
+from saltapi.repository.proposal_repository import ProposalRepository
 from saltapi.repository.user_repository import UserRepository
 from saltapi.service.permission_service import PermissionService
 from saltapi.service.proposal import ProposalCode
@@ -60,10 +61,17 @@ class FakeUserRepository:
         return self._is_administrator
 
 
+class FakeProposalRepository:
+    def __init__(self, is_self_activable: bool = False) -> None:
+        self._is_self_activable = is_self_activable
+
+    def is_self_activable(self, proposal_code: str) -> bool:
+        return self._is_self_activable
+
+
 INVESTIGATOR = "investigator"
 PRINCIPAL_INVESTIGATOR = "principal_investigator"
 PRINCIPAL_CONTACT = "principal_contact"
-ACTIVATING_INVESTIGATOR = "activating_investigator"
 SALT_ASTRONOMER = "salt_astronomer"
 TAC_MEMBER = "tac_member"
 TAC_CHAIR = "tac_chair"
@@ -93,7 +101,7 @@ USER = User(
 PROPOSAL_CODE = ProposalCode("some_code")
 
 
-def _repositories_and_expected_results(
+def _user_repositories_and_expected_results(
     roles_with_permission: Iterable[str],
 ) -> List[Tuple[str, UserRepository, bool]]:
     """
@@ -119,17 +127,20 @@ def _repositories_and_expected_results(
     return values
 
 
-def _assert_permission(
+def _assert_role_based_permission(
     permission: str, roles_with_permission: List[str], **kwargs: Any
 ) -> None:
     """
     Check that a role has the given permission if and only if it is in the given list of
     roles.
     """
-    for role, repository, expected_result in _repositories_and_expected_results(
-        roles_with_permission
-    ):
-        permission_service = PermissionService(repository)
+    proposal_repository = cast(ProposalRepository, FakeProposalRepository())
+    for (
+        role,
+        user_repository,
+        expected_result,
+    ) in _user_repositories_and_expected_results(roles_with_permission):
+        permission_service = PermissionService(user_repository, proposal_repository)
         assert (
             getattr(permission_service, permission)(user=USER, **kwargs)
             is expected_result
@@ -147,21 +158,45 @@ def test_may_view_proposal() -> None:
         BOARD_MEMBER,
         ADMINISTRATOR,
     ]
-    _assert_permission(
+    _assert_role_based_permission(
         "may_view_proposal", roles_with_permission, proposal_code=PROPOSAL_CODE
     )
 
 
 def test_may_update_proposal_status() -> None:
     roles_with_permission = [SALT_ASTRONOMER, ADMINISTRATOR]
-    _assert_permission("may_update_proposal_status", roles_with_permission)
+    _assert_role_based_permission("may_update_proposal_status", roles_with_permission)
 
 
 def test_may_activate_proposal() -> None:
-    roles_with_permission = [ACTIVATING_INVESTIGATOR, SALT_ASTRONOMER, ADMINISTRATOR]
-    _assert_permission(
-        "may_activate_proposal", roles_with_permission, proposal_code=PROPOSAL_CODE
-    )
+    for role in ALL_ROLES:
+        for is_self_activable in [True, False]:
+            if role in [SALT_ASTRONOMER, ADMINISTRATOR]:
+                expected_permitted = True
+            elif (
+                role in [PRINCIPAL_INVESTIGATOR, PRINCIPAL_CONTACT]
+                and is_self_activable
+            ):
+                expected_permitted = True
+            else:
+                expected_permitted = False
+
+            kwargs = {f"is_{role}": True}
+            user_repository = cast(UserRepository, FakeUserRepository(**kwargs))
+            proposal_repository = cast(
+                ProposalRepository,
+                FakeProposalRepository(is_self_activable=is_self_activable),
+            )
+            permission_service = PermissionService(user_repository, proposal_repository)
+
+            assert (
+                permission_service.may_activate_proposal(USER, PROPOSAL_CODE)
+                == expected_permitted
+            ), (
+                f"Expected {expected_permitted} for role {role} and a "
+                f"{'non-' if not is_self_activable else ''}self-activable proposal, "
+                f"got {not expected_permitted}"
+            )
 
 
 def test_may_deactivate_proposal() -> None:
@@ -171,6 +206,6 @@ def test_may_deactivate_proposal() -> None:
         SALT_ASTRONOMER,
         ADMINISTRATOR,
     ]
-    _assert_permission(
+    _assert_role_based_permission(
         "may_deactivate_proposal", roles_with_permission, proposal_code=PROPOSAL_CODE
     )
