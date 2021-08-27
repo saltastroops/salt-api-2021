@@ -12,7 +12,6 @@ class FakeUserRepository:
         is_investigator: bool = False,
         is_principal_investigator: bool = False,
         is_principal_contact: bool = False,
-        is_activating_investigator: bool = False,
         is_salt_astronomer: bool = False,
         is_tac_member: bool = False,
         is_tac_chair: bool = False,
@@ -22,7 +21,6 @@ class FakeUserRepository:
         self._is_investigator = is_investigator
         self._is_principal_investigator = is_principal_investigator
         self._is_principal_contact = is_principal_contact
-        self._is_activating_investigator = is_activating_investigator
         self._is_salt_astronomer = is_salt_astronomer
         self._is_tac_member = is_tac_member
         self._is_tac_chair = is_tac_chair
@@ -44,11 +42,6 @@ class FakeUserRepository:
 
     def is_principal_contact(self, username: str, proposal_code: ProposalCode) -> bool:
         return self._is_principal_contact
-
-    def is_activating_investigator(
-        self, username: str, proposal_code: ProposalCode
-    ) -> bool:
-        return self._is_activating_investigator
 
     def is_salt_astronomer(self, username: str) -> bool:
         return self._is_salt_astronomer
