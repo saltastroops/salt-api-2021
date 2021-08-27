@@ -12,7 +12,6 @@ from fastapi import (
     Response,
     UploadFile,
     status,
-    Depends,
 )
 from fastapi.responses import FileResponse
 

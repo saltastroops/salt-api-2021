@@ -41,7 +41,7 @@ clean: ## remove test and coverage artifacts
 	rm -fr .pytest_cache
 
 coverage: ## check code coverage quickly with the default Python
-	pytest --cov-report html:../htmlcov --cov=saltapi tests/
+	pytest --cov-report html:htmlcov --cov=saltapi tests/
 	$(BROWSER) htmlcov/index.html
 
 flake8: ## check style with flake8
