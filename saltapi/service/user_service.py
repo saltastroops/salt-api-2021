@@ -23,13 +23,12 @@ class UserService:
             token_payload,
             timedelta(hours=24)
         )
+
         self.send_reset_token_email(reset_token, user)
 
-    def reset_password(self, password: str, token: str):
-        # Get username from token
-        # update the password
-        # Email a successful update of pass word
-        pass
+    def reset_password(self, password: str, user: User):
+        self.repository.update_password(user.username, password)
+        self.send_successful_password_rest_email(user)
 
     @staticmethod
     def send_reset_token_email(token: str, user: User):
@@ -53,7 +52,32 @@ SALT Team
         )
 
         try:
-            smtpObj = smtplib.SMTP('localhost')  # TODO need to use SAAO SMTP
-            smtpObj.sendmail(Settings().email, [user.email], message)
+            smtp_obj = smtplib.SMTP(Settings().saao_smtp)
+            smtp_obj.sendmail(Settings().email, [user.email], message)
+        except:
+            raise ValueError("Failed to send reset password email.")
+
+    @staticmethod
+    def send_successful_password_rest_email(user: User):
+
+        message = """From: SALT Team <{sender}>
+To: {user} <{receiver}>
+Subject: WEB Manager password reset
+
+
+Password reset was successful.
+
+Regards
+SALT Team
+            """.format(
+            sender=Settings().email,
+            user="{family_name} {given_name}".format(
+                family_name=user.family_name, given_name=user.given_name),
+            receiver=user.email
+        )
+
+        try:
+            smtp_obj = smtplib.SMTP(Settings().saao_smtp)
+            smtp_obj.sendmail(Settings().email, [user.email], message)
         except smtplib.SMTPException:
             raise ValueError("Failed to send reset password email.")

@@ -6,15 +6,13 @@ from saltapi.settings import Settings
 from saltapi.web.api.authentication import router as authentication_router
 from saltapi.web.api.blocks import router as blocks_router
 from saltapi.web.api.proposals import router as proposals_router
+from saltapi.web.api.user import router as user_router
 
 app = FastAPI()
 settings = Settings()
 origins = [settings.frontend_uri]
 
 setup_logging(app)
-
-settings = Settings()
-origins = [settings.frontend_uri]
 
 app.add_middleware(
     CORSMiddleware,
@@ -27,3 +25,4 @@ app.add_middleware(
 app.include_router(blocks_router)
 app.include_router(proposals_router)
 app.include_router(authentication_router)
+app.include_router(user_router)

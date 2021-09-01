@@ -35,5 +35,8 @@ class Settings(BaseSettings):
     # Email sender
     email: Optional[str]
 
+    # SAAO SMTP
+    saao_smtp: Optional[str]
+
     class Config:
         env_file = os.getenv("DOTENV_FILE", ".env")
