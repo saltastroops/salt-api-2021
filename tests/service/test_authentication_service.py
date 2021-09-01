@@ -60,32 +60,29 @@ def test_access_token_by_default_expires_in_seven_days(
     with freeze_time("2021-10-17 12:00:01"):
         authentication_service = AuthenticationService(user_repository)
         access_token = authentication_service.access_token(USER)
-        today = datetime.today()
-        # you can use something like freeze gut to set a time static
+        today = datetime.now()
         assert access_token.expires_at == (today + timedelta(days=7))
 
+
 @pytest.mark.parametrize(
-"user, token_lifetime_hours",
+    "token_lifetime_hours",
     [
-        (USER, 10),
-        (USER, 200),
-        (USER, 0),
-        (USER, -10),
+        (10),
+        (200),
+        (0),
+        (-10),
     ]
 )
-def test_access_token_expire_in_given_hours(user: User, token_lifetime_hours: int) -> None:
+def test_access_token_expires_in_given_hours(token_lifetime_hours: int) -> None:
     with freeze_time("2021-10-17 12:00:01"):
-        today = datetime.today()
-        authentication_service = AuthenticationService(user_repository)
-        access_token = authentication_service.access_token(USER,  token_lifetime_hours)
+        today = datetime.now()
+        access_token = AuthenticationService.access_token(USER,  token_lifetime_hours)
         assert access_token.expires_at == (today + timedelta(hours=token_lifetime_hours))
-
 
 
 def test_access_token_has_type_bearer(
 ) -> None:
-    authentication_service = AuthenticationService(user_repository)
-    access_token = authentication_service.access_token(USER)
+    access_token = AuthenticationService.access_token(USER)
     assert access_token.token_type == 'bearer'
 
 
@@ -106,6 +103,7 @@ def test_authenticate_user_returns_correct_user() -> None:
         ("noUser", "hasdedpassword"),
         ("", "hasdedpassword"),
         ("jdoee", "hasdedpassword"),
+        (None, "hasdedpassword"),
     ]
 )
 def test_authenticate_user_raises_error_for_wrong_user(
@@ -121,9 +119,11 @@ def test_authenticate_user_raises_error_for_wrong_user(
         ("jdoe", "hasdedpasswordd"),
         ("jdoe", "wrongpassword"),
         ("jdoe", ""),
+        ("jdoe", None),
+        (None, None),
     ]
 )
-def test_authenticate_user_raise_error_for_wrong_password(
+def test_authenticate_user_raises_error_for_wrong_password(
         username: str, password: str) -> None:
     authentication_service = AuthenticationService(user_repository)
     with pytest.raises(NotFoundError):
