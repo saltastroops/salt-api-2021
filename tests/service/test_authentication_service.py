@@ -66,12 +66,7 @@ def test_access_token_by_default_expires_in_seven_days(
 
 @pytest.mark.parametrize(
     "token_lifetime_hours",
-    [
-        (10),
-        (200),
-        (0),
-        (-10),
-    ]
+    [10, 200, 0, -10]
 )
 def test_access_token_expires_in_given_hours(token_lifetime_hours: int) -> None:
     with freeze_time("2021-10-17 12:00:01"):
