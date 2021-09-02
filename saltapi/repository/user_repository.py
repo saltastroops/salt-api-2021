@@ -5,15 +5,9 @@ from typing import Optional, cast
 from passlib.context import CryptContext
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
-from passlib.context import CryptContext
 
 from saltapi.exceptions import NotFoundError
 from saltapi.service.user import User
-
-pwd_context = CryptContext(
-    schemes=["bcrypt", "md5_crypt"], default="bcrypt", deprecated="auto"
-)
-
 
 pwd_context = CryptContext(
     schemes=["bcrypt", "md5_crypt"], default="bcrypt", deprecated="auto"

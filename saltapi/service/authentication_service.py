@@ -24,7 +24,9 @@ class AuthenticationService:
         self.user_repository = user_repository
 
     @staticmethod
-    def access_token(user: User, token_lifetime_hours: Optional[int] = None) -> AccessToken:
+    def access_token(
+        user: User, token_lifetime_hours: Optional[int] = None
+    ) -> AccessToken:
         """Generate an authentication token."""
         if token_lifetime_hours is not None:
             token_expires = timedelta(hours=token_lifetime_hours)
