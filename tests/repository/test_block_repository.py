@@ -355,9 +355,7 @@ def test_get_block_status(
     for d in data:
         block_id = d["block_id"]
         expected_status = d["status"]
-        target_repository = TargetRepository(dbconnection)
-        instrument_repository = InstrumentRepository(dbconnection)
-        block_repository = BlockRepository(target_repository, instrument_repository, dbconnection)
+        block_repository = create_block_repository(dbconnection)
         status = block_repository.get_block_status(block_id)
 
         assert expected_status == status

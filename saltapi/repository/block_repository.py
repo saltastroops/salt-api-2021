@@ -11,6 +11,7 @@ from saltapi.exceptions import NotFoundError
 from saltapi.repository.instrument_repository import InstrumentRepository
 from saltapi.repository.target_repository import TargetRepository
 from saltapi.service.block import Block
+from saltapi.web.schema.block import BlockStatus
 
 
 class BlockRepository:
@@ -102,7 +103,7 @@ WHERE B.Block_Id = :block_id;
             "proposal_code": row.proposal_code,
             "submission_date": pytz.utc.localize(row.submission_date),
             "semester": row.semester,
-            "status": row.status,
+            "status": {"value": row.status, "reason": ""},
             "priority": row.priority,
             "ranking": row.ranking,
             "wait_period": row.wait_period,
@@ -121,9 +122,9 @@ WHERE B.Block_Id = :block_id;
 
         return block
 
-    def get_block_status(self, block_id: int) -> str:
+    def get_block_status(self, block_id: int) -> Dict[BlockStatus, str]:
         """
-        Return the block status for a proposal.
+        Return the block status for a block id.
         """
         stmt = text(
             """
@@ -134,10 +135,12 @@ WHERE B.Block_Id = :block_id
         """
         )
         result = self.connection.execute(stmt, {"block_id": block_id})
-        try:
-            return cast(str, result.scalar_one())
-        except NoResultFound:
-            raise NotFoundError()
+
+        row = result.one()
+
+        status = {"status_value": row, "status_comment": ""}
+
+        return status
 
     def update_block_status(self, block_id: int, status: str) -> None:
         """
@@ -145,10 +148,11 @@ WHERE B.Block_Id = :block_id
         """
         stmt = text(
             """
-UPDATE BlockStatus
-JOIN Block B ON BlockStatus.BlockStatus_Id = B.BlockStatus_Id
-SET BlockStatus.BlockStatus = :status
-WHERE B.Block_Id = :block_id;
+UPDATE Block
+JOIN BlockStatus BS on Block.BlockStatus_Id = BS.BlockStatus_Id
+SET Block.BlockStatus_Id = BS.BlockStatus_Id
+WHERE BS.BlockStatus = :status
+AND Block.Block_Id = :block_id;
     """
         )
         result = self.connection.execute(

@@ -20,7 +20,7 @@ from saltapi.web.schema.salticam import SalticamSummary
 
 
 class BlockStatus(str, Enum):
-    """Block status."""
+    """Block status value."""
 
     ACTIVE = "Active"
     COMPLETED = "Completed"
