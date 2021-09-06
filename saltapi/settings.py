@@ -33,10 +33,10 @@ class Settings(BaseSettings):
     sentry_dsn: Optional[str]
 
     # Email sender
-    email: Optional[str]
+    email: str
 
-    # SAAO SMTP
-    saao_smtp: Optional[str]
+    # SMTP server fro sending emails
+    smtp_server: str
 
     class Config:
         env_file = os.getenv("DOTENV_FILE", ".env")

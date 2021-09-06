@@ -8,7 +8,7 @@ from sqlalchemy.engine import Connection
 
 from saltapi.exceptions import NotFoundError
 from saltapi.service.proposal import ProposalCode
-from saltapi.service.user import User
+from saltapi.service.user import User, UserToUpdate
 
 pwd_context = CryptContext(
     schemes=["bcrypt", "md5_crypt"], default="bcrypt", deprecated="auto"
@@ -268,7 +268,7 @@ ON DUPLICATE KEY UPDATE Password = :password
             stmt, {"username": username, "password": new_password_hash}
         )
 
-    def update_password(self, username: str, password: str) -> None:
+    def _update_password(self, username: str, password: str):
         self.update_password_hash(username, password)
         password_hash = self.get_password_hash(password)
         stmt = text(
@@ -281,6 +281,11 @@ WHERE Username = :username
         self.connection.execute(
             stmt, {"username": username, "password": password_hash}
         )
+
+    def update_user_details(self, user_to_update: UserToUpdate, user: User) -> None:
+        # TODO discuss with Encarni on how to update users
+        if user_to_update.password:
+            self._update_password(user.username, user_to_update.password)
 
     @staticmethod
     def get_new_password_hash(password: str) -> str:

@@ -1,10 +1,9 @@
-import smtplib
 from datetime import timedelta
 
 from saltapi.repository.user_repository import UserRepository
 from saltapi.service.authentication_service import AuthenticationService
-from saltapi.service.user import User
-from saltapi.settings import Settings
+from saltapi.service.mail_service import MailService
+from saltapi.service.user import User, UserToUpdate
 
 
 class UserService:
@@ -24,60 +23,7 @@ class UserService:
             timedelta(hours=24)
         )
 
-        self.send_reset_token_email(reset_token, user)
+        MailService.send_password_reset_email(reset_token, user)
 
-    def reset_password(self, password: str, user: User):
-        self.repository.update_password(user.username, password)
-        self.send_successful_password_rest_email(user)
-
-    @staticmethod
-    def send_reset_token_email(token: str, user: User):
-        reset_token = Settings().frontend_uri + "/reset-password/" + token
-
-        message = """From: SALT Team <{sender}>
-To: {user} <{receiver}>
-Subject: WEB Manager password reset
-
-Please click on the link below to reset your password:
-{reset_token}
-
-Regards
-SALT Team
-        """.format(
-            sender=Settings().email,
-            user="{family_name} {given_name}".format(
-                family_name=user.family_name, given_name=user.given_name),
-            receiver=user.email,
-            reset_token=reset_token
-        )
-
-        try:
-            smtp_obj = smtplib.SMTP(Settings().saao_smtp)
-            smtp_obj.sendmail(Settings().email, [user.email], message)
-        except:
-            raise ValueError("Failed to send reset password email.")
-
-    @staticmethod
-    def send_successful_password_rest_email(user: User):
-
-        message = """From: SALT Team <{sender}>
-To: {user} <{receiver}>
-Subject: WEB Manager password reset
-
-
-Password reset was successful.
-
-Regards
-SALT Team
-            """.format(
-            sender=Settings().email,
-            user="{family_name} {given_name}".format(
-                family_name=user.family_name, given_name=user.given_name),
-            receiver=user.email
-        )
-
-        try:
-            smtp_obj = smtplib.SMTP(Settings().saao_smtp)
-            smtp_obj.sendmail(Settings().email, [user.email], message)
-        except smtplib.SMTPException:
-            raise ValueError("Failed to send reset password email.")
+    def update_user_details(self, user_to_update: UserToUpdate, user: User):
+        self.repository.update_user_details(user_to_update, user)

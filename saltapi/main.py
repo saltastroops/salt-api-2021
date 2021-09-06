@@ -6,7 +6,7 @@ from saltapi.settings import Settings
 from saltapi.web.api.authentication import router as authentication_router
 from saltapi.web.api.blocks import router as blocks_router
 from saltapi.web.api.proposals import router as proposals_router
-from saltapi.web.api.user import router as user_router
+from saltapi.web.api.users import router as user_router
 
 app = FastAPI()
 settings = Settings()
