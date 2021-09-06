@@ -1,6 +1,6 @@
 import hashlib
 import secrets
-from typing import cast
+from typing import cast, List
 
 from passlib.context import CryptContext
 from sqlalchemy import text
@@ -8,7 +8,7 @@ from sqlalchemy.engine import Connection
 
 from saltapi.exceptions import NotFoundError
 from saltapi.service.proposal import ProposalCode
-from saltapi.service.user import User
+from saltapi.service.user import User, Role
 
 pwd_context = CryptContext(
     schemes=["bcrypt", "md5_crypt"], default="bcrypt", deprecated="auto"
@@ -209,6 +209,47 @@ WHERE PC.Proposal_Code = :proposal_code
 
         return cast(int, result.scalar_one()) > 0
 
+    def is_user_tac_chair(self, username: str) -> bool:
+        # TODO this is a duplicate method we need to discuss how ho handle TAC's and
+        #  Chairs
+        """
+        Check whether the user is a TAC chair.
+
+        If the user do not exist, it is assumed the user is no TAC chair.
+        """
+        stmt = text(
+            """
+SELECT COUNT(Username) FROM PiptUserTAC PUT
+    JOIN PiptUser PU ON PU.PiptUser_Id = PUT.PiptUser_Id
+WHERE Username = :username
+    AND PUT.Chair > 0
+        """
+        )
+        result = self.connection.execute(
+            stmt, {"username": username}
+        )
+
+        return cast(int, result.scalar_one()) > 0
+
+    def is_user_tac_member(self, username: str) -> bool:
+        """
+        Check whether the user is a TAC member.
+
+        If the user do not exist, it is assumed the user is not a TAC member.
+        """
+        stmt = text(
+            """
+SELECT COUNT(Username) FROM PiptUserTAC PUT
+    JOIN PiptUser PU ON PU.PiptUser_Id = PUT.PiptUser_Id
+WHERE Username = :username
+        """
+        )
+        result = self.connection.execute(
+            stmt, {"username": username}
+        )
+
+        return cast(int, result.scalar_one()) > 0
+
     def is_board_member(self, username: str) -> bool:
         """
         Check whether the user is a SALT Board member.
@@ -297,3 +338,26 @@ ON DUPLICATE KEY UPDATE Password = :password
             raise NotFoundError()
 
         return user
+
+    def get_user_roles(self, username: str) -> List[Role]:
+        """
+        It assume that user have no roles and roles will be added accordingly.
+        """
+        roles = []
+        if self.is_administrator(username):
+            # TODO we need to discuss about the different admins(Admin Levels)
+            roles.append(Role.ADMINISTRATOR)
+
+        if self.is_salt_astronomer(username):
+            roles.append(Role.SALT_ASTRONOMER)
+
+        if self.is_board_member(username):
+            roles.append(Role.BOARD_MEMBER)
+
+        if self.is_user_tac_chair(username):
+            roles.append(Role.TAC_CHAIR)
+
+        if self.is_user_tac_member(username):
+            roles.append(Role.TAC_MEMBER)
+
+        return roles
