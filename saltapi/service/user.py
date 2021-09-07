@@ -12,8 +12,8 @@ class User(NamedTuple):
 
 
 class Role(str, Enum):
-    SALT_ASTRONOMER = 'SALT Astronomer'
-    ADMINISTRATOR = 'Administrator'
-    TAC_MEMBER = 'TAC Member'
-    TAC_CHAIR = 'TAC Chair'
-    BOARD_MEMBER = 'Board Member'
+    SALT_ASTRONOMER = "SALT Astronomer"
+    ADMINISTRATOR = "Administrator"
+    TAC_MEMBER = "TAC Member"
+    TAC_CHAIR = "TAC Chair"
+    BOARD_MEMBER = "Board Member"

@@ -14,8 +14,8 @@ class FakeUserRepository:
         is_principal_contact: bool = False,
         is_activating_investigator: bool = False,
         is_salt_astronomer: bool = False,
-        is_tac_member: bool = False,
-        is_tac_chair: bool = False,
+        is_tac_member_for_proposal: bool = False,
+        is_tac_chair_for_proposal: bool = False,
         is_board_member: bool = False,
         is_administrator: bool = False,
     ) -> None:
@@ -24,8 +24,8 @@ class FakeUserRepository:
         self._is_principal_contact = is_principal_contact
         self._is_activating_investigator = is_activating_investigator
         self._is_salt_astronomer = is_salt_astronomer
-        self._is_tac_member = is_tac_member
-        self._is_tac_chair = is_tac_chair
+        self._is_tac_member = is_tac_member_for_proposal
+        self._is_tac_chair = is_tac_chair_for_proposal
         self._is_board_member = is_board_member
         self._is_administrator = is_administrator
 
@@ -53,11 +53,15 @@ class FakeUserRepository:
     def is_salt_astronomer(self, username: str) -> bool:
         return self._is_salt_astronomer
 
-    def is_tac_member(self, username: str, proposal_code: ProposalCode) -> bool:
+    def is_tac_member_for_proposal(
+        self, username: str, proposal_code: ProposalCode
+    ) -> bool:
         # A TAC chair is a TAC member as well
         return self._is_tac_member or self._is_tac_chair
 
-    def is_tac_chair(self, username: str, proposal_code: ProposalCode) -> bool:
+    def is_tac_chair_for_proposal(
+        self, username: str, proposal_code: ProposalCode
+    ) -> bool:
         return self._is_tac_chair
 
     def is_board_member(self, username: str) -> bool:
@@ -72,8 +76,8 @@ PRINCIPAL_INVESTIGATOR = "principal_investigator"
 PRINCIPAL_CONTACT = "principal_contact"
 ACTIVATING_INVESTIGATOR = "activating_investigator"
 SALT_ASTRONOMER = "salt_astronomer"
-TAC_MEMBER = "tac_member"
-TAC_CHAIR = "tac_chair"
+TAC_MEMBER_FOR_PROPOSAL = "tac_member_for_proposal"
+TAC_CHAIR_FOR_PROPOSAL = "tac_chair_for_proposal"
 BOARD_MEMBER = "board_member"
 ADMINISTRATOR = "administrator"
 
@@ -82,8 +86,8 @@ ALL_ROLES = {
     PRINCIPAL_INVESTIGATOR,
     PRINCIPAL_CONTACT,
     SALT_ASTRONOMER,
-    TAC_MEMBER,
-    TAC_CHAIR,
+    TAC_MEMBER_FOR_PROPOSAL,
+    TAC_CHAIR_FOR_PROPOSAL,
     BOARD_MEMBER,
     ADMINISTRATOR,
 }
@@ -149,8 +153,8 @@ def test_may_view_proposal() -> None:
         PRINCIPAL_INVESTIGATOR,
         PRINCIPAL_CONTACT,
         SALT_ASTRONOMER,
-        TAC_MEMBER,
-        TAC_CHAIR,
+        TAC_MEMBER_FOR_PROPOSAL,
+        TAC_CHAIR_FOR_PROPOSAL,
         BOARD_MEMBER,
         ADMINISTRATOR,
     ]

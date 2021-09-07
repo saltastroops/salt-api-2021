@@ -1,6 +1,6 @@
 import hashlib
 import secrets
-from typing import cast, List
+from typing import List, cast
 
 from passlib.context import CryptContext
 from sqlalchemy import text
@@ -8,7 +8,7 @@ from sqlalchemy.engine import Connection
 
 from saltapi.exceptions import NotFoundError
 from saltapi.service.proposal import ProposalCode
-from saltapi.service.user import User, Role
+from saltapi.service.user import Role, User
 
 pwd_context = CryptContext(
     schemes=["bcrypt", "md5_crypt"], default="bcrypt", deprecated="auto"
@@ -152,15 +152,19 @@ WHERE PC.Proposal_Code = :proposal_code;
             """
 SELECT COUNT(*)
 FROM PiptUser PU
-    JOIN Investigator I ON PU.PiptUser_Id = I.PiptUser_Id
-    JOIN SaltAstronomers SA ON I.Investigator_Id = SA.Investigator_Id
+         JOIN PiptUserSetting PUS ON PU.PiptUser_Id = PUS.PiptUser_Id
+         JOIN PiptSetting PS ON PUS.PiptSetting_Id = PS.PiptSetting_Id
 WHERE PU.Username = :username
+  AND PS.PiptSetting_Name = 'RightAstronomer'
+  AND PUS.Value > 0
         """
         )
         result = self.connection.execute(stmt, {"username": username})
         return cast(int, result.scalar_one()) > 0
 
-    def is_tac_member(self, username: str, proposal_code: ProposalCode) -> bool:
+    def is_tac_member_for_proposal(
+        self, username: str, proposal_code: ProposalCode
+    ) -> bool:
         """
         Check whether the user is member of a TAC from which a proposal requests time.
 
@@ -184,7 +188,9 @@ WHERE PC.Proposal_Code = :proposal_code
 
         return cast(int, result.scalar_one()) > 0
 
-    def is_tac_chair(self, username: str, proposal_code: ProposalCode) -> bool:
+    def is_tac_chair_for_proposal(
+        self, username: str, proposal_code: ProposalCode
+    ) -> bool:
         """
         Check whether the user is chair of a TAC from which a proposal requests time.
 
@@ -209,44 +215,40 @@ WHERE PC.Proposal_Code = :proposal_code
 
         return cast(int, result.scalar_one()) > 0
 
-    def is_user_tac_chair(self, username: str) -> bool:
-        # TODO this is a duplicate method we need to discuss how ho handle TAC's and
-        #  Chairs
+    def is_tac_chair_in_general(self, username: str) -> bool:
         """
-        Check whether the user is a TAC chair.
+        Check whether the user is a TAC chair for any partner.
 
-        If the user do not exist, it is assumed the user is no TAC chair.
+        If the user does not exist, it is assumed the user is no TAC chair.
         """
         stmt = text(
             """
-SELECT COUNT(Username) FROM PiptUserTAC PUT
+SELECT COUNT(Username)
+FROM PiptUserTAC PUT
     JOIN PiptUser PU ON PU.PiptUser_Id = PUT.PiptUser_Id
 WHERE Username = :username
     AND PUT.Chair > 0
         """
         )
-        result = self.connection.execute(
-            stmt, {"username": username}
-        )
+        result = self.connection.execute(stmt, {"username": username})
 
         return cast(int, result.scalar_one()) > 0
 
-    def is_user_tac_member(self, username: str) -> bool:
+    def is_tac_member_in_general(self, username: str) -> bool:
         """
-        Check whether the user is a TAC member.
+        Check whether the user is a TAC member for any partner.
 
-        If the user do not exist, it is assumed the user is not a TAC member.
+        If the user does not exist, it is assumed the user is not a TAC member.
         """
         stmt = text(
             """
-SELECT COUNT(Username) FROM PiptUserTAC PUT
+SELECT COUNT(Username)
+FROM PiptUserTAC PUT
     JOIN PiptUser PU ON PU.PiptUser_Id = PUT.PiptUser_Id
 WHERE Username = :username
         """
         )
-        result = self.connection.execute(
-            stmt, {"username": username}
-        )
+        result = self.connection.execute(stmt, {"username": username})
 
         return cast(int, result.scalar_one()) > 0
 
@@ -341,11 +343,14 @@ ON DUPLICATE KEY UPDATE Password = :password
 
     def get_user_roles(self, username: str) -> List[Role]:
         """
-        It assume that user have no roles and roles will be added accordingly.
+        Get a user's roles.
+
+        The roles do not include roles which are specific to a particular proposal (such
+        as Principal Investigator). However, they include roles which are specific to a
+        partner (i.e. TAC chair and member).
         """
         roles = []
         if self.is_administrator(username):
-            # TODO we need to discuss about the different admins(Admin Levels)
             roles.append(Role.ADMINISTRATOR)
 
         if self.is_salt_astronomer(username):
@@ -354,10 +359,10 @@ ON DUPLICATE KEY UPDATE Password = :password
         if self.is_board_member(username):
             roles.append(Role.BOARD_MEMBER)
 
-        if self.is_user_tac_chair(username):
+        if self.is_tac_chair_in_general(username):
             roles.append(Role.TAC_CHAIR)
 
-        if self.is_user_tac_member(username):
+        if self.is_tac_member_in_general(username):
             roles.append(Role.TAC_MEMBER)
 
         return roles
