@@ -2,7 +2,6 @@ from typing import Dict
 
 from saltapi.repository.block_repository import BlockRepository
 from saltapi.service.block import Block
-from saltapi.web.schema.block import BlockStatus
 
 
 class BlockService:
@@ -16,7 +15,7 @@ class BlockService:
 
         return self.block_repository.get(block_id)
 
-    def get_block_status(self, block_id: int) -> Dict[BlockStatus, str]:
+    def get_block_status(self, block_id: int) -> Dict:
         """
         Return the block status for a block id.
         """

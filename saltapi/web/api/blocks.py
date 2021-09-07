@@ -40,12 +40,12 @@ def get_block(
         return block_service.get_block(block_id)
 
 
-@router.get("/{block_id}/status", summary="Get a block status", response_model=Dict[BlockStatus, str])
+@router.get("/{block_id}/status", summary="Get a block status", response_model=Dict)
 def get_block_status(
         block_id: int = Path(
             ..., title="Block id", description="Unique identifier for the block"
         )
-) -> Dict[BlockStatus, str]:
+) -> Dict:
     """
     Returns the status of the block with a given block id.
 

@@ -5,13 +5,11 @@ import pytz
 from astropy.coordinates import Angle
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
-from sqlalchemy.exc import NoResultFound
 
 from saltapi.exceptions import NotFoundError
 from saltapi.repository.instrument_repository import InstrumentRepository
 from saltapi.repository.target_repository import TargetRepository
 from saltapi.service.block import Block
-from saltapi.web.schema.block import BlockStatus
 
 
 class BlockRepository:
@@ -103,7 +101,7 @@ WHERE B.Block_Id = :block_id;
             "proposal_code": row.proposal_code,
             "submission_date": pytz.utc.localize(row.submission_date),
             "semester": row.semester,
-            "status": {"value": row.status, "reason": ""},
+            "status": {"value": row.status, "comment": ""},
             "priority": row.priority,
             "ranking": row.ranking,
             "wait_period": row.wait_period,
@@ -122,7 +120,7 @@ WHERE B.Block_Id = :block_id;
 
         return block
 
-    def get_block_status(self, block_id: int) -> Dict[BlockStatus, str]:
+    def get_block_status(self, block_id: int) -> Dict:
         """
         Return the block status for a block id.
         """
@@ -138,7 +136,7 @@ WHERE B.Block_Id = :block_id
 
         row = result.one()
 
-        status = {"status_value": row, "status_comment": ""}
+        status = {"value": row.BlockStatus, "comment": ""}
 
         return status
 
