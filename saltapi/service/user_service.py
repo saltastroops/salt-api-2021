@@ -70,6 +70,7 @@ SALT Team
                              'html')
 
         message.attach(plain_body)
+        message.attach(html_body)
 
         MailService.send_email([email_to], email_from, message)
 
