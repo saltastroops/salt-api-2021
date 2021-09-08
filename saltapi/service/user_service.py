@@ -1,6 +1,4 @@
 from datetime import timedelta
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
 
 from saltapi.repository.user_repository import UserRepository
 from saltapi.service.authentication_service import AuthenticationService
@@ -18,24 +16,21 @@ class UserService:
 
     def email_token(self, user: User):
         authentication_service = AuthenticationService(self.repository)
-        token_payload = {
-            "username": user.username
-        }
         reset_token = authentication_service.jwt_token(
-            token_payload,
+            {"username": user.username},
             timedelta(hours=24)
         )
         user_txt = "{given_name} {family_name}".format(
-                family_name=user.family_name, given_name=user.given_name),
-        message = MIMEMultipart('alternative')
-        message['Subject'] = 'WEB Manager password reset'
-        message['From'] = '{user} <{receiver}>'.format(user=user_txt, receiver=user.email)
-        message['To'] = 'SALT Team <{sender}>'.format(sender=Settings().from_email)
+                family_name=user.family_name, given_name=user.given_name)
         email_to = user.email
         email_from = Settings().from_email
-        print(user_txt[0])
+        email_to_txt = '{user} <{receiver}>'.format(
+            user=user_txt[0], receiver=user.email
+        )
+        email_from_txt = 'SALT Team <{sender}>'.format(sender=Settings().from_email)
+        email_subject = 'WEB Manager password reset'
 
-        plain_body = MIMEText('''Dear {user},
+        plain_body = '''Dear {user},
 
 Someone (probably you) has requested to reset your SALT Web Manager password.
 
@@ -49,10 +44,9 @@ If you have not requested to reset your password, you can just ignore this email
 Kind regards,
 
 SALT Team
-        '''.format(user=user_txt[0], reset_url=self.password_reset_url(reset_token)),
-                              'plain')
+        '''.format(user=user_txt[0], reset_url=self.password_reset_url(reset_token))
 
-        html_body = MIMEText('''
+        html_body = '''
 <html>
   <head></head>
   <body>
@@ -66,11 +60,15 @@ SALT Team
     <p>SALT Team</p>
   </body>
 </html>
-        '''.format(user=user_txt[0], reset_url=self.password_reset_url(reset_token)),
-                             'html')
+        '''.format(user=user_txt[0], reset_url=self.password_reset_url(reset_token))
 
-        message.attach(plain_body)
-        message.attach(html_body)
+        message = MailService.generate_email(
+            email_to=email_to_txt,
+            email_from=email_from_txt,
+            email_subject=email_subject,
+            email_html_body=html_body,
+            email_plain_body=plain_body,
+        )
 
         MailService.send_email([email_to], email_from, message)
 

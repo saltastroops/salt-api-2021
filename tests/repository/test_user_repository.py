@@ -33,6 +33,28 @@ def test_get_user_raises_error_for_non_existing_user(dbconnection: Connection) -
 
 
 @nodatabase
+def test_get_user_by_email_returns_correct_user(
+    dbconnection: Connection, testdata: Callable[[str], Any]
+) -> None:
+    expected = testdata(TEST_DATA_PATH)["get_user_by_email"]
+    user_repository = UserRepository(dbconnection)
+    user = user_repository.get_by_email(expected["email"])
+
+    assert user.id == expected["id"]
+    assert user.username == expected["username"]
+    assert user.given_name == expected["given_name"]
+    assert user.email is not None
+
+
+@nodatabase
+def test_get_user_by_email_raises_error_for_non_existing_user(
+        dbconnection: Connection) -> None:
+    user_repository = UserRepository(dbconnection)
+    with pytest.raises(NotFoundError):
+        user_repository.get("invalid@email.com")
+
+
+@nodatabase
 def test_is_investigator_returns_true_for_investigator(
     dbconnection: Connection, testdata: Callable[[str], Any]
 ) -> None:
