@@ -130,7 +130,7 @@ class Block(BaseModel):
         description="Time required for an observation of the block, including the overhead time, in seconds",
         gt=0,
     )
-    overhead_time: int = Field(
+    overhead_time: Optional[int] = Field(
         ..., title="Overhead time for an observation of the block, in seconds", ge=0
     )
     observing_windows: List[TimeInterval] = Field(

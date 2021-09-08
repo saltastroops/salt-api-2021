@@ -7,15 +7,17 @@ from saltapi.repository.instrument_repository import InstrumentRepository
 from saltapi.repository.target_repository import TargetRepository
 from saltapi.repository.unit_of_work import UnitOfWork
 from saltapi.service.block import Block
+from saltapi.service.block_service import BlockService
+from saltapi.service.observation_service import ObservationService
 from saltapi.web.schema.block import BlockVisitStatus, Observation
 
 router = APIRouter(prefix="/observations", tags=["Observations"])
 
 
-@router.get("/{block_id}", summary="Get observations of a block", response_model=Observation)
+@router.get("/{block_visit_id}", summary="Get observations of a block", response_model=List[Observation])
 def get_observations(
-        block_id: int = Path(
-            ..., title="Block id", description="Unique identifier for a block of observations"
+        block_visit_id: int = Path(
+            ..., title="Block visit id", description="Unique identifier for a block of observations"
         )
 ) -> List[Observation]:
     """
@@ -23,25 +25,24 @@ def get_observations(
     """
 
     with UnitOfWork() as unit_of_work:
-        instrument_repository = InstrumentRepository(unit_of_work.connection)
-        target_repository = TargetRepository(unit_of_work.connection)
         block_repository = BlockRepository(
-            instrument_repository=instrument_repository,
-            target_repository=target_repository,
+            instrument_repository=InstrumentRepository(unit_of_work.connection),
+            target_repository=TargetRepository(unit_of_work.connection),
             connection=unit_of_work.connection,
         )
-        block = block_repository.get(block_id)
-        return block['observations']
+        block_service = BlockService(block_repository)
+        block = block_service.get_block(block_visit_id)
+        return block["observations"]
 
 
 @router.get("/{block_visit_id}/status",
             summary="Get the status observations of a block",
             response_model=BlockVisitStatus)
 def get_observations_status(
-        block_id: int = Path(
+        block_visit_id: int = Path(
             ..., title="Block id", description="Unique identifier for a block"
         )
-) -> Block:
+) -> BlockVisitStatus:
     """
     Returns the status of observations of a given block id.
 
@@ -56,19 +57,18 @@ def get_observations_status(
     """
 
     with UnitOfWork() as unit_of_work:
-        instrument_repository = InstrumentRepository(unit_of_work.connection)
-        target_repository = TargetRepository(unit_of_work.connection)
         block_repository = BlockRepository(
-            instrument_repository=instrument_repository,
-            target_repository=target_repository,
+            instrument_repository=InstrumentRepository(unit_of_work.connection),
+            target_repository=TargetRepository(unit_of_work.connection),
             connection=unit_of_work.connection,
         )
-        return block_repository.get_observations_status(block_id)
+        observation_service = ObservationService(block_repository)
+        return observation_service.get_observations_status(block_visit_id)
 
 
 @router.put("/{block_id}/status", summary="Update the status of observations of a block")
 def update_status_of_observations(
-        block_id: int = Path(
+        block_visit_id: int = Path(
             ..., title="Block id", description="Unique identifier for a block"
         ),
         status: BlockVisitStatus = Body(
@@ -81,11 +81,10 @@ def update_status_of_observations(
     """
 
     with UnitOfWork() as unit_of_work:
-        instrument_repository = InstrumentRepository(unit_of_work.connection)
-        target_repository = TargetRepository(unit_of_work.connection)
         block_repository = BlockRepository(
-            instrument_repository=instrument_repository,
-            target_repository=target_repository,
+            instrument_repository=InstrumentRepository(unit_of_work.connection),
+            target_repository=TargetRepository(unit_of_work.connection),
             connection=unit_of_work.connection,
         )
-        block_repository.update_observations_status(block_id, status)
+        observation_service = ObservationService(block_repository)
+        return observation_service.set_observations_status(block_visit_id, status)
