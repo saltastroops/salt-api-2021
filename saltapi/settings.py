@@ -33,7 +33,7 @@ class Settings(BaseSettings):
     sentry_dsn: Optional[str]
 
     # Email sender
-    email: str
+    from_email: str
 
     # SMTP server fro sending emails
     smtp_server: str

@@ -44,6 +44,31 @@ WHERE PU.Username = :username
             raise NotFoundError("Unknown user id")
         return User(**user)
 
+    def get_by_email(self, email: str) -> User:
+        """
+        Returns the user with a given username.
+
+        If the username does not exist, a NotFoundError is raised.
+        """
+        stmt = text(
+            """
+SELECT PU.PiptUser_Id  AS id,
+       Email           AS email,
+       Surname         AS family_name,
+       FirstName       AS given_name,
+       Password        AS password_hash,
+       Username        AS username
+FROM PiptUser PU
+         JOIN Investigator I ON (PU.Investigator_Id = I.Investigator_Id)
+WHERE I.Email = :email
+        """
+        )
+        result = self.connection.execute(stmt, {"email": email})
+        user = result.one_or_none()
+        if not user:
+            raise NotFoundError("Unknown user id")
+        return User(**user)
+
     def is_investigator(self, username: str, proposal_code: ProposalCode) -> bool:
         """
         Check whether a user is an investigator on a proposal.

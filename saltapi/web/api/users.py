@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 from starlette import status
@@ -24,26 +24,26 @@ router = APIRouter(prefix="/users", tags=["User"])
     response_description="Success message.",
     response_model=ResponseMessage
 )
-def forgot_password(username: str) -> ResponseMessage:
+def forgot_password(username: Optional[str]=None, email: Optional[str]=None) -> ResponseMessage:
     with UnitOfWork() as unit_of_work:
-        try:
-            user_repository = UserRepository(unit_of_work.connection)
-            # verify username
+        user_repository = UserRepository(unit_of_work.connection)
+        # check if either email or username is provided.
+        if not username and not email:
+            raise ValueError("Either username or email should be provided.")
+        # verify username
+        if username:
             user = user_repository.get(username)
-            if not user:
-                raise ValueError("User not found.")
-            user_service = UserService(user_repository)
-            user_service.email_token(user)
+        else:
+            user = user_repository.get_by_email(email)
 
-            return ResponseMessage(
-                message="Email with a password reset link sent."
-            )
-        except Exception:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Could not validate credentials.",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
+        if not user:
+            raise ValueError("User not found.")
+        user_service = UserService(user_repository)
+        user_service.email_token(user)
+
+        return ResponseMessage(
+            message="Email with a password reset link sent."
+        )
 
 
 @router.post(
