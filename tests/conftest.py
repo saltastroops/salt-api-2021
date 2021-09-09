@@ -26,7 +26,6 @@ if sdb_dsn:
 
 @pytest.fixture(scope="function")
 def dbconnection() -> Generator[Connection, None, None]:
-    #print(sdb_dsn)
     if not engine:
         raise ValueError(
             "No SQLAlchemy engine set. Have you defined the SDB_DSN environment "

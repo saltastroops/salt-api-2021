@@ -4,7 +4,6 @@ import pytest
 from sqlalchemy.engine import Connection
 from sqlalchemy.exc import NoResultFound
 
-from saltapi.exceptions import NotFoundError
 from saltapi.repository.block_repository import BlockRepository
 from saltapi.repository.instrument_repository import InstrumentRepository
 from saltapi.repository.target_repository import TargetRepository
@@ -365,40 +364,35 @@ def test_get_block_status(
 def test_get_block_status_raises_error_for_wrong_block_id(
         dbconnection: Connection,
 ) -> None:
-    target_repository = TargetRepository(dbconnection)
-    instrument_repository = InstrumentRepository(dbconnection)
-    block_repository = BlockRepository(target_repository, instrument_repository, dbconnection)
-    with pytest.raises(NotFoundError):
+    block_repository = create_block_repository(dbconnection)
+    with pytest.raises(NoResultFound):
         block_repository.get_block_status(0)
 
 
 @nodatabase
 def test_update_block_status(dbconnection: Connection) -> None:
-    # Set the status to "On Hold"
-    target_repository = TargetRepository(dbconnection)
-    instrument_repository = InstrumentRepository(dbconnection)
-    block_repository = BlockRepository(target_repository, instrument_repository, dbconnection)
+    # Set the status to "On Hold" and the reason to "not needed"
+    block_repository = create_block_repository(dbconnection)
     block_id = 2339
-    block_repository.update_block_status(block_id, "On Hold")
-    assert block_repository.get_block_status(block_id) == "On Hold"
+    block_repository.update_block_status(block_id, "On Hold", "not needed")
+    block_status = block_repository.get_block_status(block_id)
+    assert block_status.value == "On Hold"
+    assert block_status.reason == "not needed"
 
-    # Now set it to "Active"
-    block_repository.update_block_status(block_id, "Active")
-    assert (
-            block_repository.get_block_status(block_id)
-            == "Active"
-    )
+    # Now set it the status to "Active" and reason to "Awaiting driftscan"
+    block_repository.update_block_status(block_id, "Active", "Awaiting driftscan")
+    block_status = block_repository.get_block_status(block_id)
+    assert block_status.value == "Active"
+    assert block_status.reason == "Awaiting driftscan"
 
 
 @nodatabase
 def test_update_block_status_raises_error_for_wrong_block_id(
         dbconnection: Connection,
 ) -> None:
-    target_repository = TargetRepository(dbconnection)
-    instrument_repository = InstrumentRepository(dbconnection)
-    block_repository = BlockRepository(target_repository, instrument_repository, dbconnection)
+    block_repository = create_block_repository(dbconnection)
     with pytest.raises(NoResultFound):
-        block_repository.update_block_status(0, "Active")
+        block_repository.update_block_status(0, "Active", "")
 
 
 @nodatabase
@@ -408,7 +402,7 @@ def test_update_block_status_raises_error_for_wrong_status(
     block_repository = create_block_repository(dbconnection)
     with pytest.raises(ValueError) as excinfo:
         block_repository.update_block_status(
-            1, "Wrong block status"
+            1, "Wrong block status", ""
         )
 
     assert "block status" in str(excinfo)

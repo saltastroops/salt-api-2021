@@ -63,7 +63,8 @@ SELECT B.Block_Id                      AS block_id,
        BP.ObservabilityProbability     AS observability_probability,
        BP.SeeingProbability            AS seeing_probability,
        BP.AveRanking                   AS average_ranking,
-       BP.TotalProbability             AS total_probability
+       BP.TotalProbability             AS total_probability,
+       B.BlockStatusReason             AS reason
 FROM Block B
          JOIN BlockStatus BS ON B.BlockStatus_Id = BS.BlockStatus_Id
          LEFT JOIN PiRanking PR ON B.PiRanking_Id = PR.PiRanking_Id
@@ -101,7 +102,7 @@ WHERE B.Block_Id = :block_id;
             "proposal_code": row.proposal_code,
             "submission_date": pytz.utc.localize(row.submission_date),
             "semester": row.semester,
-            "status": {"value": row.status, "comment": ""},
+            "status": {"value": row.status, "reason": row.reason},
             "priority": row.priority,
             "ranking": row.ranking,
             "wait_period": row.wait_period,
@@ -111,7 +112,7 @@ WHERE B.Block_Id = :block_id;
             "comment": row.comment,
             "observing_conditions": observing_conditions,
             "observation_time": row.observation_time,
-            "overhead_time": row.overhead_time if row.overhead_time else None,
+            "overhead_time": row.overhead_time,
             "observation_probabilities": observation_probabilities,
             "observing_windows": self._observing_windows(block_id),
             "executed_observations": self._executed_observations(block_id),
@@ -120,13 +121,13 @@ WHERE B.Block_Id = :block_id;
 
         return block
 
-    def get_block_status(self, block_id: int) -> Dict:
+    def get_block_status(self, block_id: int) -> Dict[str, Any]:
         """
         Return the block status for a block id.
         """
         stmt = text(
             """
-SELECT BS.BlockStatus
+SELECT BS.BlockStatus, B.BlockStatusReason
 FROM BlockStatus BS
 JOIN Block B ON BS.BlockStatus_Id = B.BlockStatus_Id
 WHERE B.Block_Id = :block_id
@@ -136,11 +137,11 @@ WHERE B.Block_Id = :block_id
 
         row = result.one()
 
-        status = {"value": row.BlockStatus, "comment": ""}
+        status = {"value": row.BlockStatus, "reason": row.BlockStatusReason}
 
         return status
 
-    def update_block_status(self, block_id: int, status: str) -> None:
+    def update_block_status(self, block_id: int, status: str, reason: str) -> None:
         """
         Update the status of a proposal.
         """
@@ -148,13 +149,14 @@ WHERE B.Block_Id = :block_id
             """
 UPDATE Block
 JOIN BlockStatus BS on Block.BlockStatus_Id = BS.BlockStatus_Id
-SET Block.BlockStatus_Id = BS.BlockStatus_Id
+SET Block.BlockStatus_Id = BS.BlockStatus_Id, 
+    Block.BlockStatusReason = :reason
 WHERE BS.BlockStatus = :status
 AND Block.Block_Id = :block_id;
     """
         )
         result = self.connection.execute(
-            stmt, {"block_id": block_id, "status": status}
+            stmt, {"block_id": block_id, "status": status, "reason": reason}
         )
         if not result.rowcount:
             raise NotFoundError()

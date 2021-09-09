@@ -19,7 +19,7 @@ from saltapi.web.schema.rss import RssSummary
 from saltapi.web.schema.salticam import SalticamSummary
 
 
-class BlockStatus(str, Enum):
+class BlockStatusValue(str, Enum):
     """Block status value."""
 
     ACTIVE = "Active"
@@ -29,6 +29,19 @@ class BlockStatus(str, Enum):
     NOT_SET = "Not set"
     ON_HOLD = "On Hold"
     SUPERSEDED = "Superseded"
+
+
+class BlockStatus(BaseModel):
+    value: BlockStatusValue = Field(
+        ...,
+        title="Block status value",
+        description="Block status value"
+    )
+    reason: str = Field(
+        ...,
+        title="Block status reason",
+        description="Block status reason"
+    )
 
 
 class Transparency(str, Enum):
