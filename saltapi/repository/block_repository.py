@@ -5,6 +5,7 @@ import pytz
 from astropy.coordinates import Angle
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
+from sqlalchemy.exc import IntegrityError
 
 from saltapi.exceptions import NotFoundError
 from saltapi.repository.instrument_repository import InstrumentRepository
@@ -127,9 +128,9 @@ WHERE B.Block_Id = :block_id;
         """
         stmt = text(
             """
-SELECT BS.BlockStatus, B.BlockStatusReason
+SELECT BS.BlockStatus AS value, B.BlockStatusReason AS reason
 FROM BlockStatus BS
-JOIN Block B ON BS.BlockStatus_Id = B.BlockStatus_Id
+         JOIN Block B ON BS.BlockStatus_Id = B.BlockStatus_Id
 WHERE B.Block_Id = :block_id
         """
         )
@@ -137,27 +138,36 @@ WHERE B.Block_Id = :block_id
 
         row = result.one()
 
-        status = {"value": row.BlockStatus, "reason": row.BlockStatusReason}
+        value = row.value
+        if value == "On Hold":
+            value = "On hold"
+        status = {"value": value, "reason": row.reason}
 
         return status
 
-    def update_block_status(self, block_id: int, status: str, reason: str) -> None:
+    def update_block_status(self, block_id: int, value: str, reason: Optional[str]) -> None:
         """
-        Update the status of a proposal.
+        Update the status of a block.
         """
+        if value == "On hold":
+            value = "On Hold"
+
         stmt = text(
             """
-UPDATE Block
-JOIN BlockStatus BS on Block.BlockStatus_Id = BS.BlockStatus_Id
-SET Block.BlockStatus_Id = BS.BlockStatus_Id, 
-    Block.BlockStatusReason = :reason
-WHERE BS.BlockStatus = :status
-AND Block.Block_Id = :block_id;
+UPDATE Block B
+SET B.BlockStatus_Id = (SELECT BS.BlockStatus_Id
+                        FROM BlockStatus BS
+                        WHERE BS.BlockStatus = :status),
+    B.BlockStatusReason = :reason
+WHERE B.Block_Id = :block_id;
     """
         )
-        result = self.connection.execute(
-            stmt, {"block_id": block_id, "status": status, "reason": reason}
-        )
+        try:
+            result = self.connection.execute(
+                stmt, {"block_id": block_id, "status": value, "reason": reason}
+            )
+        except IntegrityError:
+            raise NotFoundError("Unknown block status")
         if not result.rowcount:
             raise NotFoundError()
 
@@ -234,8 +244,12 @@ ORDER BY ValidFrom, FindingChart_Id
             {
                 "id": row.finding_chart_id,
                 "comment": row.comments,
-                "valid_from": pytz.utc.localize(row.valid_from) if row.valid_from else None,
-                "valid_until": pytz.utc.localize(row.valid_until) if row.valid_until else None,
+                "valid_from": pytz.utc.localize(row.valid_from)
+                if row.valid_from
+                else None,
+                "valid_until": pytz.utc.localize(row.valid_until)
+                if row.valid_until
+                else None,
             }
             for row in result
         ]
@@ -368,7 +382,9 @@ ORDER BY TCOC.Pointing_Id, TCOC.Observation_Order, TCOC.TelescopeConfig_Order,
                     pointing_rows
                 ),
                 "observation_time": pointing_rows[0].observation_time,
-                "overhead_time": pointing_rows[0].overhead_time if pointing_rows[0].overhead_time else None,
+                "overhead_time": pointing_rows[0].overhead_time
+                if pointing_rows[0].overhead_time
+                else None,
             }
             pointings.append(pointing)
 

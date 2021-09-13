@@ -1,4 +1,4 @@
-from typing import Dict, Any
+from typing import Any, Dict
 
 from saltapi.repository.block_repository import BlockRepository
 from saltapi.service.block import Block

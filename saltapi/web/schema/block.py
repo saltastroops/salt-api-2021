@@ -27,20 +27,16 @@ class BlockStatusValue(str, Enum):
     DELETED = "Deleted"
     EXPIRED = "Expired"
     NOT_SET = "Not set"
-    ON_HOLD = "On Hold"
+    ON_HOLD = "On hold"
     SUPERSEDED = "Superseded"
 
 
 class BlockStatus(BaseModel):
     value: BlockStatusValue = Field(
-        ...,
-        title="Block status value",
-        description="Block status value"
+        ..., title="Block status value", description="Block status value"
     )
     reason: str = Field(
-        ...,
-        title="Block status reason",
-        description="Block status reason"
+        ..., title="Block status reason", description="Block status reason"
     )
 
 
