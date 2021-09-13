@@ -1,45 +1,43 @@
-import smtplib
+
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from smtplib import SMTP
 from typing import List
 
 from saltapi.service.user import User
 from saltapi.settings import Settings
 
 
-class EmailMessagePart:
-    plain:  MIMEText
-    html:  MIMEText
+settings = Settings()
 
 
 class MailService:
     @staticmethod
     def send_email(
-            emails_to: List[str],
-            email_from: str,
-            email_message: MIMEMultipart,
+            to: List[User],
+            subject,
+            html_body: str,
+            plain_body: str
     ) -> None:
 
         try:
-            smtp_obj = smtplib.SMTP(Settings().smtp_server)
-            smtp_obj.sendmail(email_from, emails_to, email_message.as_string())
-        except:
-            raise ValueError("Failed to send reset password from_email.")
+            to_txt = ",".join(
+                f'{u.given_name} {u.family_name} <{u.email}>'
+                for u in to
+            )
+            to = [u.email for u in to]
 
-    @staticmethod
-    def generate_email(
-            email_to: str,
-            email_from: str,
-            email_subject: str,
-            email_html_body: str,
-            email_plain_body: str,
-
-                       ) -> MIMEMultipart:
-        message = MIMEMultipart('alternative')
-        message['Subject'] = email_subject
-        message['To'] = email_to
-        message['From'] = email_from
-        message.attach(MIMEText(email_plain_body, 'plain'))
-        message.attach(MIMEText(email_html_body, 'html'))
-        return message
-
+            message = MIMEMultipart('alternative')
+            message['Subject'] = subject
+            message['To'] = to_txt
+            message['From'] = settings.from_email,
+            message.attach(MIMEText(plain_body, 'plain'))
+            message.attach(MIMEText(html_body, 'html'))
+            smtp_obj = SMTP(settings.smtp_server)
+            smtp_obj.sendmail(
+                settings.from_email,
+                to,
+                message.as_string()
+            )
+        except Exception as e:
+            raise ValueError(f"Failed to send email: {e}")

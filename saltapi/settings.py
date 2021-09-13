@@ -35,7 +35,7 @@ class Settings(BaseSettings):
     # Email sender
     from_email: str
 
-    # SMTP server fro sending emails
+    # SMTP server for sending emails
     smtp_server: str
 
     class Config:

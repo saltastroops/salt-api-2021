@@ -41,12 +41,12 @@ WHERE PU.Username = :username
         result = self.connection.execute(stmt, {"username": username})
         user = result.one_or_none()
         if not user:
-            raise NotFoundError("Unknown user id")
+            raise NotFoundError("Unknown username")
         return User(**user)
 
     def get_by_email(self, email: str) -> User:
         """
-        Returns the user with a given username.
+        Returns the user with a given email
 
         If the username does not exist, a NotFoundError is raised.
         """
@@ -59,14 +59,14 @@ SELECT PU.PiptUser_Id  AS id,
        Password        AS password_hash,
        Username        AS username
 FROM PiptUser PU
-         JOIN Investigator I ON (PU.Investigator_Id = I.Investigator_Id)
+         JOIN Investigator I ON (PU.PiptUser_Id = I.PiptUser_Id)
 WHERE I.Email = :email
         """
         )
         result = self.connection.execute(stmt, {"email": email})
         user = result.one_or_none()
         if not user:
-            raise NotFoundError("Unknown user id")
+            raise NotFoundError("Unknown email address")
         return User(**user)
 
     def is_investigator(self, username: str, proposal_code: ProposalCode) -> bool:
@@ -306,11 +306,6 @@ WHERE Username = :username
         self.connection.execute(
             stmt, {"username": username, "password": password_hash}
         )
-
-    def update_user_details(self, user_to_update: UserToUpdate, user: User) -> None:
-        # TODO discuss with Encarni on how to update users
-        if user_to_update.password:
-            self._update_password(user.username, user_to_update.password)
 
     @staticmethod
     def get_new_password_hash(password: str) -> str:
