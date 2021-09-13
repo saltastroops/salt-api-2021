@@ -19,16 +19,25 @@ from saltapi.web.schema.rss import RssSummary
 from saltapi.web.schema.salticam import SalticamSummary
 
 
-class BlockStatus(str, Enum):
-    """Block status."""
+class BlockStatusValue(str, Enum):
+    """Block status value."""
 
     ACTIVE = "Active"
     COMPLETED = "Completed"
     DELETED = "Deleted"
     EXPIRED = "Expired"
     NOT_SET = "Not set"
-    ON_HOLD = "On Hold"
+    ON_HOLD = "On hold"
     SUPERSEDED = "Superseded"
+
+
+class BlockStatus(BaseModel):
+    value: BlockStatusValue = Field(
+        ..., title="Block status value", description="Block status value"
+    )
+    reason: str = Field(
+        ..., title="Block status reason", description="Block status reason"
+    )
 
 
 class Transparency(str, Enum):
@@ -76,7 +85,7 @@ class Block(BaseModel):
     """A block, i.e. a smallest schedulable unit in a proposal."""
 
     id: int = Field(..., title="Block id", description="Unique identifier of the block")
-    name: str = Field(..., title="Name", description="Block name")
+    name: Optional[str] = Field(..., title="Name", description="Block name")
     proposal_code: ProposalCode = Field(
         ..., title="Proposal code of the proposal to which the block belongs"
     )
@@ -121,7 +130,7 @@ class Block(BaseModel):
         description="Time required for an observation of the block, including the overhead time, in seconds",
         gt=0,
     )
-    overhead_time: int = Field(
+    overhead_time: Optional[int] = Field(
         ..., title="Overhead time for an observation of the block, in seconds", ge=0
     )
     observing_windows: List[TimeInterval] = Field(

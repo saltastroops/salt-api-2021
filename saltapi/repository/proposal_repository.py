@@ -594,7 +594,7 @@ WHERE BS.BlockStatus NOT IN :excluded_status_values
 
     def _executed_observations(self, proposal_code: str) -> List[Dict[str, Any]]:
         """
-        Return the executed observations (including observatiopns in the queue) for all
+        Return the executed observations (including observations in the queue) for all
         semesters.
 
         The observations are ordered by block name and observation night.
