@@ -203,7 +203,7 @@ class DataReleaseDateUpdate(BaseModel):
         title="Data release date",
         description="Requested date when the proposal data should become public",
     )
-    motivation: date = Field(
+    motivation: str = Field(
         ...,
         title="Motivation",
         description="Motivation why the request should be granted",

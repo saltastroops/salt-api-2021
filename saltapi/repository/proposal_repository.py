@@ -16,8 +16,10 @@ from saltapi.util import (
     partner_name,
     semester_end,
     semester_of_datetime,
-    tonight,
+    tonight, months_difference,
 )
+from saltapi.web.schema.common import Message
+from saltapi.web.schema.proposal import DataReleaseDate
 
 
 class ProposalRepository:
@@ -1092,3 +1094,58 @@ WHERE PC.Proposal_Code = :proposal_code;
         one_or_none = result.scalar_one_or_none()
 
         return bool(one_or_none and cast(int, one_or_none) > 0)
+
+    def get_data_release_date(self, proposal_code: str) -> DataReleaseDate:
+        stmt = text(
+            """
+SELECT PGI.ReleaseDate AS release_date
+FROM ProposalGeneralInfo PGI
+    JOIN ProposalCode PC ON PC.ProposalCode_Id = PGI.ProposalCode_Id
+WHERE PC.Proposal_Code = :proposal_code
+        """
+        )
+        result = self.connection.execute(stmt, {"proposal_code": proposal_code})
+        release_date = result.one()["release_date"]
+        return DataReleaseDate(release_date=release_date)
+
+    def _calculate_proprietary_period(self, proposal_code: str, to_date: date) -> int:
+        stmt = text(
+            """
+SELECT EndSemester AS end_semester FROM Proposal P
+JOIN ProposalCode PC ON PC.ProposalCode_Id = P.ProposalCode_Id
+JOIN Semester S ON S.Semester_Id = P.Semester_Id
+WHERE `Current` = 1 AND PC.Proposal_Code = :proposal_code 
+ORDER BY P.Semester_Id DESC
+        """
+        )
+        results = self.connection.execute(stmt, {"proposal_code": proposal_code})
+        # for row in results:
+        #     print(row)
+        end_semester = results.first()[0]
+
+        return months_difference(end_semester, to_date)
+
+    def update_data_release_date(self, proposal_code: str,
+                                 release_date: date) -> Message:
+        proprietary_period = self._calculate_proprietary_period(proposal_code, release_date)
+        stmt = text(
+            """
+UPDATE ProposalGeneralInfo PGI
+SET ReleaseDate = :release_date, ProprietaryPeriod = :proprietary_period
+WHERE PGI.ProposalCode_Id = (
+    SELECT ProposalCode_Id 
+    FROM ProposalCode PC 
+    WHERE PC.Proposal_Code = :proposal_code)
+        """
+        )
+        self.connection.execute(
+            stmt,
+            {
+                "proposal_code": proposal_code,
+                "release_date": release_date,
+                "proprietary_period": proprietary_period,
+            }
+        )
+        return Message(
+            message="Release date updated successfully."
+        )

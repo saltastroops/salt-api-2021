@@ -1,5 +1,5 @@
 from datetime import date
-from typing import List, Optional
+from typing import List, Optional, Dict
 
 from fastapi import (
     APIRouter,
@@ -23,7 +23,7 @@ from saltapi.service.proposal_service import ProposalService
 from saltapi.web.schema.common import (
     ExecutedObservation,
     ProposalCode,
-    Semester,
+    Semester, Message,
 )
 from saltapi.web.schema.proposal import (
     DataReleaseDate,
@@ -454,39 +454,32 @@ def get_data_release_date(
         ...,
         title="Proposal code",
         description="Proposal code of the proposal whose data release date is requested.",
-    ),
-    from_date: Optional[date] = Query(
-        date(2000, 1, 1),
-        alias="from",
-        title="From date",
-        description="Only include observations for this night and later.",
-    ),
-    to_date: Optional[date] = Query(
-        date(2099, 12, 31),
-        alias="to",
-        title="From date",
-        description="Only include observations for this night and earlier.",
-    ),
-) -> date:
+    )
+) -> Dict[str, date]:
     """
     Returns the date when the observation data for the proposal is scheduled to become public.
     """
-    raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED)
+    with UnitOfWork() as unit_of_work:
+        proposal_repository = ProposalRepository(unit_of_work.connection)
+        proposal_service = ProposalService(proposal_repository)
+        return proposal_service.get_data_release_date(proposal_code)
 
 
-@router.put(
+@router.patch(
     "/{proposal_code}/data-release-date",
     summary="Request a new data release date.",
-    response_model=DataReleaseDateUpdate,
+    response_model=Message,
     status_code=status.HTTP_202_ACCEPTED,
 )
 def update_data_release_date(
-    proposal_code: ProposalCode = Path(
-        ...,
-        title="Proposal code",
-        description="Proposal code of the proposal for which a new data release date is requested.",
-    ),
-) -> DataReleaseDate:
+        release_date: DataReleaseDateUpdate,
+        proposal_code: ProposalCode = Path(
+            ...,
+            title="Proposal code",
+            description="Proposal code of the proposal for which a new data release date is requested.",
+        )
+
+) -> Message:
     """
     Requests a new date when the observation data can become public. It depends on
     the requested date and the proposal whether the request is granted immediately.
@@ -499,4 +492,10 @@ def update_data_release_date(
     The request returns the new release date. This is the same as the previous date
     if the request needs to be approved.
     """
-    raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED)
+    with UnitOfWork() as unit_of_work:
+        proposal_repository = ProposalRepository(unit_of_work.connection)
+        proposal_service = ProposalService(proposal_repository)
+        return proposal_service.update_data_release_date(
+            proposal_code,
+            release_date.release_date
+        )

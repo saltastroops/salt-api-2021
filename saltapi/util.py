@@ -131,3 +131,8 @@ def semester_of_datetime(t: datetime) -> str:
         semester = 2
 
     return f"{year}-{semester}"
+
+
+def months_difference(date_1, date_2):
+    """Return the number of months between date_1 and date_2"""
+    return abs(date_1.month - date_2.month + 12 * (date_1.year - date_2.year))
