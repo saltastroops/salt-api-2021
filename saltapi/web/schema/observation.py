@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date
 from enum import Enum
 from typing import List, Optional
 
@@ -54,10 +54,10 @@ class FinderChart(BaseModel):
     comment: Optional[str] = Field(
         ..., title="Comment by the Principal Investigator regarding the finder chart"
     )
-    valid_from: Optional[datetime] = Field(
+    valid_from: Optional[date] = Field(
         ..., title="Time from when the finder chart may be used"
     )
-    valid_until: Optional[datetime] = Field(
+    valid_until: Optional[date] = Field(
         ..., title="Time until when the finder chart may be used"
     )
 
@@ -179,7 +179,7 @@ class Observation(BaseModel):
         description="Time required for executing the observation, including the overhead time, in seconds",
         gt=0,
     )
-    overhead_time: Optional[int] = Field(
+    overhead_time: int = Field(
         ..., title="Overhead time for the observation, in seconds", gt=0
     )
     target: Target = Field(..., title="Target", description="Target to be observed")
