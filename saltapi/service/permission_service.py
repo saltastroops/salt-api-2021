@@ -1,11 +1,15 @@
+from saltapi.repository.proposal_repository import ProposalRepository
 from saltapi.repository.user_repository import UserRepository
 from saltapi.service.proposal import ProposalCode
 from saltapi.service.user import User
 
 
 class PermissionService:
-    def __init__(self, user_repository: UserRepository) -> None:
+    def __init__(
+        self, user_repository: UserRepository, proposal_repository: ProposalRepository
+    ) -> None:
         self.user_repository = user_repository
+        self.proposal_repository = proposal_repository
 
     def may_view_proposal(self, user: User, proposal_code: ProposalCode) -> bool:
         """
@@ -42,7 +46,17 @@ class PermissionService:
         username = user.username
 
         return (
-            self.user_repository.is_activating_investigator(username, proposal_code)
+            (
+                self.proposal_repository.is_self_activable(proposal_code)
+                and (
+                    self.user_repository.is_principal_investigator(
+                        username, proposal_code
+                    )
+                    or self.user_repository.is_principal_contact(
+                        username, proposal_code
+                    )
+                )
+            )
             or self.user_repository.is_salt_astronomer(username)
             or self.user_repository.is_administrator(username)
         )

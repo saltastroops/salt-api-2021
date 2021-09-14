@@ -113,35 +113,6 @@ WHERE PCode.Proposal_Code = :proposal_code AND PU.Username = :username
         )
         return cast(int, result.scalar()) > 0
 
-    def is_activating_investigator(
-        self, username: str, proposal_code: ProposalCode
-    ) -> bool:
-        """
-        Check whether the user is an investigator who may activate a given proposal.
-
-        The user is such an investigator if they are the Principal Investigator or
-        Contact, and activation is allowed for these.
-
-        If the user or proposal do not exist, it is assumed that the user is no
-        activating investigator.
-        """
-        stmt = text(
-            """
-SELECT PSA.PiPcMayActivate
-FROM ProposalSelfActivation PSA
-         JOIN ProposalCode PC ON PSA.ProposalCode_Id = PC.ProposalCode_Id
-WHERE PC.Proposal_Code = :proposal_code;
-        """
-        )
-        result = self.connection.execute(stmt, {"proposal_code": proposal_code})
-        one_ore_none = result.scalar_one_or_none()
-        pi_pc_may_activate = bool(one_ore_none and cast(int, one_ore_none) > 0)
-
-        return pi_pc_may_activate and (
-            self.is_principal_investigator(username, proposal_code)
-            or self.is_principal_contact(username, proposal_code)
-        )
-
     def is_salt_astronomer(self, username: str) -> bool:
         """
         Check whether the user is a SALT Astronomer.

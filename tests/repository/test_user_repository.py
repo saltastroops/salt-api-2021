@@ -131,44 +131,6 @@ def test_is_principal_contact_returns_false_for_non_pc(
 
 
 @nodatabase
-def test_is_activating_investigator_returns_true_for_activating_investigator(
-    dbconnection: Connection, testdata: Callable[[str], Any]
-) -> None:
-    data = testdata(TEST_DATA_PATH)["is_activating_investigator"]
-    user_repository = UserRepository(dbconnection)
-    for d in data:
-        proposal_code = d["proposal_code"]
-        activating_investigators = d["activating_investigators"]
-        for username in activating_investigators:
-            assert (
-                user_repository.is_activating_investigator(username, proposal_code)
-                is True
-            ), (
-                f"Should be true for activating investigator username {username} and "
-                f"proposal code {proposal_code}"
-            )
-
-
-@nodatabase
-def test_is_activating_investigator_returns_false_for_non_activating_investigator(
-    dbconnection: Connection, testdata: Callable[[str], Any]
-) -> None:
-    data = testdata(TEST_DATA_PATH)["is_activating_investigator"]
-    user_repository = UserRepository(dbconnection)
-    for d in data:
-        proposal_code = d["proposal_code"]
-        activating_investigators = d["non_activating_investigators"]
-        for username in activating_investigators:
-            assert (
-                user_repository.is_activating_investigator(username, proposal_code)
-                is False
-            ), (
-                f"Should be false for activating investigator username {username} and "
-                f"proposal code {proposal_code}"
-            )
-
-
-@nodatabase
 def test_is_salt_astronomer_returns_true_for_salt_astronomer(
     dbconnection: Connection, testdata: Callable[[str], Any]
 ) -> None:
