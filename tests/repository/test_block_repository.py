@@ -350,12 +350,12 @@ def test_get_observations_status(
 ) -> None:
     data = testdata(TEST_DATA)["observations_status"]
     for d in data:
-        block_id = d["block_id"]
+        block_visit_id = d["block_visit_id"]
         expected_status = d["status"]
         target_repository = TargetRepository(dbconnection)
         instrument_repository = InstrumentRepository(dbconnection)
         block_repository = BlockRepository(target_repository, instrument_repository, dbconnection)
-        status = block_repository.get_observations_status(block_id)
+        status = block_repository.get_observations_status(block_visit_id)
 
         assert expected_status == status
 
@@ -376,14 +376,14 @@ def test_update_observations_status(dbconnection: Connection) -> None:
     target_repository = TargetRepository(dbconnection)
     instrument_repository = InstrumentRepository(dbconnection)
     block_repository = BlockRepository(target_repository, instrument_repository, dbconnection)
-    block_id = 2339
-    block_repository.update_observations_status(block_id, "Accepted")
-    assert block_repository.get_observations_status(block_id) == "Accepted"
+    block_visit_id = 2339
+    block_repository.update_observations_status(block_visit_id, "Accepted")
+    assert block_repository.get_observations_status(block_visit_id) == "Accepted"
 
     # Now set it to "Rejected"
-    block_repository.update_observations_status(block_id, "Rejected")
+    block_repository.update_observations_status(block_visit_id, "Rejected")
     assert (
-            block_repository.get_observations_status(block_id)
+            block_repository.get_observations_status(block_visit_id)
             == "Active"
     )
 
