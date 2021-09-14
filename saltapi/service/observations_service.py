@@ -1,7 +1,6 @@
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 
 from saltapi.repository.block_repository import BlockRepository
-from saltapi.web.schema.block import BlockVisitStatus
 
 
 class ObservationService:
@@ -15,7 +14,7 @@ class ObservationService:
 
         return self.block_repository.get_observations(block_visit_id)
 
-    def get_observations_status(self, block_visit_id: int) -> BlockVisitStatus:
+    def get_observations_status(self, block_visit_id: int) -> str:
         """
         Return the observation status for a block visit id.
         """

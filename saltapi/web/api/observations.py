@@ -1,6 +1,6 @@
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 
-from fastapi import APIRouter, Path, Body
+from fastapi import APIRouter, Body, Path
 
 from saltapi.repository.block_repository import BlockRepository
 from saltapi.repository.instrument_repository import InstrumentRepository
@@ -13,11 +13,13 @@ from saltapi.web.schema.block import BlockVisitStatus
 router = APIRouter(prefix="/observations", tags=["Observations"])
 
 
-@router.get("/{block_visit_id}", summary="Get observations", response_model=List[Dict[str, Any]])
+@router.get(
+    "/{block_visit_id}", summary="Get observations", response_model=List[Dict[str, Any]]
+)
 def get_observations(
-        block_visit_id: int = Path(
-            ..., title="Block visit id", description="Unique identifier observations"
-        )
+    block_visit_id: int = Path(
+        ..., title="Block visit id", description="Unique identifier observations"
+    )
 ) -> List[Dict[str, Any]]:
     """
     Returns observations of a given block visit id.
@@ -34,14 +36,16 @@ def get_observations(
         return observations
 
 
-@router.get("/{block_visit_id}/status",
-            summary="Get observations status",
-            response_model=BlockVisitStatus)
+@router.get(
+    "/{block_visit_id}/status",
+    summary="Get observations status",
+    response_model=BlockVisitStatus,
+)
 def get_observations_status(
-        block_visit_id: int = Path(
-            ..., title="Block visit id", description="Unique identifier for observations"
-        )
-) -> BlockVisitStatus:
+    block_visit_id: int = Path(
+        ..., title="Block visit id", description="Unique identifier for observations"
+    )
+) -> str:
     """
     Returns the status of observations of a given block visit id.
 
@@ -67,12 +71,15 @@ def get_observations_status(
 
 @router.put("/{block_id}/status", summary="Update the status of observations")
 def update_observations_status(
-        block_visit_id: int = Path(
-            ..., title="Block id", description="Unique identifier for a block visit"
-        ),
-        status: BlockVisitStatus = Body(
-            ..., alias="status", title="Observations status", description="New observations status."
-        )
+    block_visit_id: int = Path(
+        ..., title="Block id", description="Unique identifier for a block visit"
+    ),
+    status: BlockVisitStatus = Body(
+        ...,
+        alias="status",
+        title="Observations status",
+        description="New observations status.",
+    ),
 ) -> Block:
     """
     Updates the status of observations with the given the block visit id.

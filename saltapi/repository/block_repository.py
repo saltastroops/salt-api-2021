@@ -11,7 +11,6 @@ from saltapi.exceptions import NotFoundError
 from saltapi.repository.instrument_repository import InstrumentRepository
 from saltapi.repository.target_repository import TargetRepository
 from saltapi.service.block import Block
-from saltapi.web.schema.block import BlockVisitStatus
 
 
 class BlockRepository:
@@ -146,7 +145,9 @@ WHERE B.Block_Id = :block_id
 
         return status
 
-    def update_block_status(self, block_id: int, value: str, reason: Optional[str]) -> None:
+    def update_block_status(
+        self, block_id: int, value: str, reason: Optional[str]
+    ) -> None:
         """
         Update the status of a block.
         """
@@ -188,7 +189,7 @@ WHERE BV.BlockVisit_Id = :block_visit_id;
         block_id = cast(int, result.scalar_one())
         return self._pointings(block_id)
 
-    def get_observations_status(self, block_visit_id: int) -> BlockVisitStatus:
+    def get_observations_status(self, block_visit_id: int) -> str:
         """
         Return the status of observations for a block id.
         """
