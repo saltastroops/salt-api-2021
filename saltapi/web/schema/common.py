@@ -276,4 +276,4 @@ class TimeInterval(BaseModel):
 
 
 class Message(BaseModel):
-    message: str
+    message: str = Field(..., title="Message", description="Message")

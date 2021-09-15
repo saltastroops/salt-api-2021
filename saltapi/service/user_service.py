@@ -3,7 +3,7 @@ from datetime import timedelta
 from saltapi.repository.user_repository import UserRepository
 from saltapi.service.authentication_service import AuthenticationService
 from saltapi.service.mail_service import MailService
-from saltapi.service.user import User, UserToUpdate
+from saltapi.service.user import User
 from saltapi.settings import Settings
 
 
@@ -15,14 +15,15 @@ class UserService:
         return self.repository.get(username)
 
     def send_password_reset_email(self, user: User):
+        mail_service = MailService()
         authentication_service = AuthenticationService(self.repository)
         reset_token = authentication_service.jwt_token(
             {"username": user.username},
             timedelta(hours=24)
         )
-        user_full_name = f"{user.given_name} {user.family_name}"
+        user_full_name = f'{user.given_name} {user.family_name}'
 
-        plain_body = f'''Dear {user_full_name[0]},
+        plain_body = f'''Dear {user_full_name},
 
 Someone (probably you) has requested to reset your SALT Web Manager password.
 
@@ -39,11 +40,11 @@ Kind regards,
 SALT Team
         '''
 
-        html_body = '''
+        html_body = f'''
 <html>
   <head></head>
   <body>
-    <p>Dear {user_full_name[0]},</p>
+    <p>Dear {user_full_name},</p>
     <p>Someone (probably you) has requested to reset your SALT Web Manager password.</p>
     <p>Please click on the link below to reset your password:</p>
     <p><a href="{self.password_reset_url(reset_token)}">password reset link</a>.</p>
@@ -54,12 +55,16 @@ SALT Team
   </body>
 </html>
         '''
-
-        MailService.send_email(
-            to=[user],
-            subject='SALT Web Manager password reset',
+        message = mail_service.generate_email(
+            to=f'{user.given_name} {user.family_name} <{user.email}>',
+            html_body=html_body,
             plain_body=plain_body,
-            html_body=html_body
+            subject='SALT Web Manager password reset'
+
+        )
+        mail_service.send_email(
+            to=[user.email],
+            message=message
         )
 
     @staticmethod

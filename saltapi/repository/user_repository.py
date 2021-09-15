@@ -8,7 +8,7 @@ from sqlalchemy.engine import Connection
 
 from saltapi.exceptions import NotFoundError
 from saltapi.service.proposal import ProposalCode
-from saltapi.service.user import User, UserToUpdate
+from saltapi.service.user import User
 
 pwd_context = CryptContext(
     schemes=["bcrypt", "md5_crypt"], default="bcrypt", deprecated="auto"

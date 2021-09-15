@@ -1,6 +1,6 @@
 
+import smtplib
 from email.mime.multipart import MIMEMultipart
-from smtplib import SMTP
 
 import pytest
 
@@ -8,35 +8,18 @@ from saltapi.service.mail_service import MailService
 from saltapi.service.user import User
 
 
-def test_send_email_raises_an_error_for_invalid_email(monkeypatch):
-    def mock_send_email(*args, **kwargs):
-        raise ValueError
-
-    with pytest.raises(ValueError) as e:
-        monkeypatch.setattr(MailService, "send_email", mock_send_email)
-        user = User(
-            id=6,
-            username='invalid',
-            given_name='invalid',
-            family_name='invalid',
-            email='invalid@mail.com',
-            password_hash='hashed_password'
-        )
-        MailService().send_email(
-            to=[user],
-            subject="Email Subject",
-            plain_body="",
-            html_body="",
-        )
-
-
-def test_send_email_raises_an_error_for_valid_email(monkeypatch):
-    def mock_send_email(*args, **kwargs):
+class MockSMTP:
+    def __init__(self, *args, **kwargs):
         pass
 
-    try:
-        monkeypatch.setattr(MailService, "send_email", mock_send_email, raising=True)
-        user = User(
+    def sendmail(self, *args, **kwargs):
+        if 'invalid@email.com' in kwargs['to_addrs']:
+            raise Exception("Can not send to this address")
+
+
+mail_service = MailService()
+message = MIMEMultipart()
+user = User(
             id=6,
             username='valid',
             given_name='valid',
@@ -44,11 +27,31 @@ def test_send_email_raises_an_error_for_valid_email(monkeypatch):
             email='valid@mail.com',
             password_hash='hashed_password'
         )
-        MailService().send_email(
-            to=[user],
-            subject="Email Subject",
-            plain_body="",
-            html_body="",
+
+
+def test_send_email_raises_an_error_for_invalid_email(monkeypatch):
+    with pytest.raises(Exception) as e:
+        monkeypatch.setattr(smtplib, 'SMTP', MockSMTP)
+        user = User(
+            id=6,
+            username='invalid',
+            given_name='invalid',
+            family_name='invalid',
+            email='invalid@email.com',
+            password_hash='hashed_password'
         )
-    except ZeroDivisionError as exc:
+        MailService().send_email(
+            to=[user.email],
+            message=message,
+        )
+
+
+def test_send_email_raises_an_error_for_valid_email(monkeypatch):
+    try:
+        monkeypatch.setattr(smtplib, 'SMTP', MockSMTP)
+        MailService().send_email(
+            to=[user.email],
+            message=message
+        )
+    except Exception as exc:
         assert False, 'Valid email raised and error.'
