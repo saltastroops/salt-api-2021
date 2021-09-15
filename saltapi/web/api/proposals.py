@@ -1,9 +1,10 @@
 from datetime import date
-from typing import List, Optional
+from typing import List, Optional, cast
 
 from fastapi import (
     APIRouter,
     Body,
+    Depends,
     File,
     Header,
     HTTPException,
@@ -17,9 +18,14 @@ from fastapi.responses import FileResponse
 
 from saltapi.repository.proposal_repository import ProposalRepository
 from saltapi.repository.unit_of_work import UnitOfWork
+from saltapi.repository.user_repository import UserRepository
+from saltapi.service.authentication_service import get_current_user
+from saltapi.service.permission_service import PermissionService
 from saltapi.service.proposal import Proposal as _Proposal
+from saltapi.service.proposal import ProposalCode as _ProposalCode
 from saltapi.service.proposal import ProposalListItem as _ProposalListItem
 from saltapi.service.proposal_service import ProposalService
+from saltapi.service.user import User
 from saltapi.web.schema.common import (
     ExecutedObservation,
     ProposalCode,
@@ -87,6 +93,7 @@ def get_proposal(
         title="Accepted content type",
         description="Content type that should be returned.",
     ),
+    user: User = Depends(get_current_user),
 ) -> _Proposal:
     """
     Returns the proposal with a given proposal code. The proposal can be requested in
@@ -119,8 +126,13 @@ def get_proposal(
     """
 
     with UnitOfWork() as unit_of_work:
+        user_repository = UserRepository(unit_of_work.connection)
         proposal_repository = ProposalRepository(unit_of_work.connection)
         proposal_service = ProposalService(proposal_repository)
+        permission_service = PermissionService(user_repository, proposal_repository)
+        if not permission_service.may_view_proposal(user, cast(_ProposalCode, proposal_code)):
+            raise HTTPException(status.HTTP_403_FORBIDDEN)
+
         return proposal_service.get_proposal(proposal_code)
 
 

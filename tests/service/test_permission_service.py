@@ -155,7 +155,6 @@ def test_may_view_proposal() -> None:
         SALT_ASTRONOMER,
         TAC_MEMBER,
         TAC_CHAIR,
-        BOARD_MEMBER,
         ADMINISTRATOR,
     ]
     _assert_role_based_permission(

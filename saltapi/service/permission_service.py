@@ -20,7 +20,6 @@ class PermissionService:
         * a SALT Astronomer
         * an investigator on the proposal
         * a TAC member for the proposal
-        * a Board member
         * an administrator
         """
         username = user.username
@@ -29,7 +28,6 @@ class PermissionService:
             self.user_repository.is_salt_astronomer(username)
             or self.user_repository.is_investigator(username, proposal_code)
             or self.user_repository.is_tac_member(username, proposal_code)
-            or self.user_repository.is_board_member(username)
             or self.user_repository.is_administrator(username)
         )
 
