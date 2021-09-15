@@ -40,15 +40,6 @@ class BlockStatus(BaseModel):
     )
 
 
-class BlockVisitStatus(str, Enum):
-    """Block status."""
-
-    ACCEPTED = "Accepted"
-    DELETED = "Deleted"
-    IN_QUEUE = "In queue"
-    REJECTED = "Rejected"
-
-
 class Transparency(str, Enum):
     """Sky transparency."""
 

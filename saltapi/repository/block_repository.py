@@ -145,9 +145,7 @@ WHERE B.Block_Id = :block_id
 
         return status
 
-    def update_block_status(
-        self, block_id: int, value: str, reason: Optional[str]
-    ) -> None:
+    def update_block_status(self, block_id: int, value: str, reason: Optional[str]) -> None:
         """
         Update the status of a block.
         """
@@ -170,59 +168,6 @@ WHERE B.Block_Id = :block_id;
             )
         except IntegrityError:
             raise NotFoundError("Unknown block status")
-        if not result.rowcount:
-            raise NotFoundError()
-
-    def get_observations(self, block_visit_id: int) -> List[Dict[str, Any]]:
-        """
-        Return the observations for a block visit id.
-        """
-        stmt = text(
-            """
-SELECT B.Block_Id
-FROM Block B
-JOIN BlockVisit BV ON B.Block_Id = BV.Block_Id
-WHERE BV.BlockVisit_Id = :block_visit_id;
-        """
-        )
-        result = self.connection.execute(stmt, {"block_visit_id": block_visit_id})
-        block_id = cast(int, result.scalar_one())
-        return self._pointings(block_id)
-
-    def get_observations_status(self, block_visit_id: int) -> str:
-        """
-        Return the status of observations for a block id.
-        """
-        stmt = text(
-            """
-SELECT BVS.BlockVisitStatus
-FROM BlockVisitStatus BVS
-JOIN BlockVisit BV ON BVS.BlockVisitStatus_Id = BV.BlockVisitStatus_Id
-WHERE BV.BlockVisit_Id = :block_visit_id;
-        """
-        )
-        result = self.connection.execute(stmt, {"block_visit_id": block_visit_id})
-        return cast(str, result.scalar_one())
-
-    def update_observations_status(self, block_visit_id: int, status: str) -> None:
-        """
-        Return the proposal status for a proposal.
-        """
-        stmt = text(
-            """
-UPDATE BlockVisit BV
-SET BV.BlockVisitStatus_Id = (SELECT BVS.BlockVisitStatus_Id
-                                FROM BlockVisitStatus BVS
-                                WHERE BVS.BlockVisitStatus = :status)
-WHERE BV.BlockVisit_Id = :block_visit_id;
-        """
-        )
-        try:
-            result = self.connection.execute(
-                stmt, {"block_visit_id": block_visit_id, "status": status}
-            )
-        except IntegrityError:
-            raise NotFoundError("Unknown block visit status")
         if not result.rowcount:
             raise NotFoundError()
 
