@@ -400,11 +400,14 @@ WHERE PC.Proposal_Code = :proposal_code
         if info["proposal_type"] == "Director Discretionary Time (DDT)":
             info["proposal_type"] = "Director's Discretionary Time"
 
-        info["liaison_salt_astronomer"] = {
-            "given_name": row.astronomer_given_name,
-            "family_name": row.astronomer_family_name,
-            "email": row.astronomer_email,
-        }
+        if row.astronomer_email:
+            info["liaison_salt_astronomer"] = {
+                "given_name": row.astronomer_given_name,
+                "family_name": row.astronomer_family_name,
+                "email": row.astronomer_email,
+            }
+        else:
+            info["liaison_salt_astronomer"] = None
 
         info["first_submission"] = self._first_submission_date(proposal_code)
         info["submission_number"] = self._latest_submission(proposal_code)

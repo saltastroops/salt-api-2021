@@ -122,7 +122,7 @@ class GeneralProposalInfo(BaseModel):
         title="Data release date",
         description="Date when the proposal data is scheduled to become public",
     )
-    liaison_salt_astronomer: ContactDetails = Field(
+    liaison_salt_astronomer: Optional[ContactDetails] = Field(
         ...,
         title="Liaison astronomer",
         description="SALT Astronomer who is the liaison astronomer for the proposal",
