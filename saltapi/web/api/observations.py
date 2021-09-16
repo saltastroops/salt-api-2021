@@ -6,7 +6,6 @@ from saltapi.repository.block_repository import BlockRepository
 from saltapi.repository.instrument_repository import InstrumentRepository
 from saltapi.repository.target_repository import TargetRepository
 from saltapi.repository.unit_of_work import UnitOfWork
-from saltapi.service.block import Block
 from saltapi.service.observations_service import ObservationService
 from saltapi.web.schema.block import BlockVisitStatus
 
@@ -73,7 +72,7 @@ def update_observations_status(
         status: BlockVisitStatus = Body(
             ..., alias="status", title="Observations status", description="New observations status."
         )
-) -> Block:
+) -> None:
     """
     Updates the status of observations with the given the block visit id.
     See the corresponding GET request for a description of the available status values.
