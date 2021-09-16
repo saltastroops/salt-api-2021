@@ -26,8 +26,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.engine import Connection, Engine
 from starlette import status
 
+import saltapi.web.api.authentication
 from saltapi.main import app
-from saltapi.web.api.authentication import get_user_authentication_function as user_auth
 
 engine: Optional[Engine] = None
 sdb_dsn = os.environ.get("SDB_DSN")
@@ -56,7 +56,9 @@ def get_user_authentication_function() -> Callable[[str, str], User]:
     return authenticate_user
 
 
-app.dependency_overrides[user_auth] = get_user_authentication_function
+app.dependency_overrides[
+    saltapi.web.api.authentication.get_user_authentication_function
+] = get_user_authentication_function
 
 
 TEST_DATA = "users.yaml"
@@ -302,10 +304,15 @@ def this_is_ok(response: Response) -> None:
 
 
 @then("I get an authentication error")
-def authentication_error(response: Response) -> None:
+def i_get_an_authentication_error(response: Response) -> None:
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
 @then("I get a permission error")
-def permission_error(response: Response) -> None:
+def i_get_a_permission_error(response: Response) -> None:
     assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+@then("I get a not found error")
+def i_get_a_not_found_error(response: Response) -> None:
+    assert response.status_code == status.HTTP_404_NOT_FOUND

@@ -368,6 +368,12 @@ def test_get_proposal_type_returns_the_correct_proposal_type(
         assert proposal_type == expected_proposal_type
 
 
+def test_get_proposal_type_raises_not_found_error(dbconnection: Connection) -> None:
+    proposal_repository = ProposalRepository(dbconnection)
+    with pytest.raises(NotFoundError):
+        proposal_repository.get_proposal_type("idontexist")
+
+
 def test_get_proposal_status(
     dbconnection: Connection, testdata: Callable[[str], Any]
 ) -> None:
