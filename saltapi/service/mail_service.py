@@ -26,7 +26,7 @@ class MailService:
 
             )
         except Exception as e:
-            raise Exception(f'Fail to send email.\n{e}')
+            raise Exception(f'Failed to send email: {e}')
 
 
     @staticmethod
