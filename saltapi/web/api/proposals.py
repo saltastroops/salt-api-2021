@@ -130,7 +130,9 @@ def get_proposal(
         proposal_repository = ProposalRepository(unit_of_work.connection)
         proposal_service = ProposalService(proposal_repository)
         permission_service = PermissionService(user_repository, proposal_repository)
-        if not permission_service.may_view_proposal(user, cast(_ProposalCode, proposal_code)):
+        if not permission_service.may_view_proposal(
+            user, cast(_ProposalCode, proposal_code)
+        ):
             raise HTTPException(status.HTTP_403_FORBIDDEN)
 
         return proposal_service.get_proposal(proposal_code)

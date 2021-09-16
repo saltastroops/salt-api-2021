@@ -17,6 +17,7 @@ class FakeUserRepository:
         is_tac_member: bool = False,
         is_tac_chair: bool = False,
         is_board_member: bool = False,
+        is_partner_affiliated_user: bool = False,
         is_administrator: bool = False,
     ) -> None:
         self._is_investigator = is_investigator
@@ -26,6 +27,7 @@ class FakeUserRepository:
         self._is_tac_member = is_tac_member
         self._is_tac_chair = is_tac_chair
         self._is_board_member = is_board_member
+        self._is_partner_affiliated_user = is_partner_affiliated_user
         self._is_administrator = is_administrator
 
     def is_investigator(self, username: str, proposal_code: ProposalCode) -> bool:
@@ -57,6 +59,9 @@ class FakeUserRepository:
     def is_board_member(self, username: str) -> bool:
         return self._is_board_member
 
+    def is_partner_affiliated_user(self, username: str) -> bool:
+        return self._is_partner_affiliated_user
+
     def is_administrator(self, username: str) -> bool:
         return self._is_administrator
 
@@ -68,6 +73,9 @@ class FakeProposalRepository:
     def is_self_activable(self, proposal_code: str) -> bool:
         return self._is_self_activable
 
+    def get_proposal_type(self, proposal_code: str) -> str:
+        return "Science " if "GW" not in proposal_code else "Gravitational Wave Event"
+
 
 INVESTIGATOR = "investigator"
 PRINCIPAL_INVESTIGATOR = "principal_investigator"
@@ -76,6 +84,7 @@ SALT_ASTRONOMER = "salt_astronomer"
 TAC_MEMBER = "tac_member"
 TAC_CHAIR = "tac_chair"
 BOARD_MEMBER = "board_member"
+PARTNER_AFFILIATED_USER = "partner_affiliated_user"
 ADMINISTRATOR = "administrator"
 
 ALL_ROLES = {
@@ -147,7 +156,7 @@ def _assert_role_based_permission(
         ), f"Expected {expected_result} for {role}, got {not expected_result}"
 
 
-def test_may_view_proposal() -> None:
+def test_may_view_non_gravitational_wave_proposal() -> None:
     roles_with_permission = [
         INVESTIGATOR,
         PRINCIPAL_INVESTIGATOR,
@@ -159,6 +168,13 @@ def test_may_view_proposal() -> None:
     ]
     _assert_role_based_permission(
         "may_view_proposal", roles_with_permission, proposal_code=PROPOSAL_CODE
+    )
+
+
+def test_may_view_gravitational_wave_proposal() -> None:
+    roles_with_permission = [PARTNER_AFFILIATED_USER]
+    _assert_role_based_permission(
+        "may_view_proposal", roles_with_permission, proposal_code="2019-1-GWE-005"
     )
 
 

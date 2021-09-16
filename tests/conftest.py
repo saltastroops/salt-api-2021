@@ -27,9 +27,7 @@ from sqlalchemy.engine import Connection, Engine
 from starlette import status
 
 from saltapi.main import app
-from saltapi.web.api.authentication import \
-    get_user_authentication_function as \
-    original_get_user_authentication_function
+from saltapi.web.api.authentication import get_user_authentication_function as user_auth
 
 engine: Optional[Engine] = None
 sdb_dsn = os.environ.get("SDB_DSN")
@@ -58,9 +56,7 @@ def get_user_authentication_function() -> Callable[[str, str], User]:
     return authenticate_user
 
 
-app.dependency_overrides[
-    original_get_user_authentication_function
-] = get_user_authentication_function
+app.dependency_overrides[user_auth] = get_user_authentication_function
 
 
 TEST_DATA = "users.yaml"
@@ -159,6 +155,16 @@ def i_am(user_type: str, client: TestClient) -> None:
         authenticate(board_member(), client)
         return
 
+    groups = re.match(r"(?:a )?partner affilated user", user_type)
+    if groups:
+        authenticate(partner_affiliated_user(), client)
+        return
+
+    groups = re.match(r"(?:a )?non[- ]partner affilated user", user_type)
+    if groups:
+        authenticate(non_partner_affiliated_user(), client)
+        return
+
     groups = re.match(r"(?:a )?SALT [Aa]stronomer", user_type)
     if groups:
         authenticate(salt_astronomer(), client)
@@ -248,6 +254,26 @@ def i_am_a_board_member(client: TestClient) -> None:
 def board_member() -> str:
     users = read_testdata(TEST_DATA)
     return cast(str, users["board_member"])
+
+
+@given("I am a partner affiliated user")
+def i_am_a_partner_affiliated_user(client: TestClient) -> None:
+    authenticate(partner_affiliated_user(), client)
+
+
+def partner_affiliated_user() -> str:
+    users = read_testdata(TEST_DATA)
+    return cast(str, users["partner_affiliated_user"])
+
+
+@given("I am a non-partner affiliated user")
+def i_am_a_non_partner_affiliated_user(client: TestClient) -> None:
+    authenticate(non_partner_affiliated_user(), client)
+
+
+def non_partner_affiliated_user() -> str:
+    users = read_testdata(TEST_DATA)
+    return cast(str, users["non_partner_affiliated_user"])
 
 
 @given("I am a SALT Astronomer")

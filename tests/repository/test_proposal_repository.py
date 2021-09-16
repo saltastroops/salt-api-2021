@@ -356,6 +356,18 @@ def test_get_returns_observation_comments(
         assert expected_comments[i]["comment"] in comments[i]["comment"]
 
 
+def test_get_proposal_type_returns_the_correct_proposal_type(
+    dbconnection: Connection, testdata: Callable[[str], Any]
+) -> None:
+    data = testdata(TEST_DATA)["get_proposal_type"]
+    proposal_repository = ProposalRepository(dbconnection)
+    for d in data:
+        proposal_code = d["proposal_code"]
+        expected_proposal_type = d["proposal_type"]
+        proposal_type = proposal_repository.get_proposal_type(proposal_code)
+        assert proposal_type == expected_proposal_type
+
+
 def test_get_proposal_status(
     dbconnection: Connection, testdata: Callable[[str], Any]
 ) -> None:

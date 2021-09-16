@@ -23,13 +23,17 @@ class PermissionService:
         * an administrator
         """
         username = user.username
+        proposal_type = self.proposal_repository.get_proposal_type(proposal_code)
 
-        return (
-            self.user_repository.is_salt_astronomer(username)
-            or self.user_repository.is_investigator(username, proposal_code)
-            or self.user_repository.is_tac_member(username, proposal_code)
-            or self.user_repository.is_administrator(username)
-        )
+        if proposal_type != "Gravitational Wave Event":
+            return (
+                self.user_repository.is_salt_astronomer(username)
+                or self.user_repository.is_investigator(username, proposal_code)
+                or self.user_repository.is_tac_member(username, proposal_code)
+                or self.user_repository.is_administrator(username)
+            )
+        else:
+            return self.user_repository.is_partner_affiliated_user(username)
 
     def may_activate_proposal(self, user: User, proposal_code: ProposalCode) -> bool:
         """

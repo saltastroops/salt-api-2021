@@ -214,6 +214,23 @@ ORDER BY S.Year, S.Semester;
         result = self.connection.execute(stmt, {"proposal_code": proposal_code})
         return list(result.scalars())
 
+    def get_proposal_type(self, proposal_code: str) -> str:
+        stmt = text(
+            """
+SELECT PT.ProposalType AS proposal_type
+FROM ProposalType PT
+         JOIN ProposalGeneralInfo PGI ON PT.ProposalType_Id = PGI.ProposalType_Id
+         JOIN ProposalCode PC ON PGI.ProposalCode_Id = PC.ProposalCode_Id
+WHERE PC.Proposal_Code = :proposal_code
+            """
+        )
+        result = self.connection.execute(stmt, {"proposal_code": proposal_code})
+        proposal_type = result.scalar_one_or_none()
+        if not proposal_type:
+            raise NotFoundError()
+
+        return self._map_proposal_type(proposal_type)
+
     def _latest_submission_semester(self, proposal_code: str) -> str:
         """
         Return the semester for which the latest submission was made.
