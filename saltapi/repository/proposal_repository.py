@@ -1068,13 +1068,13 @@ WHERE PS.Status = :status
 
     def _list_salt_astronomers(self,) -> List[Dict[str, Any]]:
         """
-        Return general proposal information for a semester.
+        Return a list of SALT astronomers.
         """
         stmt = text(
             """
-SELECT I.FirstName                         AS astronomer_given_name,
-       I.Surname                           AS astronomer_family_name,
-       I.Email                             AS astronomer_email
+SELECT DISTINCT I.FirstName                         AS astronomer_given_name,
+                I.Surname                           AS astronomer_family_name,
+                I.Email                             AS astronomer_email
 FROM Investigator I
          JOIN ProposalContact C ON C.Astronomer_Id = I.Investigator_Id
          """

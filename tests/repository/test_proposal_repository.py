@@ -397,3 +397,19 @@ def test_update_proposal_status_raises_error_for_wrong_status(
         )
 
     assert "proposal status" in str(excinfo)
+
+
+@nodatabase
+def test_list_returns_correct_list_of_astronomers(
+        dbconnection: Connection, testdata: Callable[[str], Any]
+) -> None:
+    data = testdata(TEST_DATA)["list_salt_astronomers"]
+    for d in data:
+        astronomer = {"given_name": d["given_name"],
+                      "family_name": d["family_name"],
+                      "email": d["email"]}
+
+        proposal_repository = ProposalRepository(dbconnection)
+        astronomers = proposal_repository.list_salt_astronomers()
+
+        assert astronomer in astronomers
