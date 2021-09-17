@@ -1,12 +1,15 @@
 
 import smtplib
 from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 import pytest
 
 from saltapi.service.mail_service import MailService
 from saltapi.service.user import User
+from saltapi.settings import Settings
 
+settings = Settings()
 
 class MockSMTP:
     def __init__(self, *args, **kwargs):
@@ -29,29 +32,19 @@ user = User(
         )
 
 
-def test_send_email_raises_an_error_for_invalid_email(monkeypatch):
-    with pytest.raises(Exception) as e:
-        monkeypatch.setattr(smtplib, 'SMTP', MockSMTP)
-        user = User(
-            id=6,
-            username='invalid',
-            given_name='invalid',
-            family_name='invalid',
-            email='invalid@email.com',
-            password_hash='hashed_password'
-        )
-        MailService().send_email(
-            to=[user.email],
-            message=message,
-        )
+def test_send_generate_email_return_correct_message(monkeypatch):
+    to = "Test User <test.user@email.com>"
+    plain_body = "Test plain body"
+    html_body = "<body>Test html body</body>"
+    subject = "Test subject"
+    message = mail_service.generate_email(
+        to=to,
+        plain_body=plain_body,
+        html_body=html_body,
+        subject=subject
+    )
+    
+    assert message["To"] == to
+    assert message["From"] == f"SALT Team <{settings.from_email}>"
+    assert message["Subject"] == subject
 
-
-def test_send_email_raises_an_error_for_valid_email(monkeypatch):
-    try:
-        monkeypatch.setattr(smtplib, 'SMTP', MockSMTP)
-        MailService().send_email(
-            to=[user.email],
-            message=message
-        )
-    except Exception as exc:
-        assert False, 'Valid email raised and error.'
