@@ -11,6 +11,7 @@ from sqlalchemy.exc import NoResultFound
 
 from saltapi.exceptions import NotFoundError
 from saltapi.service.proposal import Proposal, ProposalListItem
+from saltapi.service.user import User
 from saltapi.util import (
     TimeInterval,
     partner_name,
@@ -18,6 +19,8 @@ from saltapi.util import (
     semester_of_datetime,
     tonight,
 )
+from saltapi.web.schema.common import Message
+from saltapi.web.schema.proposal import ObservationComment
 
 
 class ProposalRepository:
@@ -27,7 +30,7 @@ class ProposalRepository:
         self.connection = connection
 
     def _list(
-        self, first_semester: str, last_semester: str, limit: int
+            self, first_semester: str, last_semester: str, limit: int
     ) -> List[ProposalListItem]:
         """
         Return a list of proposal summaries.
@@ -119,10 +122,10 @@ LIMIT :limit
         return astronomer
 
     def list(
-        self,
-        first_semester: str = "2000-1",
-        last_semester: str = "2099-2",
-        limit: int = 100000,
+            self,
+            first_semester: str = "2000-1",
+            last_semester: str = "2099-2",
+            limit: int = 100000,
     ) -> List[Dict[str, Any]]:
         """
         Return a list of proposal summaries.
@@ -141,10 +144,10 @@ LIMIT :limit
         )
 
     def _get(
-        self,
-        proposal_code: str,
-        semester: Optional[str],
-        phase: Optional[int],
+            self,
+            proposal_code: str,
+            semester: Optional[str],
+            phase: Optional[int],
     ) -> Proposal:
         """
         Return the proposal content for a semester.
@@ -177,17 +180,17 @@ LIMIT :limit
             "executed_observations": executed_observations,
             "time_allocations": self.time_allocations(proposal_code, semester),
             "charged_time": self.charged_time(proposal_code, semester),
-            "observation_comments": self._observation_comments(proposal_code),
+            "observation_comments": self.get_observation_comments(proposal_code),
             "targets": None,
             "requested_times": None,
         }
         return proposal
 
     def get(
-        self,
-        proposal_code: str,
-        semester: Optional[str] = None,
-        phase: Optional[int] = None,
+            self,
+            proposal_code: str,
+            semester: Optional[str] = None,
+            phase: Optional[int] = None,
     ) -> Proposal:
         try:
             return self._get(
@@ -306,9 +309,9 @@ LIMIT 1
 
     @staticmethod
     def _data_release_date(
-        executed_observations: List[Dict[str, Any]],
-        proprietary_period: Optional[int],
-        first_submission: date,
+            executed_observations: List[Dict[str, Any]],
+            proprietary_period: Optional[int],
+            first_submission: date,
     ) -> Optional[date]:
         # no proprietary period - no release date
         if proprietary_period is None:
@@ -464,8 +467,8 @@ ORDER BY I.Surname, I.FirstName
             if investigator["approved"] == 1:
                 investigator["has_approved_proposal"] = True
             elif (
-                investigator["approval_code"] is None
-                or investigator["approval_code"] == ""
+                    investigator["approval_code"] is None
+                    or investigator["approval_code"] == ""
             ):
                 investigator["has_approved_proposal"] = False
             else:
@@ -831,7 +834,7 @@ WHERE C.Proposal_Code = :proposal_code
         return instruments
 
     def time_allocations(
-        self, proposal_code: str, semester: str
+            self, proposal_code: str, semester: str
     ) -> List[Dict[str, Any]]:
         """
         Return the time allocations and TAC comments for a semester.
@@ -943,7 +946,7 @@ GROUP BY B.Priority
         return time
 
     def _block_observable_nights(
-        self, proposal_code: str, semester: str, interval: TimeInterval
+            self, proposal_code: str, semester: str, interval: TimeInterval
     ) -> Dict[int, int]:
         """
         Return the number of nights in an interval when blocks are observable.
@@ -995,13 +998,14 @@ GROUP BY B.Block_Id
         )
         return {int(row.block_id): int(row.nights) for row in result}
 
-    def _observation_comments(self, proposal_code: str) -> List[Dict[str, Any]]:
+    def get_observation_comments(self, proposal_code: str) -> List[ObservationComment]:
         """
         Return the proposal comments ordered by the time when they were made.
         """
         stmt = text(
             """
-SELECT PC.CommentDate                      AS comment_date,
+SELECT PC.ProposalComment_Id               AS id
+       PC.CommentDate                      AS comment_date,
        CONCAT(I.FirstName, ' ', I.Surname) AS author,
        PC.ProposalComment                  AS comment
 FROM ProposalComment PC
@@ -1012,7 +1016,45 @@ ORDER BY PC.CommentDate, PC.ProposalComment_Id
         """
         )
         result = self.connection.execute(stmt, {"proposal_code": proposal_code})
-        return [dict(row) for row in result]
+        return [ObservationComment(**dict(row)) for row in result]
+
+    def add_observation_comment(self, proposal_code: str, comment: str, user: User) -> Message:
+        stmt = text(
+            """
+INSERT INTO ProposalComment(
+    ProposalCode_Id, 
+    CommentDate, 
+    Investigator_Id, 
+    ProposalComment
+)
+VALUES (
+    (SELECT ProposalCode_Id FROM ProposalCode WHERE Proposal_Code = :proposal_code),
+    :date,
+    (SELECT Investigator_Id FROM PiptUser WHERE Username = :username),
+    :comment
+)
+    """
+        )
+        self.connection.execute(
+            stmt, {
+                "proposal_code": proposal_code,
+                "username": user.username,
+                "comment": comment}
+        )
+        return Message(message="Comment added successfully.")
+
+    def update_observation_comment(self, comment_id: int, comment: str) -> Message:
+        stmt = text(
+            """
+UPDATE ProposalComment PC
+SET ProposalComment = :comment
+WHERE PC.ProposalComment_Id = :comment_id;
+    """
+        )
+        self.connection.execute(
+            stmt, {"comment_id": comment_id, "comment": comment}
+        )
+        return Message(message="Updated successfully.")
 
     def get_proposal_status(self, proposal_code: str) -> str:
         """

@@ -2,6 +2,9 @@ from typing import List
 
 from saltapi.repository.proposal_repository import ProposalRepository
 from saltapi.service.proposal import Proposal, ProposalListItem
+from saltapi.service.user import User
+from saltapi.web.schema.common import Message
+from saltapi.web.schema.proposal import ObservationComment
 
 
 class ProposalService:
@@ -13,3 +16,15 @@ class ProposalService:
 
     def get_proposal(self, proposal_code: str) -> Proposal:
         return self.repository.get(proposal_code)
+
+    def get_observation_comments(self, proposal_code: str) -> List[ObservationComment]:
+        return self.repository.get_observation_comments(proposal_code)
+
+    def add_observation_comment(self, proposal_code: str, comment: str, user: User) -> Message:
+        # TODO only SA's, SO's and investigators can add a comment
+        return self.repository.add_observation_comment(proposal_code, comment, user)
+
+    def update_observation_comment(self, comment_id: int, comment: str, user: User) -> Message:
+        # TODO only commenter can update a comment.
+
+        return self.repository.update_observation_comment(comment_id, comment)

@@ -20,10 +20,11 @@ from saltapi.repository.unit_of_work import UnitOfWork
 from saltapi.service.proposal import Proposal as _Proposal
 from saltapi.service.proposal import ProposalListItem as _ProposalListItem
 from saltapi.service.proposal_service import ProposalService
+from saltapi.service.user import User
 from saltapi.web.schema.common import (
     ExecutedObservation,
     ProposalCode,
-    Semester,
+    Semester, Message,
 )
 from saltapi.web.schema.proposal import (
     DataReleaseDate,
@@ -308,7 +309,10 @@ def get_observation_comments(
         description="Proposal code of the proposal whose observation comments are requested.",
     )
 ) -> List[ObservationComment]:
-    raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED)
+    with UnitOfWork() as unit_of_work:
+        proposal_repository = ProposalRepository(unit_of_work.connection)
+        proposal_service = ProposalService(proposal_repository)
+        return proposal_service.get_observation_comments(proposal_code)
 
 
 @router.post(
@@ -323,12 +327,44 @@ def post_observation_comment(
         description="Proposal code of the proposal for which an observation comment is added.",
     ),
     comment: str = Body(..., title="Comment", description="Text of the comment."),
-) -> ObservationComment:
+    user: User = None    # TODO needs to get and authorised user.
+) -> Message:
     """
     Adds a new comment related to an observation. The user submitting the request is
     recorded as the comment author.
     """
-    raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED)
+    with UnitOfWork() as unit_of_work:
+        proposal_repository = ProposalRepository(unit_of_work.connection)
+        proposal_service = ProposalService(proposal_repository)
+        return proposal_service.add_observation_comment(proposal_code=proposal_code,
+                                                        comment=comment,
+                                                        user=user)
+
+
+@router.patch(
+    "/{proposal_code}/observation-comments",
+    summary="Create an observation comment",
+    response_model=ObservationComment,
+)
+def patch_observation_comment(
+        comment_id: int = Path(
+            ...,
+            title="Comment ID",
+            description="Comment identifier.",
+        ),
+        comment: str = Body(..., title="Comment",
+                            description="Text of the comment."),
+        user: User = None    # TODO needs to get and authorised user.
+) -> Message:
+    """
+    Updates a comment related to an proposal.
+    """
+    with UnitOfWork() as unit_of_work:
+        proposal_repository = ProposalRepository(unit_of_work.connection)
+        proposal_service = ProposalService(proposal_repository)
+        return proposal_service.update_observation_comment(comment_id=comment_id,
+                                                           comment=comment,
+                                                           user=user)
 
 
 @router.get(
