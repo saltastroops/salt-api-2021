@@ -413,7 +413,7 @@ class ProposalListItem(BaseModel):
     principal_contact: ContactDetails = Field(
         ..., title="Principal Contact", description="Principal Contact"
     )
-    liaison_astronomer: ContactDetails = Field(
+    liaison_astronomer: Optional[ContactDetails] = Field(
         ..., title="Liaison Astronomer", description="Liaison Astronomer"
     )
 
