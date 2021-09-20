@@ -43,7 +43,7 @@ def test_send_generate_email_return_correct_message(monkeypatch):
         html_body=html_body,
         subject=subject
     )
-    
+
     assert message["To"] == to
     assert message["From"] == f"SALT Team <{settings.from_email}>"
     assert message["Subject"] == subject

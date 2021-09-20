@@ -17,16 +17,13 @@ class MailService:
             to: List[str],
             message: MIMEMultipart
     ) -> None:
-        try:
-            smtp_obj = smtplib.SMTP(settings.smtp_server)
-            smtp_obj.sendmail(
-                msg=message.as_string(),
-                from_addr=settings.from_email,
-                to_addrs=to
+        smtp_obj = smtplib.SMTP(settings.smtp_server)
+        smtp_obj.sendmail(
+            msg=message.as_string(),
+            from_addr=settings.from_email,
+            to_addrs=to
 
-            )
-        except Exception as e:
-            raise Exception(f'Failed to send email: {e}')
+        )
 
 
     @staticmethod
