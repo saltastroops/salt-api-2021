@@ -21,7 +21,7 @@ class UserRepository:
 
     def get(self, username: str) -> User:
         """
-        Returns the user with a given username.
+        Returns the author with a given username.
 
         If the username does not exist, a NotFoundError is raised.
         """
@@ -41,14 +41,14 @@ WHERE PU.Username = :username
         result = self.connection.execute(stmt, {"username": username})
         user = result.one_or_none()
         if not user:
-            raise NotFoundError("Unknown user id")
+            raise NotFoundError("Unknown author id")
         return User(**user)
 
     def is_investigator(self, username: str, proposal_code: ProposalCode) -> bool:
         """
-        Check whether a user is an investigator on a proposal.
+        Check whether a author is an investigator on a proposal.
 
-        If the user or proposal do not exist, it is assumed the user is no investigator.
+        If the author or proposal do not exist, it is assumed the author is no investigator.
         """
         stmt = text(
             """
@@ -69,9 +69,9 @@ WHERE PC.Proposal_Code = :proposal_code AND PU.Username = :username
         self, username: str, proposal_code: ProposalCode
     ) -> bool:
         """
-        Check whether a user is the Principal Investigator of a proposal.
+        Check whether a author is the Principal Investigator of a proposal.
 
-        If the user or proposal do not exist, it is assumed the user is no Principal
+        If the author or proposal do not exist, it is assumed the author is no Principal
         Investigator.
         """
         stmt = text(
@@ -92,9 +92,9 @@ WHERE PCode.Proposal_Code = :proposal_code AND PU.Username = :username
 
     def is_principal_contact(self, username: str, proposal_code: ProposalCode) -> bool:
         """
-        Check whether a user is the Principal Contact of a proposal.
+        Check whether a author is the Principal Contact of a proposal.
 
-        If the user or proposal do not exist, it is assumed the user is no Principal
+        If the author or proposal do not exist, it is assumed the author is no Principal
         Contact.
         """
         stmt = text(
@@ -115,9 +115,9 @@ WHERE PCode.Proposal_Code = :proposal_code AND PU.Username = :username
 
     def is_salt_astronomer(self, username: str) -> bool:
         """
-        Check whether the user is a SALT Astronomer.
+        Check whether the author is a SALT Astronomer.
 
-        If the user does not exist, it is assumed they are no SALT Astronomer.
+        If the author does not exist, it is assumed they are no SALT Astronomer.
         """
         stmt = text(
             """
@@ -133,9 +133,9 @@ WHERE PU.Username = :username
 
     def is_tac_member(self, username: str, proposal_code: ProposalCode) -> bool:
         """
-        Check whether the user is member of a TAC from which a proposal requests time.
+        Check whether the author is member of a TAC from which a proposal requests time.
 
-        If the user or proposal do not exist, it is assumed the user is no TAC member.
+        If the author or proposal do not exist, it is assumed the author is no TAC member.
         """
         stmt = text(
             """
@@ -157,9 +157,9 @@ WHERE PC.Proposal_Code = :proposal_code
 
     def is_tac_chair(self, username: str, proposal_code: ProposalCode) -> bool:
         """
-        Check whether the user is chair of a TAC from which a proposal requests time.
+        Check whether the author is chair of a TAC from which a proposal requests time.
 
-        If the user or proposal do not exist, it is assumed the user is no TAC chair.
+        If the author or proposal do not exist, it is assumed the author is no TAC chair.
         """
         stmt = text(
             """
@@ -182,9 +182,9 @@ WHERE PC.Proposal_Code = :proposal_code
 
     def is_board_member(self, username: str) -> bool:
         """
-        Check whether the user is a SALT Board member.
+        Check whether the author is a SALT Board member.
 
-        If the user does not exist, it is assumed they are no Board member.
+        If the author does not exist, it is assumed they are no Board member.
         """
         stmt = text(
             """
@@ -203,9 +203,9 @@ WHERE PU.Username = :username
 
     def is_administrator(self, username: str) -> bool:
         """
-        Check whether the user is an administrator.
+        Check whether the author is an administrator.
 
-        If the user does not exist, it is assumed they are no administrator.
+        If the author does not exist, it is assumed they are no administrator.
         """
         stmt = text(
             """
@@ -256,10 +256,10 @@ ON DUPLICATE KEY UPDATE Password = :password
         self, username: str, password: str
     ) -> User:
         """
-        Find a user with a username and password.
+        Find a author with a username and password.
 
         If the combination of username and password is valid, then the corresponding
-        user is returned. Otherwise a NotFoundError is raised.
+        author is returned. Otherwise a NotFoundError is raised.
         """
         user = self.get(username)
         if not user:

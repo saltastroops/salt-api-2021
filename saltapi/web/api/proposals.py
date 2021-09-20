@@ -11,12 +11,13 @@ from fastapi import (
     Query,
     Response,
     UploadFile,
-    status,
+    status, Depends,
 )
 from fastapi.responses import FileResponse
 
 from saltapi.repository.proposal_repository import ProposalRepository
 from saltapi.repository.unit_of_work import UnitOfWork
+from saltapi.service.authentication_service import get_current_user
 from saltapi.service.proposal import Proposal as _Proposal
 from saltapi.service.proposal import ProposalListItem as _ProposalListItem
 from saltapi.service.proposal_service import ProposalService
@@ -60,7 +61,7 @@ def get_proposals(
     ),
 ) -> List[_ProposalListItem]:
     """
-    Lists all proposals the user may view. The proposals returned can be limited to those
+    Lists all proposals the author may view. The proposals returned can be limited to those
     with submissions within a semester range by supplying a from or a to semester (or
     both).
     """
@@ -327,44 +328,21 @@ def post_observation_comment(
         description="Proposal code of the proposal for which an observation comment is added.",
     ),
     comment: str = Body(..., title="Comment", description="Text of the comment."),
-    user: User = None    # TODO needs to get and authorised user.
+    user: User = Depends(get_current_user)
 ) -> Message:
     """
-    Adds a new comment related to an observation. The user submitting the request is
+    Adds a new comment related to an observation. The author submitting the request is
     recorded as the comment author.
     """
     with UnitOfWork() as unit_of_work:
         proposal_repository = ProposalRepository(unit_of_work.connection)
         proposal_service = ProposalService(proposal_repository)
-        return proposal_service.add_observation_comment(proposal_code=proposal_code,
-                                                        comment=comment,
-                                                        user=user)
-
-
-@router.patch(
-    "/{proposal_code}/observation-comments",
-    summary="Create an observation comment",
-    response_model=ObservationComment,
-)
-def patch_observation_comment(
-        comment_id: int = Path(
-            ...,
-            title="Comment ID",
-            description="Comment identifier.",
-        ),
-        comment: str = Body(..., title="Comment",
-                            description="Text of the comment."),
-        user: User = None    # TODO needs to get and authorised user.
-) -> Message:
-    """
-    Updates a comment related to an proposal.
-    """
-    with UnitOfWork() as unit_of_work:
-        proposal_repository = ProposalRepository(unit_of_work.connection)
-        proposal_service = ProposalService(proposal_repository)
-        return proposal_service.update_observation_comment(comment_id=comment_id,
-                                                           comment=comment,
-                                                           user=user)
+        proposal_service.add_observation_comment(
+            proposal_code=proposal_code,
+            comment=comment,
+            user=user
+        )
+        return Message(message="Comment added successfully.")
 
 
 @router.get(

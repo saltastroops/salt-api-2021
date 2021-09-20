@@ -19,7 +19,6 @@ from saltapi.util import (
     semester_of_datetime,
     tonight,
 )
-from saltapi.web.schema.common import Message
 from saltapi.web.schema.proposal import ObservationComment
 
 
@@ -481,7 +480,7 @@ ORDER BY I.Surname, I.FirstName
 
     def _principal_investigator_user_id(self, proposal_code: str) -> int:
         """
-        Return the user id of the Principal Investigator.
+        Return the author id of the Principal Investigator.
         """
         stmt = text(
             """
@@ -497,7 +496,7 @@ WHERE P.Proposal_Code = :proposal_code
 
     def _principal_contact_user_id(self, proposal_code: str) -> int:
         """
-        Return the user id of the Principal Contact.
+        Return the author id of the Principal Contact.
         """
         stmt = text(
             """
@@ -1018,7 +1017,7 @@ ORDER BY PC.CommentDate, PC.ProposalComment_Id
         result = self.connection.execute(stmt, {"proposal_code": proposal_code})
         return [ObservationComment(**dict(row)) for row in result]
 
-    def add_observation_comment(self, proposal_code: str, comment: str, user: User) -> Message:
+    def add_observation_comment(self, proposal_code: str, comment: str, author: User) -> None:
         stmt = text(
             """
 INSERT INTO ProposalComment(
@@ -1038,23 +1037,11 @@ VALUES (
         self.connection.execute(
             stmt, {
                 "proposal_code": proposal_code,
-                "username": user.username,
-                "comment": comment}
+                "username": author.username,
+                "comment": comment,
+                "date": date.today()
+            }
         )
-        return Message(message="Comment added successfully.")
-
-    def update_observation_comment(self, comment_id: int, comment: str) -> Message:
-        stmt = text(
-            """
-UPDATE ProposalComment PC
-SET ProposalComment = :comment
-WHERE PC.ProposalComment_Id = :comment_id;
-    """
-        )
-        self.connection.execute(
-            stmt, {"comment_id": comment_id, "comment": comment}
-        )
-        return Message(message="Updated successfully.")
 
     def get_proposal_status(self, proposal_code: str) -> str:
         """

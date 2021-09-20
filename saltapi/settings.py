@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     proposals_dir: DirectoryPath
 
     # DSN for the SALT Science Database, in a format understood by SQL Alchemy
-    # Example: mysql+pymysql://user:password@database.server:3306/sdb
+    # Example: mysql+pymysql://author:password@database.server:3306/sdb
     sdb_dsn: str
 
     # Echo all executed SQL statements?
