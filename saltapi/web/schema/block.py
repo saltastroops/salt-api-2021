@@ -41,10 +41,10 @@ class BlockStatus(BaseModel):
 
 
 class BlockVisitStatus(str, Enum):
-    """Block status."""
+    """Block visit status."""
 
     ACCEPTED = "Accepted"
-    DELETED = "Deleted"
+    #DELETED = "Deleted"
     IN_QUEUE = "In queue"
     REJECTED = "Rejected"
 

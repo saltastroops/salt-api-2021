@@ -1,88 +1,92 @@
 from typing import List, Dict, Any
 
-from fastapi import APIRouter, Path, Body
+from fastapi import APIRouter, Path, Body, Depends
+from sqlalchemy.engine import Connection
 
 from saltapi.repository.block_repository import BlockRepository
 from saltapi.repository.instrument_repository import InstrumentRepository
+from saltapi.repository.proposal_repository import ProposalRepository
 from saltapi.repository.target_repository import TargetRepository
 from saltapi.repository.unit_of_work import UnitOfWork
-from saltapi.service.observations_service import ObservationService
+from saltapi.repository.user_repository import UserRepository
+from saltapi.service.block_service import BlockService
+from saltapi.service.permission_service import PermissionService
+from saltapi.service.user import User
 from saltapi.web.schema.block import BlockVisitStatus
 
-router = APIRouter(prefix="/observations", tags=["Observations"])
+router = APIRouter(prefix="/block_visit", tags=["Block visit"])
 
 
-@router.get("/{block_visit_id}", summary="Get observations", response_model=List[Dict[str, Any]])
-def get_observations(
+def create_block_repository(connection: Connection) -> BlockRepository:
+    return BlockRepository(
+        target_repository=TargetRepository(connection),
+        instrument_repository=InstrumentRepository(connection),
+        connection=connection,
+    )
+
+
+@router.get("/{block_visit_id}", summary="Get block visits", response_model=Dict[str, Any])
+def get_block_visits(
         block_visit_id: int = Path(
-            ..., title="Block visit id", description="Unique identifier observations"
+            ..., title="Block visit id", description="Unique identifier for block visits"
         )
-) -> List[Dict[str, Any]]:
+) -> Dict[str, Any]:
     """
-    Returns observations of a given block visit id.
+    Returns block visits of a given block visit id.
     """
 
     with UnitOfWork() as unit_of_work:
-        block_repository = BlockRepository(
-            instrument_repository=InstrumentRepository(unit_of_work.connection),
-            target_repository=TargetRepository(unit_of_work.connection),
-            connection=unit_of_work.connection,
-        )
-        observation_service = ObservationService(block_repository)
-        observations = observation_service.get_observations(block_visit_id)
-        return observations
+        block_repository = create_block_repository(unit_of_work.connection)
+        block_service = BlockService(block_repository)
+        block_visits = block_service.get_block_visit(block_visit_id)
+        return block_visits
 
 
 @router.get("/{block_visit_id}/status",
             summary="Get observations status",
             response_model=BlockVisitStatus)
-def get_observations_status(
+def get_block_visit_status(
         block_visit_id: int = Path(
-            ..., title="Block visit id", description="Unique identifier for observations"
+            ..., title="Block visit id", description="Unique identifier for block visit"
         )
 ) -> BlockVisitStatus:
     """
-    Returns the status of observations of a given block visit id.
+    Returns the status of a block visit of a given block visit id.
 
     The following status values are possible.
 
     Status | Description
     --- | ---
     Accepted | The observations are accepted.
-    Deleted | The observations has been deleted.
     In queue | The observations are in a queue.
     Rejected | The observations are rejected.
     """
 
     with UnitOfWork() as unit_of_work:
-        block_repository = BlockRepository(
-            instrument_repository=InstrumentRepository(unit_of_work.connection),
-            target_repository=TargetRepository(unit_of_work.connection),
-            connection=unit_of_work.connection,
-        )
-        observation_service = ObservationService(block_repository)
-        return observation_service.get_observations_status(block_visit_id)
+        block_repository = create_block_repository(unit_of_work.connection)
+        block_service = BlockService(block_repository)
+        return block_service.get_block_visit_status(block_visit_id)
 
 
-@router.put("/{block_id}/status", summary="Update the status of observations")
-def update_observations_status(
+@router.put("/{block_visit_id}/status", summary="Update the status of a block visit")
+def update_block_visit_status(
         block_visit_id: int = Path(
-            ..., title="Block id", description="Unique identifier for a block visit"
+            ..., title="Block visit id", description="Unique identifier for a block visit"
         ),
         status: BlockVisitStatus = Body(
-            ..., alias="status", title="Observations status", description="New observations status."
-        )
+            ..., alias="status", title="Block visit status", description="New block visit status."
+        ),
+        user: User = Depends(),
 ) -> None:
     """
-    Updates the status of observations with the given the block visit id.
+    Updates the status of a block visit with the given the block visit id.
     See the corresponding GET request for a description of the available status values.
     """
 
     with UnitOfWork() as unit_of_work:
-        block_repository = BlockRepository(
-            instrument_repository=InstrumentRepository(unit_of_work.connection),
-            target_repository=TargetRepository(unit_of_work.connection),
-            connection=unit_of_work.connection,
-        )
-        observation_service = ObservationService(block_repository)
-        return observation_service.update_observations_status(block_visit_id, status)
+        permission_service = PermissionService(user_repository=UserRepository(unit_of_work.connection),
+                                               proposal_repository=ProposalRepository(unit_of_work.connection))
+        if permission_service.may_update_proposal_status(user):
+            block_repository = create_block_repository(unit_of_work.connection)
+            block_service = BlockService(block_repository)
+            return block_service.update_block_visit_status(block_visit_id, status)

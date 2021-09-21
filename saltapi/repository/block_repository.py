@@ -172,25 +172,34 @@ WHERE B.Block_Id = :block_id;
         if not result.rowcount:
             raise NotFoundError()
 
-    def get_observations(self, block_visit_id: int) -> List[Dict[str, Any]]:
+    def get_block_visit(self, block_visit_id: int) -> Dict[str, Any]:
         """
         Return the observations for a block visit id.
         """
         stmt = text(
             """
-SELECT B.Block_Id
-FROM Block B
-JOIN BlockVisit BV ON B.Block_Id = BV.Block_Id
-WHERE BV.BlockVisit_Id = :block_visit_id;
+SELECT BV.BlockVisit_Id     AS id,
+       NI.Date              AS night,
+       BVS.BlockVisitStatus AS status
+FROM BlockVisit BV
+    JOIN NightInfo NI ON BV.NightInfo_Id = NI.NightInfo_Id
+    JOIN BlockVisitStatus BVS ON BV.BlockVisitStatus_Id = BVS.BlockVisitStatus_Id
+WHERE BV.BlockVisit_Id = :block_visit_id
+  AND BVS.BlockVisitStatus IN ('Accepted', 'Rejected', 'In queue');
         """
         )
         result = self.connection.execute(stmt, {"block_visit_id": block_visit_id})
-        block_id = cast(int, result.scalar_one())
-        return self._pointings(block_id)
+        row = result.one()
+        block_visit = {
+            "id": row.id,
+            "night": row.night,
+            "status": row.status,
+            }
+        return block_visit
 
-    def get_observations_status(self, block_visit_id: int) -> BlockVisitStatus:
+    def get_block_visit_status(self, block_visit_id: int) -> BlockVisitStatus:
         """
-        Return the status of observations for a block id.
+        Return the status of observations for a block visit id.
         """
         stmt = text(
             """
@@ -203,7 +212,7 @@ WHERE BV.BlockVisit_Id = :block_visit_id;
         result = self.connection.execute(stmt, {"block_visit_id": block_visit_id})
         return cast(str, result.scalar_one())
 
-    def update_observations_status(self, block_visit_id: int, status: str) -> None:
+    def update_block_visit_status(self, block_visit_id: int, status: str) -> None:
         """
         Return the proposal status for a proposal.
         """
@@ -218,7 +227,7 @@ WHERE BV.BlockVisit_Id = :block_visit_id;
         )
         try:
             result = self.connection.execute(
-                stmt, {"block_visit_id": block_visit_id, "status": status}
+                stmt, {"observation_id": block_visit_id, "status": status}
             )
         except IntegrityError:
             raise NotFoundError("Unknown block visit status")

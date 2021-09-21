@@ -407,70 +407,87 @@ def test_update_block_status_raises_error_for_wrong_status(
 
     assert "block status" in str(excinfo.value)
 
+
 @nodatabase
-def test_get_observations_status(
+def test_get_block_visit_status(
         dbconnection: Connection, testdata: Callable[[str], Any]
 ) -> None:
-    data = testdata(TEST_DATA)["observations_status"]
+    data = testdata(TEST_DATA)["block_visit"]
     for d in data:
-        block_visit_id = d["block_visit_id"]
+        block_visit_id = d["id"]
+        target_repository = TargetRepository(dbconnection)
+        instrument_repository = InstrumentRepository(dbconnection)
+        block_repository = BlockRepository(target_repository, instrument_repository, dbconnection)
+        block_visit = block_repository.get_block_visits(block_visit_id)
+        for key in data:
+            assert key in block_visit
+            assert block_visit[key] == data[key]
+
+
+@nodatabase
+def test_get_block_visit_status(
+        dbconnection: Connection, testdata: Callable[[str], Any]
+) -> None:
+    data = testdata(TEST_DATA)["block_visit"]
+    for d in data:
+        block_visit_id = d["id"]
         expected_status = d["status"]
         target_repository = TargetRepository(dbconnection)
         instrument_repository = InstrumentRepository(dbconnection)
         block_repository = BlockRepository(target_repository, instrument_repository, dbconnection)
-        status = block_repository.get_observations_status(block_visit_id)
+        status = block_repository.get_block_visit_status(block_visit_id)
 
         assert expected_status == status
 
 @nodatabase
-def test_get_observations_status_raises_error_for_wrong_block_id(
+def test_get_block_visit_status_raises_error_for_wrong_block_id(
         dbconnection: Connection,
 ) -> None:
     target_repository = TargetRepository(dbconnection)
     instrument_repository = InstrumentRepository(dbconnection)
     block_repository = BlockRepository(target_repository, instrument_repository, dbconnection)
     with pytest.raises(NoResultFound):
-        block_repository.get_observations_status(0)
+        block_repository.get_block_visit_status(0)
 
 
 @nodatabase
-def test_update_observations_status(dbconnection: Connection) -> None:
+def test_update_block_visit_status(dbconnection: Connection) -> None:
     # Set the status to "Accepted"
     target_repository = TargetRepository(dbconnection)
     instrument_repository = InstrumentRepository(dbconnection)
     block_repository = BlockRepository(target_repository, instrument_repository, dbconnection)
     block_visit_id = 2339
-    block_repository.update_observations_status(block_visit_id, "Accepted")
-    assert block_repository.get_observations_status(block_visit_id) == "Accepted"
+    block_repository.update_block_visit_status(block_visit_id, "Accepted")
+    assert block_repository.get_block_visit_status(block_visit_id) == "Accepted"
 
     # Now set it to "Rejected"
-    block_repository.update_observations_status(block_visit_id, "Rejected")
+    block_repository.update_block_visit_status(block_visit_id, "Rejected")
     assert (
-            block_repository.get_observations_status(block_visit_id)
+            block_repository.get_block_visit_status(block_visit_id)
             == "Active"
     )
 
 
 @nodatabase
-def test_update_observations_status_raises_error_for_wrong_block_id(
+def test_update_block_visit_status_raises_error_for_wrong_block_id(
         dbconnection: Connection,
 ) -> None:
     target_repository = TargetRepository(dbconnection)
     instrument_repository = InstrumentRepository(dbconnection)
     block_repository = BlockRepository(target_repository, instrument_repository, dbconnection)
     with pytest.raises(NoResultFound):
-        block_repository.update_observations_status(0, "Accepted")
+        block_repository.update_block_visit_status(0, "Accepted")
 
 
 @nodatabase
-def test_update_observations_status_raises_error_for_wrong_status(
+def test_update_block_visit_status_raises_error_for_wrong_status(
         dbconnection: Connection,
 ) -> None:
     block_repository = create_block_repository(dbconnection)
     with pytest.raises(ValueError) as excinfo:
-        block_repository.update_observations_status(
-            1, "Wrong observations status"
+        block_repository.update_block_visit_status(
+            1, "Wrong block visit status"
         )
 
-    assert "observations status" in str(excinfo)
+    assert "block visit status" in str(excinfo)
 
