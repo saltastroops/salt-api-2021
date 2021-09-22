@@ -4,9 +4,9 @@ from fastapi import (
     APIRouter,
 )
 
-from saltapi.repository.proposal_repository import ProposalRepository
+from saltapi.repository.user_repository import UserRepository
 from saltapi.repository.unit_of_work import UnitOfWork
-from saltapi.service.proposal_service import ProposalService
+from saltapi.service.user_service import UserService
 
 
 router = APIRouter(prefix="/salt-astronomers", tags=["SALT-Astronomers"])
@@ -19,6 +19,6 @@ def get_list_of_astronomers() -> List[Dict[str, Any]]:
     """
 
     with UnitOfWork() as unit_of_work:
-        proposal_repository = ProposalRepository(unit_of_work.connection)
-        proposal_service = ProposalService(proposal_repository)
-        return proposal_service.list_salt_astronomers()
+        user_repository = UserRepository(unit_of_work.connection)
+        user_service = UserService(user_repository)
+        return user_service.list_salt_astronomers()

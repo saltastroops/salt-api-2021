@@ -1,4 +1,4 @@
-from typing import List, Dict, Any
+from typing import List
 
 from saltapi.repository.proposal_repository import ProposalRepository
 from saltapi.service.proposal import Proposal, ProposalListItem
@@ -13,6 +13,3 @@ class ProposalService:
 
     def get_proposal(self, proposal_code: str) -> Proposal:
         return self.repository.get(proposal_code)
-
-    def list_salt_astronomers(self) -> List[Dict[str, Any]]:
-        return self.repository.list_salt_astronomers()

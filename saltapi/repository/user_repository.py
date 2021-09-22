@@ -1,19 +1,14 @@
 import hashlib
 import secrets
-from typing import Optional, cast
+from typing import Optional, cast, List, Dict, Any
 
-from passlib.context import CryptContext
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
 from passlib.context import CryptContext
+from sqlalchemy.exc import NoResultFound
 
 from saltapi.exceptions import NotFoundError
 from saltapi.service.user import User
-
-pwd_context = CryptContext(
-    schemes=["bcrypt", "md5_crypt"], default="bcrypt", deprecated="auto"
-)
-
 
 pwd_context = CryptContext(
     schemes=["bcrypt", "md5_crypt"], default="bcrypt", deprecated="auto"
@@ -199,3 +194,34 @@ ON DUPLICATE KEY UPDATE Password = :password
             return None
 
         return user
+
+    def _list_salt_astronomers(self,) -> List[Dict[str, Any]]:
+        """
+        Return a list of SALT astronomers.
+        """
+        stmt = text(
+            """
+SELECT DISTINCT I.FirstName                         AS astronomer_given_name,
+                I.Surname                           AS astronomer_family_name,
+                I.Email                             AS astronomer_email
+FROM Investigator I
+         JOIN ProposalContact C ON C.Astronomer_Id = I.Investigator_Id
+         """
+        )
+        result = self.connection.execute(stmt)
+        astronomers = []
+        for row in result:
+            astronomer = {
+                "given_name": row.astronomer_given_name,
+                "family_name": row.astronomer_family_name,
+                "email": row.astronomer_email,
+            }
+            astronomers.append(astronomer)
+
+        return astronomers
+
+    def list_salt_astronomers(self,) -> List[Dict[str, Any]]:
+        try:
+            return self._list_salt_astronomers()
+        except NoResultFound:
+            raise NotFoundError()

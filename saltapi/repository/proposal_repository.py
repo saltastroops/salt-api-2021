@@ -1065,34 +1065,3 @@ WHERE PS.Status = :status
         )
         result = self.connection.execute(stmt, {"status": status})
         return cast(int, result.scalar_one())
-
-    def _list_salt_astronomers(self,) -> List[Dict[str, Any]]:
-        """
-        Return a list of SALT astronomers.
-        """
-        stmt = text(
-            """
-SELECT DISTINCT I.FirstName                         AS astronomer_given_name,
-                I.Surname                           AS astronomer_family_name,
-                I.Email                             AS astronomer_email
-FROM Investigator I
-         JOIN ProposalContact C ON C.Astronomer_Id = I.Investigator_Id
-         """
-        )
-        result = self.connection.execute(stmt)
-        astronomers = []
-        for row in result:
-            astronomer = {
-                "given_name": row.astronomer_given_name,
-                "family_name": row.astronomer_family_name,
-                "email": row.astronomer_email,
-            }
-            astronomers.append(astronomer)
-
-        return astronomers
-
-    def list_salt_astronomers(self,) -> List[Dict[str, Any]]:
-        try:
-            return self._list_salt_astronomers()
-        except NoResultFound:
-            raise NotFoundError()
