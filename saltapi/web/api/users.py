@@ -1,7 +1,7 @@
-from typing import Optional
+from fastapi import APIRouter, Body, HTTPException
+from starlette import status
 
-from fastapi import APIRouter
-
+from saltapi.exceptions import NotFoundError
 from saltapi.repository.unit_of_work import UnitOfWork
 from saltapi.repository.user_repository import UserRepository
 from saltapi.service.user_service import UserService
@@ -17,22 +17,25 @@ router = APIRouter(prefix="/users", tags=["User"])
     response_model=Message
 )
 def send_password_reset_email(
-        username: Optional[str] = None,
-        email: Optional[str] = None
+        body: dict = Body(...)
 ) -> Message:
-    with UnitOfWork() as unit_of_work:
-        user_repository = UserRepository(unit_of_work.connection)
-        # check if either email or username is provided.
-        if not username and not email:
-            raise ValueError("Either username or email should be provided.")
-        # verify username
-        if username:
-            user = user_repository.get(username)
-        else:
-            user = user_repository.get_by_email(email)
 
-        if not user:
-            raise ValueError("User not found.")
+    with UnitOfWork() as unit_of_work:
+        username_email = body['username_email']
+        user_repository = UserRepository(unit_of_work.connection)
+        try:
+            try:
+                user = user_repository.get(username_email)
+            except NotFoundError:
+                user = user_repository.get_by_email(username_email)
+
+        except NotFoundError:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Username or email didn't match any user.",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
         user_service = UserService(user_repository)
         user_service.send_password_reset_email(user)
 
