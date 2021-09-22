@@ -214,7 +214,7 @@ WHERE BV.BlockVisit_Id = :block_visit_id;
 
     def update_block_visit_status(self, block_visit_id: int, status: str) -> None:
         """
-        Return the proposal status for a proposal.
+        Update the status of a block visit.
         """
         stmt = text(
             """

@@ -409,7 +409,7 @@ def test_update_block_status_raises_error_for_wrong_status(
 
 
 @nodatabase
-def test_get_block_visit_status(
+def test_get_block_visit(
         dbconnection: Connection, testdata: Callable[[str], Any]
 ) -> None:
     data = testdata(TEST_DATA)["block_visit"]
@@ -418,7 +418,7 @@ def test_get_block_visit_status(
         target_repository = TargetRepository(dbconnection)
         instrument_repository = InstrumentRepository(dbconnection)
         block_repository = BlockRepository(target_repository, instrument_repository, dbconnection)
-        block_visit = block_repository.get_block_visits(block_visit_id)
+        block_visit = block_repository.get_block_visit(block_visit_id)
         for key in data:
             assert key in block_visit
             assert block_visit[key] == data[key]
@@ -428,7 +428,7 @@ def test_get_block_visit_status(
 def test_get_block_visit_status(
         dbconnection: Connection, testdata: Callable[[str], Any]
 ) -> None:
-    data = testdata(TEST_DATA)["block_visit"]
+    data = testdata(TEST_DATA)["block_visit_status"]
     for d in data:
         block_visit_id = d["id"]
         expected_status = d["status"]

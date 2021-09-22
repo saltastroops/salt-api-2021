@@ -43,8 +43,9 @@ class BlockStatus(BaseModel):
 class BlockVisitStatus(str, Enum):
     """Block visit status."""
 
+    # The SDB also contains a status "Deleted", but the API should ignore block visits
+    # with this status.
     ACCEPTED = "Accepted"
-    #DELETED = "Deleted"
     IN_QUEUE = "In queue"
     REJECTED = "Rejected"
 

@@ -14,7 +14,7 @@ from saltapi.service.permission_service import PermissionService
 from saltapi.service.user import User
 from saltapi.web.schema.block import BlockVisitStatus
 
-router = APIRouter(prefix="/block_visit", tags=["Block visit"])
+router = APIRouter(prefix="/block-visits", tags=["Block visit"])
 
 
 def create_block_repository(connection: Connection) -> BlockRepository:
@@ -25,14 +25,17 @@ def create_block_repository(connection: Connection) -> BlockRepository:
     )
 
 
-@router.get("/{block_visit_id}", summary="Get block visits", response_model=Dict[str, Any])
+@router.get("/{block_visit_id}", summary="Get a block visit", response_model=Dict[str, Any])
 def get_block_visits(
         block_visit_id: int = Path(
             ..., title="Block visit id", description="Unique identifier for block visits"
         )
 ) -> Dict[str, Any]:
     """
-    Returns block visits of a given block visit id.
+    Returns a block visit.
+
+    A block visit is an observation which has been made for a block or which is in the
+    queue to be observed.
     """
 
     with UnitOfWork() as unit_of_work:
@@ -43,15 +46,15 @@ def get_block_visits(
 
 
 @router.get("/{block_visit_id}/status",
-            summary="Get observations status",
+            summary="Get the status of a block visit",
             response_model=BlockVisitStatus)
 def get_block_visit_status(
         block_visit_id: int = Path(
-            ..., title="Block visit id", description="Unique identifier for block visit"
+            ..., title="Block visit id", description="Unique identifier for a block visit"
         )
 ) -> BlockVisitStatus:
     """
-    Returns the status of a block visit of a given block visit id.
+    Returns the status of a block visit.
 
     The following status values are possible.
 
