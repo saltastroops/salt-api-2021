@@ -33,7 +33,13 @@ class PermissionService:
                 or self.user_repository.is_administrator(username)
             )
         else:
-            return self.user_repository.is_partner_affiliated_user(username)
+            # Gravitational wave event proposals are a special case; they can be viewed
+            # by anyone who belongs to a SALT partner.
+            return (
+                self.user_repository.is_salt_astronomer(username)
+                or self.user_repository.is_partner_affiliated_user(username)
+                or self.user_repository.is_administrator(username)
+            )
 
     def may_activate_proposal(self, user: User, proposal_code: ProposalCode) -> bool:
         """

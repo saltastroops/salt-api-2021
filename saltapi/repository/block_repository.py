@@ -116,7 +116,7 @@ WHERE B.Block_Id = :block_id;
             "overhead_time": row.overhead_time,
             "observation_probabilities": observation_probabilities,
             "observing_windows": self._observing_windows(block_id),
-            "executed_observations": self._executed_observations(block_id),
+            "block_visits": self._block_visits(block_id),
             "observations": self._pointings(block_id),
         }
 
@@ -173,7 +173,7 @@ WHERE B.Block_Id = :block_id;
         if not result.rowcount:
             raise NotFoundError()
 
-    def _executed_observations(self, block_id: int) -> List[Dict[str, Any]]:
+    def _block_visits(self, block_id: int) -> List[Dict[str, Any]]:
         """
         Return the executed observations.
         """

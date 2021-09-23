@@ -306,7 +306,7 @@ def this_is_ok(response: Response) -> None:
 @then(parsers.parse("I get a bad request error containing {message_text}"))
 def i_get_a_user_error_containing(message_text: str, response: Response) -> None:
     assert response.status_code == status.HTTP_400_BAD_REQUEST
-    assert message_text in response.json()["message"]
+    assert message_text in response.json()["detail"]
 
 
 @then("I get an authentication error")
@@ -323,6 +323,8 @@ def i_get_a_permission_error(response: Response) -> None:
 def i_get_a_not_found_error(response: Response) -> None:
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
-@then("I get an unprocessable entity error")
-def i_get_an_unprocessable_entity_error(response: Response) -> None:
+
+@then(parsers.parse("I get an unprocessable entity error containing {message_text}"))
+def i_get_an_unprocessable_entity_error(message_text: str, response: Response) -> None:
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+    assert message_text in str(response.json()["detail"])

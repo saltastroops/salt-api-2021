@@ -114,7 +114,7 @@ class Block(BaseModel):
         title="Requested observations",
         description="Number of observations requested for the block",
     )
-    executed_observations: List[BaseExecutedObservation] = Field(
+    block_visits: List[BaseExecutedObservation] = Field(
         ...,
         title="Executed observations",
         description="Observations made for the block",

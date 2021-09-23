@@ -202,6 +202,9 @@ WHERE PU.Username = :username
         return cast(int, result.scalar_one()) > 0
 
     def is_partner_affiliated_user(self, username: str) -> bool:
+        """
+        Check whether the user is a user that is affiliated to a SALT partner.
+        """
         stmt = text(
             """
 SELECT COUNT(*)

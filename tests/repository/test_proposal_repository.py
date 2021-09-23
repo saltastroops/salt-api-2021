@@ -10,17 +10,20 @@ from tests.markers import nodatabase
 
 TEST_DATA = "repository/proposal_repository.yaml"
 
+USER_TEST_DATA = "users.yaml"
+
 
 @nodatabase
 def test_list_returns_correct_content(
     dbconnection: Connection, testdata: Callable[[str], Any]
 ) -> None:
+    salt_astronomer = testdata(USER_TEST_DATA)["salt_astronomer"]
     data = testdata(TEST_DATA)["proposal_list_content"]
     for d in data:
         semester = d["semester"]
         expected_proposal = d["proposal"]
         proposal_repository = ProposalRepository(dbconnection)
-        proposals = proposal_repository.list(semester, semester)
+        proposals = proposal_repository.list(salt_astronomer, semester, semester)
         proposal = [
             p
             for p in proposals
@@ -30,35 +33,50 @@ def test_list_returns_correct_content(
         assert proposal == expected_proposal
 
 
-def test_list_returns_correct_count(
+@nodatabase
+def test_list_returns_correct_proposal_codes(
     dbconnection: Connection, testdata: Callable[[str], Any]
 ) -> None:
-    data = testdata(TEST_DATA)["proposal_list_count"]
+    data = testdata(TEST_DATA)["proposal_list"]
+    proposal_repository = ProposalRepository(dbconnection)
     for d in data:
-        first_semester = d["first_semester"]
-        last_semester = d["last_semester"]
+        from_semester = d["from_semester"]
+        to_semester = d["to_semester"]
+        username = d["username"]
+        expected_proposal_codes = sorted(d["proposal_codes"])
         expected_proposal_count = d["proposal_count"]
-        proposal_repository = ProposalRepository(dbconnection)
-        proposals = proposal_repository.list(
-            first_semester=first_semester, last_semester=last_semester
-        )
-        proposal_count = len(proposals)
 
-        assert proposal_count == expected_proposal_count
+        proposals = proposal_repository.list(
+            username=username, from_semester=from_semester, to_semester=to_semester
+        )
+        proposal_codes = sorted(p["proposal_code"] for p in proposals)
+
+        assert len(proposal_codes) == expected_proposal_count
+        if expected_proposal_codes != ["many"]:
+            assert proposal_codes == expected_proposal_codes
 
 
 @nodatabase
-def test_list_handles_omitted_semester_limits(dbconnection: Connection) -> None:
+def test_list_handles_omitted_semester_limits(
+    dbconnection: Connection, testdata: Callable[[str], Any]
+) -> None:
     proposal_repository = ProposalRepository(dbconnection)
 
-    assert len(proposal_repository.list(last_semester="2015-1")) == len(
-        proposal_repository.list(first_semester="2000-1", last_semester="2015-1")
+    salt_astronomer = testdata(USER_TEST_DATA)["salt_astronomer"]
+    assert len(
+        proposal_repository.list(username=salt_astronomer, to_semester="2015-1")
+    ) == len(
+        proposal_repository.list(
+            username=salt_astronomer, from_semester="2000-1", to_semester="2015-1"
+        )
     )
-    assert len(proposal_repository.list(first_semester="2020-1")) == len(
-        proposal_repository.list(first_semester="2020-1")
-    )
-    assert len(proposal_repository.list()) == len(
-        proposal_repository.list(first_semester="2000-1", last_semester="2100-1")
+    assert len(
+        proposal_repository.list(username=salt_astronomer, from_semester="2020-1")
+    ) == len(proposal_repository.list(username=salt_astronomer, from_semester="2020-1"))
+    assert len(proposal_repository.list(username=salt_astronomer)) == len(
+        proposal_repository.list(
+            username=salt_astronomer, from_semester="2000-1", to_semester="2100-1"
+        )
     )
 
 
@@ -66,6 +84,7 @@ def test_list_handles_omitted_semester_limits(dbconnection: Connection) -> None:
 def test_list_results_can_be_limited(
     dbconnection: Connection, testdata: Callable[[str], Any]
 ) -> None:
+    salt_astronomer = testdata(USER_TEST_DATA)["salt_astronomer"]
     data = testdata(TEST_DATA)["proposal_list_limit"]
     for d in data:
         semester = d["semester"]
@@ -73,7 +92,10 @@ def test_list_results_can_be_limited(
         limit = len(expected_proposal_codes)
         proposal_repository = ProposalRepository(dbconnection)
         proposals = proposal_repository.list(
-            first_semester=semester, last_semester=semester, limit=limit
+            username=salt_astronomer,
+            from_semester=semester,
+            to_semester=semester,
+            limit=limit,
         )
 
         assert [p["proposal_code"] for p in proposals] == expected_proposal_codes
@@ -83,16 +105,16 @@ def test_list_results_can_be_limited(
 def test_list_handles_omitted_limit(dbconnection: Connection) -> None:
     proposal_repository = ProposalRepository(dbconnection)
     assert proposal_repository.list(
-        first_semester="2018-2", last_semester="2019-2"
+        username="someone", from_semester="2018-2", to_semester="2019-2"
     ) == proposal_repository.list(
-        first_semester="2018-2", last_semester="2019-2", limit=100000
+        username="someone", from_semester="2018-2", to_semester="2019-2", limit=100000
     )
 
 
 def test_list_raises_error_for_negative_limit(dbconnection: Connection) -> None:
     with pytest.raises(ValueError) as excinfo:
         proposal_repository = ProposalRepository(dbconnection)
-        proposal_repository.list(limit=-1)
+        proposal_repository.list(username="someone", limit=-1)
 
     assert "negative" in str(excinfo)
 
@@ -108,12 +130,25 @@ def test_list_raises_error_for_wrong_semester_format(
     proposal_repository = ProposalRepository(dbconnection)
 
     with pytest.raises(ValueError) as excinfo:
-        proposal_repository.list(first_semester=incorrect_semester)
+        proposal_repository.list(username="someone", from_semester=incorrect_semester)
     assert "format" in str(excinfo)
 
     with pytest.raises(ValueError) as excinfo:
-        proposal_repository.list(last_semester=incorrect_semester)
+        proposal_repository.list(username="someone", to_semester=incorrect_semester)
     assert "format" in str(excinfo)
+
+
+@nodatabase
+def test_list_raises_error_for_wrong_semester_order(
+    dbconnection: Connection, testdata: Callable[[str], Any]
+) -> None:
+    proposal_repository = ProposalRepository(dbconnection)
+    with pytest.raises(ValueError) as excinfo:
+        username = testdata(USER_TEST_DATA)["salt_astronomer"]
+        proposal_repository.list(
+            username=username, from_semester="2021-2", to_semester="2021-1"
+        )
+    assert "semester" in str(excinfo.value)
 
 
 @nodatabase
