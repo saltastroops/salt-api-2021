@@ -142,6 +142,19 @@ def test_get_returns_general_info(
             assert general_info[key] == expected_general_info[key]
 
 
+def test_get_returns_correct_value_for_is_self_activable(
+    dbconnection: Connection, testdata: Callable[[str], Any]
+) -> None:
+    data = testdata(TEST_DATA)["is_self_activable"]
+    proposal_repository = ProposalRepository(dbconnection)
+    for d in data:
+        proposal_code = d["proposal_code"]
+        expected_may_activate = d["self_activable"]
+        proposal = proposal_repository.get(proposal_code)
+
+        assert proposal["general_info"]["is_self_activable"] == expected_may_activate
+
+
 @nodatabase
 def test_get_returns_investigators(
     dbconnection: Connection, testdata: Callable[[str], Any]
@@ -397,3 +410,18 @@ def test_update_proposal_status_raises_error_for_wrong_status(
         )
 
     assert "proposal status" in str(excinfo)
+
+
+def test_is_self_activable(
+    dbconnection: Connection, testdata: Callable[[str], Any]
+) -> None:
+    data = testdata(TEST_DATA)["is_self_activable"]
+    proposal_repository = ProposalRepository(dbconnection)
+    for d in data:
+        proposal_code = d["proposal_code"]
+        expected_self_activable = d["self_activable"]
+
+        assert (
+            proposal_repository.is_self_activable(proposal_code)
+            == expected_self_activable
+        )
