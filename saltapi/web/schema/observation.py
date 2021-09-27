@@ -54,10 +54,10 @@ class FinderChart(BaseModel):
     comment: Optional[str] = Field(
         ..., title="Comment by the Principal Investigator regarding the finder chart"
     )
-    validFrom: datetime = Field(
+    valid_from: Optional[datetime] = Field(
         ..., title="Time from when the finder chart may be used"
     )
-    validUntil: datetime = Field(
+    valid_until: Optional[datetime] = Field(
         ..., title="Time until when the finder chart may be used"
     )
 
@@ -179,7 +179,7 @@ class Observation(BaseModel):
         description="Time required for executing the observation, including the overhead time, in seconds",
         gt=0,
     )
-    overhead_time: int = Field(
+    overhead_time: Optional[int] = Field(
         ..., title="Overhead time for the observation, in seconds", gt=0
     )
     target: Target = Field(..., title="Target", description="Target to be observed")

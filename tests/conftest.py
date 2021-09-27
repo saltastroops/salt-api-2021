@@ -17,7 +17,7 @@ import yaml
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Connection, Engine
 
-engine: Optional[Engine]
+engine: Optional[Engine] = None
 sdb_dsn = os.environ.get("SDB_DSN")
 if sdb_dsn:
     echo_sql = True if os.environ.get("ECHO_SQL") else False  # SQLAlchemy needs a bool

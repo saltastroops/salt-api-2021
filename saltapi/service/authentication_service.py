@@ -6,6 +6,7 @@ from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from starlette import status
 
+from saltapi.exceptions import NotFoundError
 from saltapi.repository.unit_of_work import UnitOfWork
 from saltapi.repository.user_repository import UserRepository
 from saltapi.service.authentication import AccessToken
@@ -22,10 +23,16 @@ class AuthenticationService:
     def __init__(self, user_repository: UserRepository) -> None:
         self.user_repository = user_repository
 
-    def access_token(self, user: User) -> AccessToken:
+    @staticmethod
+    def access_token(
+        user: User, token_lifetime_hours: Optional[int] = None
+    ) -> AccessToken:
         """Generate an authentication token."""
-        token_expires = timedelta(hours=ACCESS_TOKEN_LIFETIME_HOURS)
-        token = self.jwt_token(
+        if token_lifetime_hours is not None:
+            token_expires = timedelta(hours=token_lifetime_hours)
+        else:
+            token_expires = timedelta(hours=ACCESS_TOKEN_LIFETIME_HOURS)
+        token = AuthenticationService.jwt_token(
             payload={"sub": user.username},
             expires_delta=token_expires,
         )
@@ -34,7 +41,7 @@ class AuthenticationService:
         return AccessToken(
             access_token=token,
             token_type=token_type,
-            expires_at=datetime.now() + timedelta(hours=ACCESS_TOKEN_LIFETIME_HOURS),
+            expires_at=datetime.now() + token_expires,
         )
 
     @staticmethod
@@ -57,7 +64,7 @@ class AuthenticationService:
             username, password
         )
         if not user:
-            raise ValueError("User not found or password doesn't match.")
+            raise NotFoundError("User not found or password doesn't match.")
         return user
 
     def validate_auth_token(self, token: str) -> User:

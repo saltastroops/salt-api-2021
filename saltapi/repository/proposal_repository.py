@@ -358,7 +358,10 @@ SELECT PT.Title                            AS title,
        PGI.ProprietaryPeriod               AS proprietary_period,
        I.FirstName                         AS astronomer_given_name,
        I.Surname                           AS astronomer_family_name,
-       I.Email                             AS astronomer_email
+       I.Email                             AS astronomer_email,
+       IF(PSA.PiPcMayActivate IS NOT NULL,
+          PSA.PiPcMayActivate,
+          0)                               AS self_activable
 FROM Proposal P
          JOIN Semester S ON P.Semester_Id = S.Semester_Id
          JOIN ProposalCode PC ON P.ProposalCode_Id = PC.ProposalCode_Id
@@ -368,6 +371,7 @@ FROM Proposal P
          JOIN ProposalStatus PS ON PGI.ProposalStatus_Id = PS.ProposalStatus_Id
          JOIN ProposalContact C ON PC.ProposalCode_Id = C.ProposalCode_Id
          LEFT JOIN Investigator I ON C.Astronomer_Id = I.Investigator_Id
+         LEFT JOIN ProposalSelfActivation PSA ON P.ProposalCode_Id = PSA.ProposalCode_Id
 WHERE PC.Proposal_Code = :proposal_code
   AND P.Current = 1
   AND S.Year = :year
@@ -390,6 +394,7 @@ WHERE PC.Proposal_Code = :proposal_code
             "target_of_opportunity": row.target_of_opportunity,
             "total_requested_time": row.total_requested_time,
             "proprietary_period": row.proprietary_period,
+            "is_self_activable": row.self_activable > 0,
         }
 
         if info["proposal_type"] == "Director Discretionary Time (DDT)":
@@ -589,28 +594,29 @@ WHERE BS.BlockStatus NOT IN :excluded_status_values
 
     def _executed_observations(self, proposal_code: str) -> List[Dict[str, Any]]:
         """
-        Return the executed observations (including observatiopns in the queue) for all
+        Return the executed observations (including observations in the queue) for all
         semesters.
 
         The observations are ordered by block name and observation night.
         """
         stmt = text(
             """
-SELECT BV.BlockVisit_Id     AS id,
-       BV.Block_Id          AS block_id,
-       B.Block_Name AS block_name,
-       B.ObsTime AS observation_time,
-       B.Priority AS priority,
-       B.MaxLunarPhase AS maximum_lunar_phase,
-       NI.Date              AS night,
+SELECT BV.BlockVisit_Id                            AS id,
+       BV.Block_Id                                 AS block_id,
+       B.Block_Name                                AS block_name,
+       B.ObsTime                                   AS observation_time,
+       B.Priority                                  AS priority,
+       B.MaxLunarPhase                             AS maximum_lunar_phase,
+       NI.Date                                     AS night,
        IF(BVS.BlockVisitStatus = 'Accepted', 1, 0) AS is_accepted,
-       BRR.RejectedReason   AS rejection_reason
+       BRR.RejectedReason                          AS rejection_reason
 FROM BlockVisit BV
          JOIN BlockVisitStatus BVS ON BV.BlockVisitStatus_Id = BVS.BlockVisitStatus_Id
-         LEFT JOIN BlockRejectedReason BRR on BV.BlockRejectedReason_Id = BRR.BlockRejectedReason_Id
-         JOIN NightInfo NI on BV.NightInfo_Id = NI.NightInfo_Id
+         LEFT JOIN BlockRejectedReason BRR
+                   ON BV.BlockRejectedReason_Id = BRR.BlockRejectedReason_Id
+         JOIN NightInfo NI ON BV.NightInfo_Id = NI.NightInfo_Id
          JOIN Block B ON BV.Block_Id = B.Block_Id
-         JOIN ProposalCode PC on B.ProposalCode_Id = PC.ProposalCode_Id
+         JOIN ProposalCode PC ON B.ProposalCode_Id = PC.ProposalCode_Id
 WHERE PC.Proposal_Code = :proposal_code
   AND BVS.BlockVisitStatus != 'Deleted'
 ORDER BY B.Block_Name, NI.Date
@@ -1056,6 +1062,9 @@ WHERE ProposalCode_Id = (SELECT PC.ProposalCode_Id
             raise NotFoundError()
 
     def _proposal_status_id(self, status: str) -> int:
+        """
+        Return the id of a proposal status value.
+        """
         stmt = text(
             """
 SELECT PS.ProposalStatus_Id
@@ -1065,3 +1074,21 @@ WHERE PS.Status = :status
         )
         result = self.connection.execute(stmt, {"status": status})
         return cast(int, result.scalar_one())
+
+    def is_self_activable(self, proposal_code: str) -> bool:
+        """
+        Check whether the proposal may be activated the Principal Investigator and
+        Principal Contact.
+        """
+        stmt = text(
+            """
+        SELECT PSA.PiPcMayActivate
+FROM ProposalSelfActivation PSA
+         JOIN ProposalCode PC ON PSA.ProposalCode_Id = PC.ProposalCode_Id
+WHERE PC.Proposal_Code = :proposal_code;
+        """
+        )
+        result = self.connection.execute(stmt, {"proposal_code": proposal_code})
+        one_or_none = result.scalar_one_or_none()
+
+        return bool(one_or_none and cast(int, one_or_none) > 0)
