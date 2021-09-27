@@ -17,11 +17,13 @@ router = APIRouter(prefix="/users", tags=["User"])
     response_model=Message
 )
 def send_password_reset_email(
-        body: dict = Body(...)
+    password_reset_request: PasswordResetRequest = Body(
+        ..., title="Password reset request", description="Password reset request"
+    ),
 ) -> Message:
 
     with UnitOfWork() as unit_of_work:
-        username_email = body['username_email']
+        username_email = password_reset_request.username_email
         user_repository = UserRepository(unit_of_work.connection)
         try:
             try:
