@@ -79,8 +79,8 @@ def read_testdata(path: str) -> Any:
     if Path(path).is_absolute():
         raise ValueError("The file path must be a relative path.")
 
-    root_dir = Path(__file__).parent.parent
-    datafile = root_dir / "testdata" / path
+    root_dir = Path(os.environ["TEST_DATA_DIR"])
+    datafile = root_dir / path
     if not datafile.exists():
         raise FileNotFoundError(f"File does not exist: {datafile}")
 
