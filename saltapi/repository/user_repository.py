@@ -307,7 +307,7 @@ ON DUPLICATE KEY UPDATE Password = :password
             stmt, {"username": username, "password": new_password_hash}
         )
 
-    def _update_password(self, username: str, password: str):
+    def _update_password(self, username: str, password: str) -> None:
         self.update_password_hash(username, password)
         password_hash = self.get_password_hash(password)
         stmt = text(
@@ -317,9 +317,7 @@ SET Password = :password
 WHERE Username = :username
         """
         )
-        self.connection.execute(
-            stmt, {"username": username, "password": password_hash}
-        )
+        self.connection.execute(stmt, {"username": username, "password": password_hash})
 
     @staticmethod
     def get_new_password_hash(password: str) -> str:

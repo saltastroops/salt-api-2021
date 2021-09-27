@@ -6,6 +6,7 @@ from saltapi.repository.unit_of_work import UnitOfWork
 from saltapi.repository.user_repository import UserRepository
 from saltapi.service.user_service import UserService
 from saltapi.web.schema.common import Message
+from saltapi.web.schema.user import PasswordResetRequest
 
 router = APIRouter(prefix="/users", tags=["User"])
 
@@ -14,7 +15,7 @@ router = APIRouter(prefix="/users", tags=["User"])
     "/send-password-reset-email",
     summary="Request an email with a password reset link to be sent.",
     response_description="Success message.",
-    response_model=Message
+    response_model=Message,
 )
 def send_password_reset_email(
     password_reset_request: PasswordResetRequest = Body(
@@ -41,6 +42,4 @@ def send_password_reset_email(
         user_service = UserService(user_repository)
         user_service.send_password_reset_email(user)
 
-        return Message(
-            message="Email with a password reset link sent."
-        )
+        return Message(message="Email with a password reset link sent.")

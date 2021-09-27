@@ -48,7 +48,8 @@ def test_get_user_by_email_returns_correct_user(
 
 @nodatabase
 def test_get_user_by_email_raises_error_for_non_existing_user(
-        dbconnection: Connection) -> None:
+    dbconnection: Connection,
+) -> None:
     user_repository = UserRepository(dbconnection)
     with pytest.raises(NotFoundError):
         user_repository.get("invalid@email.com")

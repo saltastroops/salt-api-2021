@@ -145,7 +145,9 @@ WHERE B.Block_Id = :block_id
 
         return status
 
-    def update_block_status(self, block_id: int, value: str, reason: Optional[str]) -> None:
+    def update_block_status(
+        self, block_id: int, value: str, reason: Optional[str]
+    ) -> None:
         """
         Update the status of a block.
         """
