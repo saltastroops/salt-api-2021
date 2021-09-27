@@ -1,9 +1,5 @@
-
-import smtplib
+import re
 from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-
-import pytest
 
 from saltapi.service.mail_service import MailService
 from saltapi.service.user import User
@@ -32,19 +28,20 @@ user = User(
         )
 
 
-def test_send_generate_email_return_correct_message(monkeypatch):
+def test_send_generate_email_returns_correct_message():
     to = "Test User <test.user@email.com>"
     plain_body = "Test plain body"
     html_body = "<body>Test html body</body>"
     subject = "Test subject"
-    message = mail_service.generate_email(
+    msg = mail_service.generate_email(
         to=to,
         plain_body=plain_body,
         html_body=html_body,
         subject=subject
     )
-
-    assert message["To"] == to
-    assert message["From"] == f"SALT Team <{settings.from_email}>"
-    assert message["Subject"] == subject
+    assert msg["To"] == to
+    assert msg["From"] == f"SALT Team <{settings.from_email}>"
+    assert msg["Subject"] == subject
+    assert re.match('^(\btext/plain\b)?', msg.as_string())
+    assert re.match('^(\btext/html\b)?', msg.as_string())
 
