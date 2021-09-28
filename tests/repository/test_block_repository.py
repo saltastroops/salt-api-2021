@@ -439,6 +439,7 @@ def test_get_block_visit_status(
 
         assert expected_status == status
 
+
 @nodatabase
 def test_get_block_visit_status_raises_error_for_wrong_block_id(
         dbconnection: Connection,
@@ -490,4 +491,3 @@ def test_update_block_visit_status_raises_error_for_wrong_status(
         )
 
     assert "block visit status" in str(excinfo)
-

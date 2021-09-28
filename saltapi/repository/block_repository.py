@@ -185,7 +185,7 @@ FROM BlockVisit BV
     JOIN NightInfo NI ON BV.NightInfo_Id = NI.NightInfo_Id
     JOIN BlockVisitStatus BVS ON BV.BlockVisitStatus_Id = BVS.BlockVisitStatus_Id
 WHERE BV.BlockVisit_Id = :block_visit_id
-  AND BVS.BlockVisitStatus IN ('Accepted', 'Rejected', 'In queue');
+  AND BVS.BlockVisitStatus NOT IN ('Deleted');
         """
         )
         result = self.connection.execute(stmt, {"block_visit_id": block_visit_id})
@@ -206,7 +206,8 @@ WHERE BV.BlockVisit_Id = :block_visit_id
 SELECT BVS.BlockVisitStatus
 FROM BlockVisitStatus BVS
 JOIN BlockVisit BV ON BVS.BlockVisitStatus_Id = BV.BlockVisitStatus_Id
-WHERE BV.BlockVisit_Id = :block_visit_id;
+WHERE BV.BlockVisit_Id = :block_visit_id
+AND BVS.BlockVisitStatus NOT IN ('Deleted');
         """
         )
         result = self.connection.execute(stmt, {"block_visit_id": block_visit_id})

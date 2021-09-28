@@ -1,6 +1,6 @@
-from typing import List, Dict, Any
+from typing import Dict, Any
 
-from fastapi import APIRouter, Path, Body, Depends
+from fastapi import APIRouter, Path, Body, Depends, Query
 from sqlalchemy.engine import Connection
 
 from saltapi.repository.block_repository import BlockRepository
@@ -9,8 +9,10 @@ from saltapi.repository.proposal_repository import ProposalRepository
 from saltapi.repository.target_repository import TargetRepository
 from saltapi.repository.unit_of_work import UnitOfWork
 from saltapi.repository.user_repository import UserRepository
+from saltapi.service.authentication_service import get_current_user
 from saltapi.service.block_service import BlockService
 from saltapi.service.permission_service import PermissionService
+from saltapi.service.proposal import ProposalCode
 from saltapi.service.user import User
 from saltapi.web.schema.block import BlockVisitStatus
 
@@ -29,7 +31,13 @@ def create_block_repository(connection: Connection) -> BlockRepository:
 def get_block_visits(
         block_visit_id: int = Path(
             ..., title="Block visit id", description="Unique identifier for block visits"
-        )
+        ),
+        user: User = Depends(get_current_user),
+        proposal_code: ProposalCode = Query(
+            None,
+            description="Proposal code",
+            title="Proposal code",
+        ),
 ) -> Dict[str, Any]:
     """
     Returns a block visit.
@@ -39,10 +47,13 @@ def get_block_visits(
     """
 
     with UnitOfWork() as unit_of_work:
-        block_repository = create_block_repository(unit_of_work.connection)
-        block_service = BlockService(block_repository)
-        block_visits = block_service.get_block_visit(block_visit_id)
-        return block_visits
+        permission_service = PermissionService(user_repository=UserRepository(unit_of_work.connection),
+                                               proposal_repository=ProposalRepository(unit_of_work.connection))
+        if permission_service.may_view_block_visit(user, proposal_code):
+            block_repository = create_block_repository(unit_of_work.connection)
+            block_service = BlockService(block_repository)
+            block_visits = block_service.get_block_visit(block_visit_id)
+            return block_visits
 
 
 @router.get("/{block_visit_id}/status",
@@ -51,6 +62,12 @@ def get_block_visits(
 def get_block_visit_status(
         block_visit_id: int = Path(
             ..., title="Block visit id", description="Unique identifier for a block visit"
+        ),
+        user: User = Depends(get_current_user),
+        proposal_code: ProposalCode = Query(
+            None,
+            description="Proposal code",
+            title="Proposal code",
         )
 ) -> BlockVisitStatus:
     """
@@ -66,9 +83,12 @@ def get_block_visit_status(
     """
 
     with UnitOfWork() as unit_of_work:
-        block_repository = create_block_repository(unit_of_work.connection)
-        block_service = BlockService(block_repository)
-        return block_service.get_block_visit_status(block_visit_id)
+        permission_service = PermissionService(user_repository=UserRepository(unit_of_work.connection),
+                                               proposal_repository=ProposalRepository(unit_of_work.connection))
+        if permission_service.may_view_block_visit(user, proposal_code):
+            block_repository = create_block_repository(unit_of_work.connection)
+            block_service = BlockService(block_repository)
+            return block_service.get_block_visit_status(block_visit_id)
 
 
 @router.put("/{block_visit_id}/status", summary="Update the status of a block visit")
@@ -79,7 +99,7 @@ def update_block_visit_status(
         status: BlockVisitStatus = Body(
             ..., alias="status", title="Block visit status", description="New block visit status."
         ),
-        user: User = Depends(),
+        user: User = Depends(get_current_user),
 ) -> None:
     """
     Updates the status of a block visit with the given the block visit id.
@@ -89,7 +109,7 @@ def update_block_visit_status(
     with UnitOfWork() as unit_of_work:
         permission_service = PermissionService(user_repository=UserRepository(unit_of_work.connection),
                                                proposal_repository=ProposalRepository(unit_of_work.connection))
-        if permission_service.may_update_proposal_status(user):
+        if permission_service.may_update_block_visit_status(user):
             block_repository = create_block_repository(unit_of_work.connection)
             block_service = BlockService(block_repository)
             return block_service.update_block_visit_status(block_visit_id, status)
