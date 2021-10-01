@@ -166,7 +166,7 @@ def test_is_tac_member_returns_true_for_tac_member(
         proposal_code = d["proposal_code"]
 
         for username in d["tac_members"]:
-            assert user_repository.is_tac_member(
+            assert user_repository.is_tac_member_for_proposal(
                 username, proposal_code
             ), f"Should be true for {username} and {proposal_code}"
 
@@ -181,7 +181,7 @@ def test_is_tac_member_returns_false_for_non_tac_member(
         proposal_code = d["proposal_code"]
 
         for username in d["non_tac_members"]:
-            assert not user_repository.is_tac_member(
+            assert not user_repository.is_tac_member_for_proposal(
                 username, proposal_code
             ), f"Should be false for {username} and {proposal_code}"
 
@@ -196,7 +196,7 @@ def test_is_tac_chair_returns_true_for_tac_chair(
         proposal_code = d["proposal_code"]
 
         for username in d["tac_chairs"]:
-            assert user_repository.is_tac_chair(
+            assert user_repository.is_tac_chair_for_proposal(
                 username, proposal_code
             ), f"Should be true for {username} and {proposal_code}"
 
@@ -211,7 +211,7 @@ def test_is_tac_chair_returns_false_for_non_tac_chair(
         proposal_code = d["proposal_code"]
 
         for username in d["non_tac_chairs"]:
-            assert not user_repository.is_tac_chair(
+            assert not user_repository.is_tac_chair_for_proposal(
                 username, proposal_code
             ), f"Should be false for {username} and {proposal_code}"
 
@@ -297,8 +297,9 @@ def test_is_administrator_returns_false_for_administrator(
         "investigator",
         "principal_investigator",
         "principal_contact",
-        "tac_member",
-        "tac_chair",
+        "activating_investigator",
+        "tac_member_for_proposal",
+        "tac_chair_for_proposal",
     ],
 )
 def test_role_checks_return_false_for_non_existing_proposal(
@@ -376,3 +377,19 @@ def test_find_by_username_and_password_raises_error_for_wrong_password(
     # None may raise an exception other than NotFoundError
     with pytest.raises(Exception):
         user_repository.find_user_with_username_and_password(username, cast(str, None))
+
+
+@nodatabase
+def test_get_user_roles_returns_correct_roles(
+    dbconnection: Connection, testdata: Callable[[str], Any]
+) -> None:
+    data = testdata(TEST_DATA_PATH)["get_user_roles"]
+    user_repository = UserRepository(dbconnection)
+    for d in data:
+        username = d["username"]
+        expected_roles = set(d["roles"])
+        roles = set(role.value for role in user_repository.get_user_roles(username))
+
+        assert (
+            expected_roles == roles
+        ), f"Expected roles for {username}: {expected_roles}; found: {roles}"
