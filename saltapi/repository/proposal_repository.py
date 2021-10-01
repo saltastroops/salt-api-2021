@@ -16,6 +16,7 @@ from saltapi.util import (
     partner_name,
     semester_end,
     semester_of_datetime,
+    semester_start,
     tonight,
 )
 
@@ -27,28 +28,28 @@ class ProposalRepository:
         self.connection = connection
 
     def _list(
-        self, first_semester: str, last_semester: str, limit: int
+        self, username: str, from_semester: str, to_semester: str, limit: int
     ) -> List[ProposalListItem]:
         """
         Return a list of proposal summaries.
         """
         stmt = text(
             """
-SELECT P.Proposal_Id                   AS id,
-       PC.Proposal_Code                AS proposal_code,
-       CONCAT(S.Year, '-', S.Semester) AS semester,
-       PT.Title                        AS title,
-       P.Phase                         AS phase,
-       PS.Status                       AS status,
-       T.ProposalType                  AS proposal_type,
-       Leader.FirstName                AS pi_given_name,
-       Leader.Surname                  AS pi_family_name,
-       Leader.Email                    AS pi_email,
-       Contact.FirstName               AS pc_given_name,
-       Contact.Surname                 AS pc_family_name,
-       Contact.Email                   AS pc_email,
-       Astronomer.FirstName            AS la_given_name,
-       Astronomer.Surname              AS la_family_name
+SELECT DISTINCT P.Proposal_Id                   AS id,
+                PC.Proposal_Code                AS proposal_code,
+                CONCAT(S.Year, '-', S.Semester) AS semester,
+                PT.Title                        AS title,
+                P.Phase                         AS phase,
+                PS.Status                       AS status,
+                T.ProposalType                  AS proposal_type,
+                Leader.FirstName                AS pi_given_name,
+                Leader.Surname                  AS pi_family_name,
+                Leader.Email                    AS pi_email,
+                Contact.FirstName               AS pc_given_name,
+                Contact.Surname                 AS pc_family_name,
+                Contact.Email                   AS pc_email,
+                Astronomer.FirstName            AS la_given_name,
+                Astronomer.Surname              AS la_family_name
 FROM Proposal P
          JOIN ProposalCode PC ON P.ProposalCode_Id = PC.ProposalCode_Id
          JOIN ProposalGeneralInfo PGI ON PC.ProposalCode_Id = PGI.ProposalCode_Id
@@ -62,20 +63,67 @@ FROM Proposal P
                    ON C.Astronomer_Id = Astronomer.Investigator_Id
          JOIN Investigator Contact ON C.Contact_Id = Contact.Investigator_Id
          JOIN Investigator Leader ON C.Leader_Id = Leader.Investigator_Id
+         JOIN ProposalInvestigator PI ON PC.ProposalCode_Id = PI.ProposalCode_Id
+         JOIN Investigator I ON PI.Investigator_Id = I.Investigator_Id
+         JOIN PiptUser PU ON I.PiptUser_Id = PU.PiptUser_Id
+         LEFT JOIN P1RequestedTime P1RT ON P.Proposal_Id = P1RT.Proposal_Id
+         LEFT JOIN MultiPartner MP ON PC.ProposalCode_Id = MP.ProposalCode_Id AND
+                                      S.Semester_Id = MP.Semester_Id
+         LEFT JOIN PiptUserTAC PUT ON MP.Partner_Id = PUT.Partner_Id
+         LEFT JOIN PiptUser TACUser ON PUT.PiptUser_Id = TACUser.PiptUser_Id
 WHERE P.Current = 1
   AND S.Semester_Id IN (SELECT S2.Semester_Id
                         FROM Semester AS S2
                         WHERE CONCAT(S2.Year, '-', S2.Semester)
-                            BETWEEN :first_semester AND :last_semester)
+                                  BETWEEN :from_semester AND :to_semester)
+  AND PS.Status != 'Deleted'
+  AND (
+        -- The user is an investigator on the proposal
+            PU.Username = :username
+        OR
+        -- Proposal is requesting time from TAC to which the user belongs
+            (TACUser.Username = :username AND MP.ReqTimePercent > 0)
+        OR
+        -- The proposal is a Gravitational Wave Event and the user is affiliated to
+        -- a SALT partner
+            (T.ProposalType = 'Gravitational Wave Event' AND (
+                    (SELECT COUNT(*)
+                     FROM Partner PUser
+                              JOIN Institute IUser
+                                   ON PUser.Partner_Id = IUser.Partner_Id
+                              JOIN Investigator I2User
+                                   ON IUser.Institute_Id = I2User.Institute_Id
+                              JOIN PiptUser PUUser
+                                   ON I2User.PiptUser_Id = PUUser.PiptUser_Id
+                     WHERE PUUser.Username = :username
+                       AND PUser.Partner_Code != 'OTH'
+                    ) > 0)
+                )
+        OR
+        -- The user is allowed to view all proposals
+            (
+                    (SELECT COUNT(*)
+                     FROM PiptUserSetting PUSRights
+                              JOIN PiptSetting PSRights
+                                   ON PUSRights.PiptSetting_Id = PSRights.PiptSetting_Id
+                              JOIN PiptUser PURights
+                                   ON PUSRights.PiptUser_Id = PURights.PiptUser_Id
+                     WHERE PURights.Username = :username
+                       AND PSRights.PiptSetting_Name = 'RightProposals'
+                       AND PUSRights.Value >= 2
+                    ) > 0
+                )
+    )
 ORDER BY P.Proposal_Id DESC
-LIMIT :limit
+LIMIT :limit;
         """
         )
         result = self.connection.execute(
             stmt,
             {
-                "first_semester": first_semester,
-                "last_semester": last_semester,
+                "username": username,
+                "from_semester": from_semester,
+                "to_semester": to_semester,
                 "limit": limit,
             },
         )
@@ -120,24 +168,36 @@ LIMIT :limit
 
     def list(
         self,
-        first_semester: str = "2000-1",
-        last_semester: str = "2099-2",
-        limit: int = 100000,
+        username: str,
+        from_semester: str = "2000-1",
+        to_semester: str = "2099-2",
+        limit: int = 1000000,
     ) -> List[Dict[str, Any]]:
         """
         Return a list of proposal summaries.
+
+        The from and to semester are inclusive. The from semester must not be later than
+        the to semester.
         """
 
-        if not re.match(r"^\d{4}-\d$", first_semester):
-            raise ValueError(f"Illegal semester format: {first_semester}")
-        if not re.match(r"^\d{4}-\d$", last_semester):
-            raise ValueError(f"Illegal semester format: {last_semester}")
+        if not re.match(r"^\d{4}-\d$", from_semester):
+            raise ValueError(f"Illegal semester format: {from_semester}")
+        if not re.match(r"^\d{4}-\d$", to_semester):
+            raise ValueError(f"Illegal semester format: {to_semester}")
+
+        if semester_start(from_semester) > semester_start(to_semester):
+            raise ValueError(
+                "The from semester must not be later than the to " "semester."
+            )
 
         if limit < 0:
-            raise ValueError("The limit must be a non-negative integer.")
+            raise ValueError("The limit must not be negative.")
 
         return self._list(
-            first_semester=first_semester, last_semester=last_semester, limit=limit
+            username=username,
+            from_semester=from_semester,
+            to_semester=to_semester,
+            limit=limit,
         )
 
     def _get(
@@ -213,6 +273,23 @@ ORDER BY S.Year, S.Semester;
         )
         result = self.connection.execute(stmt, {"proposal_code": proposal_code})
         return list(result.scalars())
+
+    def get_proposal_type(self, proposal_code: str) -> str:
+        stmt = text(
+            """
+SELECT PT.ProposalType AS proposal_type
+FROM ProposalType PT
+         JOIN ProposalGeneralInfo PGI ON PT.ProposalType_Id = PGI.ProposalType_Id
+         JOIN ProposalCode PC ON PGI.ProposalCode_Id = PC.ProposalCode_Id
+WHERE PC.Proposal_Code = :proposal_code
+            """
+        )
+        result = self.connection.execute(stmt, {"proposal_code": proposal_code})
+        proposal_type = result.scalar_one_or_none()
+        if not proposal_type:
+            raise NotFoundError()
+
+        return self._map_proposal_type(proposal_type)
 
     def _latest_submission_semester(self, proposal_code: str) -> str:
         """
@@ -400,11 +477,14 @@ WHERE PC.Proposal_Code = :proposal_code
         if info["proposal_type"] == "Director Discretionary Time (DDT)":
             info["proposal_type"] = "Director's Discretionary Time"
 
-        info["liaison_salt_astronomer"] = {
-            "given_name": row.astronomer_given_name,
-            "family_name": row.astronomer_family_name,
-            "email": row.astronomer_email,
-        }
+        if row.astronomer_email:
+            info["liaison_salt_astronomer"] = {
+                "given_name": row.astronomer_given_name,
+                "family_name": row.astronomer_family_name,
+                "email": row.astronomer_email,
+            }
+        else:
+            info["liaison_salt_astronomer"] = None
 
         info["first_submission"] = self._first_submission_date(proposal_code)
         info["submission_number"] = self._latest_submission(proposal_code)
