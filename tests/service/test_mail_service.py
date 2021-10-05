@@ -41,5 +41,4 @@ def test_send_generate_email_returns_correct_message() -> None:
     assert msg["To"] == to
     assert msg["From"] == f"SALT Team <{settings.from_email}>"
     assert msg["Subject"] == subject
-    assert re.match(r"^(\btext/plain\b)?", msg.as_string())
-    assert re.match(r"^(\btext/html\b)?", msg.as_string())
+    assert re.match(r"^(\btext/plain\.*\btext/html\b)?", msg.as_string())
