@@ -5,7 +5,7 @@ import pytz
 from astropy.coordinates import Angle
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, NoResultFound
 
 from saltapi.exceptions import NotFoundError
 from saltapi.repository.instrument_repository import InstrumentRepository
@@ -135,6 +135,7 @@ FROM BlockStatus BS
 WHERE B.Block_Id = :block_id
         """
         )
+
         result = self.connection.execute(stmt, {"block_id": block_id})
 
         row = result.one()
@@ -188,14 +189,17 @@ WHERE BV.BlockVisit_Id = :block_visit_id
   AND BVS.BlockVisitStatus NOT IN ('Deleted');
         """
         )
-        result = self.connection.execute(stmt, {"block_visit_id": block_visit_id})
-        row = result.one()
-        block_visit = {
-            "id": row.id,
-            "night": row.night,
-            "status": row.status,
-            }
-        return block_visit
+        try:
+            result = self.connection.execute(stmt, {"block_visit_id": block_visit_id})
+            row = result.one()
+            block_visit = {
+                "id": row.id,
+                "night": row.night,
+                "status": row.status,
+                }
+            return block_visit
+        except NoResultFound:
+            raise NotFoundError("Unknown block visit id")
 
     def get_block_visit_status(self, block_visit_id: int) -> BlockVisitStatus:
         """
@@ -210,8 +214,11 @@ WHERE BV.BlockVisit_Id = :block_visit_id
 AND BVS.BlockVisitStatus NOT IN ('Deleted');
         """
         )
-        result = self.connection.execute(stmt, {"block_visit_id": block_visit_id})
-        return cast(str, result.scalar_one())
+        try:
+            result = self.connection.execute(stmt, {"block_visit_id": block_visit_id})
+            return cast(str, result.scalar_one())
+        except NoResultFound:
+            raise NotFoundError("Unknown block visit id")
 
     def update_block_visit_status(self, block_visit_id: int, status: str) -> None:
         """

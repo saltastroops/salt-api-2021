@@ -1,8 +1,10 @@
 from typing import Dict, Any
 
-from fastapi import APIRouter, Path, Body, Depends, Query
+from fastapi import APIRouter, Path, Body, Depends, Query, HTTPException
 from sqlalchemy.engine import Connection
+from starlette import status
 
+from saltapi.exceptions import NotFoundError
 from saltapi.repository.block_repository import BlockRepository
 from saltapi.repository.instrument_repository import InstrumentRepository
 from saltapi.repository.proposal_repository import ProposalRepository
@@ -45,15 +47,20 @@ def get_block_visits(
     A block visit is an observation which has been made for a block or which is in the
     queue to be observed.
     """
+    try:
+        with UnitOfWork() as unit_of_work:
+            permission_service = PermissionService(user_repository=UserRepository(unit_of_work.connection),
+                                                   proposal_repository=ProposalRepository(unit_of_work.connection))
+            if permission_service.may_view_block_visit(user, proposal_code):
+                block_repository = create_block_repository(unit_of_work.connection)
+                block_service = BlockService(block_repository)
+                block_visits = block_service.get_block_visit(block_visit_id)
+                return block_visits
 
-    with UnitOfWork() as unit_of_work:
-        permission_service = PermissionService(user_repository=UserRepository(unit_of_work.connection),
-                                               proposal_repository=ProposalRepository(unit_of_work.connection))
-        if permission_service.may_view_block_visit(user, proposal_code):
-            block_repository = create_block_repository(unit_of_work.connection)
-            block_service = BlockService(block_repository)
-            block_visits = block_service.get_block_visit(block_visit_id)
-            return block_visits
+            else:
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
+    except NotFoundError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
 
 @router.get("/{block_visit_id}/status",
@@ -81,14 +88,18 @@ def get_block_visit_status(
     In queue | The observations are in a queue.
     Rejected | The observations are rejected.
     """
-
-    with UnitOfWork() as unit_of_work:
-        permission_service = PermissionService(user_repository=UserRepository(unit_of_work.connection),
-                                               proposal_repository=ProposalRepository(unit_of_work.connection))
-        if permission_service.may_view_block_visit(user, proposal_code):
-            block_repository = create_block_repository(unit_of_work.connection)
-            block_service = BlockService(block_repository)
-            return block_service.get_block_visit_status(block_visit_id)
+    try:
+        with UnitOfWork() as unit_of_work:
+            permission_service = PermissionService(user_repository=UserRepository(unit_of_work.connection),
+                                                   proposal_repository=ProposalRepository(unit_of_work.connection))
+            if permission_service.may_view_block_visit(user, proposal_code):
+                block_repository = create_block_repository(unit_of_work.connection)
+                block_service = BlockService(block_repository)
+                return block_service.get_block_visit_status(block_visit_id)
+            else:
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
+    except NotFoundError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
 
 @router.put("/{block_visit_id}/status", summary="Update the status of a block visit")
@@ -96,7 +107,7 @@ def update_block_visit_status(
         block_visit_id: int = Path(
             ..., title="Block visit id", description="Unique identifier for a block visit"
         ),
-        status: BlockVisitStatus = Body(
+        block_visit_status: BlockVisitStatus = Body(
             ..., alias="status", title="Block visit status", description="New block visit status."
         ),
         user: User = Depends(get_current_user),
@@ -112,4 +123,5 @@ def update_block_visit_status(
         if permission_service.may_update_block_visit_status(user):
             block_repository = create_block_repository(unit_of_work.connection)
             block_service = BlockService(block_repository)
-            return block_service.update_block_visit_status(block_visit_id, status)
+            return block_service.update_block_visit_status(block_visit_id, block_visit_status)
+

@@ -103,16 +103,13 @@ class PermissionService:
         This is the case if the user is any of the following:
 
         * a SALT Astronomer
+        * an investigator on the proposal
+        * a TAC member for the proposal
         * a Board member
         * an administrator
         """
-        username = user.username
 
-        return (
-                self.user_repository.is_salt_astronomer(username)
-                or self.user_repository.is_principal_investigator(username, proposal_code)
-                or self.user_repository.is_administrator(username)
-        )
+        return self.may_view_proposal(user, proposal_code)
 
     def may_update_block_visit_status(self, user: User) -> bool:
         """
