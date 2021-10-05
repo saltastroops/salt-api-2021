@@ -41,7 +41,32 @@ WHERE PU.Username = :username
         result = self.connection.execute(stmt, {"username": username})
         user = result.one_or_none()
         if not user:
-            raise NotFoundError("Unknown user id")
+            raise NotFoundError("Unknown username")
+        return User(**user)
+
+    def get_by_email(self, email: str) -> User:
+        """
+        Returns the user with a given email
+
+        If the username does not exist, a NotFoundError is raised.
+        """
+        stmt = text(
+            """
+SELECT PU.PiptUser_Id  AS id,
+       Email           AS email,
+       Surname         AS family_name,
+       FirstName       AS given_name,
+       Password        AS password_hash,
+       Username        AS username
+FROM PiptUser PU
+         JOIN Investigator I ON (PU.PiptUser_Id = I.PiptUser_Id)
+WHERE I.Email = :email
+        """
+        )
+        result = self.connection.execute(stmt, {"email": email})
+        user = result.one_or_none()
+        if not user:
+            raise NotFoundError("Unknown email address")
         return User(**user)
 
     def is_investigator(self, username: str, proposal_code: ProposalCode) -> bool:
@@ -300,6 +325,18 @@ ON DUPLICATE KEY UPDATE Password = :password
         self.connection.execute(
             stmt, {"username": username, "password": new_password_hash}
         )
+
+    def _update_password(self, username: str, password: str) -> None:
+        self.update_password_hash(username, password)
+        password_hash = self.get_password_hash(password)
+        stmt = text(
+            """
+UPDATE PiptUser
+SET Password = :password
+WHERE Username = :username
+        """
+        )
+        self.connection.execute(stmt, {"username": username, "password": password_hash})
 
     @staticmethod
     def get_new_password_hash(password: str) -> str:
