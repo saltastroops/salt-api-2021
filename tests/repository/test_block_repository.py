@@ -73,15 +73,15 @@ def test_get_raises_error_for_too_complicated_blocks(
 
 
 @nodatabase
-def test_get_returns_executed_observations(
+def test_get_returns_block_visits(
     dbconnection: Connection, testdata: Callable[[str], Any]
 ) -> None:
-    data = testdata(TEST_DATA)["executed_observations"]
+    data = testdata(TEST_DATA)["block_visits"]
     block_id = data["block_id"]
-    expected_observations = data["observations"]
+    expected_observations = data["visits"]
     block_repository = create_block_repository(dbconnection)
     block = block_repository.get(block_id)
-    observations = block["executed_observations"]
+    observations = block["block_visits"]
 
     assert len(observations) == len(expected_observations)
     for i in range(len(observations)):

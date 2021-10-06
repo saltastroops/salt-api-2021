@@ -20,18 +20,26 @@ class PermissionService:
         * a SALT Astronomer
         * an investigator on the proposal
         * a TAC member for the proposal
-        * a Board member
         * an administrator
         """
         username = user.username
+        proposal_type = self.proposal_repository.get_proposal_type(proposal_code)
 
-        return (
-            self.user_repository.is_salt_astronomer(username)
-            or self.user_repository.is_investigator(username, proposal_code)
-            or self.user_repository.is_tac_member(username, proposal_code)
-            or self.user_repository.is_board_member(username)
-            or self.user_repository.is_administrator(username)
-        )
+        if proposal_type != "Gravitational Wave Event":
+            return (
+                self.user_repository.is_salt_astronomer(username)
+                or self.user_repository.is_investigator(username, proposal_code)
+                or self.user_repository.is_tac_member(username, proposal_code)
+                or self.user_repository.is_administrator(username)
+            )
+        else:
+            # Gravitational wave event proposals are a special case; they can be viewed
+            # by anyone who belongs to a SALT partner.
+            return (
+                self.user_repository.is_salt_astronomer(username)
+                or self.user_repository.is_partner_affiliated_user(username)
+                or self.user_repository.is_administrator(username)
+            )
 
     def may_activate_proposal(self, user: User, proposal_code: ProposalCode) -> bool:
         """

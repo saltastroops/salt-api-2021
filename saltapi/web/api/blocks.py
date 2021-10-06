@@ -1,11 +1,9 @@
-from typing import Any, Dict
-
-from fastapi import APIRouter, Body, Depends, HTTPException, Path
+from fastapi import APIRouter, Body, Depends, Path
 from sqlalchemy.engine import Connection
-from starlette import status
 
 from saltapi.repository.block_repository import BlockRepository
 from saltapi.repository.instrument_repository import InstrumentRepository
+from saltapi.repository.proposal_repository import ProposalRepository
 from saltapi.repository.target_repository import TargetRepository
 from saltapi.repository.unit_of_work import UnitOfWork
 from saltapi.repository.user_repository import UserRepository
@@ -99,7 +97,8 @@ def update_block_status(
 
     with UnitOfWork() as unit_of_work:
         user_repository = UserRepository(unit_of_work.connection)
-        permission_service = PermissionService(user_repository)
+        proposal_repository = ProposalRepository(unit_of_work.connection)
+        permission_service = PermissionService(user_repository, proposal_repository)
         if permission_service.may_update_proposal_status(user):
             block_repository = create_block_repository(unit_of_work.connection)
             block_service = BlockService(block_repository)
