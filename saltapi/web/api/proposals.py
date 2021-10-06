@@ -1,5 +1,5 @@
 from datetime import date
-from typing import List, Optional
+from typing import List, Optional, Dict
 
 from fastapi import (
     APIRouter,
@@ -319,7 +319,7 @@ def get_observation_comments(
 @router.post(
     "/{proposal_code}/observation-comments",
     summary="Create an observation comment",
-    response_model=ObservationComment,
+    response_model=Message,
 )
 def post_observation_comment(
     proposal_code: ProposalCode = Path(
@@ -327,7 +327,7 @@ def post_observation_comment(
         title="Proposal code",
         description="Proposal code of the proposal for which an observation comment is added.",
     ),
-    comment: str = Body(..., title="Comment", description="Text of the comment."),
+    comment: Dict[str, str] = Body(..., title="Comment", description="Text of the comment."),
     user: User = Depends(get_current_user)
 ) -> Message:
     """
@@ -339,7 +339,7 @@ def post_observation_comment(
         proposal_service = ProposalService(proposal_repository)
         proposal_service.add_observation_comment(
             proposal_code=proposal_code,
-            comment=comment,
+            comment=comment["comment"],
             user=user
         )
         return Message(message="Comment added successfully.")

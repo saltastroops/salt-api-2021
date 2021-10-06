@@ -227,7 +227,7 @@ class ObservationComment(BaseModel):
                 "id": 123,
                 "author": "Sipho Mangana",
                 "comment": "Please check the position angle.",
-                "madeAt": "2019-08-24T14:15:22Z",
+                "comment_date": "2019-08-24T14:15:22Z",
             }
         }
 

@@ -1003,7 +1003,7 @@ GROUP BY B.Block_Id
         """
         stmt = text(
             """
-SELECT PC.ProposalComment_Id               AS id
+SELECT PC.ProposalComment_Id               AS id,
        PC.CommentDate                      AS comment_date,
        CONCAT(I.FirstName, ' ', I.Surname) AS author,
        PC.ProposalComment                  AS comment
@@ -1017,7 +1017,8 @@ ORDER BY PC.CommentDate, PC.ProposalComment_Id
         result = self.connection.execute(stmt, {"proposal_code": proposal_code})
         return [ObservationComment(**dict(row)) for row in result]
 
-    def add_observation_comment(self, proposal_code: str, comment: str, author: User) -> None:
+    def add_observation_comment(self, proposal_code: str, comment: str,
+                                author: User) -> None:
         stmt = text(
             """
 INSERT INTO ProposalComment(
@@ -1042,6 +1043,7 @@ VALUES (
                 "date": date.today()
             }
         )
+        self.connection.commit()
 
     def get_proposal_status(self, proposal_code: str) -> str:
         """
