@@ -10,7 +10,7 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.exc import NoResultFound
 
 from saltapi.exceptions import NotFoundError
-from saltapi.service.proposal import Proposal, ProposalListItem
+from saltapi.service.proposal import Proposal, ProposalCode, ProposalListItem
 from saltapi.util import (
     TimeInterval,
     partner_name,
@@ -192,6 +192,36 @@ LIMIT :limit
         try:
             return self._get(
                 proposal_code=proposal_code, semester=semester, phase=phase
+            )
+        except NoResultFound:
+            raise NotFoundError()
+
+    def _get_proposal_code(self, block_visit_id: int) -> ProposalCode:
+        """
+        Return proposal code for a block visit id:
+        """
+        stmt = text(
+            """
+SELECT PC.Proposal_code
+FROM ProposalCode PC
+JOIN Block B on PC.ProposalCode_Id = B.ProposalCode_Id
+JOIN BlockVisit BV on BV.Block_Id = B.Block_Id
+WHERE BV.BlockVisit_Id = :block_visit_id
+        """
+        )
+        result = self.connection.execute(
+            stmt,
+            {
+                "block_visit_id": block_visit_id
+            },
+        )
+
+        return cast(ProposalCode, result.scalar_one())
+
+    def get_proposal_code(self, block_visit_id: int) -> ProposalCode:
+        try:
+            return self._get_proposal_code(
+                block_visit_id=block_visit_id
             )
         except NoResultFound:
             raise NotFoundError()

@@ -186,6 +186,11 @@ def authenticate(username: str, client: TestClient) -> None:
     client.headers["Authorization"] = f"Bearer {token}"
 
 
+@given("I am not authenticated")
+def i_am_not_authenticated(client: TestClient) -> None:
+    not_authenticated(client)
+
+
 def not_authenticated(client: TestClient) -> None:
     if "Authorization" in client.headers:
         del client.headers["Authorization"]

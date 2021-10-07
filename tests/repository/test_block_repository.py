@@ -447,7 +447,7 @@ def test_get_block_visit_status_raises_error_for_wrong_block_id(
     target_repository = TargetRepository(dbconnection)
     instrument_repository = InstrumentRepository(dbconnection)
     block_repository = BlockRepository(target_repository, instrument_repository, dbconnection)
-    with pytest.raises(NoResultFound):
+    with pytest.raises(NotFoundError):
         block_repository.get_block_visit_status(0)
 
 
@@ -476,7 +476,7 @@ def test_update_block_visit_status_raises_error_for_wrong_block_id(
     target_repository = TargetRepository(dbconnection)
     instrument_repository = InstrumentRepository(dbconnection)
     block_repository = BlockRepository(target_repository, instrument_repository, dbconnection)
-    with pytest.raises(NoResultFound):
+    with pytest.raises(NotFoundError):
         block_repository.update_block_visit_status(0, "Accepted")
 
 

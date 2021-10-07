@@ -61,7 +61,7 @@ class PermissionService:
             or self.user_repository.is_administrator(username)
         )
 
-    def may_deactivate_proposal(self, user: User, proposal_code: ProposalCode) -> bool:
+    def may_deactivate_proposal(self, user: User, block_visit_id: int) -> bool:
         """
         Check whether the user may deactivate a proposal.
 
@@ -72,6 +72,8 @@ class PermissionService:
         * a SALT Astronomer
         * an administrator
         """
+        proposal_code: ProposalCode = self.proposal_repository.get_proposal_code(block_visit_id)
+
         username = user.username
 
         return (
@@ -96,18 +98,13 @@ class PermissionService:
             username
         ) or self.user_repository.is_administrator(username)
 
-    def may_view_block_visit(self, user: User, proposal_code: ProposalCode) -> bool:
+    def may_view_block_visit(self, user: User, block_visit_id: int) -> bool:
         """
         Check whether the user may view a block visit.
 
-        This is the case if the user is any of the following:
-
-        * a SALT Astronomer
-        * an investigator on the proposal
-        * a TAC member for the proposal
-        * a Board member
-        * an administrator
+        This is the case if the user may view the proposal for which the block visit was taken.
         """
+        proposal_code: ProposalCode = self.proposal_repository.get_proposal_code(block_visit_id)
 
         return self.may_view_proposal(user, proposal_code)
 

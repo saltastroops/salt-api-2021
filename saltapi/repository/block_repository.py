@@ -117,7 +117,7 @@ WHERE B.Block_Id = :block_id;
             "overhead_time": row.overhead_time,
             "observation_probabilities": observation_probabilities,
             "observing_windows": self._observing_windows(block_id),
-            "executed_observations": self._executed_observations(block_id),
+            "block_visits": self._block_visits(block_id),
             "observations": self._pointings(block_id),
         }
 
@@ -230,7 +230,11 @@ UPDATE BlockVisit BV
 SET BV.BlockVisitStatus_Id = (SELECT BVS.BlockVisitStatus_Id
                                 FROM BlockVisitStatus BVS
                                 WHERE BVS.BlockVisitStatus = :status)
-WHERE BV.BlockVisit_Id = :block_visit_id;
+WHERE BV.BlockVisit_Id = :block_visit_id
+AND BV.BlockVisitStatus_Id NOT IN (SELECT BVS2.BlockVisitStatus_Id 
+                                    FROM BlockVisitStatus AS BVS2 
+                                    WHERE BVS2.BlockVisitStatus != 'Deleted'
+                                    );
         """
         )
         try:
@@ -242,7 +246,7 @@ WHERE BV.BlockVisit_Id = :block_visit_id;
         if not result.rowcount:
             raise NotFoundError()
 
-    def _executed_observations(self, block_id: int) -> List[Dict[str, Any]]:
+    def _block_visits(self, block_id: int) -> List[Dict[str, Any]]:
         """
         Return the executed observations.
         """
