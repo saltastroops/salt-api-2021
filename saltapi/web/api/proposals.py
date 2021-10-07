@@ -137,7 +137,7 @@ def get_proposal(
     HTTP header with an appropriate filename (with the proposal code and the correct
     file extension).
 
-    An error with status code 406 (Not Acceptable) is returned if an unsupported value
+    An error with status code 406 (Not A§cceptable) is returned if an unsupported value
     is given in the `Accept` header.
 
     The different formats do not contain the same information. Most importantly, while
