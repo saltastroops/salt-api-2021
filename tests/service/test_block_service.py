@@ -4,9 +4,8 @@ import pytest
 
 from saltapi.exceptions import NotFoundError
 from saltapi.repository.block_repository import BlockRepository
-from saltapi.service.block import Block, BlockStatus
+from saltapi.service.block import Block, BlockStatus, BlockVisitStatus
 from saltapi.service.block_service import BlockService
-from saltapi.web.schema.block import BlockVisitStatus
 
 
 class FakeBlockRepository:
@@ -31,7 +30,7 @@ class FakeBlockRepository:
             block_visit = {
                 "id": BLOCK_VISIT_ID,
                 "night": "2000-01-01",
-                "status": "Rejected"
+                "status": "Rejected",
             }
             return block_visit
         raise NotFoundError
@@ -54,9 +53,7 @@ class FakeBlockRepository:
         else:
             raise NotFoundError()
 
-    def update_block_visit_status(
-            self, block_id: int, value: str
-    ) -> None:
+    def update_block_visit_status(self, block_id: int, value: str) -> None:
         if block_id == BLOCK_VISIT_ID:
             self.block_visit_status = value
         else:
@@ -71,11 +68,7 @@ BLOCK = {
     "ranking": "High",
 }
 
-BLOCK_VISIT = {
-    "id": 2,
-    "night": "2000-01-01",
-    "status": "Rejected"
-}
+BLOCK_VISIT = {"id": 2, "night": "2000-01-01", "status": "Rejected"}
 
 
 VALID_BLOCK_ID = 1

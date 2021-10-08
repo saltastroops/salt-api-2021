@@ -326,4 +326,3 @@ def i_get_a_not_found_error(response: Response) -> None:
 def i_get_an_unprocessable_entity_error(message_text: str, response: Response) -> None:
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
     assert message_text in str(response.json()["detail"])
-

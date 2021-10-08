@@ -27,10 +27,10 @@ def create_block_repository(connection: Connection) -> BlockRepository:
 
 @router.get("/{block_visit_id}", summary="Get a block visit", response_model=BlockVisit)
 def get_block_visit(
-        block_visit_id: int = Path(
-            ..., title="Block visit id", description="Unique identifier for block visits"
-        ),
-        user: User = Depends(get_current_user),
+    block_visit_id: int = Path(
+        ..., title="Block visit id", description="Unique identifier for block visits"
+    ),
+    user: User = Depends(get_current_user),
 ) -> BlockVisit:
     """
     Returns a block visit.
@@ -40,9 +40,11 @@ def get_block_visit(
     """
     with UnitOfWork() as unit_of_work:
         block_repository = create_block_repository(unit_of_work.connection)
-        permission_service = PermissionService(user_repository=UserRepository(unit_of_work.connection),
-                                               proposal_repository=ProposalRepository(unit_of_work.connection),
-                                               block_repository=block_repository)
+        permission_service = PermissionService(
+            user_repository=UserRepository(unit_of_work.connection),
+            proposal_repository=ProposalRepository(unit_of_work.connection),
+            block_repository=block_repository,
+        )
         if permission_service.may_view_block_visit(user, block_visit_id):
             block_service = BlockService(block_repository)
             block_visit = block_service.get_block_visit(block_visit_id)
@@ -52,14 +54,16 @@ def get_block_visit(
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
 
 
-@router.get("/{block_visit_id}/status",
-            summary="Get the status of a block visit",
-            response_model=BlockVisitStatus)
+@router.get(
+    "/{block_visit_id}/status",
+    summary="Get the status of a block visit",
+    response_model=BlockVisitStatus,
+)
 def get_block_visit_status(
-        block_visit_id: int = Path(
-            ..., title="Block visit id", description="Unique identifier for a block visit"
-        ),
-        user: User = Depends(get_current_user),
+    block_visit_id: int = Path(
+        ..., title="Block visit id", description="Unique identifier for a block visit"
+    ),
+    user: User = Depends(get_current_user),
 ) -> BlockVisitStatus:
     """
     Returns the status of a block visit.
@@ -74,9 +78,11 @@ def get_block_visit_status(
     """
     with UnitOfWork() as unit_of_work:
         block_repository = create_block_repository(unit_of_work.connection)
-        permission_service = PermissionService(user_repository=UserRepository(unit_of_work.connection),
-                                               proposal_repository=ProposalRepository(unit_of_work.connection),
-                                               block_repository=block_repository)
+        permission_service = PermissionService(
+            user_repository=UserRepository(unit_of_work.connection),
+            proposal_repository=ProposalRepository(unit_of_work.connection),
+            block_repository=block_repository,
+        )
         if permission_service.may_view_block_visit(user, block_visit_id):
             block_service = BlockService(block_repository)
             return block_service.get_block_visit_status(block_visit_id)
@@ -86,13 +92,16 @@ def get_block_visit_status(
 
 @router.put("/{block_visit_id}/status", summary="Update the status of a block visit")
 def update_block_visit_status(
-        block_visit_id: int = Path(
-            ..., title="Block visit id", description="Unique identifier for a block visit"
-        ),
-        block_visit_status: BlockVisitStatus = Body(
-            ..., alias="status", title="Block visit status", description="New block visit status."
-        ),
-        user: User = Depends(get_current_user),
+    block_visit_id: int = Path(
+        ..., title="Block visit id", description="Unique identifier for a block visit"
+    ),
+    block_visit_status: BlockVisitStatus = Body(
+        ...,
+        alias="status",
+        title="Block visit status",
+        description="New block visit status.",
+    ),
+    user: User = Depends(get_current_user),
 ) -> None:
     """
     Updates the status of a block visit with the given the block visit id.
@@ -101,9 +110,13 @@ def update_block_visit_status(
 
     with UnitOfWork() as unit_of_work:
         block_repository = create_block_repository(unit_of_work.connection)
-        permission_service = PermissionService(user_repository=UserRepository(unit_of_work.connection),
-                                               proposal_repository=ProposalRepository(unit_of_work.connection),
-                                               block_repository=block_repository)
+        permission_service = PermissionService(
+            user_repository=UserRepository(unit_of_work.connection),
+            proposal_repository=ProposalRepository(unit_of_work.connection),
+            block_repository=block_repository,
+        )
         if permission_service.may_update_block_visit_status(user):
             block_service = BlockService(block_repository)
-            return block_service.update_block_visit_status(block_visit_id, block_visit_status)
+            return block_service.update_block_visit_status(
+                block_visit_id, block_visit_status
+            )

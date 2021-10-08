@@ -35,10 +35,10 @@ def get_user_authentication_function() -> Callable[[str, str], User]:
     response_model=AccessToken,
 )
 def token(
-        form_data: OAuth2PasswordRequestForm = Depends(),
-        authenticate_user: Callable[[str, str], User] = Depends(
-            get_user_authentication_function
-        ),
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    authenticate_user: Callable[[str, str], User] = Depends(
+        get_user_authentication_function
+    ),
 ) -> AccessToken:
     """
     Request an authentication token.
@@ -54,9 +54,7 @@ def token(
     Note that the token expires 24 hours after being issued.
     """
     try:
-        user = authenticate_user(
-            form_data.username, form_data.password
-        )
+        user = authenticate_user(form_data.username, form_data.password)
         if user:
             return AuthenticationService.access_token(user)
 

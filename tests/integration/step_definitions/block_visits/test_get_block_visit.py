@@ -12,7 +12,10 @@ BLOCK_VISIT_URL = "/block-visits"
     parsers.parse("I request a block visit {block_visit_id}"), target_fixture="response"
 )
 def request_block_visit(block_visit_id: int, client: TestClient) -> Response:
-    response = client.get(BLOCK_VISIT_URL + "/" + str(block_visit_id), params={"proposal_code": "2016-1-COM-001"})
+    response = client.get(
+        BLOCK_VISIT_URL + "/" + str(block_visit_id),
+        params={"proposal_code": "2016-1-COM-001"},
+    )
     return response
 
 

@@ -147,7 +147,9 @@ WHERE B.Block_Id = :block_id
 
         return status
 
-    def update_block_status(self, block_id: int, value: str, reason: Optional[str]) -> None:
+    def update_block_status(
+        self, block_id: int, value: str, reason: Optional[str]
+    ) -> None:
         """
         Update the status of a block.
         """
@@ -199,8 +201,8 @@ WHERE BV.BlockVisit_Id = :block_visit_id
                 "id": row.id,
                 "night": row.night,
                 "status": row.status,
-                "rejection_reason": row.rejection_reason
-                }
+                "rejection_reason": row.rejection_reason,
+            }
             return block_visit
         except NoResultFound:
             raise NotFoundError("Unknown block visit id")
@@ -220,7 +222,7 @@ AND BVS.BlockVisitStatus NOT IN ('Deleted');
         )
         try:
             result = self.connection.execute(stmt, {"block_visit_id": block_visit_id})
-            return result.scalar_one()
+            return cast(str, result.scalar_one())
         except NoResultFound:
             raise NotFoundError("Unknown block visit id")
 
@@ -235,8 +237,8 @@ SET BV.BlockVisitStatus_Id = (SELECT BVS.BlockVisitStatus_Id
                                 FROM BlockVisitStatus BVS
                                 WHERE BVS.BlockVisitStatus = :status)
 WHERE BV.BlockVisit_Id = :block_visit_id
-AND BV.BlockVisitStatus_Id NOT IN (SELECT BVS2.BlockVisitStatus_Id 
-                                    FROM BlockVisitStatus AS BVS2 
+AND BV.BlockVisitStatus_Id NOT IN (SELECT BVS2.BlockVisitStatus_Id
+                                    FROM BlockVisitStatus AS BVS2
                                     WHERE BVS2.BlockVisitStatus != 'Deleted'
                                     );
         """
@@ -267,9 +269,7 @@ AND BVS.BlockVisitStatus NOT IN ('Deleted');
         )
         result = self.connection.execute(
             stmt,
-            {
-                "block_visit_id": block_visit_id
-            },
+            {"block_visit_id": block_visit_id},
         )
 
         try:
@@ -277,7 +277,7 @@ AND BVS.BlockVisitStatus NOT IN ('Deleted');
         except NoResultFound:
             raise NotFoundError()
 
-    def _block_visits(self, block_id: int) -> List[Dict[str, any]]:
+    def _block_visits(self, block_id: int) -> List[Dict[str, Any]]:
         """
         Return the executed observations.
         """
@@ -307,8 +307,9 @@ WHERE B.Block_Id = :block_id
                 "id": row.id,
                 "night": row.night,
                 "status": row.status,
-                "rejection_reason": row.rejection_reason
-            } for row in result
+                "rejection_reason": row.rejection_reason,
+            }
+            for row in result
         ]
 
         return block_visits

@@ -1,9 +1,7 @@
 from typing import Any, Dict
 
 from saltapi.repository.block_repository import BlockRepository
-from saltapi.service.block import Block
-from saltapi.web.schema.block import BlockVisitStatus
-from saltapi.web.schema.common import BlockVisit
+from saltapi.service.block import Block, BlockVisit, BlockVisitStatus
 
 
 class BlockService:

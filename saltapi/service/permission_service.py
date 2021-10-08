@@ -10,7 +10,7 @@ class PermissionService:
         self,
         user_repository: UserRepository,
         proposal_repository: ProposalRepository,
-        block_repository: BlockRepository
+        block_repository: BlockRepository,
     ) -> None:
         self.user_repository = user_repository
         self.proposal_repository = proposal_repository
@@ -106,9 +106,12 @@ class PermissionService:
         """
         Check whether the user may view a block visit.
 
-        This is the case if the user may view the proposal for which the block visit was taken.
+        This is the case if the user may view the proposal for which the block visit
+        was taken.
         """
-        proposal_code: ProposalCode = self.block_repository.get_proposal_code_for_block_visit_id(block_visit_id)
+        proposal_code: ProposalCode = (
+            self.block_repository.get_proposal_code_for_block_visit_id(block_visit_id)
+        )
 
         return self.may_view_proposal(user, proposal_code)
 

@@ -1,8 +1,5 @@
-from typing import Any, Dict
-
-from fastapi import APIRouter, Body, Depends, HTTPException, Path
+from fastapi import APIRouter, Body, Depends, Path
 from sqlalchemy.engine import Connection
-from starlette import status
 
 from saltapi.repository.block_repository import BlockRepository
 from saltapi.repository.instrument_repository import InstrumentRepository
