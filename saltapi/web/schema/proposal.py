@@ -6,7 +6,7 @@ from pydantic import BaseModel, EmailStr, Field
 
 from saltapi.web.schema.block import BlockSummary
 from saltapi.web.schema.common import (
-    ExecutedObservation,
+    BlockVisit,
     PartnerCode,
     PartnerName,
     Priority,
@@ -344,7 +344,7 @@ class Proposal(BaseModel):
     blocks: List[BlockSummary] = Field(
         ..., title="Blocks", description="Blocks for the semester"
     )
-    executed_observations: List[ExecutedObservation] = Field(
+    block_visits: List[BlockVisit] = Field(
         ...,
         title="Observations",
         description="Observations made for the proposal in any semester",

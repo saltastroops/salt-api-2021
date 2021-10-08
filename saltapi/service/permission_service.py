@@ -1,3 +1,4 @@
+from saltapi.repository.block_repository import BlockRepository
 from saltapi.repository.proposal_repository import ProposalRepository
 from saltapi.repository.user_repository import UserRepository
 from saltapi.service.proposal import ProposalCode
@@ -6,10 +7,14 @@ from saltapi.service.user import User
 
 class PermissionService:
     def __init__(
-        self, user_repository: UserRepository, proposal_repository: ProposalRepository
+        self,
+        user_repository: UserRepository,
+        proposal_repository: ProposalRepository,
+        block_repository: BlockRepository
     ) -> None:
         self.user_repository = user_repository
         self.proposal_repository = proposal_repository
+        self.block_repository = block_repository
 
     def may_view_proposal(self, user: User, proposal_code: ProposalCode) -> bool:
         """
@@ -61,7 +66,7 @@ class PermissionService:
             or self.user_repository.is_administrator(username)
         )
 
-    def may_deactivate_proposal(self, user: User, block_visit_id: int) -> bool:
+    def may_deactivate_proposal(self, user: User, proposal_code: ProposalCode) -> bool:
         """
         Check whether the user may deactivate a proposal.
 
@@ -72,7 +77,6 @@ class PermissionService:
         * a SALT Astronomer
         * an administrator
         """
-        proposal_code: ProposalCode = self.proposal_repository.get_proposal_code(block_visit_id)
 
         username = user.username
 
@@ -104,7 +108,7 @@ class PermissionService:
 
         This is the case if the user may view the proposal for which the block visit was taken.
         """
-        proposal_code: ProposalCode = self.proposal_repository.get_proposal_code(block_visit_id)
+        proposal_code: ProposalCode = self.block_repository.get_proposal_code_for_block_visit_id(block_visit_id)
 
         return self.may_view_proposal(user, proposal_code)
 

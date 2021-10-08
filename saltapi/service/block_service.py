@@ -1,8 +1,9 @@
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 from saltapi.repository.block_repository import BlockRepository
 from saltapi.service.block import Block
 from saltapi.web.schema.block import BlockVisitStatus
+from saltapi.web.schema.common import BlockVisit
 
 
 class BlockService:
@@ -30,7 +31,7 @@ class BlockService:
 
         return self.block_repository.update_block_status(block_id, status, reason)
 
-    def get_block_visit(self, block_visit_id: int) -> Dict[str, Any]:
+    def get_block_visit(self, block_visit_id: int) -> BlockVisit:
         """
         Return the block visit for a block visit id.
         """

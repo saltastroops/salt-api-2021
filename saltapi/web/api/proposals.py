@@ -21,7 +21,7 @@ from saltapi.service.proposal import Proposal as _Proposal
 from saltapi.service.proposal import ProposalListItem as _ProposalListItem
 from saltapi.service.proposal_service import ProposalService
 from saltapi.web.schema.common import (
-    ExecutedObservation,
+    BlockVisit,
     ProposalCode,
     Semester,
 )
@@ -398,7 +398,7 @@ def put_progress_report(
 @router.get(
     "/{proposal_code}/observations",
     summary="List observations",
-    response_model=List[ExecutedObservation],
+    response_model=List[BlockVisit],
 )
 def get_observations(
     proposal_code: ProposalCode = Path(
@@ -418,7 +418,7 @@ def get_observations(
         title="From date",
         description="Only include observations for this night and earlier.",
     ),
-) -> List[ExecutedObservation]:
+) -> List[BlockVisit]:
     """
     Returns the list of observations for a proposal. The list of observations can be
     filtered by a from date or a to date or both. These dates refer to observation

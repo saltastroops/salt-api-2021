@@ -11,7 +11,9 @@ from saltapi.exceptions import NotFoundError
 from saltapi.repository.instrument_repository import InstrumentRepository
 from saltapi.repository.target_repository import TargetRepository
 from saltapi.service.block import Block
+from saltapi.service.proposal import ProposalCode
 from saltapi.web.schema.block import BlockVisitStatus
+from saltapi.web.schema.common import BlockVisit
 
 
 class BlockRepository:
@@ -173,7 +175,7 @@ WHERE B.Block_Id = :block_id;
         if not result.rowcount:
             raise NotFoundError()
 
-    def get_block_visit(self, block_visit_id: int) -> Dict[str, Any]:
+    def get_block_visit(self, block_visit_id: int) -> BlockVisit:
         """
         Return the observations for a block visit id.
         """
@@ -181,8 +183,11 @@ WHERE B.Block_Id = :block_id;
             """
 SELECT BV.BlockVisit_Id     AS id,
        NI.Date              AS night,
-       BVS.BlockVisitStatus AS status
+       BVS.BlockVisitStatus AS status,
+       BRR.RejectedReason   AS rejection_reason
 FROM BlockVisit BV
+    LEFT JOIN BlockRejectedReason BRR
+                   ON BV.BlockRejectedReason_Id = BRR.BlockRejectedReason_Id
     JOIN NightInfo NI ON BV.NightInfo_Id = NI.NightInfo_Id
     JOIN BlockVisitStatus BVS ON BV.BlockVisitStatus_Id = BVS.BlockVisitStatus_Id
 WHERE BV.BlockVisit_Id = :block_visit_id
@@ -196,6 +201,7 @@ WHERE BV.BlockVisit_Id = :block_visit_id
                 "id": row.id,
                 "night": row.night,
                 "status": row.status,
+                "rejection_reason": row.rejection_reason
                 }
             return block_visit
         except NoResultFound:
@@ -216,7 +222,7 @@ AND BVS.BlockVisitStatus NOT IN ('Deleted');
         )
         try:
             result = self.connection.execute(stmt, {"block_visit_id": block_visit_id})
-            return cast(str, result.scalar_one())
+            return cast(BlockVisitStatus, result.scalar_one())
         except NoResultFound:
             raise NotFoundError("Unknown block visit id")
 
@@ -239,14 +245,41 @@ AND BV.BlockVisitStatus_Id NOT IN (SELECT BVS2.BlockVisitStatus_Id
         )
         try:
             result = self.connection.execute(
-                stmt, {"observation_id": block_visit_id, "status": status}
+                stmt, {"block_visit_id": block_visit_id, "status": status}
             )
         except IntegrityError:
             raise NotFoundError("Unknown block visit status")
         if not result.rowcount:
             raise NotFoundError()
 
-    def _block_visits(self, block_id: int) -> List[Dict[str, Any]]:
+    def get_proposal_code_for_block_visit_id(self, block_visit_id: int) -> ProposalCode:
+        """
+        Return proposal code for a block visit id:
+        """
+        stmt = text(
+            """
+SELECT PC.Proposal_code
+FROM ProposalCode PC
+JOIN Block B on PC.ProposalCode_Id = B.ProposalCode_Id
+JOIN BlockVisit BV on BV.Block_Id = B.Block_Id
+JOIN BlockVisitStatus BVS ON BV.BlockVisitStatus_Id = BVS.BlockVisitStatus_Id
+WHERE BV.BlockVisit_Id = :block_visit_id
+AND BVS.BlockVisitStatus NOT IN ('Deleted');
+        """
+        )
+        result = self.connection.execute(
+            stmt,
+            {
+                "block_visit_id": block_visit_id
+            },
+        )
+
+        try:
+            return cast(ProposalCode, result.scalar_one())
+        except NoResultFound:
+            raise NotFoundError()
+
+    def _block_visits(self, block_id: int) -> List[BlockVisit]:
         """
         Return the executed observations.
         """
@@ -271,17 +304,17 @@ WHERE B.Block_Id = :block_id
         """
         )
         result = self.connection.execute(stmt, {"block_id": block_id})
-        observations = []
+        block_visits = []
         for row in result:
             observation = {
                 "id": row.id,
                 "night": row.night,
-                "accepted": row.status == "Accepted",
+                "status": row.status,
                 "rejection_reason": row.rejection_reason,
             }
-            observations.append(observation)
+            block_visits.append(observation)
 
-        return observations
+        return block_visits
 
     def _observing_windows(self, block_id: int) -> List[Dict[str, datetime]]:
         """

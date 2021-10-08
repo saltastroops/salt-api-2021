@@ -5,9 +5,11 @@ from typing import Any, Callable, Dict, Generator, List, Optional
 
 from pydantic import BaseModel, Field
 
+from saltapi.web.schema.block import BlockVisitStatus
 
-class BaseExecutedObservation(BaseModel):
-    "An observation made, without block details."
+
+class BaseBlockVisit(BaseModel):
+    """An observation made, without block details."""
 
     id: int = Field(
         ..., title="Observation id", description="Unique identifier of the observation"
@@ -17,10 +19,10 @@ class BaseExecutedObservation(BaseModel):
         title="Observation night",
         description="Start date of the night when the observation was made",
     )
-    accepted: bool = Field(
+    status: BlockVisitStatus = Field(
         ...,
-        title="Accepted?",
-        description="Whether the observation has been accepted",
+        title="Block visit status",
+        description="Status of the block visit",
     )
     rejection_reason: Optional[str] = Field(
         None,
@@ -45,7 +47,7 @@ class Priority(IntEnum):
     P4 = 4
 
 
-class ExecutedObservation(BaseExecutedObservation):
+class BlockVisit(BaseBlockVisit):
     """An observation made."""
 
     block_id: int = Field(
