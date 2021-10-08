@@ -29,7 +29,9 @@ class PermissionService:
             return (
                 self.user_repository.is_salt_astronomer(username)
                 or self.user_repository.is_investigator(username, proposal_code)
-                or self.user_repository.is_tac_member_for_proposal(username, proposal_code)
+                or self.user_repository.is_tac_member_for_proposal(
+                    username, proposal_code
+                )
                 or self.user_repository.is_administrator(username)
             )
         else:

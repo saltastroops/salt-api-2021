@@ -71,13 +71,14 @@ def get_proposals(
     ),
 ) -> List[_ProposalListItem]:
     """
-    Lists all proposals the user may view. The proposals returned can be limited to those
-    with submissions within a semester range by supplying a from or a to semester (or
-    both). The maximum number of results can be set with the limit parameter; the default is 1000.
+    Lists all proposals the user may view. The proposals returned can be limited to
+    those with submissions within a semester range by supplying a from or a to
+    semester (or both). The maximum number of results can be set with the limit
+    parameter; the default is 1000.
 
-    A proposal is included for a semester if there exists a submission for that semester.
-    For multi-semester proposals this implies that a proposal may not be included for a
-    semester even though time has been requested for that semester.
+    A proposal is included for a semester if there exists a submission for that
+    semester. For multi-semester proposals this implies that a proposal may not be
+    included for a semester even though time has been requested for that semester.
     """
 
     with UnitOfWork() as unit_of_work:
