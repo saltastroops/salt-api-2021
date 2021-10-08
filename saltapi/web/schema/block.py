@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field
 
 from saltapi.web.schema.bvit import BvitSummary
 from saltapi.web.schema.common import (
-    BaseExecutedObservation,
+    BaseBlockVisit,
     ObservationProbabilities,
     Priority,
     ProposalCode,
@@ -38,16 +38,6 @@ class BlockStatus(BaseModel):
     reason: str = Field(
         ..., title="Block status reason", description="Block status reason"
     )
-
-
-class BlockVisitStatus(str, Enum):
-    """Block visit status."""
-
-    # The SDB also contains a status "Deleted", but the API should ignore block visits
-    # with this status.
-    ACCEPTED = "Accepted"
-    IN_QUEUE = "In queue"
-    REJECTED = "Rejected"
 
 
 class Transparency(str, Enum):
@@ -124,7 +114,7 @@ class Block(BaseModel):
         title="Requested observations",
         description="Number of observations requested for the block",
     )
-    executed_observations: List[BaseExecutedObservation] = Field(
+    executed_observations: List[BaseBlockVisit] = Field(
         ...,
         title="Executed observations",
         description="Observations made for the block",

@@ -12,8 +12,7 @@ from saltapi.service.authentication_service import get_current_user
 from saltapi.service.block_service import BlockService
 from saltapi.service.permission_service import PermissionService
 from saltapi.service.user import User
-from saltapi.web.schema.block import BlockVisitStatus
-from saltapi.web.schema.common import BlockVisit
+from saltapi.web.schema.common import BlockVisit, BlockVisitStatus
 
 router = APIRouter(prefix="/block-visits", tags=["Block visit"])
 
@@ -40,11 +39,11 @@ def get_block_visit(
     queue to be observed.
     """
     with UnitOfWork() as unit_of_work:
+        block_repository = create_block_repository(unit_of_work.connection)
         permission_service = PermissionService(user_repository=UserRepository(unit_of_work.connection),
                                                proposal_repository=ProposalRepository(unit_of_work.connection),
-                                               block_repository=create_block_repository(unit_of_work.connection))
+                                               block_repository=block_repository)
         if permission_service.may_view_block_visit(user, block_visit_id):
-            block_repository = create_block_repository(unit_of_work.connection)
             block_service = BlockService(block_repository)
             block_visit = block_service.get_block_visit(block_visit_id)
             return block_visit
@@ -74,11 +73,11 @@ def get_block_visit_status(
     Rejected | The observations are rejected.
     """
     with UnitOfWork() as unit_of_work:
+        block_repository = create_block_repository(unit_of_work.connection)
         permission_service = PermissionService(user_repository=UserRepository(unit_of_work.connection),
                                                proposal_repository=ProposalRepository(unit_of_work.connection),
-                                               block_repository=create_block_repository(unit_of_work.connection))
+                                               block_repository=block_repository)
         if permission_service.may_view_block_visit(user, block_visit_id):
-            block_repository = create_block_repository(unit_of_work.connection)
             block_service = BlockService(block_repository)
             return block_service.get_block_visit_status(block_visit_id)
         else:
@@ -101,10 +100,10 @@ def update_block_visit_status(
     """
 
     with UnitOfWork() as unit_of_work:
+        block_repository = create_block_repository(unit_of_work.connection)
         permission_service = PermissionService(user_repository=UserRepository(unit_of_work.connection),
                                                proposal_repository=ProposalRepository(unit_of_work.connection),
-                                               block_repository=create_block_repository(unit_of_work.connection))
+                                               block_repository=block_repository)
         if permission_service.may_update_block_visit_status(user):
-            block_repository = create_block_repository(unit_of_work.connection)
             block_service = BlockService(block_repository)
             return block_service.update_block_visit_status(block_visit_id, block_visit_status)

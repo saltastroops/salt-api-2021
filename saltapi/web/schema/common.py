@@ -5,19 +5,27 @@ from typing import Any, Callable, Dict, Generator, List, Optional
 
 from pydantic import BaseModel, Field
 
-from saltapi.web.schema.block import BlockVisitStatus
+
+class BlockVisitStatus(str, Enum):
+    """Block visit status."""
+
+    # The SDB also contains a status "Deleted", but the API should ignore block visits
+    # with this status.
+    ACCEPTED = "Accepted"
+    IN_QUEUE = "In queue"
+    REJECTED = "Rejected"
 
 
 class BaseBlockVisit(BaseModel):
-    """An observation made, without block details."""
+    """A block visit made, without block details."""
 
     id: int = Field(
-        ..., title="Observation id", description="Unique identifier of the observation"
+        ..., title="Block visit id", description="Unique identifier of the block visit"
     )
     night: date = Field(
         ...,
         title="Observation night",
-        description="Start date of the night when the observation was made",
+        description="Start date of the night when the block visit was made",
     )
     status: BlockVisitStatus = Field(
         ...,
@@ -27,7 +35,7 @@ class BaseBlockVisit(BaseModel):
     rejection_reason: Optional[str] = Field(
         None,
         title="Rejection reason",
-        description="Reason why the observation has been rejected",
+        description="Reason why the block visit has been rejected",
     )
 
 

@@ -12,7 +12,7 @@ from saltapi.repository.instrument_repository import InstrumentRepository
 from saltapi.repository.target_repository import TargetRepository
 from saltapi.service.block import Block
 from saltapi.service.proposal import ProposalCode
-from saltapi.web.schema.block import BlockVisitStatus
+from saltapi.web.schema.common import BlockVisitStatus
 from saltapi.web.schema.common import BlockVisit
 
 
@@ -175,9 +175,9 @@ WHERE B.Block_Id = :block_id;
         if not result.rowcount:
             raise NotFoundError()
 
-    def get_block_visit(self, block_visit_id: int) -> BlockVisit:
+    def get_block_visit(self, block_visit_id: int) -> Dict[str, str]:
         """
-        Return the observations for a block visit id.
+        Return the block visits for a block visit id.
         """
         stmt = text(
             """
@@ -304,15 +304,14 @@ WHERE B.Block_Id = :block_id
         """
         )
         result = self.connection.execute(stmt, {"block_id": block_id})
-        block_visits = []
-        for row in result:
-            observation = {
+        block_visits = [
+            {
                 "id": row.id,
                 "night": row.night,
                 "status": row.status,
-                "rejection_reason": row.rejection_reason,
-            }
-            block_visits.append(observation)
+                "rejection_reason": row.rejection_reason
+            } for row in result
+        ]
 
         return block_visits
 
