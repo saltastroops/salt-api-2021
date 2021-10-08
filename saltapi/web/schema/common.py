@@ -17,7 +17,7 @@ class BlockVisitStatus(str, Enum):
 
 
 class BaseBlockVisit(BaseModel):
-    """A block visit made, without block details."""
+    """A block visit, without block details."""
 
     id: int = Field(
         ..., title="Block visit id", description="Unique identifier of the block visit"
@@ -25,7 +25,7 @@ class BaseBlockVisit(BaseModel):
     night: date = Field(
         ...,
         title="Observation night",
-        description="Start date of the night when the block visit was made",
+        description="Start date of the night when the observation was made (or the block visit was queued).",
     )
     status: BlockVisitStatus = Field(
         ...,

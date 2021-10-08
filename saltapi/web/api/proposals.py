@@ -437,9 +437,6 @@ def get_block_visits(
     * The start date of the night when the block visit was done. For example, if the date is 3 July 2021, the block visit was done between 3 July 2021 noon (UTC) and 4 July 2021 noon (UTC).
     * The block visit status. This can be `Accepted`, `Rejected` or `In queue`.
     * The reason why the block visit has been rejected. This is relevant only for rejected block visits.
-
-    Block visits are returned irrespective of whether they have been accepted or
-    rejected.
     """
     raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED)
 

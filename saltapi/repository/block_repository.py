@@ -12,8 +12,6 @@ from saltapi.repository.instrument_repository import InstrumentRepository
 from saltapi.repository.target_repository import TargetRepository
 from saltapi.service.block import Block
 from saltapi.service.proposal import ProposalCode
-from saltapi.web.schema.common import BlockVisitStatus
-from saltapi.web.schema.common import BlockVisit
 
 
 class BlockRepository:
@@ -207,7 +205,7 @@ WHERE BV.BlockVisit_Id = :block_visit_id
         except NoResultFound:
             raise NotFoundError("Unknown block visit id")
 
-    def get_block_visit_status(self, block_visit_id: int) -> BlockVisitStatus:
+    def get_block_visit_status(self, block_visit_id: int) -> str:
         """
         Return the status of observations for a block visit id.
         """
@@ -222,7 +220,7 @@ AND BVS.BlockVisitStatus NOT IN ('Deleted');
         )
         try:
             result = self.connection.execute(stmt, {"block_visit_id": block_visit_id})
-            return cast(BlockVisitStatus, result.scalar_one())
+            return result.scalar_one()
         except NoResultFound:
             raise NotFoundError("Unknown block visit id")
 
@@ -279,7 +277,7 @@ AND BVS.BlockVisitStatus NOT IN ('Deleted');
         except NoResultFound:
             raise NotFoundError()
 
-    def _block_visits(self, block_id: int) -> List[BlockVisit]:
+    def _block_visits(self, block_id: int) -> List[Dict[str, any]]:
         """
         Return the executed observations.
         """
