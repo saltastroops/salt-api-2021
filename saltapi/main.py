@@ -15,11 +15,6 @@ from saltapi.web.api.users import router as user_router
 app = FastAPI()
 
 
-@app.exception_handler(NotFoundError)
-async def not_found_exception_handler(request: Request, exc: NotFoundError) -> Response:
-    return JSONResponse(status_code=404, content={"message": "Not Found"})
-
-
 settings = Settings()
 origins = [settings.frontend_uri]
 

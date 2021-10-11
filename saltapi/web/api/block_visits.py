@@ -11,6 +11,8 @@ from saltapi.repository.user_repository import UserRepository
 from saltapi.service.authentication_service import get_current_user
 from saltapi.service.block_service import BlockService
 from saltapi.service.permission_service import PermissionService
+from saltapi.service.block import BlockVisit as _BlockVisit
+from saltapi.service.block import BlockVisitStatus as _BlockVisitStatus
 from saltapi.service.user import User
 from saltapi.web.schema.common import BlockVisit, BlockVisitStatus
 
@@ -31,7 +33,7 @@ def get_block_visit(
         ..., title="Block visit id", description="Unique identifier for block visits"
     ),
     user: User = Depends(get_current_user),
-) -> BlockVisit:
+) -> _BlockVisit:
     """
     Returns a block visit.
 
@@ -64,7 +66,7 @@ def get_block_visit_status(
         ..., title="Block visit id", description="Unique identifier for a block visit"
     ),
     user: User = Depends(get_current_user),
-) -> BlockVisitStatus:
+) -> _BlockVisitStatus:
     """
     Returns the status of a block visit.
 

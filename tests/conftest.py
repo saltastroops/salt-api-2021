@@ -62,34 +62,6 @@ app.dependency_overrides[
 TEST_DATA = "users.yaml"
 
 
-# Replace the user authentication with one which assumes that every user has the
-# password "secret".
-
-USER_PASSWORD = "secret"
-
-
-def get_user_authentication_function() -> Callable[[str, str], User]:
-    def authenticate_user(username: str, password: str) -> User:
-        if password != USER_PASSWORD:
-            raise NotFoundError("No user found for username and password")
-
-        with cast(Engine, engine).connect() as connection:
-            user_repository = UserRepository(connection)
-            user_service = UserService(user_repository)
-            user = user_service.get_user(username)
-            return user
-
-    return authenticate_user
-
-
-app.dependency_overrides[
-    saltapi.web.api.authentication.get_user_authentication_function
-] = get_user_authentication_function
-
-
-TEST_DATA = "users.yaml"
-
-
 @pytest.fixture(scope="function")
 def dbconnection() -> Generator[Connection, None, None]:
     if not engine:
