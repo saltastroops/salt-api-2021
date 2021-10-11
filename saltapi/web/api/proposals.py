@@ -1,9 +1,10 @@
 from datetime import date
-from typing import List, Optional
+from typing import List, Optional, cast
 
 from fastapi import (
     APIRouter,
     Body,
+    Depends,
     File,
     Header,
     HTTPException,
@@ -17,9 +18,15 @@ from fastapi.responses import FileResponse
 
 from saltapi.repository.proposal_repository import ProposalRepository
 from saltapi.repository.unit_of_work import UnitOfWork
+from saltapi.repository.user_repository import UserRepository
+from saltapi.service.authentication_service import get_current_user
+from saltapi.service.permission_service import PermissionService
 from saltapi.service.proposal import Proposal as _Proposal
+from saltapi.service.proposal import ProposalCode as _ProposalCode
 from saltapi.service.proposal import ProposalListItem as _ProposalListItem
 from saltapi.service.proposal_service import ProposalService
+from saltapi.service.user import User
+from saltapi.util import semester_start
 from saltapi.web.schema.common import (
     BlockVisit,
     ProposalCode,
@@ -46,28 +53,48 @@ class PDFResponse(Response):
 
 @router.get("/", summary="List proposals", response_model=List[ProposalListItem])
 def get_proposals(
-    from_semester: Optional[Semester] = Query(
-        "2005-2",
+    user: User = Depends(get_current_user),
+    from_semester: Semester = Query(
+        "2000-1",
         alias="from",
         description="Only include proposals for this semester and later.",
+        title="From semester",
     ),
-    to_semester: Optional[Semester] = Query(
+    to_semester: Semester = Query(
         "2099-2",
         alias="to",
         description="Only include proposals for this semester and earlier.",
         title="To semester",
     ),
+    limit: int = Query(
+        1000, description="Maximum number of results to return.", title="Limit", ge=0
+    ),
 ) -> List[_ProposalListItem]:
     """
     Lists all proposals the user may view. The proposals returned can be limited to those
     with submissions within a semester range by supplying a from or a to semester (or
-    both).
+    both). The maximum number of results can be set with the limit parameter; the default is 1000.
+
+    A proposal is included for a semester if there exists a submission for that semester.
+    For multi-semester proposals this implies that a proposal may not be included for a
+    semester even though time has been requested for that semester.
     """
 
     with UnitOfWork() as unit_of_work:
+        if semester_start(from_semester) > semester_start(to_semester):
+            raise HTTPException(
+                status_code=400,
+                detail="The from semester must not be later than the to semester.",
+            )
+
         proposal_repository = ProposalRepository(unit_of_work.connection)
         proposal_service = ProposalService(proposal_repository)
-        return proposal_service.list_proposal_summaries()
+        return proposal_service.list_proposal_summaries(
+            username=user.username,
+            from_semester=from_semester,
+            to_semester=to_semester,
+            limit=limit,
+        )
 
 
 @router.get(
@@ -87,6 +114,7 @@ def get_proposal(
         title="Accepted content type",
         description="Content type that should be returned.",
     ),
+    user: User = Depends(get_current_user),
 ) -> _Proposal:
     """
     Returns the proposal with a given proposal code. The proposal can be requested in
@@ -119,8 +147,15 @@ def get_proposal(
     """
 
     with UnitOfWork() as unit_of_work:
+        user_repository = UserRepository(unit_of_work.connection)
         proposal_repository = ProposalRepository(unit_of_work.connection)
         proposal_service = ProposalService(proposal_repository)
+        permission_service = PermissionService(user_repository, proposal_repository)
+        if not permission_service.may_view_proposal(
+            user, cast(_ProposalCode, proposal_code)
+        ):
+            raise HTTPException(status.HTTP_403_FORBIDDEN)
+
         return proposal_service.get_proposal(proposal_code)
 
 

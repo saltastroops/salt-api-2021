@@ -15,18 +15,20 @@ class FakeUserRepository:
         is_principal_investigator: bool = False,
         is_principal_contact: bool = False,
         is_salt_astronomer: bool = False,
-        is_tac_member: bool = False,
-        is_tac_chair: bool = False,
+        is_tac_member_for_proposal: bool = False,
+        is_tac_chair_for_proposal: bool = False,
         is_board_member: bool = False,
+        is_partner_affiliated_user: bool = False,
         is_administrator: bool = False,
     ) -> None:
         self._is_investigator = is_investigator
         self._is_principal_investigator = is_principal_investigator
         self._is_principal_contact = is_principal_contact
         self._is_salt_astronomer = is_salt_astronomer
-        self._is_tac_member = is_tac_member
-        self._is_tac_chair = is_tac_chair
+        self._is_tac_member = is_tac_member_for_proposal
+        self._is_tac_chair = is_tac_chair_for_proposal
         self._is_board_member = is_board_member
+        self._is_partner_affiliated_user = is_partner_affiliated_user
         self._is_administrator = is_administrator
 
     def is_investigator(self, username: str, proposal_code: ProposalCode) -> bool:
@@ -48,15 +50,22 @@ class FakeUserRepository:
     def is_salt_astronomer(self, username: str) -> bool:
         return self._is_salt_astronomer
 
-    def is_tac_member(self, username: str, proposal_code: ProposalCode) -> bool:
+    def is_tac_member_for_proposal(
+        self, username: str, proposal_code: ProposalCode
+    ) -> bool:
         # A TAC chair is a TAC member as well
         return self._is_tac_member or self._is_tac_chair
 
-    def is_tac_chair(self, username: str, proposal_code: ProposalCode) -> bool:
+    def is_tac_chair_for_proposal(
+        self, username: str, proposal_code: ProposalCode
+    ) -> bool:
         return self._is_tac_chair
 
     def is_board_member(self, username: str) -> bool:
         return self._is_board_member
+
+    def is_partner_affiliated_user(self, username: str) -> bool:
+        return self._is_partner_affiliated_user
 
     def is_administrator(self, username: str) -> bool:
         return self._is_administrator
@@ -69,6 +78,9 @@ class FakeProposalRepository:
     def is_self_activable(self, proposal_code: str) -> bool:
         return self._is_self_activable
 
+    def get_proposal_type(self, proposal_code: str) -> str:
+        return "Science " if "GW" not in proposal_code else "Gravitational Wave Event"
+
 
 class FakeBlockRepository:
     pass
@@ -78,9 +90,10 @@ INVESTIGATOR = "investigator"
 PRINCIPAL_INVESTIGATOR = "principal_investigator"
 PRINCIPAL_CONTACT = "principal_contact"
 SALT_ASTRONOMER = "salt_astronomer"
-TAC_MEMBER = "tac_member"
-TAC_CHAIR = "tac_chair"
+TAC_MEMBER_FOR_PROPOSAL = "tac_member_for_proposal"
+TAC_CHAIR_FOR_PROPOSAL = "tac_chair_for_proposal"
 BOARD_MEMBER = "board_member"
+PARTNER_AFFILIATED_USER = "partner_affiliated_user"
 ADMINISTRATOR = "administrator"
 
 ALL_ROLES = {
@@ -88,8 +101,8 @@ ALL_ROLES = {
     PRINCIPAL_INVESTIGATOR,
     PRINCIPAL_CONTACT,
     SALT_ASTRONOMER,
-    TAC_MEMBER,
-    TAC_CHAIR,
+    TAC_MEMBER_FOR_PROPOSAL,
+    TAC_CHAIR_FOR_PROPOSAL,
     BOARD_MEMBER,
     ADMINISTRATOR,
 }
@@ -155,7 +168,7 @@ def _assert_role_based_permission(
         ), f"Expected {expected_result} for {role}, got {not expected_result}"
 
 
-def test_may_view_proposal() -> None:
+def test_may_view_non_gravitational_wave_proposal() -> None:
     roles_with_permission = [
         INVESTIGATOR,
         PRINCIPAL_INVESTIGATOR,
@@ -163,11 +176,17 @@ def test_may_view_proposal() -> None:
         SALT_ASTRONOMER,
         TAC_MEMBER,
         TAC_CHAIR,
-        BOARD_MEMBER,
         ADMINISTRATOR,
     ]
     _assert_role_based_permission(
         "may_view_proposal", roles_with_permission, proposal_code=PROPOSAL_CODE
+    )
+
+
+def test_may_view_gravitational_wave_proposal() -> None:
+    roles_with_permission = [PARTNER_AFFILIATED_USER]
+    _assert_role_based_permission(
+        "may_view_proposal", roles_with_permission, proposal_code="2019-1-GWE-005"
     )
 
 

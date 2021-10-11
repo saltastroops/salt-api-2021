@@ -15,13 +15,13 @@ TEST_DATA_PATH = "repository/user_repository.yaml"
 def test_get_user_returns_correct_user(
     dbconnection: Connection, testdata: Callable[[str], Any]
 ) -> None:
-    expected = testdata(TEST_DATA_PATH)["get_user"]
+    expected_user = testdata(TEST_DATA_PATH)["get_user"]
     user_repository = UserRepository(dbconnection)
-    user = user_repository.get(expected["username"])
+    user = user_repository.get(expected_user["username"])
 
-    assert user.id == expected["id"]
-    assert user.username == expected["username"]
-    assert user.given_name == expected["given_name"]
+    assert user.id == expected_user["id"]
+    assert user.username == expected_user["username"]
+    assert user.given_name == expected_user["given_name"]
     assert user.email is not None
 
 
@@ -30,6 +30,29 @@ def test_get_user_raises_error_for_non_existing_user(dbconnection: Connection) -
     user_repository = UserRepository(dbconnection)
     with pytest.raises(NotFoundError):
         user_repository.get("idontexist")
+
+
+@nodatabase
+def test_get_user_by_email_returns_correct_user(
+    dbconnection: Connection, testdata: Callable[[str], Any]
+) -> None:
+    expected_user = testdata(TEST_DATA_PATH)["get_user_by_email"]
+    user_repository = UserRepository(dbconnection)
+    user = user_repository.get_by_email(expected_user["email"])
+
+    assert user.id == expected_user["id"]
+    assert user.username == expected_user["username"]
+    assert user.given_name == expected_user["given_name"]
+    assert user.email is not None
+
+
+@nodatabase
+def test_get_user_by_email_raises_error_for_non_existing_user(
+    dbconnection: Connection,
+) -> None:
+    user_repository = UserRepository(dbconnection)
+    with pytest.raises(NotFoundError):
+        user_repository.get("invalid@email.com")
 
 
 @nodatabase
@@ -166,7 +189,7 @@ def test_is_tac_member_returns_true_for_tac_member(
         proposal_code = d["proposal_code"]
 
         for username in d["tac_members"]:
-            assert user_repository.is_tac_member(
+            assert user_repository.is_tac_member_for_proposal(
                 username, proposal_code
             ), f"Should be true for {username} and {proposal_code}"
 
@@ -181,7 +204,7 @@ def test_is_tac_member_returns_false_for_non_tac_member(
         proposal_code = d["proposal_code"]
 
         for username in d["non_tac_members"]:
-            assert not user_repository.is_tac_member(
+            assert not user_repository.is_tac_member_for_proposal(
                 username, proposal_code
             ), f"Should be false for {username} and {proposal_code}"
 
@@ -196,7 +219,7 @@ def test_is_tac_chair_returns_true_for_tac_chair(
         proposal_code = d["proposal_code"]
 
         for username in d["tac_chairs"]:
-            assert user_repository.is_tac_chair(
+            assert user_repository.is_tac_chair_for_proposal(
                 username, proposal_code
             ), f"Should be true for {username} and {proposal_code}"
 
@@ -211,7 +234,7 @@ def test_is_tac_chair_returns_false_for_non_tac_chair(
         proposal_code = d["proposal_code"]
 
         for username in d["non_tac_chairs"]:
-            assert not user_repository.is_tac_chair(
+            assert not user_repository.is_tac_chair_for_proposal(
                 username, proposal_code
             ), f"Should be false for {username} and {proposal_code}"
 
@@ -236,6 +259,30 @@ def test_is_board_member_returns_false_for_non_board_member(
     user_repository = UserRepository(dbconnection)
     for username in data["non_board_members"]:
         assert not user_repository.is_board_member(
+            username
+        ), f"Should be false for {username}"
+
+
+@nodatabase
+def test_is_partner_affiliated_user_returns_true_for_affiliated_user(
+    dbconnection: Connection, testdata: Callable[[str], Any]
+) -> None:
+    data = testdata(TEST_DATA_PATH)["is_partner_affiliated_user"]
+    user_repository = UserRepository(dbconnection)
+    for username in data["affiliated_users"]:
+        assert user_repository.is_partner_affiliated_user(
+            username
+        ), f"Should be true for {username}"
+
+
+@nodatabase
+def test_is_partner_affiliated_user_returns_false_for_non_affiliated_user(
+    dbconnection: Connection, testdata: Callable[[str], Any]
+) -> None:
+    data = testdata(TEST_DATA_PATH)["is_partner_affiliated_user"]
+    user_repository = UserRepository(dbconnection)
+    for username in data["non_affiliated_users"]:
+        assert not user_repository.is_partner_affiliated_user(
             username
         ), f"Should be false for {username}"
 
@@ -273,8 +320,9 @@ def test_is_administrator_returns_false_for_administrator(
         "investigator",
         "principal_investigator",
         "principal_contact",
-        "tac_member",
-        "tac_chair",
+        "activating_investigator",
+        "tac_member_for_proposal",
+        "tac_chair_for_proposal",
     ],
 )
 def test_role_checks_return_false_for_non_existing_proposal(
@@ -352,3 +400,19 @@ def test_find_by_username_and_password_raises_error_for_wrong_password(
     # None may raise an exception other than NotFoundError
     with pytest.raises(Exception):
         user_repository.find_user_with_username_and_password(username, cast(str, None))
+
+
+@nodatabase
+def test_get_user_roles_returns_correct_roles(
+    dbconnection: Connection, testdata: Callable[[str], Any]
+) -> None:
+    data = testdata(TEST_DATA_PATH)["get_user_roles"]
+    user_repository = UserRepository(dbconnection)
+    for d in data:
+        username = d["username"]
+        expected_roles = set(d["roles"])
+        roles = set(role.value for role in user_repository.get_user_roles(username))
+
+        assert (
+            expected_roles == roles
+        ), f"Expected roles for {username}: {expected_roles}; found: {roles}"

@@ -283,3 +283,7 @@ class TimeInterval(BaseModel):
     end: datetime = Field(
         ..., title="Interval end", description="End time of the interval, in UTC"
     )
+
+
+class Message(BaseModel):
+    message: str = Field(..., title="Message", description="Message")
