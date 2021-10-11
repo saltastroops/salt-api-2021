@@ -35,7 +35,7 @@ class BlockStatus(BaseModel):
     value: BlockStatusValue = Field(
         ..., title="Block status value", description="Block status value"
     )
-    reason: str = Field(
+    reason: Optional[str] = Field(
         ..., title="Block status reason", description="Block status reason"
     )
 
@@ -114,7 +114,7 @@ class Block(BaseModel):
         title="Requested observations",
         description="Number of observations requested for the block",
     )
-    executed_observations: List[BaseExecutedObservation] = Field(
+    block_visits: List[BaseExecutedObservation] = Field(
         ...,
         title="Executed observations",
         description="Observations made for the block",

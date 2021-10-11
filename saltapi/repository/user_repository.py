@@ -269,6 +269,25 @@ WHERE PU.Username = :username
 
         return cast(int, result.scalar_one()) > 0
 
+    def is_partner_affiliated_user(self, username: str) -> bool:
+        """
+        Check whether the user is a user that is affiliated to a SALT partner.
+        """
+        stmt = text(
+            """
+SELECT COUNT(*)
+FROM Investigator I
+         JOIN PiptUser PU ON I.PiptUser_Id = PU.PiptUser_Id
+         JOIN Institute I2 ON I.Institute_Id = I2.Institute_Id
+         JOIN Partner P ON I2.Partner_Id = P.Partner_Id
+WHERE PU.Username = :username
+  AND P.Partner_Code != 'OTH'
+  AND P.Virtual = 0;
+        """
+        )
+        result = self.connection.execute(stmt, {"username": username})
+        return cast(int, result.scalar_one()) > 0
+
     def is_administrator(self, username: str) -> bool:
         """
         Check whether the user is an administrator.
@@ -307,7 +326,7 @@ ON DUPLICATE KEY UPDATE Password = :password
             stmt, {"username": username, "password": new_password_hash}
         )
 
-    def _update_password(self, username: str, password: str):
+    def _update_password(self, username: str, password: str) -> None:
         self.update_password_hash(username, password)
         password_hash = self.get_password_hash(password)
         stmt = text(
@@ -317,9 +336,7 @@ SET Password = :password
 WHERE Username = :username
         """
         )
-        self.connection.execute(
-            stmt, {"username": username, "password": password_hash}
-        )
+        self.connection.execute(stmt, {"username": username, "password": password_hash})
 
     @staticmethod
     def get_new_password_hash(password: str) -> str:

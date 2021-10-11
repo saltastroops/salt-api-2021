@@ -48,7 +48,8 @@ def test_get_user_by_email_returns_correct_user(
 
 @nodatabase
 def test_get_user_by_email_raises_error_for_non_existing_user(
-        dbconnection: Connection) -> None:
+    dbconnection: Connection,
+) -> None:
     user_repository = UserRepository(dbconnection)
     with pytest.raises(NotFoundError):
         user_repository.get("invalid@email.com")
@@ -258,6 +259,30 @@ def test_is_board_member_returns_false_for_non_board_member(
     user_repository = UserRepository(dbconnection)
     for username in data["non_board_members"]:
         assert not user_repository.is_board_member(
+            username
+        ), f"Should be false for {username}"
+
+
+@nodatabase
+def test_is_partner_affiliated_user_returns_true_for_affiliated_user(
+    dbconnection: Connection, testdata: Callable[[str], Any]
+) -> None:
+    data = testdata(TEST_DATA_PATH)["is_partner_affiliated_user"]
+    user_repository = UserRepository(dbconnection)
+    for username in data["affiliated_users"]:
+        assert user_repository.is_partner_affiliated_user(
+            username
+        ), f"Should be true for {username}"
+
+
+@nodatabase
+def test_is_partner_affiliated_user_returns_false_for_non_affiliated_user(
+    dbconnection: Connection, testdata: Callable[[str], Any]
+) -> None:
+    data = testdata(TEST_DATA_PATH)["is_partner_affiliated_user"]
+    user_repository = UserRepository(dbconnection)
+    for username in data["non_affiliated_users"]:
+        assert not user_repository.is_partner_affiliated_user(
             username
         ), f"Should be false for {username}"
 

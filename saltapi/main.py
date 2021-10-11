@@ -1,6 +1,8 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
+from saltapi.exceptions import NotFoundError
 from saltapi.logging_config import setup_logging
 from saltapi.settings import Settings
 from saltapi.web.api.authentication import router as authentication_router
@@ -21,6 +23,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.exception_handler(NotFoundError)
+async def not_found_exception_handler(request: Request, exc: NotFoundError) -> Response:
+    return JSONResponse(status_code=404, content={"message": "Not Found"})
+
 
 app.include_router(blocks_router)
 app.include_router(proposals_router)
