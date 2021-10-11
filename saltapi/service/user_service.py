@@ -1,4 +1,5 @@
 from datetime import timedelta
+from typing import List
 
 from saltapi.repository.user_repository import UserRepository
 from saltapi.service.authentication_service import AuthenticationService
@@ -69,7 +70,7 @@ SALT Team
 
     @staticmethod
     def password_reset_url(token) -> str:
-        return Settings().frontend_uri + "/reset-password/" + token
+        return Settings().frontend_uri + "/change-password/" + token
 
     def get_user_roles(self, username: str) -> List[Role]:
         return self.repository.get_user_roles(username)

@@ -42,3 +42,12 @@ def send_password_reset_email(
         return Message(
             message="Email with a password reset link sent."
         )
+
+
+@router.post(
+    "/change-user-details",
+    summary="Create an observation comment",
+    response_model=Message,
+)
+def change_user_details():
+    pass
