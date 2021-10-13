@@ -5,7 +5,7 @@ import dotenv
 # Make sure that the test database etc. are used.
 # IMPORTANT: These lines must be executed before any server-related package is imported.
 
-os.environ["DOTENV_FILE"] = 'tests/.env.test'
+os.environ["DOTENV_FILE"] = "tests/.env.test"
 dotenv.load_dotenv(os.environ["DOTENV_FILE"])
 
 
@@ -15,18 +15,20 @@ from saltapi.service.user import User
 from saltapi.service.user_service import UserService
 
 
-#mport re
+# mport re
 from pathlib import Path
 from typing import Any, Callable, Generator, Optional, cast
 
 import pytest
 import yaml
 from fastapi.testclient import TestClient
-#from pytest_bdd import given, parsers, then
-#from requests import Response
+
+# from pytest_bdd import given, parsers, then
+# from requests import Response
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Connection, Engine
-#from starlette import status
+
+# from starlette import status
 
 import saltapi.web.api.authentication
 from saltapi.main import app
@@ -121,3 +123,6 @@ def authenticate(username: str, client: TestClient) -> None:
     client.headers["Authorization"] = f"Bearer {token}"
 
 
+def not_authenticated(client: TestClient) -> None:
+    if "Authorization" in client.headers:
+        del client.headers["Authorization"]

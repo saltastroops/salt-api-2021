@@ -27,6 +27,3 @@ def test_login_with_valid_credentials(client: TestClient) -> None:
     )
     assert response.status_code == status.HTTP_200_OK
     assert "access_token" in response.json()
-
-
-

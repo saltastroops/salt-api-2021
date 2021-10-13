@@ -81,6 +81,7 @@ def get_proposals(
     """
 
     with UnitOfWork() as unit_of_work:
+        print(to_semester)
         if semester_start(from_semester) > semester_start(to_semester):
             raise HTTPException(
                 status_code=400,
