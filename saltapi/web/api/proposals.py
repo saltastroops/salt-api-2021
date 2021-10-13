@@ -28,7 +28,7 @@ from saltapi.service.proposal_service import ProposalService
 from saltapi.service.user import User
 from saltapi.util import semester_start
 from saltapi.web.schema.common import (
-    ExecutedObservation,
+    BlockVisit,
     ProposalCode,
     Semester,
 )
@@ -432,11 +432,11 @@ def put_progress_report(
 
 
 @router.get(
-    "/{proposal_code}/observations",
-    summary="List observations",
-    response_model=List[ExecutedObservation],
+    "/{proposal_code}/block_visits",
+    summary="List block visits",
+    response_model=List[BlockVisit],
 )
-def get_observations(
+def get_block_visits(
     proposal_code: ProposalCode = Path(
         ...,
         title="Proposal code",
@@ -454,28 +454,25 @@ def get_observations(
         title="From date",
         description="Only include observations for this night and earlier.",
     ),
-) -> List[ExecutedObservation]:
+) -> List[BlockVisit]:
     """
-    Returns the list of observations for a proposal. The list of observations can be
+    Returns the list of block visits for a proposal. The list of block visits can be
     filtered by a from date or a to date or both. These dates refer to observation
     nights, and they are inclusive. So for example, if the from date is 1 July 2021
-    and the to date is 31 July 2021, the request returns observations made between 1
+    and the to date is 31 July 2021, the request returns block visits made between 1
     July 2021 noon (UTC) and 1 August 2021 noon (UTC).
 
-    The following information is included for each observation:
+    The following information is included for each block visit:
 
-    * The unique observation identifier. This can be used to update the observation status.
-    * The time charged for the observation.
+    * The unique block visit identifier. This can be used to update the block visit status.
+    * The time charged for the block visit.
     * The unique identifier of the observed block. This can be used to access the full block details.
     * The priority of the observed block.
-    * The maximum lunar phase allowed for the observation. This the percentage of lunar illumination. It is only relevant if the Moon is above the horizon.
+    * The maximum lunar phase allowed for the block visit. This the percentage of lunar illumination. It is only relevant if the Moon is above the horizon.
     * The list of observed targets. With the exception of some old proposals, this list contains a single target only. The unique target identifier and the target name are given for each target.
-    * The start date of the night when the observation was done. For example, if the date is 3 July 2021, the oservation was done between 3 July 2021 noon (UTC) and 4 July 2021 noon (UTC).
-    * The observation status. Thids can be `Accepted` or `Rejected`.
-    * The reason why the observation has been rejected. This is relevant only for rejected observations.
-
-    Observations are returned irrespective of whether they have been accepted or
-    rejected.
+    * The start date of the night when the block visit was done. For example, if the date is 3 July 2021, the block visit was done between 3 July 2021 noon (UTC) and 4 July 2021 noon (UTC).
+    * The block visit status. This can be `Accepted`, `Rejected` or `In queue`.
+    * The reason why the block visit has been rejected. This is relevant only for rejected block visits.
     """
     raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED)
 

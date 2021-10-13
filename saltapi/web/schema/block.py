@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field
 
 from saltapi.web.schema.bvit import BvitSummary
 from saltapi.web.schema.common import (
-    BaseExecutedObservation,
+    BaseBlockVisit,
     ObservationProbabilities,
     Priority,
     ProposalCode,
@@ -35,7 +35,7 @@ class BlockStatus(BaseModel):
     value: BlockStatusValue = Field(
         ..., title="Block status value", description="Block status value"
     )
-    reason: str = Field(
+    reason: Optional[str] = Field(
         ..., title="Block status reason", description="Block status reason"
     )
 
@@ -114,9 +114,9 @@ class Block(BaseModel):
         title="Requested observations",
         description="Number of observations requested for the block",
     )
-    block_visits: List[BaseExecutedObservation] = Field(
+    block_visits: List[BaseBlockVisit] = Field(
         ...,
-        title="Executed observations",
+        title="Block visit",
         description="Observations made for the block",
     )
     observing_conditions: ObservingConditions = Field(

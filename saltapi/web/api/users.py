@@ -34,9 +34,8 @@ def send_password_reset_email(
 
         except NotFoundError:
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
+                status_code=status.HTTP_404_NOT_FOUND,
                 detail="Username or email didn't match any user.",
-                headers={"WWW-Authenticate": "Bearer"},
             )
 
         user_service = UserService(user_repository)

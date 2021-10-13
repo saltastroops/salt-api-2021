@@ -1,3 +1,4 @@
+from saltapi.repository.block_repository import BlockRepository
 from saltapi.repository.proposal_repository import ProposalRepository
 from saltapi.repository.user_repository import UserRepository
 from saltapi.service.proposal import ProposalCode
@@ -6,10 +7,14 @@ from saltapi.service.user import User
 
 class PermissionService:
     def __init__(
-        self, user_repository: UserRepository, proposal_repository: ProposalRepository
+        self,
+        user_repository: UserRepository,
+        proposal_repository: ProposalRepository,
+        block_repository: BlockRepository,
     ) -> None:
         self.user_repository = user_repository
         self.proposal_repository = proposal_repository
+        self.block_repository = block_repository
 
     def may_view_proposal(self, user: User, proposal_code: ProposalCode) -> bool:
         """
@@ -32,6 +37,7 @@ class PermissionService:
                 or self.user_repository.is_tac_member_for_proposal(
                     username, proposal_code
                 )
+                or self.user_repository.is_tac_member_for_proposal(username, proposal_code)
                 or self.user_repository.is_administrator(username)
             )
         else:
@@ -82,6 +88,7 @@ class PermissionService:
         * a SALT Astronomer
         * an administrator
         """
+
         username = user.username
 
         return (
@@ -94,6 +101,34 @@ class PermissionService:
     def may_update_proposal_status(self, user: User) -> bool:
         """
         Check whether the user may update a proposal status.
+
+        This is the case if the user is any of the following:
+
+        * a SALT Astronomer
+        * an administrator
+        """
+        username = user.username
+
+        return self.user_repository.is_salt_astronomer(
+            username
+        ) or self.user_repository.is_administrator(username)
+
+    def may_view_block_visit(self, user: User, block_visit_id: int) -> bool:
+        """
+        Check whether the user may view a block visit.
+
+        This is the case if the user may view the proposal for which the block visit
+        was taken.
+        """
+        proposal_code: ProposalCode = (
+            self.block_repository.get_proposal_code_for_block_visit_id(block_visit_id)
+        )
+
+        return self.may_view_proposal(user, proposal_code)
+
+    def may_update_block_visit_status(self, user: User) -> bool:
+        """
+        Check whether the user may update a block visit status.
 
         This is the case if the user is any of the following:
 

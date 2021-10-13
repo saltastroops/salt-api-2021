@@ -1,5 +1,6 @@
 from typing import Any, Iterable, List, Tuple, cast
 
+from saltapi.repository.block_repository import BlockRepository
 from saltapi.repository.proposal_repository import ProposalRepository
 from saltapi.repository.user_repository import UserRepository
 from saltapi.service.permission_service import PermissionService
@@ -81,6 +82,10 @@ class FakeProposalRepository:
         return "Science " if "GW" not in proposal_code else "Gravitational Wave Event"
 
 
+class FakeBlockRepository:
+    pass
+
+
 INVESTIGATOR = "investigator"
 PRINCIPAL_INVESTIGATOR = "principal_investigator"
 PRINCIPAL_CONTACT = "principal_contact"
@@ -148,12 +153,15 @@ def _assert_role_based_permission(
     roles.
     """
     proposal_repository = cast(ProposalRepository, FakeProposalRepository())
+    block_repository = cast(BlockRepository, FakeBlockRepository)
     for (
         role,
         user_repository,
         expected_result,
     ) in _user_repositories_and_expected_results(roles_with_permission):
-        permission_service = PermissionService(user_repository, proposal_repository)
+        permission_service = PermissionService(
+            user_repository, proposal_repository, block_repository
+        )
         assert (
             getattr(permission_service, permission)(user=USER, **kwargs)
             is expected_result
@@ -206,7 +214,10 @@ def test_may_activate_proposal() -> None:
                 ProposalRepository,
                 FakeProposalRepository(is_self_activable=is_self_activable),
             )
-            permission_service = PermissionService(user_repository, proposal_repository)
+            block_repository = cast(BlockRepository, FakeBlockRepository)
+            permission_service = PermissionService(
+                user_repository, proposal_repository, block_repository
+            )
 
             assert (
                 permission_service.may_activate_proposal(USER, PROPOSAL_CODE)
