@@ -1,3 +1,5 @@
+from typing import Dict, Any
+
 import pytest
 from fastapi.testclient import TestClient
 from starlette import status
@@ -14,9 +16,10 @@ SECRET_KEY = Settings().secret_key
 # Unauthenticated user cannot request a proposal
 def test_get_proposal_for_nonpermitted_user(client: TestClient) -> None:
     proposal_code = list(USERS["investigators"].keys())[0]
+    not_authenticated(client)
     response = client.get(
         PROPOSALS_URL + "/" + proposal_code,
-        params={"proposal_code": proposal_code, "user": not_authenticated(client)},
+        params={"proposal_code": proposal_code},
     )
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
@@ -25,9 +28,10 @@ def test_get_proposal_for_nonpermitted_user(client: TestClient) -> None:
 def test_get_nonexisting_proposal(client: TestClient) -> None:
     username = list(USERS["investigators"].values())[0]
     proposal_code = "2020-2-SCI-099"
+    authenticate(username, client)
     response = client.get(
         PROPOSALS_URL + "/" + proposal_code,
-        params={"proposal_code": proposal_code, "user": authenticate(username, client)},
+        params={"proposal_code": proposal_code},
     )
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
@@ -37,13 +41,14 @@ def test_get_nonexisting_proposal(client: TestClient) -> None:
     "user_type",
     [
         "investigators",
-        "principal_investigators" "administrator",
+        "principal_investigators",
+        "administrator",
         "salt_astronomer",
         "tac_members",
     ],
 )
 def test_get_proposal_for_permitted_users(user_type: str, client: TestClient) -> None:
-    data: dict = {"proposal_code": [], "username": []}
+    data: Dict[Any, Any] = {"proposal_code": [], "username": []}
 
     if user_type == "administrator" or user_type == "salt_astronomer":
         # an administrator and a salt-astronomer can check any proposal
@@ -57,8 +62,8 @@ def test_get_proposal_for_permitted_users(user_type: str, client: TestClient) ->
     elif user_type == "tac_members":
         # a tac-member can only check a proposal they affiliated partner to
         username = USERS[user_type]["RSA"]
-        for i, proposal_code in enumerate(USERS["investigators"].keys()):
-            if i in [0, 1, 5]:
+        for proposal_code in USERS["investigators"].keys():
+            if proposal_code in ['2019-2-SCI-006', '2018-2-LSP-001']:
                 data["proposal_code"].append(proposal_code)
                 data["username"].append(username)
 
@@ -71,12 +76,10 @@ def test_get_proposal_for_permitted_users(user_type: str, client: TestClient) ->
     for i in range(len(data["proposal_code"])):
         proposal_code = data["proposal_code"][i]
         username = data["username"][i]
+        authenticate(username, client)
         response = client.get(
             PROPOSALS_URL + "/" + proposal_code,
-            params={
-                "proposal_code": proposal_code,
-                "user": authenticate(username, client),
-            },
+            params={"proposal_code": proposal_code},
         )
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["proposal_code"] == proposal_code
@@ -96,8 +99,9 @@ def test_get_proposal_for_nonpermitted_users(
 ) -> None:
     proposal_code = list(USERS[user_type].keys())[0]
     username = list(USERS[user_type].values())[1]
+    authenticate(username, client)
     response = client.get(
         PROPOSALS_URL + "/" + proposal_code,
-        params={"proposal_code": proposal_code, "user": authenticate(username, client)},
+        params={"proposal_code": proposal_code},
     )
     assert response.status_code == status.HTTP_403_FORBIDDEN

@@ -13,9 +13,8 @@ SECRET_KEY = Settings().secret_key
 
 # Unauthenticated users cannot request a proposal
 def test_get_proposals_for_nonpermitted_user(client: TestClient) -> None:
-    response = client.get(
-        PROPOSALS_URL + "/", params={"user": not_authenticated(client)}
-    )
+    not_authenticated(client)
+    response = client.get(PROPOSALS_URL + "/")
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
@@ -28,16 +27,12 @@ def test_get_proposals_for_nonpermitted_user(client: TestClient) -> None:
         "principal_contacts",
     ],
 )
-def test_get_proposals_for_permitted_users(user_type, client: TestClient) -> None:
+def test_get_proposals_for_permitted_users(user_type: str, client: TestClient) -> None:
     data = USERS[user_type]
     usernames = data.values()
     for username in usernames:
-        response = client.get(
-            PROPOSALS_URL + "/",
-            params={
-                "user": authenticate(username, client),
-            },
-        )
+        authenticate(username, client)
+        response = client.get(PROPOSALS_URL + "/")
         assert response.status_code == status.HTTP_200_OK
 
 
@@ -54,10 +49,10 @@ def test_start_semester_not_less_than_end_semester(
     from_semester: str, to_semester: str, client: TestClient
 ) -> None:
     username = USERS["administrator"]
+    authenticate(username, client)
     response = client.get(
         PROPOSALS_URL + "/",
         params={
-            "user": authenticate(username, client),
             "from": from_semester,
             "to": to_semester,
         },
@@ -80,10 +75,10 @@ def test_invalid_semesters(
     from_semester: str, to_semester: str, client: TestClient
 ) -> None:
     username = USERS["administrator"]
+    authenticate(username, client)
     response = client.get(
         PROPOSALS_URL + "/",
         params={
-            "user": authenticate(username, client),
             "from": from_semester,
             "to": to_semester,
         },
@@ -102,12 +97,10 @@ def test_invalid_semesters(
 )
 def test_get_limited_proposals(limit: int, client: TestClient) -> None:
     username = USERS["administrator"]
+    authenticate(username, client)
     response = client.get(
         PROPOSALS_URL + "/",
-        params={
-            "user": authenticate(username, client),
-            "limit": limit,
-        },
+        params={"limit": limit},
     )
     assert response.status_code == status.HTTP_200_OK
     assert len(response.json()) == limit
@@ -116,8 +109,9 @@ def test_get_limited_proposals(limit: int, client: TestClient) -> None:
 # A negative value is rejected for the maximum number of results
 def test_invalid_limit(client: TestClient) -> None:
     username = USERS["administrator"]
+    authenticate(username, client)
     response = client.get(
         PROPOSALS_URL + "/",
-        params={"user": authenticate(username, client), "limit": -1},
+        params={"limit": -1},
     )
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
