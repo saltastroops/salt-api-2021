@@ -4,13 +4,15 @@ import dotenv
 
 # Make sure that the test database etc. are used.
 # IMPORTANT: These lines must be executed before any server-related package is imported.
+os.environ["DOTENV_FILE"] = "tests/.env.test"
+dotenv.load_dotenv(os.environ["DOTENV_FILE"])
+
 from saltapi.exceptions import NotFoundError
 from saltapi.repository.user_repository import UserRepository
 from saltapi.service.user import User
 from saltapi.service.user_service import UserService
 
-os.environ["DOTENV_FILE"] = ".env.test"
-dotenv.load_dotenv(os.environ["DOTENV_FILE"])
+
 
 import re
 from pathlib import Path

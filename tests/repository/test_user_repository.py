@@ -5,10 +5,21 @@ from pytest import MonkeyPatch
 from sqlalchemy.engine import Connection
 
 from saltapi.exceptions import NotFoundError
+from saltapi.repository.instrument_repository import InstrumentRepository
+from saltapi.repository.target_repository import TargetRepository
 from saltapi.repository.user_repository import UserRepository
+from saltapi.repository.block_repository import BlockRepository
 from tests.markers import nodatabase
 
 TEST_DATA_PATH = "repository/user_repository.yaml"
+
+
+def create_block_repository(connection: Connection) -> BlockRepository:
+    return BlockRepository(
+        target_repository=TargetRepository(connection),
+        instrument_repository=InstrumentRepository(connection),
+        connection=connection,
+    )
 
 
 @nodatabase
@@ -320,7 +331,6 @@ def test_is_administrator_returns_false_for_administrator(
         "investigator",
         "principal_investigator",
         "principal_contact",
-        "activating_investigator",
         "tac_member_for_proposal",
         "tac_chair_for_proposal",
     ],

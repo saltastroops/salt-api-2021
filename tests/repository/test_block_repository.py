@@ -12,7 +12,7 @@ from saltapi.service.instrument import BVIT, HRS, RSS, Salticam
 from saltapi.service.target import Target
 from tests.markers import nodatabase
 
-TEST_DATA = "repository/block_repository.yaml"
+TEST_DATA = "../saltapi-testdata/repository/block_repository.yaml"
 
 
 class FakeTargetRepository:
@@ -421,16 +421,15 @@ def test_get_block_visit(
             target_repository, instrument_repository, dbconnection
         )
         block_visit = block_repository.get_block_visit(block_visit_id)
-        for key in data:
-            assert key in block_visit
-            assert block_visit[key] == data[key]
+        assert block_visit_id == block_visit["id"]
+        assert d["status"] == block_visit["status"]
 
 
 @nodatabase
 def test_get_block_visit_status(
     dbconnection: Connection, testdata: Callable[[str], Any]
 ) -> None:
-    data = testdata(TEST_DATA)["block_visit_status"]
+    data = testdata(TEST_DATA)["block_visit"]
     for d in data:
         block_visit_id = d["id"]
         expected_status = d["status"]
