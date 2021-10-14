@@ -30,7 +30,7 @@ class ProposalRepository:
         self.connection = connection
 
     def _list(
-        self, username: str, from_semester: str, to_semester: str, limit: int
+            self, username: str, from_semester: str, to_semester: str, limit: int
     ) -> List[ProposalListItem]:
         """
         Return a list of proposal summaries.
@@ -169,11 +169,11 @@ LIMIT :limit;
         return astronomer
 
     def list(
-        self,
-        username: str,
-        from_semester: str = "2000-1",
-        to_semester: str = "2099-2",
-        limit: int = 1000000,
+            self,
+            username: str,
+            from_semester: str = "2000-1",
+            to_semester: str = "2099-2",
+            limit: int = 1000000,
     ) -> List[Dict[str, Any]]:
         """
         Return a list of proposal summaries.
@@ -203,10 +203,10 @@ LIMIT :limit;
         )
 
     def _get(
-        self,
-        proposal_code: str,
-        semester: Optional[str],
-        phase: Optional[int],
+            self,
+            proposal_code: str,
+            semester: Optional[str],
+            phase: Optional[int],
     ) -> Proposal:
         """
         Return the proposal content for a semester.
@@ -246,10 +246,10 @@ LIMIT :limit;
         return proposal
 
     def get(
-        self,
-        proposal_code: str,
-        semester: Optional[str] = None,
-        phase: Optional[int] = None,
+            self,
+            proposal_code: str,
+            semester: Optional[str] = None,
+            phase: Optional[int] = None,
     ) -> Proposal:
         try:
             return self._get(
@@ -385,9 +385,9 @@ LIMIT 1
 
     @staticmethod
     def _data_release_date(
-        executed_observations: List[Dict[str, Any]],
-        proprietary_period: Optional[int],
-        first_submission: date,
+            executed_observations: List[Dict[str, Any]],
+            proprietary_period: Optional[int],
+            first_submission: date,
     ) -> Optional[date]:
         # no proprietary period - no release date
         if proprietary_period is None:
@@ -546,8 +546,8 @@ ORDER BY I.Surname, I.FirstName
             if investigator["approved"] == 1:
                 investigator["has_approved_proposal"] = True
             elif (
-                investigator["approval_code"] is None
-                or investigator["approval_code"] == ""
+                    investigator["approval_code"] is None
+                    or investigator["approval_code"] == ""
             ):
                 investigator["has_approved_proposal"] = False
             else:
@@ -913,7 +913,7 @@ WHERE C.Proposal_Code = :proposal_code
         return instruments
 
     def time_allocations(
-        self, proposal_code: str, semester: str
+            self, proposal_code: str, semester: str
     ) -> List[Dict[str, Any]]:
         """
         Return the time allocations and TAC comments for a semester.
@@ -1025,7 +1025,7 @@ GROUP BY B.Priority
         return time
 
     def _block_observable_nights(
-        self, proposal_code: str, semester: str, interval: TimeInterval
+            self, proposal_code: str, semester: str, interval: TimeInterval
     ) -> Dict[int, int]:
         """
         Return the number of nights in an interval when blocks are observable.
@@ -1097,8 +1097,9 @@ ORDER BY PC.CommentDate, PC.ProposalComment_Id
         result = self.connection.execute(stmt, {"proposal_code": proposal_code})
         return [ObservationComment(**dict(row)) for row in result]
 
-    def add_observation_comment(self, proposal_code: str, comment: str,
-                                author: User) -> None:
+    def add_observation_comment(
+            self, proposal_code: str, comment: str, user: User
+    ) -> ObservationComment:
         stmt = text(
             """
 INSERT INTO ProposalComment(
@@ -1115,15 +1116,21 @@ VALUES (
 )
     """
         )
-        self.connection.execute(
+        comment_date = date.today()
+        results = self.connection.execute(
             stmt, {
                 "proposal_code": proposal_code,
-                "username": author.username,
+                "username": user.username,
                 "comment": comment,
-                "date": date.today()
+                "date": comment_date
             }
         )
-        self.connection.commit()
+        return ObservationComment(
+            id=results.lastrowid,
+            author=f"{user.given_name} {user.family_name}",
+            comment=comment,
+            comment_date=comment_date,
+        )
 
     def get_proposal_status(self, proposal_code: str) -> str:
         """

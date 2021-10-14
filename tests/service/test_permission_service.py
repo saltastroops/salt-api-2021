@@ -118,7 +118,7 @@ def _user_repositories_and_expected_results(
     roles_with_permission: Iterable[str],
 ) -> List[Tuple[str, UserRepository, bool]]:
     """
-    Create a fake author repository for every role and return these along with the role
+    Create a fake user repository for every role and return these along with the role
     and the expected result for a permission check. The latter is assumed to be True if
     and only if the role is in the given list of roles with permission.
     """

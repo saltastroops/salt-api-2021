@@ -42,7 +42,7 @@ from saltapi.web.schema.proposal import (
     ProposalContentType,
     ProposalListItem,
     ProposalStatusContent,
-    SubmissionAcknowledgment,
+    SubmissionAcknowledgment, Comment,
 )
 
 router = APIRouter(prefix="/proposals", tags=["Proposals"])
@@ -342,11 +342,19 @@ def get_observation_comments(
         ...,
         title="Proposal code",
         description="Proposal code of the proposal whose observation comments are requested.",
-    )
+    ),
+    user: User = Depends(get_current_user)
 ) -> List[ObservationComment]:
     with UnitOfWork() as unit_of_work:
         proposal_repository = ProposalRepository(unit_of_work.connection)
+        user_repository = UserRepository(unit_of_work.connection)
         proposal_service = ProposalService(proposal_repository)
+        permission_service = PermissionService(user_repository, proposal_repository)
+        if not permission_service.may_view_comment(user, proposal_code):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User are not permitted to perform this action."
+            )
         return proposal_service.get_observation_comments(proposal_code)
 
 
@@ -354,6 +362,7 @@ def get_observation_comments(
     "/{proposal_code}/observation-comments",
     summary="Create an observation comment",
     response_model=Message,
+    status_code=201
 )
 def post_observation_comment(
     proposal_code: ProposalCode = Path(
@@ -361,22 +370,31 @@ def post_observation_comment(
         title="Proposal code",
         description="Proposal code of the proposal for which an observation comment is added.",
     ),
-    comment: Dict[str, str] = Body(..., title="Comment", description="Text of the comment."),
+    comment: Comment = Body(..., title="Comment", description="Text of the comment."),
     user: User = Depends(get_current_user)
-) -> Message:
+) -> ObservationComment:
     """
     Adds a new comment related to an observation. The user submitting the request is
-    recorded as the comment author.
+    recorded as the comment user.
     """
     with UnitOfWork() as unit_of_work:
         proposal_repository = ProposalRepository(unit_of_work.connection)
+        user_repository = UserRepository(unit_of_work.connection)
         proposal_service = ProposalService(proposal_repository)
-        proposal_service.add_observation_comment(
+        permission_service = PermissionService(user_repository, proposal_repository)
+        if not permission_service.may_add_comment(user, proposal_code):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User are not permitted to perform this action."
+            )
+
+        observation_comment = proposal_service.add_observation_comment(
             proposal_code=proposal_code,
-            comment=comment["comment"],
+            comment=comment.comment,
             user=user
         )
-        return Message(message="Comment added successfully.")
+        proposal_repository.connection.commit()
+        return observation_comment
 
 
 @router.get(

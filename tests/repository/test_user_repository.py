@@ -388,7 +388,7 @@ def test_find_by_username_and_password_raises_error_for_wrong_password(
     data = testdata(TEST_DATA_PATH)["find_user_with_wrong_password"]
     username = data["username"]
 
-    # Make sure the author exists
+    # Make sure the user exists
     assert user_repository.get(username)
 
     with pytest.raises(NotFoundError):

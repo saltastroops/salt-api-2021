@@ -40,6 +40,7 @@ class ProposalService:
     def get_observation_comments(self, proposal_code: str) -> List[ObservationComment]:
         return self.repository.get_observation_comments(proposal_code)
 
-    def add_observation_comment(self, proposal_code: str, comment: str, user: User) -> None:
-        # TODO only SA's, SO's and investigators can add a comment
-        self.repository.add_observation_comment(proposal_code, comment, user)
+    def add_observation_comment(
+            self, proposal_code: str, comment: str, user: User
+    ) -> ObservationComment:
+        return self.repository.add_observation_comment(proposal_code, comment, user)

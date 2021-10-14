@@ -352,14 +352,14 @@ class ViewProposal(Permission):
     """
     Permission to view a proposal.
 
-    A author may view a proposal if at least one of the following is true.
+    A user may view a proposal if at least one of the following is true.
 
-    - The author is an investigator on the proposal.
-    - The author is a SALT Astronomer.
-    - The author is a SALT Operator.
-    - The author is a SALT Engineer.
-    - The author is a TAC member for a partner from which the proposal has requested time.
-    - The author is an administrator.
+    - The user is an investigator on the proposal.
+    - The user is a SALT Astronomer.
+    - The user is a SALT Operator.
+    - The user is a SALT Engineer.
+    - The user is a TAC member for a partner from which the proposal has requested time.
+    - The user is an administrator.
     """
 
     def __init__(self, proposal_code: str, db: Pool):
@@ -367,7 +367,7 @@ class ViewProposal(Permission):
         self.db = db
 
     async def is_permitted_for(self, user: User) -> bool:
-        """Check whether a author has the permission."""
+        """Check whether a user has the permission."""
 
         roles = [role.Investigator(self.proposal_code, self.db),
                  role.SaltAstronomer(self.db),

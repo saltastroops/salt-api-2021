@@ -6,16 +6,17 @@ from saltapi.service.user import User
 
 class PermissionService:
     def __init__(
-        self, user_repository: UserRepository, proposal_repository: ProposalRepository
+            self, user_repository: UserRepository,
+            proposal_repository: ProposalRepository
     ) -> None:
         self.user_repository = user_repository
         self.proposal_repository = proposal_repository
 
     def may_view_proposal(self, user: User, proposal_code: ProposalCode) -> bool:
         """
-        Check whether the author may view a proposal.
+        Check whether the user may view a proposal.
 
-        This is the case if the author is any of the following:
+        This is the case if the user is any of the following:
 
         * a SALT Astronomer
         * an investigator on the proposal
@@ -43,9 +44,9 @@ class PermissionService:
 
     def may_activate_proposal(self, user: User, proposal_code: ProposalCode) -> bool:
         """
-        Check whether the author may activate a proposal.
+        Check whether the user may activate a proposal.
 
-        This is the case if the author is any of the following:
+        This is the case if the user is any of the following:
 
         * a SALT Astronomer
         * an activating investigator
@@ -71,9 +72,9 @@ class PermissionService:
 
     def may_deactivate_proposal(self, user: User, proposal_code: ProposalCode) -> bool:
         """
-        Check whether the author may deactivate a proposal.
+        Check whether the user may deactivate a proposal.
 
-        This is the case if the author is any of the following:
+        This is the case if the user is any of the following:
 
         * a Principal Investigator
         * a Principal Contact
@@ -83,17 +84,17 @@ class PermissionService:
         username = user.username
 
         return (
-            self.user_repository.is_principal_investigator(username, proposal_code)
-            or self.user_repository.is_principal_contact(username, proposal_code)
-            or self.user_repository.is_salt_astronomer(username)
-            or self.user_repository.is_administrator(username)
+                self.user_repository.is_principal_investigator(username, proposal_code)
+                or self.user_repository.is_principal_contact(username, proposal_code)
+                or self.user_repository.is_salt_astronomer(username)
+                or self.user_repository.is_administrator(username)
         )
 
     def may_update_proposal_status(self, user: User) -> bool:
         """
-        Check whether the author may update a proposal status.
+        Check whether the user may update a proposal status.
 
-        This is the case if the author is any of the following:
+        This is the case if the user is any of the following:
 
         * a SALT Astronomer
         * an administrator
@@ -103,3 +104,37 @@ class PermissionService:
         return self.user_repository.is_salt_astronomer(
             username
         ) or self.user_repository.is_administrator(username)
+
+    def may_add_comment(self, user: User, proposal_code: ProposalCode):
+        """
+        Checks if the user can update an observation comment
+
+        This is the case if the user is any of the following:
+
+        * A SALT Astronomer
+        * A principal investigator
+        * A principal contact
+        * An administrator
+        """
+        username = user.username
+        return self.user_repository.is_principal_investigator(username, proposal_code) \
+               or self.user_repository.is_principal_contact(username, proposal_code) \
+               or self.user_repository.is_salt_astronomer(username) \
+               or self.user_repository.is_administrator(username)
+
+    def may_view_comment(self, user: User, proposal_code: ProposalCode):
+        """
+        Checks if the user can update an observation comment
+
+        This is the case if the user is any of the following:
+
+        * A SALT Astronomer
+        * A principal investigator
+        * A principal contact
+        * An administrator
+        """
+        username = user.username
+        return self.user_repository.is_principal_investigator(username, proposal_code) \
+               or self.user_repository.is_principal_contact(username, proposal_code) \
+               or self.user_repository.is_salt_astronomer(username) \
+               or self.user_repository.is_administrator(username)
