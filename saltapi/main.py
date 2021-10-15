@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.requests import Request
 from starlette.responses import Response, JSONResponse
 
 from saltapi.exceptions import NotFoundError
@@ -29,7 +30,7 @@ app.add_middleware(
 
 
 @app.exception_handler(NotFoundError)
-async def not_found_exception_handler() -> Response:
+async def not_found_exception_handler(request: Request, exc: NotFoundError) -> Response:
     return JSONResponse(status_code=404, content={"message": "Not Found"})
 
 

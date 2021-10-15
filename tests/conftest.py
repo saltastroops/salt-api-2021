@@ -12,8 +12,6 @@ from saltapi.repository.user_repository import UserRepository
 from saltapi.service.user import User
 from saltapi.service.user_service import UserService
 
-
-
 import re
 from pathlib import Path
 from typing import Any, Callable, Generator, Optional, cast

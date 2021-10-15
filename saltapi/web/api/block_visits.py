@@ -14,7 +14,7 @@ from saltapi.service.permission_service import PermissionService
 from saltapi.service.block import BlockVisit as _BlockVisit
 from saltapi.service.block import BlockVisitStatus as _BlockVisitStatus
 from saltapi.service.user import User
-from saltapi.web.schema.common import BlockVisit, BlockVisitStatus
+from saltapi.web.schema.common import BlockVisitStatus, BaseBlockVisit
 
 router = APIRouter(prefix="/block-visits", tags=["Block visit"])
 
@@ -27,7 +27,9 @@ def create_block_repository(connection: Connection) -> BlockRepository:
     )
 
 
-@router.get("/{block_visit_id}", summary="Get a block visit", response_model=BlockVisit)
+@router.get(
+    "/{block_visit_id}", summary="Get a block visit", response_model=BaseBlockVisit
+)
 def get_block_visit(
     block_visit_id: int = Path(
         ..., title="Block visit id", description="Unique identifier for block visits"

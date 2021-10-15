@@ -217,11 +217,11 @@ LIMIT :limit;
         general_info = self._general_info(proposal_code, semester)
 
         # Replace the proprietary period with the data release date
-        executed_observations = self._executed_observations(proposal_code)
+        block_visits = self._block_visits(proposal_code)
         proprietary_period = general_info["proprietary_period"]
         first_submission_date = self._first_submission_date(proposal_code)
         general_info["data_release_date"] = self._data_release_date(
-            executed_observations, proprietary_period, first_submission_date.date()
+            block_visits, proprietary_period, first_submission_date.date()
         )
         del general_info["proprietary_period"]
 
@@ -234,7 +234,7 @@ LIMIT :limit;
             "general_info": general_info,
             "investigators": self._investigators(proposal_code),
             "blocks": self._blocks(proposal_code, semester),
-            "executed_observations": executed_observations,
+            "block_visits": block_visits,
             "time_allocations": self.time_allocations(proposal_code, semester),
             "charged_time": self.charged_time(proposal_code, semester),
             "observation_comments": self._observation_comments(proposal_code),
@@ -383,7 +383,7 @@ LIMIT 1
 
     @staticmethod
     def _data_release_date(
-        executed_observations: List[Dict[str, Any]],
+        block_visits: List[Dict[str, Any]],
         proprietary_period: Optional[int],
         first_submission: date,
     ) -> Optional[date]:
@@ -393,7 +393,7 @@ LIMIT 1
 
         # find the latest observation
         latest_observation = first_submission
-        for observation in executed_observations:
+        for observation in block_visits:
             if observation["night"] > latest_observation:
                 latest_observation = observation["night"]
 
@@ -672,7 +672,7 @@ WHERE BS.BlockStatus NOT IN :excluded_status_values
 
         return blocks
 
-    def _executed_observations(self, proposal_code: str) -> List[Dict[str, Any]]:
+    def _block_visits(self, proposal_code: str) -> List[Dict[str, Any]]:
         """
         Return the executed observations (including observations in the queue) for all
         semesters.
@@ -688,7 +688,7 @@ SELECT BV.BlockVisit_Id                            AS id,
        B.Priority                                  AS priority,
        B.MaxLunarPhase                             AS maximum_lunar_phase,
        NI.Date                                     AS night,
-       IF(BVS.BlockVisitStatus = 'Accepted', 1, 0) AS is_accepted,
+       BVS.BlockVisitStatus                        AS status,
        BRR.RejectedReason                          AS rejection_reason
 FROM BlockVisit BV
          JOIN BlockVisitStatus BVS ON BV.BlockVisitStatus_Id = BVS.BlockVisitStatus_Id
@@ -703,7 +703,7 @@ ORDER BY B.Block_Name, NI.Date
         """
         )
         result = self.connection.execute(stmt, {"proposal_code": proposal_code})
-        observations = [
+        block_visits = [
             {
                 "id": row.id,
                 "block_id": row.block_id,
@@ -712,17 +712,17 @@ ORDER BY B.Block_Name, NI.Date
                 "priority": row.priority,
                 "maximum_lunar_phase": row.maximum_lunar_phase,
                 "night": row.night,
-                "accepted": True if row.is_accepted else False,
+                "status": row.status,
                 "rejection_reason": row.rejection_reason,
             }
             for row in result
         ]
 
         block_targets = self._block_targets(proposal_code)
-        for observation in observations:
-            observation["targets"] = block_targets[observation["block_id"]]
+        for block_visit in block_visits:
+            block_visit["targets"] = block_targets[block_visit["block_id"]]
 
-        return observations
+        return block_visits
 
     def _block_targets(self, proposal_code: str) -> Dict[int, List[str]]:
         """
