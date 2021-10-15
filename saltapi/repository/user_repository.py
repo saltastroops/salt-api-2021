@@ -8,7 +8,7 @@ from sqlalchemy.engine import Connection
 
 from saltapi.exceptions import NotFoundError
 from saltapi.service.proposal import ProposalCode
-from saltapi.service.user import Role, User
+from saltapi.service.user import Role, User, UserToUpdate
 
 pwd_context = CryptContext(
     schemes=["bcrypt", "md5_crypt"], default="bcrypt", deprecated="auto"
@@ -338,6 +338,10 @@ WHERE Username = :username
         )
         self.connection.execute(stmt, {"username": username, "password": password_hash})
 
+    def update_user_given_family_name(self, user) -> None:
+        # TODO still needs to be discussed how to do it properly
+        pass
+
     @staticmethod
     def get_new_password_hash(password: str) -> str:
         """Hash a plain text password."""
@@ -393,3 +397,9 @@ WHERE Username = :username
             roles.append(Role.TAC_MEMBER)
 
         return roles
+
+    def update_user_details(self, user: UserToUpdate) -> User:
+        self._update_password(user.username, user.password)
+        self.update_password_hash(user.username, user.password)
+        self.update_user_given_family_name(user)
+        return self.get(user.username)

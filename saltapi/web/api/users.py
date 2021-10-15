@@ -1,9 +1,11 @@
-from fastapi import APIRouter, Body, HTTPException
+from fastapi import APIRouter, Body, HTTPException, Depends
 from starlette import status
 
 from saltapi.exceptions import NotFoundError
 from saltapi.repository.unit_of_work import UnitOfWork
 from saltapi.repository.user_repository import UserRepository
+from saltapi.service.authentication_service import get_current_user
+from saltapi.service.user import User, UserToUpdate
 from saltapi.service.user_service import UserService
 from saltapi.web.schema.common import Message
 from saltapi.web.schema.user import PasswordResetRequest
@@ -45,9 +47,26 @@ def send_password_reset_email(
 
 
 @router.post(
-    "/change-user-details",
-    summary="Create an observation comment",
-    response_model=Message,
+    "/update-user-details",
+    summary="Update user details",
+    response_model=User,
+    status_code=201
 )
-def change_user_details():
-    pass
+def update_user_details(
+        user: UserToUpdate = Body(
+        ..., title="User Details", description="??"
+        ),
+        auth_user: User = Depends(get_current_user)
+) -> User:
+
+    with UnitOfWork() as unit_of_work:
+
+        if auth_user.username != user.username or auth_user.email != user.email:
+            raise HTTPException(
+                status_code=status.HTTP_405_METHOD_NOT_ALLOWED,
+                detail="Not allowed to update user.",
+            )
+        user_repository = UserRepository(unit_of_work.connection)
+        user_service = UserService(user_repository)
+        user_repository.connection.commet()
+        return user_service.update_user_details(user)

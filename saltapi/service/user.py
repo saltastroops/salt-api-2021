@@ -11,6 +11,14 @@ class User(NamedTuple):
     password_hash: str
 
 
+class UserToUpdate(NamedTuple):
+    username: str
+    given_name: str
+    family_name: str
+    email: str
+    password: str
+
+
 class Role(str, Enum):
     SALT_ASTRONOMER = "SALT Astronomer"
     ADMINISTRATOR = "Administrator"
