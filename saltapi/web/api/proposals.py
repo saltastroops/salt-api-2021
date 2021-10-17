@@ -31,11 +31,7 @@ from saltapi.service.proposal import ProposalListItem as _ProposalListItem
 from saltapi.service.proposal_service import ProposalService
 from saltapi.service.user import User
 from saltapi.util import semester_start
-from saltapi.web.schema.common import (
-    BlockVisit,
-    ProposalCode,
-    Semester,
-)
+from saltapi.web.schema.common import BlockVisit, ProposalCode, Semester
 from saltapi.web.schema.proposal import (
     DataReleaseDate,
     DataReleaseDateUpdate,

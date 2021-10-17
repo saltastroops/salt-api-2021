@@ -4,13 +4,8 @@ import dotenv
 
 # Make sure that the test database etc. are used.
 # IMPORTANT: These lines must be executed before any server-related package is imported.
-os.environ["DOTENV_FILE"] = "tests/.env.test"
+os.environ["DOTENV_FILE"] = ".env.test"
 dotenv.load_dotenv(os.environ["DOTENV_FILE"])
-
-from saltapi.exceptions import NotFoundError
-from saltapi.repository.user_repository import UserRepository
-from saltapi.service.user import User
-from saltapi.service.user_service import UserService
 
 import re
 from pathlib import Path
@@ -26,7 +21,11 @@ from sqlalchemy.engine import Connection, Engine
 from starlette import status
 
 import saltapi.web.api.authentication
+from saltapi.exceptions import NotFoundError
 from saltapi.main import app
+from saltapi.repository.user_repository import UserRepository
+from saltapi.service.user import User
+from saltapi.service.user_service import UserService
 
 engine: Optional[Engine] = None
 sdb_dsn = os.environ.get("SDB_DSN")

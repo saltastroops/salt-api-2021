@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Path, Body, Depends, HTTPException
+from fastapi import APIRouter, Body, Depends, HTTPException, Path
 from sqlalchemy.engine import Connection
 from starlette import status
 
@@ -9,12 +9,12 @@ from saltapi.repository.target_repository import TargetRepository
 from saltapi.repository.unit_of_work import UnitOfWork
 from saltapi.repository.user_repository import UserRepository
 from saltapi.service.authentication_service import get_current_user
-from saltapi.service.block_service import BlockService
-from saltapi.service.permission_service import PermissionService
 from saltapi.service.block import BlockVisit as _BlockVisit
 from saltapi.service.block import BlockVisitStatus as _BlockVisitStatus
+from saltapi.service.block_service import BlockService
+from saltapi.service.permission_service import PermissionService
 from saltapi.service.user import User
-from saltapi.web.schema.common import BlockVisitStatus, BaseBlockVisit
+from saltapi.web.schema.common import BaseBlockVisit, BlockVisitStatus
 
 router = APIRouter(prefix="/block-visits", tags=["Block visit"])
 

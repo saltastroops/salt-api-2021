@@ -476,7 +476,7 @@ def test_update_block_visit_status_raises_error_for_wrong_block_id(
 
 
 @nodatabase
-def test_update_block_visit_status_raises_error_for_wrong_block_status(
+def test_update_block_visit_status_raises_error_for_deleted_block_status(
     dbconnection: Connection,
 ) -> None:
     block_repository = create_block_repository(dbconnection)
