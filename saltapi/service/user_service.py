@@ -1,5 +1,5 @@
 from datetime import timedelta
-from typing import List
+from typing import Any, Dict, List
 
 from saltapi.repository.user_repository import UserRepository
 from saltapi.service.authentication_service import AuthenticationService
@@ -71,3 +71,15 @@ SALT Team
 
     def get_user_roles(self, username: str) -> List[Role]:
         return self.repository.get_user_roles(username)
+
+    def get_user_details(self, username: str) -> Dict[str, Any]:
+        contact_details = self.repository.get(username)
+        roles = self.repository.get_user_roles(username)
+
+        return {
+            "username": username,
+            "given_name": contact_details.given_name,
+            "family_name": contact_details.family_name,
+            "email": contact_details.email,
+            "roles": roles,
+        }

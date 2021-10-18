@@ -22,7 +22,11 @@ def send_password_reset_email(
         ..., title="Password reset request", description="Password reset request"
     ),
 ) -> Message:
-
+    """
+    Requests to send an email with a link for resetting the password. A username or
+    email address needs to be supplied, and the email will be sent to the user with that
+    username or email address.
+    """
     with UnitOfWork() as unit_of_work:
         username_email = password_reset_request.username_email
         user_repository = UserRepository(unit_of_work.connection)
@@ -34,9 +38,8 @@ def send_password_reset_email(
 
         except NotFoundError:
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
+                status_code=status.HTTP_404_NOT_FOUND,
                 detail="Username or email didn't match any user.",
-                headers={"WWW-Authenticate": "Bearer"},
             )
 
         user_service = UserService(user_repository)

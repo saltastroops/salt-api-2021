@@ -5,12 +5,13 @@ import pytz
 from astropy.coordinates import Angle
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, NoResultFound
 
 from saltapi.exceptions import NotFoundError
 from saltapi.repository.instrument_repository import InstrumentRepository
 from saltapi.repository.target_repository import TargetRepository
 from saltapi.service.block import Block
+from saltapi.service.proposal import ProposalCode
 
 
 class BlockRepository:
@@ -134,6 +135,7 @@ FROM BlockStatus BS
 WHERE B.Block_Id = :block_id
         """
         )
+
         result = self.connection.execute(stmt, {"block_id": block_id})
 
         row = result.one()
@@ -173,6 +175,108 @@ WHERE B.Block_Id = :block_id;
         if not result.rowcount:
             raise NotFoundError()
 
+    def get_block_visit(self, block_visit_id: int) -> Dict[str, str]:
+        """
+        Return the block visits for a block visit id.
+        """
+        stmt = text(
+            """
+SELECT BV.BlockVisit_Id     AS id,
+       NI.Date              AS night,
+       BVS.BlockVisitStatus AS status,
+       BRR.RejectedReason   AS rejection_reason
+FROM BlockVisit BV
+    LEFT JOIN BlockRejectedReason BRR
+                   ON BV.BlockRejectedReason_Id = BRR.BlockRejectedReason_Id
+    JOIN NightInfo NI ON BV.NightInfo_Id = NI.NightInfo_Id
+    JOIN BlockVisitStatus BVS ON BV.BlockVisitStatus_Id = BVS.BlockVisitStatus_Id
+WHERE BV.BlockVisit_Id = :block_visit_id
+  AND BVS.BlockVisitStatus NOT IN ('Deleted');
+        """
+        )
+        try:
+            result = self.connection.execute(stmt, {"block_visit_id": block_visit_id})
+            row = result.one()
+            block_visit = {
+                "id": row.id,
+                "night": row.night,
+                "status": row.status,
+                "rejection_reason": row.rejection_reason,
+            }
+            return block_visit
+        except NoResultFound:
+            raise NotFoundError("Unknown block visit id")
+
+    def get_block_visit_status(self, block_visit_id: int) -> str:
+        """
+        Return the status of observations for a block visit id.
+        """
+        stmt = text(
+            """
+SELECT BVS.BlockVisitStatus
+FROM BlockVisitStatus BVS
+JOIN BlockVisit BV ON BVS.BlockVisitStatus_Id = BV.BlockVisitStatus_Id
+WHERE BV.BlockVisit_Id = :block_visit_id
+AND BVS.BlockVisitStatus NOT IN ('Deleted');
+        """
+        )
+        try:
+            result = self.connection.execute(stmt, {"block_visit_id": block_visit_id})
+            return cast(str, result.scalar_one())
+        except NoResultFound:
+            raise NotFoundError("Unknown block visit id")
+
+    def update_block_visit_status(self, block_visit_id: int, status: str) -> None:
+        """
+        Update the status of a block visit.
+        """
+        stmt = text(
+            """
+UPDATE BlockVisit BV
+SET BV.BlockVisitStatus_Id = (SELECT BVS.BlockVisitStatus_Id
+                                FROM BlockVisitStatus BVS
+                                WHERE BVS.BlockVisitStatus = :status)
+WHERE BV.BlockVisit_Id = :block_visit_id
+AND BV.BlockVisitStatus_Id NOT IN (SELECT BVS2.BlockVisitStatus_Id
+                                    FROM BlockVisitStatus AS BVS2
+                                    WHERE BVS2.BlockVisitStatus != 'Deleted'
+                                    );
+        """
+        )
+        try:
+            result = self.connection.execute(
+                stmt, {"block_visit_id": block_visit_id, "status": status}
+            )
+        except IntegrityError:
+            raise NotFoundError("Unknown block visit status")
+        if not result.rowcount:
+            raise NotFoundError()
+
+    def get_proposal_code_for_block_visit_id(self, block_visit_id: int) -> ProposalCode:
+        """
+        Return proposal code for a block visit id:
+        """
+        stmt = text(
+            """
+SELECT PC.Proposal_code
+FROM ProposalCode PC
+JOIN Block B on PC.ProposalCode_Id = B.ProposalCode_Id
+JOIN BlockVisit BV on BV.Block_Id = B.Block_Id
+JOIN BlockVisitStatus BVS ON BV.BlockVisitStatus_Id = BVS.BlockVisitStatus_Id
+WHERE BV.BlockVisit_Id = :block_visit_id
+AND BVS.BlockVisitStatus NOT IN ('Deleted');
+        """
+        )
+        result = self.connection.execute(
+            stmt,
+            {"block_visit_id": block_visit_id},
+        )
+
+        try:
+            return cast(ProposalCode, result.scalar_one())
+        except NoResultFound:
+            raise NotFoundError()
+
     def _block_visits(self, block_id: int) -> List[Dict[str, Any]]:
         """
         Return the executed observations.
@@ -198,17 +302,17 @@ WHERE B.Block_Id = :block_id
         """
         )
         result = self.connection.execute(stmt, {"block_id": block_id})
-        observations = []
-        for row in result:
-            observation = {
+        block_visits = [
+            {
                 "id": row.id,
                 "night": row.night,
-                "accepted": row.status == "Accepted",
+                "status": row.status,
                 "rejection_reason": row.rejection_reason,
             }
-            observations.append(observation)
+            for row in result
+        ]
 
-        return observations
+        return block_visits
 
     def _observing_windows(self, block_id: int) -> List[Dict[str, datetime]]:
         """
