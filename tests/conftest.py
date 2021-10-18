@@ -7,7 +7,6 @@ import dotenv
 os.environ["DOTENV_FILE"] = ".env.test"
 dotenv.load_dotenv(os.environ["DOTENV_FILE"])
 
-
 import re
 from pathlib import Path
 from typing import Any, Callable, Generator, Optional, cast
@@ -33,6 +32,33 @@ sdb_dsn = os.environ.get("SDB_DSN")
 if sdb_dsn:
     echo_sql = True if os.environ.get("ECHO_SQL") else False  # SQLAlchemy needs a bool
     engine = create_engine(sdb_dsn, echo=echo_sql, future=True)
+
+# Replace the user authentication with one which assumes that every user has the
+# password "secret".
+
+USER_PASSWORD = "secret"
+
+
+def get_user_authentication_function() -> Callable[[str, str], User]:
+    def authenticate_user(username: str, password: str) -> User:
+        if password != USER_PASSWORD:
+            raise NotFoundError("No user found for username and password")
+
+        with cast(Engine, engine).connect() as connection:
+            user_repository = UserRepository(connection)
+            user_service = UserService(user_repository)
+            user = user_service.get_user(username)
+            return user
+
+    return authenticate_user
+
+
+app.dependency_overrides[
+    saltapi.web.api.authentication.get_user_authentication_function
+] = get_user_authentication_function
+
+
+TEST_DATA = "users.yaml"
 
 
 # Replace the user authentication with one which assumes that every user has the
