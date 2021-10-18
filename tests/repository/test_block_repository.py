@@ -461,10 +461,6 @@ def test_update_block_visit_status(dbconnection: Connection) -> None:
     block_repository.update_block_visit_status(block_visit_id, "Accepted")
     assert block_repository.get_block_visit_status(block_visit_id) == "Accepted"
 
-    # Now set it to "Rejected"
-    block_repository.update_block_visit_status(block_visit_id, "Rejected")
-    assert block_repository.get_block_visit_status(block_visit_id) == "Active"
-
 
 @nodatabase
 def test_update_block_visit_status_raises_error_for_wrong_block_id(
@@ -491,5 +487,4 @@ def test_update_block_visit_status_raises_error_for_wrong_status(
     block_repository = create_block_repository(dbconnection)
     with pytest.raises(ValueError) as excinfo:
         block_repository.update_block_visit_status(1, "Wrong block visit status")
-
-    assert "block visit status" in str(excinfo)
+    assert "block visit status" in str(excinfo.value)

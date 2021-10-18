@@ -250,7 +250,7 @@ AND BV.BlockVisitStatus_Id NOT IN (SELECT BVS2.BlockVisitStatus_Id
         except IntegrityError:
             raise NotFoundError("Unknown block visit status")
         if not result.rowcount:
-            raise NotFoundError()
+            raise NotFoundError("Unknown block visit status")
 
     def get_proposal_code_for_block_visit_id(self, block_visit_id: int) -> ProposalCode:
         """
