@@ -468,5 +468,7 @@ def test_update_block_visit_status_raises_error_for_wrong_status(
     dbconnection: Connection,
 ) -> None:
     block_repository = create_block_repository(dbconnection)
-    with pytest.raises(NotFoundError):
+    with pytest.raises(NotFoundError) as excinfo:
         block_repository.update_block_visit_status(1, "Wrong block visit status")
+
+    assert "block visit" in str(excinfo.value)
