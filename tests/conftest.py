@@ -4,11 +4,6 @@ import dotenv
 
 # Make sure that the test database etc. are used.
 # IMPORTANT: These lines must be executed before any server-related package is imported.
-from saltapi.exceptions import NotFoundError
-from saltapi.repository.user_repository import UserRepository
-from saltapi.service.user import User
-from saltapi.service.user_service import UserService
-
 os.environ["DOTENV_FILE"] = ".env.test"
 dotenv.load_dotenv(os.environ["DOTENV_FILE"])
 
@@ -26,7 +21,11 @@ from sqlalchemy.engine import Connection, Engine
 from starlette import status
 
 import saltapi.web.api.authentication
+from saltapi.exceptions import NotFoundError
 from saltapi.main import app
+from saltapi.repository.user_repository import UserRepository
+from saltapi.service.user import User
+from saltapi.service.user_service import UserService
 
 engine: Optional[Engine] = None
 sdb_dsn = os.environ.get("SDB_DSN")
@@ -135,6 +134,28 @@ def client() -> Generator[TestClient, None, None]:
     yield TestClient(app)
 
 
+@pytest.fixture()
+def authenticate() -> Generator[Callable[[str, TestClient], None], None, None]:
+    def auth(username: str, client: TestClient) -> None:
+        response = client.post(
+            "/token", data={"username": username, "password": USER_PASSWORD}
+        )
+        token = response.json()["access_token"]
+        client.headers["Authorization"] = f"Bearer {token}"
+
+    yield auth
+
+
+@pytest.fixture()
+def misauthenticate() -> Generator[Callable[[TestClient], None], None, None]:
+    """Add an invalid Authorization header to a test client."""
+
+    def misauth(client: TestClient) -> None:
+        client.headers["Authorization"] = "Bearer some_invalid_token"
+
+    yield misauth
+
+
 @given("I am <user_type>")
 def i_am(user_type: str, client: TestClient) -> None:
     if user_type == "not authenticated":
@@ -145,7 +166,7 @@ def i_am(user_type: str, client: TestClient) -> None:
         r"(?:an )?investigator (?:for|of) (?:the )?proposal ([-\w\d]+)", user_type
     )
     if groups:
-        authenticate(investigator(groups.group(1)), client)
+        authenticate42(investigator(groups.group(1)), client)
         return
 
     groups = re.match(
@@ -153,7 +174,7 @@ def i_am(user_type: str, client: TestClient) -> None:
         user_type,
     )
     if groups:
-        authenticate(principal_investigator(groups.group(1)), client)
+        authenticate42(principal_investigator(groups.group(1)), client)
         return
 
     groups = re.match(
@@ -161,57 +182,61 @@ def i_am(user_type: str, client: TestClient) -> None:
         user_type,
     )
     if groups:
-        authenticate(principal_contact(groups.group(1)), client)
+        authenticate42(principal_contact(groups.group(1)), client)
         return
 
     groups = re.match(
         r"(?:a )?TAC [Cc]hair (?:for|of) (?:the )?partner (\w+)", user_type
     )
     if groups:
-        authenticate(tac_chair(groups.group(1)), client)
+        authenticate42(tac_chair(groups.group(1)), client)
         return
 
     groups = re.match(
         r"(?:a )?TAC [Mm]ember (?:for|of) (?:the )?partner (\w+)", user_type
     )
     if groups:
-        authenticate(tac_member(groups.group(1)), client)
+        authenticate42(tac_member(groups.group(1)), client)
         return
 
     groups = re.match(r"(?:a )?Board member", user_type)
     if groups:
-        authenticate(board_member(), client)
+        authenticate42(board_member(), client)
         return
 
     groups = re.match(r"(?:a )?partner affilated user", user_type)
     if groups:
-        authenticate(partner_affiliated_user(), client)
+        authenticate42(partner_affiliated_user(), client)
         return
 
     groups = re.match(r"(?:a )?non[- ]partner affilated user", user_type)
     if groups:
-        authenticate(non_partner_affiliated_user(), client)
+        authenticate42(non_partner_affiliated_user(), client)
         return
 
     groups = re.match(r"(?:a )?SALT [Aa]stronomer", user_type)
     if groups:
-        authenticate(salt_astronomer(), client)
+        authenticate42(salt_astronomer(), client)
         return
 
     groups = re.match(r"(?:an )?[Aa]dministrator", user_type)
     if groups:
-        authenticate(administrator(), client)
+        authenticate42(administrator(), client)
         return
 
     raise ValueError(f"Unknown user type: {user_type}")
 
 
-def authenticate(username: str, client: TestClient) -> None:
+def authenticate42(username: str, client: TestClient) -> None:
     response = client.post(
         "/token", data={"username": username, "password": USER_PASSWORD}
     )
     token = response.json()["access_token"]
     client.headers["Authorization"] = f"Bearer {token}"
+
+
+def use_invalid_auth_token(client: TestClient) -> None:
+    client.headers["Authorization"] = "Bearer some_invalid_token"
 
 
 @given("I am not authenticated")
@@ -226,7 +251,7 @@ def not_authenticated(client: TestClient) -> None:
 
 @given(parsers.parse("I am an investigator for the proposal {proposal_code}"))
 def i_am_investigator(proposal_code: str, client: TestClient) -> None:
-    authenticate(investigator(proposal_code), client)
+    authenticate42(investigator(proposal_code), client)
 
 
 def investigator(proposal_code: str) -> str:
@@ -236,7 +261,7 @@ def investigator(proposal_code: str) -> str:
 
 @given(parsers.parse("I am a Principal Investigator for the proposal {proposal_code}"))
 def i_am_principal_investigator(proposal_code: str, client: TestClient) -> None:
-    authenticate(principal_investigator(proposal_code), client)
+    authenticate42(principal_investigator(proposal_code), client)
 
 
 def principal_investigator(proposal_code: str) -> str:
@@ -246,7 +271,7 @@ def principal_investigator(proposal_code: str) -> str:
 
 @given(parsers.parse("I am a Principal Contact for the proposal {proposal_code}"))
 def i_am_principal_contact(proposal_code: str, client: TestClient) -> None:
-    authenticate(principal_contact(proposal_code), client)
+    authenticate42(principal_contact(proposal_code), client)
 
 
 def principal_contact(proposal_code: str) -> str:
@@ -256,7 +281,7 @@ def principal_contact(proposal_code: str) -> str:
 
 @given(parsers.parse("I am TAC chair for the partner {partner_code}"))
 def i_am_tac_chair(partner_code: str, client: TestClient) -> None:
-    authenticate(tac_chair(partner_code), client)
+    authenticate42(tac_chair(partner_code), client)
 
 
 def tac_chair(partner_code: str) -> str:
@@ -266,7 +291,7 @@ def tac_chair(partner_code: str) -> str:
 
 @given(parsers.parse("I am a TAC member for the partner {partner_code}"))
 def i_am_tac_member(partner_code: str, client: TestClient) -> None:
-    authenticate(tac_chair(partner_code), client)
+    authenticate42(tac_chair(partner_code), client)
 
 
 def tac_member(partner_code: str) -> str:
@@ -276,7 +301,7 @@ def tac_member(partner_code: str) -> str:
 
 @given("I am a Board member")
 def i_am_a_board_member(client: TestClient) -> None:
-    authenticate(board_member(), client)
+    authenticate42(board_member(), client)
 
 
 def board_member() -> str:
@@ -286,7 +311,7 @@ def board_member() -> str:
 
 @given("I am a partner affiliated user")
 def i_am_a_partner_affiliated_user(client: TestClient) -> None:
-    authenticate(partner_affiliated_user(), client)
+    authenticate42(partner_affiliated_user(), client)
 
 
 def partner_affiliated_user() -> str:
@@ -296,7 +321,7 @@ def partner_affiliated_user() -> str:
 
 @given("I am a non-partner affiliated user")
 def i_am_a_non_partner_affiliated_user(client: TestClient) -> None:
-    authenticate(non_partner_affiliated_user(), client)
+    authenticate42(non_partner_affiliated_user(), client)
 
 
 def non_partner_affiliated_user() -> str:
@@ -306,7 +331,7 @@ def non_partner_affiliated_user() -> str:
 
 @given("I am a SALT Astronomer")
 def i_am_a_salt_astronomer(client: TestClient) -> None:
-    authenticate(salt_astronomer(), client)
+    authenticate42(salt_astronomer(), client)
 
 
 def salt_astronomer() -> str:
@@ -316,7 +341,7 @@ def salt_astronomer() -> str:
 
 @given("I am an administrator")
 def i_am_an_administrator(client: TestClient) -> None:
-    authenticate(administrator(), client)
+    authenticate42(administrator(), client)
 
 
 def administrator() -> str:

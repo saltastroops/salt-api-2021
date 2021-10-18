@@ -320,7 +320,6 @@ def test_is_administrator_returns_false_for_administrator(
         "investigator",
         "principal_investigator",
         "principal_contact",
-        "activating_investigator",
         "tac_member_for_proposal",
         "tac_chair_for_proposal",
     ],
