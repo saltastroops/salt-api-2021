@@ -13,7 +13,7 @@ router = APIRouter(tags=["User"])
 
 
 @router.get(
-    "/who-am-i",
+    "/user",
     summary="Get your own user details",
     response_description="User details",
     response_model=UserDetails,

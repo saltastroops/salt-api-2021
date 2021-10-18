@@ -8,8 +8,8 @@ from saltapi.settings import Settings
 from saltapi.web.api.authentication import router as authentication_router
 from saltapi.web.api.blocks import router as blocks_router
 from saltapi.web.api.proposals import router as proposals_router
-from saltapi.web.api.users import router as user_router
-from saltapi.web.api.who_am_i import router as who_am_i_router
+from saltapi.web.api.user import router as user_router
+from saltapi.web.api.users import router as users_router
 
 app = FastAPI()
 settings = Settings()
@@ -35,4 +35,4 @@ app.include_router(blocks_router)
 app.include_router(proposals_router)
 app.include_router(authentication_router)
 app.include_router(user_router)
-app.include_router(who_am_i_router)
+app.include_router(users_router)
