@@ -98,9 +98,11 @@ def update_block_status(
     with UnitOfWork() as unit_of_work:
         user_repository = UserRepository(unit_of_work.connection)
         proposal_repository = ProposalRepository(unit_of_work.connection)
-        permission_service = PermissionService(user_repository, proposal_repository)
+        block_repository = create_block_repository(unit_of_work.connection)
+        permission_service = PermissionService(
+            user_repository, proposal_repository, block_repository
+        )
         if permission_service.may_update_proposal_status(user):
-            block_repository = create_block_repository(unit_of_work.connection)
             block_service = BlockService(block_repository)
             block_service.update_block_status(block_id, block_status, status_reason)
 

@@ -37,7 +37,6 @@ class PermissionService:
                 or self.user_repository.is_tac_member_for_proposal(
                     username, proposal_code
                 )
-                or self.user_repository.is_tac_member_for_proposal(username, proposal_code)
                 or self.user_repository.is_administrator(username)
             )
         else:
