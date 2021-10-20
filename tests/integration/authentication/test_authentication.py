@@ -13,7 +13,9 @@ def test_should_return_401_if_you_login_with_incorrect_username(
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
-def test_should_return_401_if_you_login_with_invalid_password(client: TestClient) -> None:
+def test_should_return_401_if_you_login_with_invalid_password(
+    client: TestClient,
+) -> None:
     response = client.post(
         TOKEN_URL, data={"username": "hettlage", "password": "wrongpassword"}
     )

@@ -3,6 +3,8 @@ from typing import Any, Callable
 from fastapi.testclient import TestClient
 from starlette import status
 
+from tests.conftest import authenticate, misauthenticate
+
 USER_URL = "/user"
 
 USER_DATA = "api/user.yaml"
@@ -14,9 +16,7 @@ def test_should_return_401_if_user_is_not_authenticated(client: TestClient) -> N
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
-def test_should_return_401_if_user_uses_invalid_token(
-    client: TestClient, misauthenticate: Callable[[TestClient], None]
-) -> None:
+def test_should_return_401_if_user_uses_invalid_token(client: TestClient) -> None:
     misauthenticate(client)
     response = client.get(USER_URL)
 
@@ -25,7 +25,6 @@ def test_should_return_401_if_user_uses_invalid_token(
 
 def test_should_return_the_correct_user_details(
     client: TestClient,
-    authenticate: Callable[[str, TestClient], None],
     testdata: Callable[[str], Any],
 ) -> None:
     data = testdata(USER_DATA)["who_am_i"]
