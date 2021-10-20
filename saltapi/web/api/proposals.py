@@ -350,7 +350,7 @@ def get_observation_comments(
         user_repository = UserRepository(unit_of_work.connection)
         proposal_service = ProposalService(proposal_repository)
         permission_service = PermissionService(user_repository, proposal_repository)
-        if not permission_service.may_view_comment(user, proposal_code):
+        if not permission_service.may_view_observation_comments(user, proposal_code):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="User are not permitted to perform this action."
@@ -375,14 +375,14 @@ def post_observation_comment(
 ) -> ObservationComment:
     """
     Adds a new comment related to an observation. The user submitting the request is
-    recorded as the comment user.
+    recorded as the comment author.
     """
     with UnitOfWork() as unit_of_work:
         proposal_repository = ProposalRepository(unit_of_work.connection)
         user_repository = UserRepository(unit_of_work.connection)
         proposal_service = ProposalService(proposal_repository)
         permission_service = PermissionService(user_repository, proposal_repository)
-        if not permission_service.may_add_comment(user, proposal_code):
+        if not permission_service.may_add_observation_comment(user, proposal_code):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="User are not permitted to perform this action."

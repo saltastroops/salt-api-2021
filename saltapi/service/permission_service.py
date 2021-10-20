@@ -48,8 +48,9 @@ class PermissionService:
 
         This is the case if the user is any of the following:
 
+        * the Principal Investigator (and the proposal can be activated by the PI or PC)
+        * the Principal Contact (and the proposal can be activated by the PI or PC)
         * a SALT Astronomer
-        * an activating investigator
         * an administrator
         """
         username = user.username
@@ -105,16 +106,17 @@ class PermissionService:
             username
         ) or self.user_repository.is_administrator(username)
 
-    def may_add_comment(self, user: User, proposal_code: ProposalCode):
+    def may_add_observation_comment(
+            self, user: User, proposal_code: ProposalCode) -> bool:
         """
         Checks if the user can update an observation comment
 
         This is the case if the user is any of the following:
 
-        * A SALT Astronomer
-        * A principal investigator
-        * A principal contact
-        * An administrator
+        * a SALT Astronomer
+        * a Principal Investigator
+        * a Principal Contact
+        * an administrator
         """
         username = user.username
         return self.user_repository.is_principal_investigator(username, proposal_code) \
@@ -122,19 +124,17 @@ class PermissionService:
                or self.user_repository.is_salt_astronomer(username) \
                or self.user_repository.is_administrator(username)
 
-    def may_view_comment(self, user: User, proposal_code: ProposalCode):
+    def may_view_observation_comments(
+            self, user: User, proposal_code: ProposalCode) -> bool:
         """
-        Checks if the user can update an observation comment
+        Checks if the user can view the observation comments
 
         This is the case if the user is any of the following:
 
-        * A SALT Astronomer
-        * A principal investigator
-        * A principal contact
-        * An administrator
+        * a SALT Astronomer
+        * a Principal Investigator
+        * a Principal Contact
+        * an administrator
         """
-        username = user.username
-        return self.user_repository.is_principal_investigator(username, proposal_code) \
-               or self.user_repository.is_principal_contact(username, proposal_code) \
-               or self.user_repository.is_salt_astronomer(username) \
-               or self.user_repository.is_administrator(username)
+        # User may view comments if they may add them.
+        return self.may_add_observation_comment(user, proposal_code)
