@@ -249,23 +249,31 @@ AND BV.BlockVisitStatus_Id NOT IN (SELECT BVS2.BlockVisitStatus_Id
         """
         )
         self.connection.execute(
-            stmt, {"block_visit_id": block_visit_id, "block_visit_status_id": block_visit_status_id}
+            stmt,
+            {
+                "block_visit_id": block_visit_id,
+                "block_visit_status_id": block_visit_status_id,
+            },
         )
 
     def _block_visit_status_id(self, status: str) -> int:
-        stmt = text("""
+        stmt = text(
+            """
 SELECT BVS.BlockVisitStatus_Id AS id
 FROM BlockVisitStatus BVS
 WHERE BVS.BlockVisitStatus = :status
-        """)
+        """
+        )
         result = self.connection.execute(stmt, {"status": status})
         return cast(int, result.scalar_one())
 
     def _block_visit_exists(self, block_visit_id: int) -> bool:
-        stmt = text("""
+        stmt = text(
+            """
 SELECT COUNT(*) FROM BlockVisit WHERE BlockVisit_Id = :block_visit_id
-        """)
-        result = self.connection.execute(stmt, { "block_visit_id": block_visit_id })
+        """
+        )
+        result = self.connection.execute(stmt, {"block_visit_id": block_visit_id})
 
         return cast(int, result.scalar_one()) > 0
 
