@@ -35,11 +35,6 @@ app.add_middleware(
 )
 
 
-@app.exception_handler(NotFoundError)
-async def not_found_exception_handler(request: Request, exc: NotFoundError) -> Response:
-    return JSONResponse(status_code=404, content={"message": "Not Found"})
-
-
 app.include_router(blocks_router)
 app.include_router(proposals_router)
 app.include_router(authentication_router)
