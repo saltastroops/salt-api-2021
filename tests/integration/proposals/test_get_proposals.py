@@ -11,7 +11,7 @@ from tests.conftest import (
 PROPOSALS_URL = "/proposals"
 
 
-def test_should_return_401_for_get_proposals_for_unauthenticated_user(
+def test_should_return_401_when_requesting_proposals_for_unauthenticated_user(
     client: TestClient,
 ) -> None:
     not_authenticated(client)
@@ -82,7 +82,7 @@ def test_should_return_422_for_invalid_semesters(
         [find_username("Principal Contact", proposal_code="2021-1-SCI-014"), "2018-2", "2019-1", 0, ""]
     ]
 )
-def test_should_return_correct_list_of_proposals_for_get_proposals_for_authenticated_users(
+def test_should_return_correct_list_of_proposals_for_authenticated_user(
    username: str, from_semester: str, to_semester: str, proposal_count: int, proposal_codes: str, client: TestClient
 ) -> None:
     authenticate(username, client)
@@ -112,7 +112,7 @@ def test_should_return_correct_list_of_proposals_for_get_proposals_for_authentic
         102,
     ],
 )
-def test_should_return_200_for_get_limited_proposals(
+def test_should_return_proposals_only_up_to_limit(
     limit: int, client: TestClient
 ) -> None:
     username = find_username("Administrator")
@@ -135,7 +135,7 @@ def test_should_return_422_for_invalid_limit(client: TestClient) -> None:
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
 
-def test_should_return_1000_for_get_proposals_for_default_limit(
+def test_should_return_1000_proposals_as_the_default_limit(
     client: TestClient,
 ) -> None:
     username = find_username("Administrator")
