@@ -107,6 +107,29 @@ def client() -> Generator[TestClient, None, None]:
     yield TestClient(app)
 
 
+def find_username(user_type: str, proposal_code: Optional[str] = None, partner_code: Optional[str] = None):
+    normalized_user_type = user_type.lower()
+    normalized_user_type = normalized_user_type.replace(' ', '_').replace('-', '_')
+
+    users = read_testdata(TEST_DATA)
+    print(users, normalized_user_type, normalized_user_type in users)
+
+    if normalized_user_type in ["investigator", "principal_investigator", "principal_contact"]:
+        if proposal_code is None:
+            raise ValueError(f"Proposal code missing for user type {user_type}")
+        return users[normalized_user_type + "s"][proposal_code]
+
+    if normalized_user_type in ["tac_chair", "tac_member"]:
+        if partner_code is None:
+            raise ValueError(f"Partner code missing for user type {user_type}")
+        return users[normalized_user_type + "s"][partner_code]
+
+    if normalized_user_type in users:
+        return users[normalized_user_type]
+
+    raise ValueError(f"Unknown user type: {user_type}")
+
+
 def authenticate(username: str, client: TestClient) -> None:
     response = client.post(
         "/token", data={"username": username, "password": USER_PASSWORD}
