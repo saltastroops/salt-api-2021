@@ -356,7 +356,10 @@ def get_observation_comments(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="User are not permitted to perform this action."
             )
-        return proposal_service.get_observation_comments(proposal_code)
+        return [
+            ObservationComment(**dict(row))
+            for row in proposal_service.get_observation_comments(proposal_code)
+        ]
 
 
 @router.post(
@@ -395,7 +398,7 @@ def post_observation_comment(
             user=user
         )
         proposal_repository.connection.commit()
-        return observation_comment
+        return ObservationComment(**observation_comment)
 
 
 @router.get(

@@ -20,7 +20,6 @@ from saltapi.util import (
     semester_start,
     tonight,
 )
-from saltapi.web.schema.proposal import ObservationComment
 
 
 class ProposalRepository:
@@ -156,7 +155,8 @@ LIMIT :limit;
 
         return proposals
 
-    def _liaison_astronomer(self, row: Any) -> Optional[Dict[str, str]]:
+    @staticmethod
+    def _liaison_astronomer(row: Any) -> Optional[Dict[str, str]]:
         if row.la_given_name is None:
             return None
 
@@ -366,7 +366,7 @@ LIMIT 1
             """
 SELECT Submission
 FROM Proposal P
-         JOIN ProposalCode PC on P.ProposalCode_Id = PC.ProposalCode_Id
+         JOIN ProposalCode PC ON P.ProposalCode_Id = PC.ProposalCode_Id
 WHERE P.Current = 1
   AND PC.Proposal_Code = :proposal_code
 ORDER BY Submission DESC
@@ -444,7 +444,8 @@ SELECT PT.Title                            AS title,
 FROM Proposal P
          JOIN Semester S ON P.Semester_Id = S.Semester_Id
          JOIN ProposalCode PC ON P.ProposalCode_Id = PC.ProposalCode_Id
-         JOIN ProposalText PT ON PC.ProposalCode_Id = PT.ProposalCode_Id AND S.Semester_Id = PT.Semester_Id
+         JOIN ProposalText PT ON
+            PC.ProposalCode_Id = PT.ProposalCode_Id AND S.Semester_Id = PT.Semester_Id
          JOIN ProposalGeneralInfo PGI ON PC.ProposalCode_Id = PGI.ProposalCode_Id
          JOIN ProposalType T ON PGI.ProposalType_Id = T.ProposalType_Id
          JOIN ProposalStatus PS ON PGI.ProposalStatus_Id = PS.ProposalStatus_Id
@@ -611,11 +612,11 @@ SELECT B.Block_Id                      AS id,
        B.MinLunarAngularDistance       AS minimum_lunar_distance,
        B.MaxLunarPhase                 AS maximum_lunar_phase
 FROM Block B
-         JOIN Transparency T on B.Transparency_Id = T.Transparency_Id
-         JOIN BlockStatus BS on B.BlockStatus_Id = BS.BlockStatus_Id
+         JOIN Transparency T ON B.Transparency_Id = T.Transparency_Id
+         JOIN BlockStatus BS ON B.BlockStatus_Id = BS.BlockStatus_Id
          JOIN Proposal P ON B.Proposal_Id = P.Proposal_Id
          JOIN Semester S ON P.Semester_Id = S.Semester_Id
-         JOIN ProposalCode PC on B.ProposalCode_Id = PC.ProposalCode_Id
+         JOIN ProposalCode PC ON B.ProposalCode_Id = PC.ProposalCode_Id
 WHERE BS.BlockStatus NOT IN :excluded_status_values
   AND PC.Proposal_Code = :proposal_code
   AND S.Year = :year
@@ -734,14 +735,16 @@ ORDER BY B.Block_Name, NI.Date
         separator = "::::"
         stmt = text(
             """
-SELECT B.Block_Id                                                                       AS block_id,
-       GROUP_CONCAT(DISTINCT T.Target_Name ORDER BY T.Target_Name SEPARATOR :separator) AS targets
+SELECT B.Block_Id       AS block_id,
+       GROUP_CONCAT(
+            DISTINCT T.Target_Name ORDER BY T.Target_Name SEPARATOR :separator
+        )               AS targets
 FROM Target T
-         JOIN Observation O on T.Target_Id = O.Target_Id
+         JOIN Observation O ON T.Target_Id = O.Target_Id
          JOIN Pointing P ON O.Pointing_Id = P.Pointing_Id
-         JOIN Block B on P.Block_Id = B.Block_Id
-         JOIN BlockStatus BS on B.BlockStatus_Id = BS.BlockStatus_Id
-         JOIN ProposalCode PC on B.ProposalCode_Id = PC.ProposalCode_Id
+         JOIN Block B ON P.Block_Id = B.Block_Id
+         JOIN BlockStatus BS ON B.BlockStatus_Id = BS.BlockStatus_Id
+         JOIN ProposalCode PC ON B.ProposalCode_Id = PC.ProposalCode_Id
 WHERE PC.Proposal_Code = :proposal_code
 GROUP BY B.Block_Id
         """
@@ -768,8 +771,10 @@ GROUP BY B.Block_Id
 SELECT B.Block_Id AS block_id
 FROM ObsConfig OC
          JOIN PayloadConfig PC ON OC.PayloadConfig_Id = PC.PayloadConfig_Id
-         JOIN PayloadConfigType PCT ON PC.PayloadConfigType_Id = PCT.PayloadConfigType_Id
-         JOIN TelescopeConfigObsConfig TCOC ON OC.ObsConfig_Id = TCOC.PlannedObsConfig_Id
+         JOIN PayloadConfigType PCT 
+            ON PC.PayloadConfigType_Id = PCT.PayloadConfigType_Id
+         JOIN TelescopeConfigObsConfig TCOC 
+            ON OC.ObsConfig_Id = TCOC.PlannedObsConfig_Id
          JOIN Pointing P ON TCOC.Pointing_Id = P.Pointing_Id
          JOIN Block B ON P.Block_Id = B.Block_Id
          JOIN ProposalCode C ON B.ProposalCode_Id = C.ProposalCode_Id
@@ -800,15 +805,16 @@ WHERE C.Proposal_Code = :proposal_code
 SELECT B.Block_Id AS block_id,
        GROUP_CONCAT(DISTINCT RM.Mode ORDER BY RM.Mode SEPARATOR :separator) AS modes
 FROM RssMode RM
-         JOIN RssConfig RC on RM.RssMode_Id = RC.RssMode_Id
-         JOIN Rss R on RC.RssConfig_Id = R.RssConfig_Id
-         JOIN RssPatternDetail RPD on R.Rss_Id = RPD.Rss_Id
-         JOIN RssPattern RP on RPD.RssPattern_Id = RP.RssPattern_Id
-         JOIN ObsConfig OC on RP.RssPattern_Id = OC.RssPattern_Id
-         JOIN TelescopeConfigObsConfig TCOC on OC.ObsConfig_Id = TCOC.PlannedObsConfig_Id
-         JOIN Pointing P on TCOC.Pointing_Id = P.Pointing_Id
-         JOIN Block B on P.Block_Id = B.Block_Id
-         JOIN ProposalCode PC on B.ProposalCode_Id = PC.ProposalCode_Id
+         JOIN RssConfig RC ON RM.RssMode_Id = RC.RssMode_Id
+         JOIN Rss R ON RC.RssConfig_Id = R.RssConfig_Id
+         JOIN RssPatternDetail RPD ON R.Rss_Id = RPD.Rss_Id
+         JOIN RssPattern RP ON RPD.RssPattern_Id = RP.RssPattern_Id
+         JOIN ObsConfig OC ON RP.RssPattern_Id = OC.RssPattern_Id
+         JOIN TelescopeConfigObsConfig TCOC 
+            ON OC.ObsConfig_Id = TCOC.PlannedObsConfig_Id
+         JOIN Pointing P ON TCOC.Pointing_Id = P.Pointing_Id
+         JOIN Block B ON P.Block_Id = B.Block_Id
+         JOIN ProposalCode PC ON B.ProposalCode_Id = PC.ProposalCode_Id
 WHERE PC.Proposal_Code = :proposal_code
 GROUP BY B.Block_Id
         """
@@ -834,17 +840,20 @@ GROUP BY B.Block_Id
         stmt = text(
             """
 SELECT B.Block_Id AS block_id,
-       GROUP_CONCAT(DISTINCT HM.ExposureMode ORDER BY HM.ExposureMode SEPARATOR :separator) AS modes
+       GROUP_CONCAT(
+            DISTINCT HM.ExposureMode ORDER BY HM.ExposureMode SEPARATOR :separator
+        ) AS modes
 FROM HrsMode HM
-         JOIN HrsConfig HC on HM.HrsMode_Id = HC.HrsMode_Id
+         JOIN HrsConfig HC ON HM.HrsMode_Id = HC.HrsMode_Id
          JOIN Hrs H ON HC.HrsConfig_Id = H.HrsConfig_Id
-         JOIN HrsPatternDetail HPD on H.Hrs_Id = HPD.Hrs_Id
-         JOIN HrsPattern HP on HPD.HrsPattern_Id = HP.HrsPattern_Id
-         JOIN ObsConfig OC on HP.HrsPattern_Id = OC.HrsPattern_Id
-         JOIN TelescopeConfigObsConfig TCOC on OC.ObsConfig_Id = TCOC.PlannedObsConfig_Id
-         JOIN Pointing P on TCOC.Pointing_Id = P.Pointing_Id
-         JOIN Block B on P.Block_Id = B.Block_Id
-         JOIN ProposalCode PC on B.ProposalCode_Id = PC.ProposalCode_Id
+         JOIN HrsPatternDetail HPD ON H.Hrs_Id = HPD.Hrs_Id
+         JOIN HrsPattern HP ON HPD.HrsPattern_Id = HP.HrsPattern_Id
+         JOIN ObsConfig OC ON HP.HrsPattern_Id = OC.HrsPattern_Id
+         JOIN TelescopeConfigObsConfig TCOC 
+         ON OC.ObsConfig_Id = TCOC.PlannedObsConfig_Id
+         JOIN Pointing P ON TCOC.Pointing_Id = P.Pointing_Id
+         JOIN Block B ON P.Block_Id = B.Block_Id
+         JOIN ProposalCode PC ON B.ProposalCode_Id = PC.ProposalCode_Id
 WHERE PC.Proposal_Code = :proposal_code
 GROUP BY B.Block_Id
         """
@@ -874,7 +883,8 @@ GROUP BY B.Block_Id
             """
 SELECT B.Block_Id AS block_id
 FROM ObsConfig OC
-         JOIN TelescopeConfigObsConfig TCOC ON OC.ObsConfig_Id = TCOC.PlannedObsConfig_Id
+         JOIN TelescopeConfigObsConfig TCOC 
+         ON OC.ObsConfig_Id = TCOC.PlannedObsConfig_Id
          JOIN Pointing P ON TCOC.Pointing_Id = P.Pointing_Id
          JOIN Block B ON P.Block_Id = B.Block_Id
          JOIN ProposalCode C ON B.ProposalCode_Id = C.ProposalCode_Id
@@ -1005,12 +1015,15 @@ WHERE PC.Proposal_Code = :proposal_code
             """
 SELECT B.Priority AS priority, SUM(B.ObsTime) AS charged_time
 FROM BlockVisit BV
-JOIN BlockVisitStatus BVS ON BV.BlockVisitStatus_Id = BVS.BlockVisitStatus_Id
-JOIN Block B ON BV.Block_Id = B.Block_Id
-JOIN Proposal P ON B.Proposal_Id = P.Proposal_Id
-JOIN ProposalCode PC ON B.ProposalCode_Id = PC.ProposalCode_Id
-JOIN Semester S ON P.Semester_Id = S.Semester_Id
-WHERE PC.Proposal_Code = :proposal_code AND S.Year = :year AND S.Semester = :semester AND BVS.BlockVisitStatus = 'Accepted'
+    JOIN BlockVisitStatus BVS ON BV.BlockVisitStatus_Id = BVS.BlockVisitStatus_Id
+    JOIN Block B ON BV.Block_Id = B.Block_Id
+    JOIN Proposal P ON B.Proposal_Id = P.Proposal_Id
+    JOIN ProposalCode PC ON B.ProposalCode_Id = PC.ProposalCode_Id
+    JOIN Semester S ON P.Semester_Id = S.Semester_Id
+WHERE PC.Proposal_Code = :proposal_code 
+    AND S.Year = :year 
+    AND S.Semester = :semester 
+    AND BVS.BlockVisitStatus = 'Accepted'
 GROUP BY B.Priority
         """
         )
@@ -1049,10 +1062,11 @@ GROUP BY B.Priority
         # same date. The number of nights is then the number of distinct dates.
         stmt = text(
             """
-SELECT B.Block_Id                                                            AS block_id,
+SELECT B.Block_Id                                                           AS block_id,
        COUNT(DISTINCT DATE(DATE_SUB(BVW.VisibilityStart, INTERVAL 12 HOUR))) AS nights
 FROM BlockVisibilityWindow BVW
-         JOIN BlockVisibilityWindowType BVWT ON BVW.BlockVisibilityWindowType_Id = BVWT.BlockVisibilityWindowType_Id
+         JOIN BlockVisibilityWindowType BVWT 
+         ON BVW.BlockVisibilityWindowType_Id = BVWT.BlockVisibilityWindowType_Id
          JOIN Block B ON BVW.Block_Id = B.Block_Id
          JOIN Proposal P ON B.Proposal_Id = P.Proposal_Id
          JOIN ProposalCode PC ON P.ProposalCode_Id = PC.ProposalCode_Id
@@ -1077,7 +1091,7 @@ GROUP BY B.Block_Id
         )
         return {int(row.block_id): int(row.nights) for row in result}
 
-    def get_observation_comments(self, proposal_code: str) -> List[ObservationComment]:
+    def get_observation_comments(self, proposal_code: str) -> List[Dict]:
         """
         Return the proposal comments ordered by the time when they were made.
         """
@@ -1095,12 +1109,12 @@ ORDER BY PC.CommentDate, PC.ProposalComment_Id
         """
         )
         result = self.connection.execute(stmt, {"proposal_code": proposal_code})
-        return [ObservationComment(**dict(row)) for row in result]
+        return [dict(row) for row in result]
 
     def add_observation_comment(
             self, proposal_code: str, comment: str, user: User
-    ) -> ObservationComment:
-        stmt = text(
+    ) -> Dict:
+        istmt = text(
             """
 INSERT INTO ProposalComment(
     ProposalCode_Id, 
@@ -1117,20 +1131,32 @@ VALUES (
     """
         )
         comment_date = date.today()
-        results = self.connection.execute(
-            stmt, {
+        insert_results = self.connection.execute(
+            istmt, {
                 "proposal_code": proposal_code,
                 "username": user.username,
                 "comment": comment,
                 "date": comment_date
             }
         )
-        return ObservationComment(
-            id=results.lastrowid,
-            author=f"{user.given_name} {user.family_name}",
-            comment=comment,
-            comment_date=comment_date,
+        sstmt = text(
+            """
+SELECT PC.ProposalComment_Id               AS id,
+       PC.CommentDate                      AS comment_date,
+       CONCAT(I.FirstName, ' ', I.Surname) AS author,
+       PC.ProposalComment                  AS comment
+FROM ProposalComment PC
+         JOIN Investigator I ON PC.Investigator_Id = I.Investigator_Id
+         JOIN ProposalCode P ON PC.ProposalCode_Id = P.ProposalCode_Id
+WHERE PC.ProposalComment_Id = :proposal_comment_id
+)
+    """
         )
+        select_results = self.connection.execute(
+            sstmt, {"proposal_comment_id": insert_results.lastrowid}
+        )
+
+        return dict(select_results[0])
 
     def get_proposal_status(self, proposal_code: str) -> str:
         """
@@ -1156,7 +1182,7 @@ WHERE PC.Proposal_Code = :proposal_code
         Update the status of a proposal.
         """
 
-        # We copuld query for the status id within the UPDATE query, but then it would
+        # We could query for the status id within the UPDATE query, but then it would
         # not be clear whether a failing query is due to a wrong proposal code or a
         # wrong status value.
         try:
