@@ -35,5 +35,4 @@ Feature: Get a block visit
       | investigator for the proposal 2016-1-COM-001 |
       | SALT Astronomer                              |
       | Administrator                                |
-      | Board member                                 |
-      | TAC member for partner RU                    |
+      | TAC member for the partner RU                |
