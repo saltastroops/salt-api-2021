@@ -175,6 +175,28 @@ WHERE B.Block_Id = :block_id;
         if not result.rowcount:
             raise NotFoundError()
 
+    def get_proposal_code_for_block_id(self, block_id: int) -> ProposalCode:
+            """
+            Return proposal code for a block id:
+            """
+            stmt = text(
+                """
+SELECT PC.Proposal_code
+FROM ProposalCode PC
+JOIN Block B on PC.ProposalCode_Id = B.ProposalCode_Id
+WHERE B.Block_Id = :block_id;
+    """
+            )
+            result = self.connection.execute(
+                stmt,
+                {"block_id": block_id},
+            )
+
+            try:
+                return cast(ProposalCode, result.scalar_one())
+            except NoResultFound:
+                raise NotFoundError()
+
     def get_block_visit(self, block_visit_id: int) -> Dict[str, str]:
         """
         Return the block visits for a block visit id.
