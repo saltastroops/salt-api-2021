@@ -428,6 +428,15 @@ def put_progress_report(
     The optional pdf file is intended for additional details regarding the progress with
     the proposal.
     """
+
+    # TODO Ask about what to do with the requested times for partners?
+    # * how to add the requested times correctly to the database.
+    # TODO add form to database.
+    # TODO create a pdf from a form.
+    # * Is there any templates for the PDF or the format
+    # * Can users add a pdf instead of filling the form from the frontend.
+    # TODO Save the pdfs. Both the supplementary PDF and the newly created file.
+    # * Where to save the created files.
     raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED)
 
 
