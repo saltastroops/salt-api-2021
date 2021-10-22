@@ -2,20 +2,9 @@ import pytest
 from fastapi.testclient import TestClient
 from starlette import status
 
-from saltapi.settings import Settings
-from tests.conftest import (
-    authenticate,
-    find_username,
-    not_authenticated,
-    read_testdata,
-)
+from tests.conftest import authenticate, find_username, not_authenticated
 
 PROPOSALS_URL = "/proposals"
-
-TEST_DATA = "users.yaml"
-
-USERS = read_testdata(TEST_DATA)
-SECRET_KEY = Settings().secret_key
 
 
 @pytest.mark.parametrize(
@@ -43,7 +32,7 @@ def test_should_return_401_when_requesting_proposal_for_unauthorized_user(
 def test_should_return_404_when_requesting_non_existing_proposal(
     client: TestClient,
 ) -> None:
-    username = USERS["administrator"]
+    username = find_username("administrator")
     proposal_code = "2020-2-SCI-099"
     authenticate(username, client)
     response = client.get(

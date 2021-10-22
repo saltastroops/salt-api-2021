@@ -2,20 +2,9 @@ import pytest
 from fastapi.testclient import TestClient
 from starlette import status
 
-from saltapi.settings import Settings
-from tests.conftest import (
-    authenticate,
-    find_username,
-    not_authenticated,
-    read_testdata,
-)
+from tests.conftest import authenticate, find_username, not_authenticated
 
 BLOCK_VISIT_URL = "/block-visits"
-
-TEST_DATA = "users.yaml"
-
-USERS = read_testdata(TEST_DATA)
-SECRET_KEY = Settings().secret_key
 
 
 def test_should_return_401_when_requesting_block_visit_for_unauthenticated_user(
@@ -34,12 +23,9 @@ def test_should_return_404_when_requesting_block_visit_for_non_existing_block_vi
     client: TestClient,
 ) -> None:
     block_visit_id = -1
-    user = USERS["administrator"]
+    user = find_username("Administrator")
     authenticate(user, client)
-    response = client.get(
-        BLOCK_VISIT_URL + "/" + str(block_visit_id),
-        params={"block_visit_id": block_visit_id},
-    )
+    response = client.get(BLOCK_VISIT_URL + "/" + str(block_visit_id))
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
@@ -58,7 +44,7 @@ def test_should_return_404_when_requesting_block_visit_for_non_existing_block_vi
 def test_should_return_block_visit_when_requesting_block_visit_for_permitted_users(
     username: str, client: TestClient
 ) -> None:
-    block_visit_id = 25392
+    block_visit_id = 25392  # belongs to proposal 2019-2-SCI-006
 
     authenticate(username, client)
     response = client.get(
@@ -74,16 +60,18 @@ def test_should_return_block_visit_when_requesting_block_visit_for_permitted_use
 @pytest.mark.parametrize(
     "username",
     [
-        find_username("Investigator", proposal_code="2019-2-SCI-006"),
-        find_username("Principal Contact", proposal_code="2019-2-SCI-006"),
-        find_username("Principal Investigator", proposal_code="2019-2-SCI-006"),
+        find_username("Investigator", proposal_code="2020-2-DDT-005"),
+        find_username("Principal Contact", proposal_code="2020-2-DDT-005"),
+        find_username("Principal Investigator", proposal_code="2020-2-DDT-005"),
+        find_username("TAC Member", partner_code="RU"),
+        find_username("TAC Chair", partner_code="RU"),
         find_username("Board Member"),
     ],
 )
 def test_should_return_403_when_requesting_block_visit_for_non_permitted_users(
     username: str, client: TestClient
 ) -> None:
-    block_visit_id = 1
+    block_visit_id = 25392  # belongs to proposal 2019-2-SCI-006
 
     authenticate(username, client)
     response = client.get(

@@ -116,7 +116,7 @@ class PermissionService:
         """
         Check whether the user may view a block.
 
-        This is the case if the user may view the proposal for which the block belongs to.
+        This is the case if the user may view the proposal which the block belongs to.
         """
         proposal_code: ProposalCode = (
             self.block_repository.get_proposal_code_for_block_id(block_id)

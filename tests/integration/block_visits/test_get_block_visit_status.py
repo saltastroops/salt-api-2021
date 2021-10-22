@@ -2,23 +2,12 @@ import pytest
 from fastapi.testclient import TestClient
 from starlette import status
 
-from saltapi.settings import Settings
-from tests.conftest import (
-    authenticate,
-    find_username,
-    not_authenticated,
-    read_testdata,
-)
+from tests.conftest import authenticate, find_username, not_authenticated
 
 BLOCK_VISIT_URL = "/block-visits"
 
-TEST_DATA = "users.yaml"
 
-USERS = read_testdata(TEST_DATA)
-SECRET_KEY = Settings().secret_key
-
-
-def test_should_return_401_get_block_visit_status_for_unauthenticated_user(
+def test_should_return_401_when_requesting_block_visit_status_for_unauthenticated_user(
     client: TestClient,
 ) -> None:
     block_visit_id = 1
@@ -30,11 +19,11 @@ def test_should_return_401_get_block_visit_status_for_unauthenticated_user(
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
-def test_should_return_404_for_get_block_visit_status_of_non_existing_block_visit_id(
+def test_should_return_404_when_requesting_status_of_non_existing_block_visit(
     client: TestClient,
 ) -> None:
     block_visit_id = -1
-    user = USERS["administrator"]
+    user = find_username("Administrator")
     authenticate(user, client)
     response = client.get(
         BLOCK_VISIT_URL + "/" + str(block_visit_id) + "/status",
@@ -58,7 +47,7 @@ def test_should_return_404_for_get_block_visit_status_of_non_existing_block_visi
 def test_should_return_block_visit_status_for_permitted_users(
     username: str, client: TestClient
 ) -> None:
-    block_visit_id = 25392
+    block_visit_id = 25392  # belongs to proposal 2019-2-SCI-006
 
     authenticate(username, client)
     response = client.get(

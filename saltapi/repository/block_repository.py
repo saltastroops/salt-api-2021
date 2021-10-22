@@ -176,26 +176,26 @@ WHERE B.Block_Id = :block_id;
             raise NotFoundError()
 
     def get_proposal_code_for_block_id(self, block_id: int) -> ProposalCode:
+        """
+        Return proposal code for a block id:
+        """
+        stmt = text(
             """
-            Return proposal code for a block id:
-            """
-            stmt = text(
-                """
 SELECT PC.Proposal_code
 FROM ProposalCode PC
-JOIN Block B on PC.ProposalCode_Id = B.ProposalCode_Id
+         JOIN Block B ON PC.ProposalCode_Id = B.ProposalCode_Id
 WHERE B.Block_Id = :block_id;
     """
-            )
-            result = self.connection.execute(
-                stmt,
-                {"block_id": block_id},
-            )
+        )
+        result = self.connection.execute(
+            stmt,
+            {"block_id": block_id},
+        )
 
-            try:
-                return cast(ProposalCode, result.scalar_one())
-            except NoResultFound:
-                raise NotFoundError()
+        try:
+            return cast(ProposalCode, result.scalar_one())
+        except NoResultFound:
+            raise NotFoundError()
 
     def get_block_visit(self, block_visit_id: int) -> Dict[str, str]:
         """
@@ -282,11 +282,11 @@ AND BV.BlockVisitStatus_Id NOT IN (SELECT BVS2.BlockVisitStatus_Id
             """
 SELECT PC.Proposal_code
 FROM ProposalCode PC
-JOIN Block B on PC.ProposalCode_Id = B.ProposalCode_Id
-JOIN BlockVisit BV on BV.Block_Id = B.Block_Id
-JOIN BlockVisitStatus BVS ON BV.BlockVisitStatus_Id = BVS.BlockVisitStatus_Id
+         JOIN Block B ON PC.ProposalCode_Id = B.ProposalCode_Id
+         JOIN BlockVisit BV ON BV.Block_Id = B.Block_Id
+         JOIN BlockVisitStatus BVS ON BV.BlockVisitStatus_Id = BVS.BlockVisitStatus_Id
 WHERE BV.BlockVisit_Id = :block_visit_id
-AND BVS.BlockVisitStatus NOT IN ('Deleted');
+  AND BVS.BlockVisitStatus NOT IN ('Deleted');
         """
         )
         result = self.connection.execute(
