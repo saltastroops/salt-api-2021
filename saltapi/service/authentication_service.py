@@ -71,7 +71,7 @@ class AuthenticationService:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         if not payload:
             raise JWTError("Token failed to decode.")
-        user = self.user_repository.get(payload["username"])
+        user = self.user_repository.get(payload["sub"])
         if not user:
             raise ValueError("Token not valid.")
         return user
