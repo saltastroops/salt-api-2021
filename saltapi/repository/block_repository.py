@@ -266,8 +266,7 @@ SET BV.BlockVisitStatus_Id = :block_visit_status_id
 WHERE BV.BlockVisit_Id = :block_visit_id
 AND BV.BlockVisitStatus_Id NOT IN (SELECT BVS2.BlockVisitStatus_Id
                                     FROM BlockVisitStatus AS BVS2
-                                    WHERE BVS2.BlockVisitStatus != 'Deleted'
-                                    );
+                                    WHERE BVS2.BlockVisitStatus = 'Deleted');
         """
         )
         self.connection.execute(
