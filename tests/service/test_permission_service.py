@@ -174,8 +174,8 @@ def test_may_view_non_gravitational_wave_proposal() -> None:
         PRINCIPAL_INVESTIGATOR,
         PRINCIPAL_CONTACT,
         SALT_ASTRONOMER,
-        TAC_MEMBER,
-        TAC_CHAIR,
+        TAC_MEMBER_FOR_PROPOSAL,
+        TAC_CHAIR_FOR_PROPOSAL,
         ADMINISTRATOR,
     ]
     _assert_role_based_permission(
