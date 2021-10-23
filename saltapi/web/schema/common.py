@@ -6,26 +6,36 @@ from typing import Any, Callable, Dict, Generator, List, Optional
 from pydantic import BaseModel, Field
 
 
-class BaseExecutedObservation(BaseModel):
-    "An observation made, without block details."
+class BlockVisitStatus(str, Enum):
+    """Block visit status."""
+
+    # The SDB also contains a status "Deleted", but the API should ignore block visits
+    # with this status.
+    ACCEPTED = "Accepted"
+    IN_QUEUE = "In queue"
+    REJECTED = "Rejected"
+
+
+class BaseBlockVisit(BaseModel):
+    """A block visit, without block details."""
 
     id: int = Field(
-        ..., title="Observation id", description="Unique identifier of the observation"
+        ..., title="Block visit id", description="Unique identifier of the block visit"
     )
     night: date = Field(
         ...,
         title="Observation night",
-        description="Start date of the night when the observation was made",
+        description="Start date of the night when the observation was made (or the block visit was queued).",
     )
-    accepted: bool = Field(
+    status: BlockVisitStatus = Field(
         ...,
-        title="Accepted?",
-        description="Whether the observation has been accepted",
+        title="Block visit status",
+        description="Status of the block visit",
     )
     rejection_reason: Optional[str] = Field(
         None,
         title="Rejection reason",
-        description="Reason why the observation has been rejected",
+        description="Reason why the block visit has been rejected",
     )
 
 
@@ -45,7 +55,7 @@ class Priority(IntEnum):
     P4 = 4
 
 
-class ExecutedObservation(BaseExecutedObservation):
+class BlockVisit(BaseBlockVisit):
     """An observation made."""
 
     block_id: int = Field(
