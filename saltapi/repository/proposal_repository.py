@@ -703,7 +703,7 @@ ORDER BY B.Block_Name, NI.Date
         """
         )
         result = self.connection.execute(stmt, {"proposal_code": proposal_code})
-        observations = [
+        block_visits = [
             {
                 "id": row.id,
                 "block_id": row.block_id,
@@ -719,10 +719,10 @@ ORDER BY B.Block_Name, NI.Date
         ]
 
         block_targets = self._block_targets(proposal_code)
-        for observation in observations:
-            observation["targets"] = block_targets[observation["block_id"]]
+        for block_visit in block_visits:
+            block_visit["targets"] = block_targets[block_visit["block_id"]]
 
-        return observations
+        return block_visits
 
     def _block_targets(self, proposal_code: str) -> Dict[int, List[str]]:
         """

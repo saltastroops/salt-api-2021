@@ -445,12 +445,37 @@ def test_get_block_visit_status_raises_error_for_wrong_block_id(
 
 
 @nodatabase
+def test_get_block_visit_status_raises_error_for_deleted_status(
+    dbconnection: Connection,
+) -> None:
+    block_repository = create_block_repository(dbconnection)
+    with pytest.raises(NotFoundError):
+        block_repository.get_block_visit_status(829)
+
+
+@nodatabase
 def test_update_block_visit_status(dbconnection: Connection) -> None:
     # Set the status to "Accepted"
     block_repository = create_block_repository(dbconnection)
-    block_visit_id = 2339
+    block_visit_id = 2300  # The status for this block visit is "In queue"
     block_repository.update_block_visit_status(block_visit_id, "Accepted")
+    assert block_repository.get_block_visit_status(block_visit_id) == "Accepted"
 
+    # Now set it to "Rejected"
+    block_repository.update_block_visit_status(block_visit_id, "Rejected")
+    assert block_repository.get_block_visit_status(block_visit_id) == "Rejected"
+
+
+@nodatabase
+def test_update_block_visit_status_can_be_repeated(dbconnection: Connection) -> None:
+    # Set the status to "Accepted"
+    block_repository = create_block_repository(dbconnection)
+    block_visit_id = 2300  # The status for this block visit is "In queue"
+    block_repository.update_block_visit_status(block_visit_id, "Accepted")
+    assert block_repository.get_block_visit_status(block_visit_id) == "Accepted"
+
+    # Now set it to "Accepted" again
+    block_repository.update_block_visit_status(block_visit_id, "Accepted")
     assert block_repository.get_block_visit_status(block_visit_id) == "Accepted"
 
 
@@ -464,11 +489,19 @@ def test_update_block_visit_status_raises_error_for_wrong_block_id(
 
 
 @nodatabase
+def test_update_block_visit_status_raises_error_for_deleted_block_status(
+    dbconnection: Connection,
+) -> None:
+    block_repository = create_block_repository(dbconnection)
+    with pytest.raises(NotFoundError):
+        block_repository.update_block_visit_status(1234567890, "Deleted")
+
+
+@nodatabase
 def test_update_block_visit_status_raises_error_for_wrong_status(
     dbconnection: Connection,
 ) -> None:
     block_repository = create_block_repository(dbconnection)
-    with pytest.raises(NotFoundError) as excinfo:
+    with pytest.raises(ValueError) as excinfo:
         block_repository.update_block_visit_status(1, "Wrong block visit status")
-
-    assert "block visit" in str(excinfo.value)
+    assert "block visit status" in str(excinfo.value)

@@ -171,9 +171,9 @@ WHERE B.Block_Id = :block_id;
                 stmt, {"block_id": block_id, "status": value, "reason": reason}
             )
         except IntegrityError:
-            raise NotFoundError("Unknown block status")
+            raise ValueError("Unknown block status")
         if not result.rowcount:
-            raise NotFoundError()
+            raise NotFoundError("Unknown block id")
 
     def get_proposal_code_for_block_id(self, block_id: int) -> ProposalCode:
         """
@@ -231,33 +231,38 @@ WHERE BV.BlockVisit_Id = :block_visit_id
 
     def get_block_visit_status(self, block_visit_id: int) -> str:
         """
-        Return the status of observations for a block visit id.
+        Return the block visit status for a block visit id.
         """
         stmt = text(
             """
 SELECT BVS.BlockVisitStatus
 FROM BlockVisitStatus BVS
-JOIN BlockVisit BV ON BVS.BlockVisitStatus_Id = BV.BlockVisitStatus_Id
+         JOIN BlockVisit BV ON BVS.BlockVisitStatus_Id = BV.BlockVisitStatus_Id
 WHERE BV.BlockVisit_Id = :block_visit_id
-AND BVS.BlockVisitStatus NOT IN ('Deleted');
+  AND BVS.BlockVisitStatus NOT IN ('Deleted');
         """
         )
         try:
             result = self.connection.execute(stmt, {"block_visit_id": block_visit_id})
             return cast(str, result.scalar_one())
         except NoResultFound:
-            raise NotFoundError("Unknown block visit id")
+            raise NotFoundError(f"Unknown block visit id: {block_visit_id}")
 
     def update_block_visit_status(self, block_visit_id: int, status: str) -> None:
         """
         Update the status of a block visit.
         """
+        if not self._block_visit_exists(block_visit_id):
+            raise NotFoundError(f"Unknown block visit id: {block_visit_id}")
+        try:
+            block_visit_status_id = self._block_visit_status_id(status)
+        except NoResultFound:
+            raise ValueError(f"Unknown block visit status: {status}")
+
         stmt = text(
             """
 UPDATE BlockVisit BV
-SET BV.BlockVisitStatus_Id = (SELECT BVS.BlockVisitStatus_Id
-                                FROM BlockVisitStatus BVS
-                                WHERE BVS.BlockVisitStatus = :status)
+SET BV.BlockVisitStatus_Id = :block_visit_status_id
 WHERE BV.BlockVisit_Id = :block_visit_id
 AND BV.BlockVisitStatus_Id NOT IN (SELECT BVS2.BlockVisitStatus_Id
                                     FROM BlockVisitStatus AS BVS2
@@ -265,14 +270,34 @@ AND BV.BlockVisitStatus_Id NOT IN (SELECT BVS2.BlockVisitStatus_Id
                                     );
         """
         )
-        try:
-            result = self.connection.execute(
-                stmt, {"block_visit_id": block_visit_id, "status": status}
-            )
-        except IntegrityError:
-            raise NotFoundError("Unknown block visit status")
-        if not result.rowcount:
-            raise NotFoundError("Unknown block visit status")
+        self.connection.execute(
+            stmt,
+            {
+                "block_visit_id": block_visit_id,
+                "block_visit_status_id": block_visit_status_id,
+            },
+        )
+
+    def _block_visit_status_id(self, status: str) -> int:
+        stmt = text(
+            """
+SELECT BVS.BlockVisitStatus_Id AS id
+FROM BlockVisitStatus BVS
+WHERE BVS.BlockVisitStatus = :status
+        """
+        )
+        result = self.connection.execute(stmt, {"status": status})
+        return cast(int, result.scalar_one())
+
+    def _block_visit_exists(self, block_visit_id: int) -> bool:
+        stmt = text(
+            """
+SELECT COUNT(*) FROM BlockVisit WHERE BlockVisit_Id = :block_visit_id
+        """
+        )
+        result = self.connection.execute(stmt, {"block_visit_id": block_visit_id})
+
+        return cast(int, result.scalar_one()) > 0
 
     def get_proposal_code_for_block_visit_id(self, block_visit_id: int) -> ProposalCode:
         """
