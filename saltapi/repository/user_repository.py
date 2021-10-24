@@ -1,6 +1,6 @@
 import hashlib
 import secrets
-from typing import List, cast
+from typing import List, Optional, cast
 
 from passlib.context import CryptContext
 from sqlalchemy import text
@@ -8,7 +8,7 @@ from sqlalchemy.engine import Connection
 
 from saltapi.exceptions import NotFoundError
 from saltapi.service.proposal import ProposalCode
-from saltapi.service.user import Role, User, UserToUpdate
+from saltapi.service.user import Role, User, UserUpdate
 
 pwd_context = CryptContext(
     schemes=["bcrypt", "md5_crypt"], default="bcrypt", deprecated="auto"
@@ -68,6 +68,54 @@ WHERE I.Email = :email
         if not user:
             raise NotFoundError("Unknown email address")
         return User(**user)
+
+    def patch(self, username: str, user_update: UserUpdate) -> User:
+        """Updates a user's details."""
+        if user_update.password:
+            self._update_password(username, user_update.password)
+        new_user_details = self._new_user_details(username, user_update)
+        new_username = cast(str, new_user_details.username)
+        self._update_username(old_username=username, new_username=new_username)
+        return self.get(new_username)
+
+    def _new_user_details(self, username: str, user_update: UserUpdate) -> UserUpdate:
+        """
+        Returns the new user details of a user.
+
+        If the given user update has a non-None value for a property, that value should
+        replace the existing value; otherwise the existing value is kept.
+        """
+        user = self.get(username)
+        return UserUpdate(
+            username=user_update.username if user_update.username else user.username,
+            password=user_update.password,
+        )
+
+    def _update_username(self, old_username: str, new_username: str) -> None:
+        """
+        Updates the username of a user.
+        """
+        if new_username == old_username:
+            return
+
+        # Check that the new username isn't in use already
+        try:
+            user: Optional[User] = self.get(new_username)
+        except NotFoundError:
+            user = None
+        if user:
+            raise ValueError(f"The username {new_username} exists already.")
+
+        stmt = text(
+            """
+UPDATE PiptUser
+SET Username = :new_username
+WHERE Username = :old_username
+        """
+        )
+        self.connection.execute(
+            stmt, {"new_username": new_username, "old_username": old_username}
+        )
 
     def is_investigator(self, username: str, proposal_code: ProposalCode) -> bool:
         """
@@ -313,7 +361,7 @@ WHERE PS.PiptSetting_Name = 'RightAdmin'
         """Hash a plain text password."""
         return hashlib.md5(password.encode("utf-8")).hexdigest()  # nosec
 
-    def update_password_hash(self, username: str, password: str) -> None:
+    def _update_password_hash(self, username: str, password: str) -> None:
         new_password_hash = self.get_new_password_hash(password)
         stmt = text(
             """
@@ -327,7 +375,8 @@ ON DUPLICATE KEY UPDATE Password = :password
         )
 
     def _update_password(self, username: str, password: str) -> None:
-        self.update_password_hash(username, password)
+        # TODO: Uncomment once the Password table exists.
+        # self._update_password_hash(username, password)
         password_hash = self.get_password_hash(password)
         stmt = text(
             """
@@ -337,10 +386,6 @@ WHERE Username = :username
         """
         )
         self.connection.execute(stmt, {"username": username, "password": password_hash})
-
-    def update_user_given_family_name(self, user) -> None:
-        # TODO still needs to be discussed how to do it properly
-        pass
 
     @staticmethod
     def get_new_password_hash(password: str) -> str:
@@ -397,9 +442,3 @@ WHERE Username = :username
             roles.append(Role.TAC_MEMBER)
 
         return roles
-
-    def update_user_details(self, user: UserToUpdate) -> User:
-        self._update_password(user.username, user.password)
-        self.update_password_hash(user.username, user.password)
-        self.update_user_given_family_name(user)
-        return self.get(user.username)

@@ -6,6 +6,7 @@ from sqlalchemy.engine import Connection
 
 from saltapi.exceptions import NotFoundError
 from saltapi.repository.user_repository import UserRepository
+from saltapi.service.user import UserUpdate
 from tests.markers import nodatabase
 
 TEST_DATA_PATH = "repository/user_repository.yaml"
@@ -53,6 +54,74 @@ def test_get_user_by_email_raises_error_for_non_existing_user(
     user_repository = UserRepository(dbconnection)
     with pytest.raises(NotFoundError):
         user_repository.get("invalid@email.com")
+
+
+@nodatabase
+def test_patch_raises_error_for_non_existing_user(dbconnection: Connection) -> None:
+    user_repository = UserRepository(dbconnection)
+    with pytest.raises(NotFoundError):
+        user_repository.patch("idontexist", UserUpdate(username=None, password=None))
+
+
+@nodatabase
+def test_patch_uses_existing_values_by_default(dbconnection: Connection) -> None:
+    user_repository = UserRepository(dbconnection)
+    username = "hettlage"
+    old_user_details = user_repository.get(username)
+    user_repository.patch(username, UserUpdate(username=None, password=None))
+    new_user_details = user_repository.get(username)
+
+    assert old_user_details == new_user_details
+
+
+def test_patch_replaces_existing_values(dbconnection: Connection) -> None:
+    user_repository = UserRepository(dbconnection)
+    username = "hettlage"
+    old_user_details = user_repository.get(username)
+
+    new_username = "hettlage2"
+    new_password = "a_new_shiny_password"
+    assert not user_repository.verify_password(
+        new_password, old_user_details.password_hash
+    )
+
+    user_repository.patch(
+        username, UserUpdate(username=new_username, password=new_password)
+    )
+    new_user_details = user_repository.get(new_username)
+
+    assert new_user_details.username == new_username
+    assert user_repository.verify_password(new_password, new_user_details.password_hash)
+
+
+def test_patch_is_idempotent(dbconnection: Connection) -> None:
+    user_repository = UserRepository(dbconnection)
+    username = "hettlage"
+    new_username = "hettlage2"
+    new_password = "a_new_shiny_password"
+
+    user_repository.patch(
+        username, UserUpdate(username=new_username, password=new_password)
+    )
+    new_user_details_1 = user_repository.get(new_username)
+
+    user_repository.patch(
+        new_username, UserUpdate(username=new_username, password=new_password)
+    )
+    new_user_details_2 = user_repository.get(new_username)
+
+    assert new_user_details_1 == new_user_details_2
+
+
+def test_patch_cannot_use_existing_username(dbconnection: Connection) -> None:
+    user_repository = UserRepository(dbconnection)
+    username = "hettlage"
+    existing_username = "nhlavutelo"
+
+    with pytest.raises(ValueError):
+        user_repository.patch(
+            username, UserUpdate(username=existing_username, password=None)
+        )
 
 
 @nodatabase

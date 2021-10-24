@@ -4,7 +4,7 @@ from typing import List
 from saltapi.repository.user_repository import UserRepository
 from saltapi.service.authentication_service import AuthenticationService
 from saltapi.service.mail_service import MailService
-from saltapi.service.user import Role, User, UserToUpdate
+from saltapi.service.user import Role, User, UserUpdate
 from saltapi.settings import Settings
 
 
@@ -72,5 +72,10 @@ SALT Team
     def get_user_roles(self, username: str) -> List[Role]:
         return self.repository.get_user_roles(username)
 
-    def update_user_details(self, user: UserToUpdate) -> User:
-        return self.repository.update_user_details(user)
+    def get_user_details(self, username: str) -> User:
+        user = self.repository.get(username)
+        user.password_hash = "***"  # Just in case the password hash ends uop somewhere
+        return user
+
+    def update_user_details(self, username: str, user: UserUpdate) -> User:
+        return self.repository.patch(username, user)

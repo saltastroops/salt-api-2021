@@ -1,8 +1,10 @@
+from dataclasses import dataclass
 from enum import Enum
-from typing import NamedTuple
+from typing import NamedTuple, Optional
 
 
-class User(NamedTuple):
+@dataclass()
+class User:
     id: int
     username: str
     given_name: str
@@ -11,12 +13,13 @@ class User(NamedTuple):
     password_hash: str
 
 
-class UserToUpdate(NamedTuple):
-    username: str
-    given_name: str
-    family_name: str
-    email: str
-    password: str
+class UserUpdate(NamedTuple):
+    username: Optional[str]
+    # Not implemented yet
+    # given_name: Optional[str]
+    # family_name: Optional[str]
+    # email: Optional[str]
+    password: Optional[str]
 
 
 class Role(str, Enum):

@@ -55,9 +55,7 @@ def token(
     """
     try:
         user = authenticate_user(form_data.username, form_data.password)
-        if user:
-            return AuthenticationService.access_token(user)
-
+        return AuthenticationService.access_token(user)
     except Exception:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
