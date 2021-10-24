@@ -24,7 +24,7 @@ class ProposalService:
         """
         if semester_start(from_semester) > semester_start(to_semester):
             raise ValueError(
-                "The from semester must not be later than the to " "semester."
+                "The from semester must not be later than the to semester."
             )
 
         if limit < 0:

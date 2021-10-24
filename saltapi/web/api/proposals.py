@@ -156,12 +156,12 @@ def get_proposal(
     """
 
     with UnitOfWork() as unit_of_work:
+        user_repository = UserRepository(unit_of_work.connection)
         proposal_repository = ProposalRepository(unit_of_work.connection)
         proposal_service = ProposalService(proposal_repository)
+        block_repository = create_block_repository(unit_of_work.connection)
         permission_service = PermissionService(
-            user_repository=UserRepository(unit_of_work.connection),
-            proposal_repository=proposal_repository,
-            block_repository=create_block_repository(unit_of_work.connection),
+            user_repository, proposal_repository, block_repository
         )
         if not permission_service.may_view_proposal(
             user, cast(_ProposalCode, proposal_code)

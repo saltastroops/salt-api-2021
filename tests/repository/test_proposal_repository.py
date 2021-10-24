@@ -269,7 +269,7 @@ def test_get_returns_blocks(
 
 
 @nodatabase
-def test_get_returns_executed_observations(
+def test_get_returns_block_visits(
     dbconnection: Connection, testdata: Callable[[str], Any]
 ) -> None:
     data = testdata(TEST_DATA)["get"]
