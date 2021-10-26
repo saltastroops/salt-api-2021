@@ -69,14 +69,13 @@ WHERE I.Email = :email
             raise NotFoundError("Unknown email address")
         return User(**user)
 
-    def patch(self, username: str, user_update: UserUpdate) -> User:
+    def update(self, username: str, user_update: UserUpdate) -> None:
         """Updates a user's details."""
         if user_update.password:
             self._update_password(username, user_update.password)
         new_user_details = self._new_user_details(username, user_update)
         new_username = cast(str, new_user_details.username)
         self._update_username(old_username=username, new_username=new_username)
-        return self.get(new_username)
 
     def _new_user_details(self, username: str, user_update: UserUpdate) -> UserUpdate:
         """

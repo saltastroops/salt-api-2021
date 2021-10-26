@@ -77,5 +77,5 @@ SALT Team
         user.password_hash = "***"  # Just in case the password hash ends uop somewhere
         return user
 
-    def update_user_details(self, username: str, user: UserUpdate) -> User:
-        return self.repository.patch(username, user)
+    def update_user_details(self, username: str, user: UserUpdate) -> None:
+        self.repository.update(username, user)
