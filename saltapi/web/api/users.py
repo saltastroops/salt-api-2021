@@ -1,17 +1,32 @@
-from fastapi import APIRouter, Body, Depends, HTTPException, Query
+from fastapi import APIRouter, Body, Depends, HTTPException, Path
+from sqlalchemy.engine import Connection
 from starlette import status
 
 from saltapi.exceptions import NotFoundError
+from saltapi.repository.block_repository import BlockRepository
+from saltapi.repository.instrument_repository import InstrumentRepository
+from saltapi.repository.proposal_repository import ProposalRepository
+from saltapi.repository.target_repository import TargetRepository
 from saltapi.repository.unit_of_work import UnitOfWork
 from saltapi.repository.user_repository import UserRepository
 from saltapi.service.authentication_service import get_current_user
+from saltapi.service.permission_service import PermissionService
 from saltapi.service.user import User as _User
-from saltapi.service.user import UserUpdate
+from saltapi.service.user import UserUpdate as _UserUpdate
 from saltapi.service.user_service import UserService
 from saltapi.web.schema.common import Message
-from saltapi.web.schema.user import PasswordResetRequest, User
+from saltapi.web.schema.user import PasswordResetRequest, User, UserUpdate
 
 router = APIRouter(prefix="/users", tags=["User"])
+
+
+# TODO: Should be handled elsewhere
+def create_block_repository(connection: Connection) -> BlockRepository:
+    return BlockRepository(
+        target_repository=TargetRepository(connection),
+        instrument_repository=InstrumentRepository(connection),
+        connection=connection,
+    )
 
 
 @router.post(
@@ -55,13 +70,13 @@ def send_password_reset_email(
     "/{username}", summary="Update user details", response_model=User, status_code=200
 )
 def update_user_details(
-    username: str = Query(
+    username: str = Path(
         ...,
         title="Username",
         description="Username of the user whose details are updated.",
     ),
-    user: UserUpdate = Body(..., title="User Details", description="??"),
-    auth_user: _User = Depends(get_current_user),
+    user_update: UserUpdate = Body(..., title="User Details", description="??"),
+    user: _User = Depends(get_current_user),
 ) -> _User:
     with UnitOfWork() as unit_of_work:
 
@@ -72,5 +87,19 @@ def update_user_details(
         #     )
         user_repository = UserRepository(unit_of_work.connection)
         user_service = UserService(user_repository)
-        user_repository.connection.commet()
-        return user_service.update_user_details(username, user)
+        proposal_repository = ProposalRepository(unit_of_work.connection)
+        block_repository = create_block_repository(unit_of_work.connection)
+        permission_service = PermissionService(
+            user_repository, proposal_repository, block_repository
+        )
+        if not permission_service.may_update_user(user, username):
+            raise HTTPException(status.HTTP_403_FORBIDDEN)
+
+        _user_update = _UserUpdate(
+            username=user_update.username, password=user_update.password
+        )
+        user_service.update_user_details(username, _user_update)
+        unit_of_work.commit()
+
+        new_username = user_update.username if user_update.username else username
+        return user_service.get_user(new_username)

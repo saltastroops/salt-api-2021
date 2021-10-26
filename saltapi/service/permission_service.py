@@ -151,3 +151,16 @@ class PermissionService:
         return self.user_repository.is_salt_astronomer(
             username
         ) or self.user_repository.is_administrator(username)
+
+    def may_update_user(self, user: User, updated_username: str) -> bool:
+        """
+        Check whether the user may update a user.
+
+        Administrators may update any users. Other users maty only update their own user
+        details.
+        """
+
+        if self.user_repository.is_administrator(user.username):
+            return True
+
+        return user.username == updated_username

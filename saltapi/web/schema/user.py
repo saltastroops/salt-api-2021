@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import List
+from typing import List, Optional
 
 from pydantic import BaseModel, Field
 
@@ -28,6 +28,21 @@ class User(ContactDetails):
 
     username: str = Field(..., title="Username", description="Username.")
     roles: List[UserRole] = Field(..., title="User roles", description="User roles.")
+
+
+class UserUpdate(BaseModel):
+    """
+    New user details.
+
+    A None value means that the existing value should be kept.
+    """
+
+    username: Optional[str] = Field(None, title="Username", description="Username.")
+    # Not implemented yet
+    # given_name: Optional[str]
+    # family_name: Optional[str]
+    # email: Optional[str]
+    password: Optional[str] = Field(None, title="Password", description="Password.")
 
 
 class PasswordResetRequest(BaseModel):
