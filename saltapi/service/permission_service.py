@@ -152,11 +152,24 @@ class PermissionService:
             username
         ) or self.user_repository.is_administrator(username)
 
+    def may_view_user(self, user: User, updated_username: str) -> bool:
+        """
+        Check whether the user may update a user.
+
+        Administrators may view any users. Other users may only view their own user
+        details.
+        """
+
+        if self.user_repository.is_administrator(user.username):
+            return True
+
+        return user.username == updated_username
+
     def may_update_user(self, user: User, updated_username: str) -> bool:
         """
         Check whether the user may update a user.
 
-        Administrators may update any users. Other users maty only update their own user
+        Administrators may update any users. Other users may only update their own user
         details.
         """
 

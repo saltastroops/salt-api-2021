@@ -7,7 +7,7 @@ from tests.conftest import authenticate, misauthenticate
 
 USER_URL = "/user"
 
-USER_DATA = "api/user.yaml"
+USER_DATA = "integration/user.yaml"
 
 
 def test_should_return_401_if_user_is_not_authenticated(client: TestClient) -> None:

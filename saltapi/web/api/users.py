@@ -66,8 +66,31 @@ def send_password_reset_email(
         return Message(message="Email with a password reset link sent.")
 
 
+@router.get("/{username}", summary="Get user details", response_model=User)
+def get_user_details(username: str = Path(
+    ...,
+    title="Username",
+    description="Username of the user whose details are updated.",
+),
+        user: _User = Depends(get_current_user),
+) -> _User:
+    with UnitOfWork() as unit_of_work:
+        user_repository = UserRepository(unit_of_work.connection)
+        user_service = UserService(user_repository)
+        proposal_repository = ProposalRepository(unit_of_work.connection)
+        block_repository = create_block_repository(unit_of_work.connection)
+        permission_service = PermissionService(
+            user_repository, proposal_repository, block_repository
+        )
+        if not permission_service.may_view_user(user, username):
+            raise HTTPException(status.HTTP_403_FORBIDDEN)
+
+        return user_service.get_user(username)
+
+
+
 @router.patch(
-    "/{username}", summary="Update user details", response_model=User, status_code=200
+    "/{username}", summary="Update user details", response_model=User
 )
 def update_user_details(
     username: str = Path(

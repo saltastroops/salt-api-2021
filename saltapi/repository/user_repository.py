@@ -42,7 +42,7 @@ WHERE PU.Username = :username
         user = result.one_or_none()
         if not user:
             raise NotFoundError("Unknown username")
-        return User(**user)
+        return User(**user, roles=self.get_user_roles(username))
 
     def get_by_email(self, email: str) -> User:
         """
