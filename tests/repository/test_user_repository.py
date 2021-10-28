@@ -1,3 +1,4 @@
+import uuid
 from typing import Any, Callable, Optional, cast
 
 import pytest
@@ -6,7 +7,7 @@ from sqlalchemy.engine import Connection
 
 from saltapi.exceptions import NotFoundError
 from saltapi.repository.user_repository import UserRepository
-from saltapi.service.user import UserUpdate
+from saltapi.service.user import NewUserDetails, UserUpdate
 from tests.markers import nodatabase
 
 TEST_DATA_PATH = "repository/user_repository.yaml"
@@ -34,8 +35,25 @@ def test_get_user_raises_error_for_non_existing_user(dbconnection: Connection) -
 
 
 @nodatabase
+def test_get_user_by_id_returns_correct_user(
+        dbconnection: Connection, testdata: Callable[[str], Any]
+) -> None:
+    expected_user = testdata(TEST_DATA_PATH)["get_user_by_id"]
+    user_repository = UserRepository(dbconnection)
+    user = user_repository.get_by_id(expected_user["id"])
+
+    assert user.id == expected_user["id"]
+    assert user.username == expected_user["username"]
+    assert user.email == expected_user["email"]
+    assert user.given_name == expected_user["given_name"]
+    assert user.family_name == expected_user["family_name"]
+    assert user.password_hash is not None
+    assert user.roles == expected_user["roles"]
+
+
+@nodatabase
 def test_get_user_by_email_returns_correct_user(
-    dbconnection: Connection, testdata: Callable[[str], Any]
+        dbconnection: Connection, testdata: Callable[[str], Any]
 ) -> None:
     expected_user = testdata(TEST_DATA_PATH)["get_user_by_email"]
     user_repository = UserRepository(dbconnection)
@@ -43,8 +61,59 @@ def test_get_user_by_email_returns_correct_user(
 
     assert user.id == expected_user["id"]
     assert user.username == expected_user["username"]
+    assert user.email == expected_user["email"]
     assert user.given_name == expected_user["given_name"]
-    assert user.email is not None
+    assert user.family_name == expected_user["family_name"]
+    assert user.password_hash is not None
+    assert user.roles == expected_user["roles"]
+
+
+def _random_string() -> str:
+    return str(uuid.uuid4())[:8]
+
+
+@nodatabase
+def test_create_user_raisers_error_if_username_exists_already(
+    dbconnection: Connection,
+) -> None:
+    username = "hettlage"
+    new_user_details = NewUserDetails(
+        username=username,
+        email=f"{username}@example.com",
+        given_name=_random_string(),
+        family_name=_random_string(),
+        password="very_secret",
+        institute_id=5,
+    )
+    user_repository = UserRepository(dbconnection)
+    with pytest.raises(ValueError) as excinfo:
+        user_repository.create(new_user_details)
+
+    assert "username" in str(excinfo.value).lower()
+
+
+@nodatabase
+def test_create_user_creates_a_new_user(dbconnection: Connection) -> None:
+    username = _random_string()
+    new_user_details = NewUserDetails(
+        username=username,
+        password=_random_string(),
+        email=f"{username}@example.com",
+        given_name=_random_string(),
+        family_name=_random_string(),
+        institute_id=5,
+    )
+
+    user_repository = UserRepository(dbconnection)
+    user_repository.create(new_user_details)
+
+    created_user = user_repository.get(username)
+    assert created_user.username == username
+    assert created_user.password_hash is not None
+    assert created_user.email == new_user_details.email
+    assert created_user.given_name == new_user_details.given_name
+    assert created_user.family_name == new_user_details.family_name
+    assert created_user.roles == []
 
 
 @nodatabase

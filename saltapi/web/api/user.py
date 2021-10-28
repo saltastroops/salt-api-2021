@@ -24,6 +24,6 @@ def who_am_i(user: _User = Depends(get_current_user)) -> _User:
     with UnitOfWork() as unit_of_work:
         user_repository = UserRepository(unit_of_work.connection)
         user_service = UserService(user_repository)
-        user_details = user_service.get_user_details(user.username)
+        user_details = user_service.get_user(user.username)
 
         return user_details

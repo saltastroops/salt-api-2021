@@ -30,6 +30,18 @@ class User(ContactDetails):
     roles: List[UserRole] = Field(..., title="User roles", description="User roles.")
 
 
+class NewUserDetails(ContactDetails):
+    """Details for creating a user."""
+
+    username: str = Field(..., title="Username", description="Username.")
+    password: str = Field(..., title="Password", description="Password.")
+    institute_id: int = Field(
+        ...,
+        title="Institute id",
+        description="Unique identifier of the institute to which the user is affiliated.",
+    )
+
+
 class UserUpdate(BaseModel):
     """
     New user details.

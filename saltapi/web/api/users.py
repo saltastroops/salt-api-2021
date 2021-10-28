@@ -12,10 +12,11 @@ from saltapi.repository.user_repository import UserRepository
 from saltapi.service.authentication_service import get_current_user
 from saltapi.service.permission_service import PermissionService
 from saltapi.service.user import User as _User
-from saltapi.service.user import UserUpdate as _UserUpdate
+from saltapi.service.user import NewUserDetails as _NewUserDetails, UserUpdate as _UserUpdate
 from saltapi.service.user_service import UserService
 from saltapi.web.schema.common import Message
-from saltapi.web.schema.user import PasswordResetRequest, User, UserUpdate
+from saltapi.web.schema.user import PasswordResetRequest, User, UserUpdate, \
+    NewUserDetails
 
 router = APIRouter(prefix="/users", tags=["User"])
 
@@ -66,13 +67,25 @@ def send_password_reset_email(
         return Message(message="Email with a password reset link sent.")
 
 
+@router.post("/", summary="Create a new user", status_code=status.HTTP_201_CREATED, response_model=User)
+def create_user(user: NewUserDetails = Body(..., title="User details", description="User details for the user to create.")) -> _User:
+    with UnitOfWork() as unit_of_work:
+        user_repository = UserRepository(unit_of_work.connection)
+        user_service = UserService(user_repository)
+        user_service.create_user(_NewUserDetails(username=user.username, password=user.password, email=user.email, given_name=user.given_name, family_name=user.family_name, institute_id=user.institute_id))
+        unit_of_work.commit()
+
+        return user_service.get_user(user.username)
+
+
 @router.get("/{username}", summary="Get user details", response_model=User)
-def get_user_details(username: str = Path(
-    ...,
-    title="Username",
-    description="Username of the user whose details are updated.",
-),
-        user: _User = Depends(get_current_user),
+def get_user(
+    username: str = Path(
+        ...,
+        title="Username",
+        description="Username of the user whose details are updated.",
+    ),
+    user: _User = Depends(get_current_user),
 ) -> _User:
     with UnitOfWork() as unit_of_work:
         user_repository = UserRepository(unit_of_work.connection)
@@ -88,11 +101,8 @@ def get_user_details(username: str = Path(
         return user_service.get_user(username)
 
 
-
-@router.patch(
-    "/{username}", summary="Update user details", response_model=User
-)
-def update_user_details(
+@router.patch("/{username}", summary="Update user details", response_model=User)
+def update_user(
     username: str = Path(
         ...,
         title="Username",
@@ -102,12 +112,6 @@ def update_user_details(
     user: _User = Depends(get_current_user),
 ) -> _User:
     with UnitOfWork() as unit_of_work:
-
-        # if auth_user.username != user.username or auth_user.email != user.email:
-        #     raise HTTPException(
-        #         status_code=status.HTTP_405_METHOD_NOT_ALLOWED,
-        #         detail="Not allowed to update user.",
-        #     )
         user_repository = UserRepository(unit_of_work.connection)
         user_service = UserService(user_repository)
         proposal_repository = ProposalRepository(unit_of_work.connection)
@@ -121,7 +125,7 @@ def update_user_details(
         _user_update = _UserUpdate(
             username=user_update.username, password=user_update.password
         )
-        user_service.update_user_details(username, _user_update)
+        user_service.update_user(username, _user_update)
         unit_of_work.commit()
 
         new_username = user_update.username if user_update.username else username

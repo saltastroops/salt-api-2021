@@ -33,7 +33,7 @@ class AuthenticationService:
         else:
             token_expires = timedelta(hours=ACCESS_TOKEN_LIFETIME_HOURS)
         token = AuthenticationService.jwt_token(
-            payload={"sub": user.username},
+            payload={"sub": str(user.id)},   # subject must be a string, not an integer
             expires_delta=token_expires,
         )
 
@@ -71,8 +71,9 @@ class AuthenticationService:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         if not payload:
             raise JWTError("Token failed to decode.")
-        user = self.user_repository.get(payload["sub"])
-        if not user:
+        try:
+            user = self.user_repository.get_by_id(payload["sub"])
+        except NotFoundError:
             raise ValueError("Token not valid.")
         return user
 

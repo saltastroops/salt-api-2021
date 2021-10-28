@@ -114,6 +114,7 @@ USER = User(
     family_name="One",
     email="someone@example.com",
     password_hash="1234",
+    roles=[],
 )
 
 PROPOSAL_CODE = ProposalCode("some_code")

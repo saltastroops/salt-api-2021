@@ -1,19 +1,17 @@
 from datetime import timedelta
 from typing import List
 
+from saltapi.exceptions import NotFoundError, ValidationError
 from saltapi.repository.user_repository import UserRepository
 from saltapi.service.authentication_service import AuthenticationService
 from saltapi.service.mail_service import MailService
-from saltapi.service.user import Role, User, UserUpdate
+from saltapi.service.user import Role, User, UserUpdate, NewUserDetails
 from saltapi.settings import Settings
 
 
 class UserService:
     def __init__(self, repository: UserRepository):
         self.repository = repository
-
-    def get_user(self, username: str) -> User:
-        return self.repository.get(username)
 
     def send_password_reset_email(self, user: User) -> None:
         mail_service = MailService()
@@ -72,10 +70,26 @@ SALT Team
     def get_user_roles(self, username: str) -> List[Role]:
         return self.repository.get_user_roles(username)
 
-    def get_user_details(self, username: str) -> User:
+    def _does_user_exist(self, username: str) -> bool:
+        try:
+            self.get_user(username)
+        except NotFoundError:
+            return False
+
+        return True
+
+    def create_user(self, user: NewUserDetails) -> None:
+        if self._does_user_exist(user.username):
+            raise ValidationError(f"The username {user.username} exists already.")
+        self.repository.create(user)
+
+    def get_user(self, username: str) -> User:
         user = self.repository.get(username)
         user.password_hash = "***"  # Just in case the password hash ends uop somewhere
         return user
 
-    def update_user_details(self, username: str, user: UserUpdate) -> None:
+    def update_user(self, username: str, user: UserUpdate) -> None:
+        if self._does_user_exist(user.username):
+            print()
+            raise ValidationError(f"The username {user.username} exists already.")
         self.repository.update(username, user)

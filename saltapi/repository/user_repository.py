@@ -1,6 +1,7 @@
 import hashlib
 import secrets
-from typing import List, Optional, cast
+import uuid
+from typing import List, cast
 
 from passlib.context import CryptContext
 from sqlalchemy import text
@@ -8,7 +9,7 @@ from sqlalchemy.engine import Connection
 
 from saltapi.exceptions import NotFoundError
 from saltapi.service.proposal import ProposalCode
-from saltapi.service.user import Role, User, UserUpdate
+from saltapi.service.user import NewUserDetails, Role, User, UserUpdate
 
 pwd_context = CryptContext(
     schemes=["bcrypt", "md5_crypt"], default="bcrypt", deprecated="auto"
@@ -44,11 +45,36 @@ WHERE PU.Username = :username
             raise NotFoundError("Unknown username")
         return User(**user, roles=self.get_user_roles(username))
 
+    def get_by_id(self, user_id: str) -> User:
+        """
+        Returns the user with a given user id.
+
+        If there is no such user, a NotFoundError is raised.
+        """
+        stmt = text(
+            """
+SELECT PU.PiptUser_Id  AS id,
+       Email           AS email,
+       Surname         AS family_name,
+       FirstName       AS given_name,
+       Password        AS password_hash,
+       Username        AS username
+FROM PiptUser PU
+         JOIN Investigator I ON (PU.Investigator_Id = I.Investigator_Id)
+WHERE PU.PiptUser_Id = :pipt_user_id
+        """
+        )
+        result = self.connection.execute(stmt, {"pipt_user_id": user_id})
+        user = result.one_or_none()
+        if not user:
+            raise NotFoundError("Unknown email address")
+        return User(**user, roles=self.get_user_roles(user.username))
+
     def get_by_email(self, email: str) -> User:
         """
         Returns the user with a given email
 
-        If the username does not exist, a NotFoundError is raised.
+        If there is no such user, a NotFoundError is raised.
         """
         stmt = text(
             """
@@ -67,7 +93,94 @@ WHERE I.Email = :email
         user = result.one_or_none()
         if not user:
             raise NotFoundError("Unknown email address")
-        return User(**user)
+        return User(**user, roles=self.get_user_roles(user.username))
+
+    def create(self, new_user_details: NewUserDetails) -> None:
+        """Creates a new user."""
+
+        # Make sure the username is still available
+        if self._does_username_exist(new_user_details.username):
+            raise ValueError(
+                f"The username {new_user_details.username} exists already."
+            )
+
+        investigator_id = self._create_investigator_details(new_user_details)
+        pipt_user_id = self._create_pipt_user(new_user_details, investigator_id)
+        self._add_investigator_to_pipt_user(pipt_user_id, investigator_id)
+
+    def _create_investigator_details(self, new_user_details: NewUserDetails) -> int:
+        """
+        Create investigator details.
+
+        The primary key of the new database entry is returned.
+        """
+
+        stmt = text(
+            """
+INSERT INTO Investigator (Institute_Id, FirstName, Surname, Email)
+VALUES (:institute_id, :given_name, :family_name, :email)
+        """
+        )
+        result = self.connection.execute(
+            stmt,
+            {
+                "institute_id": new_user_details.institute_id,
+                "given_name": new_user_details.given_name,
+                "family_name": new_user_details.family_name,
+                "email": new_user_details.email,
+            },
+        )
+
+        return cast(int, result.lastrowid)
+
+    def _create_pipt_user(
+        self, new_user_details: NewUserDetails, investigator_id: int
+    ) -> int:
+        # TODO: Uncomment once the Password table exists.
+        password = new_user_details.password
+        # self._update_password_hash(username, password)
+        password_hash = self.get_password_hash(password)
+
+        stmt = text(
+            """
+INSERT INTO PiptUser (Username, Password, Investigator_Id, EmailValidation, Active)
+VALUES (:username, :password_hash, :investigator_id, :email_validation, 0)
+        """
+        )
+        result = self.connection.execute(
+            stmt,
+            {
+                "username": new_user_details.username,
+                "password_hash": password_hash,
+                "investigator_id": investigator_id,
+                "email_validation": str(uuid.uuid4())[:8],
+            },
+        )
+
+        return cast(int, result.lastrowid)
+
+    def _add_investigator_to_pipt_user(
+        self, pipt_user_id: int, investigator_id: int
+    ) -> None:
+        stmt = text(
+            """
+UPDATE Investigator
+SET PiptUser_Id = :pipt_user_id
+WHERE Investigator_Id = :investigator_id
+        """
+        )
+        self.connection.execute(
+            stmt, {"pipt_user_id": pipt_user_id, "investigator_id": investigator_id}
+        )
+
+    def _does_username_exist(self, username: str) -> bool:
+        """Check whether a username exists already."""
+        try:
+            self.get(username)
+        except NotFoundError:
+            return False
+
+        return True
 
     def update(self, username: str, user_update: UserUpdate) -> None:
         """Updates a user's details."""
@@ -98,11 +211,7 @@ WHERE I.Email = :email
             return
 
         # Check that the new username isn't in use already
-        try:
-            user: Optional[User] = self.get(new_username)
-        except NotFoundError:
-            user = None
-        if user:
+        if self._does_username_exist(new_username):
             raise ValueError(f"The username {new_username} exists already.")
 
         stmt = text(

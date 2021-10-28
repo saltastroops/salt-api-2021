@@ -15,5 +15,5 @@ class UnitOfWork:
     def rollback(self) -> None:
         self.connection.rollback()
 
-    async def commit(self) -> None:
-        await self.connection.commit()
+    def commit(self) -> None:
+        self.connection.commit()

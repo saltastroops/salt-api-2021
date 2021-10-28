@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum
-from typing import NamedTuple, Optional, List
+from typing import List, NamedTuple, Optional
 
 
 class Role(str, Enum):
@@ -12,14 +12,28 @@ class Role(str, Enum):
 
 
 @dataclass()
-class User:
-    id: int
-    username: str
+class ContactDetails:
     given_name: str
     family_name: str
     email: str
+
+
+@dataclass()
+class User:
+    id: int
+    username: str
+    email: str
+    given_name: str
+    family_name: str
     password_hash: str
     roles: List[Role]
+
+
+@dataclass()
+class NewUserDetails(ContactDetails):
+    username: str
+    password: str
+    institute_id: int
 
 
 class UserUpdate(NamedTuple):
