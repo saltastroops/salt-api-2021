@@ -175,4 +175,4 @@ def create_user(client: TestClient) -> str:
         institute_id=5,
     )
     response = client.post("/users/", json=new_user_details)
-    return response.json()["username"]
+    return cast(str, response.json()["username"])

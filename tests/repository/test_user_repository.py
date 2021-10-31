@@ -36,7 +36,7 @@ def test_get_user_raises_error_for_non_existing_user(dbconnection: Connection) -
 
 @nodatabase
 def test_get_user_by_id_returns_correct_user(
-        dbconnection: Connection, testdata: Callable[[str], Any]
+    dbconnection: Connection, testdata: Callable[[str], Any]
 ) -> None:
     expected_user = testdata(TEST_DATA_PATH)["get_user_by_id"]
     user_repository = UserRepository(dbconnection)
@@ -53,7 +53,7 @@ def test_get_user_by_id_returns_correct_user(
 
 @nodatabase
 def test_get_user_by_email_returns_correct_user(
-        dbconnection: Connection, testdata: Callable[[str], Any]
+    dbconnection: Connection, testdata: Callable[[str], Any]
 ) -> None:
     expected_user = testdata(TEST_DATA_PATH)["get_user_by_email"]
     user_repository = UserRepository(dbconnection)

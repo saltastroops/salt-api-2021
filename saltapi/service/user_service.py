@@ -5,7 +5,7 @@ from saltapi.exceptions import NotFoundError, ValidationError
 from saltapi.repository.user_repository import UserRepository
 from saltapi.service.authentication_service import AuthenticationService
 from saltapi.service.mail_service import MailService
-from saltapi.service.user import Role, User, UserUpdate, NewUserDetails
+from saltapi.service.user import NewUserDetails, Role, User, UserUpdate
 from saltapi.settings import Settings
 
 
@@ -88,8 +88,12 @@ SALT Team
         user.password_hash = "***"  # Just in case the password hash ends uop somewhere
         return user
 
+    def get_user_by_email(self, email: str) -> User:
+        user = self.repository.get_by_email(email)
+        user.password_hash = "***"  # Just in case the password hash ends uop somewhere
+        return user
+
     def update_user(self, username: str, user: UserUpdate) -> None:
-        if self._does_user_exist(user.username):
-            print()
+        if user.username and self._does_user_exist(user.username):
             raise ValidationError(f"The username {user.username} exists already.")
         self.repository.update(username, user)

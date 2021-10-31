@@ -1,5 +1,8 @@
 from typing import Any, Iterable, List, Tuple, cast
 
+import pytest
+
+from saltapi.exceptions import AuthorizationError
 from saltapi.repository.block_repository import BlockRepository
 from saltapi.repository.proposal_repository import ProposalRepository
 from saltapi.repository.user_repository import UserRepository
@@ -163,13 +166,14 @@ def _assert_role_based_permission(
         permission_service = PermissionService(
             user_repository, proposal_repository, block_repository
         )
-        assert (
+        if expected_result:
             getattr(permission_service, permission)(user=USER, **kwargs)
-            is expected_result
-        ), f"Expected {expected_result} for {role}, got {not expected_result}"
+        else:
+            with pytest.raises(AuthorizationError):
+                getattr(permission_service, permission)(user=USER, **kwargs)
 
 
-def test_may_view_non_gravitational_wave_proposal() -> None:
+def test_check_permission_to_view_non_gravitational_wave_proposal() -> None:
     roles_with_permission = [
         INVESTIGATOR,
         PRINCIPAL_INVESTIGATOR,
@@ -180,23 +184,29 @@ def test_may_view_non_gravitational_wave_proposal() -> None:
         ADMINISTRATOR,
     ]
     _assert_role_based_permission(
-        "may_view_proposal", roles_with_permission, proposal_code=PROPOSAL_CODE
+        "check_permission_to_view_proposal",
+        roles_with_permission,
+        proposal_code=PROPOSAL_CODE,
     )
 
 
-def test_may_view_gravitational_wave_proposal() -> None:
+def test_check_permission_to_view_gravitational_wave_proposal() -> None:
     roles_with_permission = [PARTNER_AFFILIATED_USER]
     _assert_role_based_permission(
-        "may_view_proposal", roles_with_permission, proposal_code="2019-1-GWE-005"
+        "check_permission_to_view_proposal",
+        roles_with_permission,
+        proposal_code="2019-1-GWE-005",
     )
 
 
-def test_may_update_proposal_status() -> None:
+def test_check_permission_to_update_proposal_status() -> None:
     roles_with_permission = [SALT_ASTRONOMER, ADMINISTRATOR]
-    _assert_role_based_permission("may_update_proposal_status", roles_with_permission)
+    _assert_role_based_permission(
+        "check_permission_to_update_proposal_status", roles_with_permission
+    )
 
 
-def test_may_activate_proposal() -> None:
+def test_check_permission_to_activate_proposal() -> None:
     for role in ALL_ROLES:
         for is_self_activable in [True, False]:
             if role in [SALT_ASTRONOMER, ADMINISTRATOR]:
@@ -220,17 +230,18 @@ def test_may_activate_proposal() -> None:
                 user_repository, proposal_repository, block_repository
             )
 
-            assert (
-                permission_service.may_activate_proposal(USER, PROPOSAL_CODE)
-                == expected_permitted
-            ), (
-                f"Expected {expected_permitted} for role {role} and a "
-                f"{'non-' if not is_self_activable else ''}self-activable proposal, "
-                f"got {not expected_permitted}"
-            )
+            if expected_permitted:
+                permission_service.check_permission_to_activate_proposal(
+                    USER, PROPOSAL_CODE
+                )
+            else:
+                with pytest.raises(AuthorizationError):
+                    permission_service.check_permission_to_activate_proposal(
+                        USER, PROPOSAL_CODE
+                    )
 
 
-def test_may_deactivate_proposal() -> None:
+def test_check_permission_to_deactivate_proposal() -> None:
     roles_with_permission = [
         PRINCIPAL_INVESTIGATOR,
         PRINCIPAL_CONTACT,
@@ -238,5 +249,7 @@ def test_may_deactivate_proposal() -> None:
         ADMINISTRATOR,
     ]
     _assert_role_based_permission(
-        "may_deactivate_proposal", roles_with_permission, proposal_code=PROPOSAL_CODE
+        "check_permission_to_deactivate_proposal",
+        roles_with_permission,
+        proposal_code=PROPOSAL_CODE,
     )

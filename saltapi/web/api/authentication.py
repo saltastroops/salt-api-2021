@@ -5,10 +5,10 @@ from fastapi.security import OAuth2PasswordRequestForm
 from starlette import status
 
 from saltapi.repository.unit_of_work import UnitOfWork
-from saltapi.repository.user_repository import UserRepository
 from saltapi.service.authentication import AccessToken
 from saltapi.service.authentication_service import AuthenticationService
 from saltapi.service.user import User
+from saltapi.web import services
 
 router = APIRouter(tags=["Authentication"])
 
@@ -20,9 +20,10 @@ def get_user_authentication_function() -> Callable[[str, str], User]:
 
     def authenticate_user(username: str, password: str) -> User:
         with UnitOfWork() as unit_of_work:
-            user_repository = UserRepository(unit_of_work.connection)
-            authentication_repository = AuthenticationService(user_repository)
-            user = authentication_repository.authenticate_user(username, password)
+            authentication_service = services.authentication_service(
+                unit_of_work.connection
+            )
+            user = authentication_service.authenticate_user(username, password)
             return user
 
     return authenticate_user

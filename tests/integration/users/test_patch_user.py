@@ -7,9 +7,10 @@ from starlette import status
 
 from tests.conftest import (
     authenticate,
+    create_user,
     find_username,
     misauthenticate,
-    not_authenticated, create_user,
+    not_authenticated,
 )
 
 USERS_URL = "/users/"
