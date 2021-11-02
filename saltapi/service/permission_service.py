@@ -128,10 +128,7 @@ class PermissionService:
             username
         ) or self.user_repository.is_administrator(username)
 
-        if not may_update:
-            raise AuthorizationError()
-
-    def check_permission_to_view_block(self, user: User, block_id: int) -> None:
+    def may_view_block(self, user: User, block_id: int) -> bool:
         """
         Check whether the user may view a block.
 
@@ -141,11 +138,9 @@ class PermissionService:
             self.block_repository.get_proposal_code_for_block_id(block_id)
         )
 
-        self.check_permission_to_view_proposal(user, proposal_code)
+        return self.may_view_proposal(user, proposal_code)
 
-    def check_permission_to_view_block_visit(
-        self, user: User, block_visit_id: int
-    ) -> None:
+    def may_view_block_visit(self, user: User, block_visit_id: int) -> bool:
         """
         Check whether the user may view a block visit.
 

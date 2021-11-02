@@ -1,6 +1,9 @@
-from fastapi import APIRouter, Body, Depends, Path
+from fastapi import APIRouter, Body, Depends, HTTPException, Path
+from sqlalchemy.engine import Connection
+from starlette import status
 
 from saltapi.repository.unit_of_work import UnitOfWork
+from saltapi.repository.user_repository import UserRepository
 from saltapi.service.authentication_service import get_current_user
 from saltapi.service.block import Block as _Block
 from saltapi.service.block import BlockStatus as _BlockStatus
@@ -23,11 +26,17 @@ def get_block(
     """
 
     with UnitOfWork() as unit_of_work:
-        permission_service = services.permission_service(unit_of_work.connection)
-        permission_service.check_permission_to_view_block(user, block_id)
-
-        block_service = services.block_service(unit_of_work.connection)
-        return block_service.get_block(block_id)
+        block_repository = create_block_repository(unit_of_work.connection)
+        permission_service = PermissionService(
+            user_repository=UserRepository(unit_of_work.connection),
+            proposal_repository=ProposalRepository(unit_of_work.connection),
+            block_repository=block_repository,
+        )
+        if permission_service.may_view_block(user, block_id):
+            block_service = BlockService(block_repository)
+            return block_service.get_block(block_id)
+        else:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
 
 
 @router.get(
@@ -57,11 +66,17 @@ def get_block_status(
     """
 
     with UnitOfWork() as unit_of_work:
-        permission_service = services.permission_service(unit_of_work.connection)
-        permission_service.check_permission_to_view_block(user, block_id)
-
-        block_service = services.block_service(unit_of_work.connection)
-        return block_service.get_block_status(block_id)
+        block_repository = create_block_repository(unit_of_work.connection)
+        permission_service = PermissionService(
+            user_repository=UserRepository(unit_of_work.connection),
+            proposal_repository=ProposalRepository(unit_of_work.connection),
+            block_repository=block_repository,
+        )
+        if permission_service.may_view_block(user, block_id):
+            block_service = BlockService(block_repository)
+            return block_service.get_block_status(block_id)
+        else:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
 
 
 @router.put(
@@ -88,10 +103,14 @@ def update_block_status(
     """
 
     with UnitOfWork() as unit_of_work:
-        permission_service = services.permission_service(unit_of_work.connection)
-        permission_service.check_permission_to_update_proposal_status(user)
+        block_repository = create_block_repository(unit_of_work.connection)
+        permission_service = PermissionService(
+            user_repository=UserRepository(unit_of_work.connection),
+            proposal_repository=ProposalRepository(unit_of_work.connection),
+            block_repository=block_repository,
+        )
+        if permission_service.may_update_proposal_status(user):
+            block_service = BlockService(block_repository)
+            block_service.update_block_status(block_id, block_status, status_reason)
 
-        block_service = services.block_service(unit_of_work.connection)
-        block_service.update_block_status(block_id, block_status, status_reason)
-
-        return block_service.get_block_status(block_id)
+            return block_service.get_block_status(block_id)
