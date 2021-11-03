@@ -112,6 +112,18 @@ class PermissionService:
             username
         ) or self.user_repository.is_administrator(username)
 
+    def may_view_block(self, user: User, block_id: int) -> bool:
+        """
+        Check whether the user may view a block.
+
+        This is the case if the user may view the proposal which the block belongs to.
+        """
+        proposal_code: ProposalCode = (
+            self.block_repository.get_proposal_code_for_block_id(block_id)
+        )
+
+        return self.may_view_proposal(user, proposal_code)
+
     def may_view_block_visit(self, user: User, block_visit_id: int) -> bool:
         """
         Check whether the user may view a block visit.

@@ -15,8 +15,12 @@ from fastapi import (
     status,
 )
 from fastapi.responses import FileResponse
+from sqlalchemy.engine import Connection
 
+from saltapi.repository.block_repository import BlockRepository
+from saltapi.repository.instrument_repository import InstrumentRepository
 from saltapi.repository.proposal_repository import ProposalRepository
+from saltapi.repository.target_repository import TargetRepository
 from saltapi.repository.unit_of_work import UnitOfWork
 from saltapi.repository.user_repository import UserRepository
 from saltapi.service.authentication_service import get_current_user
@@ -27,11 +31,7 @@ from saltapi.service.proposal import ProposalListItem as _ProposalListItem
 from saltapi.service.proposal_service import ProposalService
 from saltapi.service.user import User
 from saltapi.util import semester_start
-from saltapi.web.schema.common import (
-    BlockVisit,
-    ProposalCode,
-    Semester,
-)
+from saltapi.web.schema.common import BlockVisit, ProposalCode, Semester
 from saltapi.web.schema.proposal import (
     DataReleaseDate,
     DataReleaseDateUpdate,
@@ -49,6 +49,14 @@ router = APIRouter(prefix="/proposals", tags=["Proposals"])
 
 class PDFResponse(Response):
     media_type = "application/pdf"
+
+
+def create_block_repository(connection: Connection) -> BlockRepository:
+    return BlockRepository(
+        target_repository=TargetRepository(connection),
+        instrument_repository=InstrumentRepository(connection),
+        connection=connection,
+    )
 
 
 @router.get("/", summary="List proposals", response_model=List[ProposalListItem])
@@ -151,7 +159,10 @@ def get_proposal(
         user_repository = UserRepository(unit_of_work.connection)
         proposal_repository = ProposalRepository(unit_of_work.connection)
         proposal_service = ProposalService(proposal_repository)
-        permission_service = PermissionService(user_repository, proposal_repository)
+        block_repository = create_block_repository(unit_of_work.connection)
+        permission_service = PermissionService(
+            user_repository, proposal_repository, block_repository
+        )
         if not permission_service.may_view_proposal(
             user, cast(_ProposalCode, proposal_code)
         ):
