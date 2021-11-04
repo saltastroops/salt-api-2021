@@ -21,6 +21,7 @@ USER = User(
     id=1,
     email="jdoe@email.com",
     password_hash="PasswordHash",
+    roles=[],
 )
 
 
@@ -33,21 +34,23 @@ class FakeUserRepository:
                 given_name="John",
                 family_name="Doe",
                 email="johndoe@email.com",
-                password_hash="hasdedpassword",
+                password_hash="hashedpassword",
+                roles=[],
             )
         return None
 
     def find_user_with_username_and_password(
         self, username: str, password: str
     ) -> User:
-        if username == "jdoe" and password == "hasdedpassword":
+        if username == "jdoe" and password == "hashedpassword":
             return User(
                 id=1,
                 username="jdoe",
                 given_name="John",
                 family_name="Doe",
                 email="johndoe@email.com",
-                password_hash="hasdedpassword",
+                password_hash="hashedpassword",
+                roles=[],
             )
 
         raise NotFoundError("User not found or password doesn't match.")
@@ -79,7 +82,7 @@ def test_access_token_has_type_bearer() -> None:
 
 def test_authenticate_user_returns_correct_user() -> None:
     authentication_service = AuthenticationService(user_repository)
-    user = authentication_service.authenticate_user("jdoe", "hasdedpassword")
+    user = authentication_service.authenticate_user("jdoe", "hashedpassword")
 
     assert user.id == 1
     assert user.username == "jdoe"
@@ -90,10 +93,10 @@ def test_authenticate_user_returns_correct_user() -> None:
 @pytest.mark.parametrize(
     "username, password",
     [
-        ("noUser", "hasdedpassword"),
-        ("", "hasdedpassword"),
-        ("jdoee", "hasdedpassword"),
-        (None, "hasdedpassword"),
+        ("noUser", "hashedpassword"),
+        ("", "hashedpassword"),
+        ("jdoee", "hashedpassword"),
+        (None, "hashedpassword"),
     ],
 )
 def test_authenticate_user_raises_error_for_wrong_user(
@@ -107,7 +110,7 @@ def test_authenticate_user_raises_error_for_wrong_user(
 @pytest.mark.parametrize(
     "username, password",
     [
-        ("jdoe", "hasdedpasswordd"),
+        ("jdoe", "hashedpasswordd"),
         ("jdoe", "wrongpassword"),
         ("jdoe", ""),
         ("jdoe", None),

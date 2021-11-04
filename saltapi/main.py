@@ -1,24 +1,23 @@
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.requests import Request
-from starlette.responses import Response, JSONResponse
+from starlette.responses import JSONResponse, Response
 
-from saltapi.exceptions import NotFoundError
+from saltapi.exceptions import (
+    AuthorizationError,
+    NotFoundError,
+    ValidationError,
+)
 from saltapi.logging_config import setup_logging
 from saltapi.settings import Settings
 from saltapi.web.api.authentication import router as authentication_router
-from saltapi.web.api.blocks import router as blocks_router
 from saltapi.web.api.block_visits import router as block_visits_router
+from saltapi.web.api.blocks import router as blocks_router
 from saltapi.web.api.proposals import router as proposals_router
 from saltapi.web.api.user import router as user_router
 from saltapi.web.api.users import router as users_router
 
 app = FastAPI()
-
-
-@app.exception_handler(NotFoundError)
-async def not_found_exception_handler(request: Request, exc: NotFoundError) -> Response:
-    return JSONResponse(status_code=404, content={"message": "Not Found"})
 
 
 settings = Settings()
@@ -36,8 +35,20 @@ app.add_middleware(
 
 
 @app.exception_handler(NotFoundError)
-async def not_found_exception_handler(request: Request, exc: NotFoundError) -> Response:
+async def not_found_error_handler(request: Request, exc: NotFoundError) -> Response:
     return JSONResponse(status_code=404, content={"message": "Not Found"})
+
+
+@app.exception_handler(ValidationError)
+async def validation_error_handler(request: Request, exc: ValidationError) -> Response:
+    return JSONResponse(status_code=400, content={"message": str(exc)})
+
+
+@app.exception_handler(AuthorizationError)
+async def authorization_error_handler(
+    request: Request, exc: AuthorizationError
+) -> Response:
+    return JSONResponse(status_code=403, content={"message": "Forbidden"})
 
 
 app.include_router(blocks_router)

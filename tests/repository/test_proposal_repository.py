@@ -269,15 +269,15 @@ def test_get_returns_blocks(
 
 
 @nodatabase
-def test_get_returns_executed_observations(
+def test_get_returns_block_visits(
     dbconnection: Connection, testdata: Callable[[str], Any]
 ) -> None:
     data = testdata(TEST_DATA)["get"]
     proposal_code = data["proposal_code"]
-    expected_observations = data["executed_observations"]
+    expected_observations = data["block_visits"]
     proposal_repository = ProposalRepository(dbconnection)
     proposal = proposal_repository.get(proposal_code)
-    observations = proposal["executed_observations"]
+    observations = proposal["block_visits"]
 
     assert len(observations) == len(expected_observations)
     for i in range(len(observations)):

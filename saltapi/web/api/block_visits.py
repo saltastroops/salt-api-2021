@@ -1,37 +1,25 @@
-from fastapi import APIRouter, Path, Body, Depends, HTTPException
-from sqlalchemy.engine import Connection
-from starlette import status
+from fastapi import APIRouter, Body, Depends, Path
 
-from saltapi.repository.block_repository import BlockRepository
-from saltapi.repository.instrument_repository import InstrumentRepository
-from saltapi.repository.proposal_repository import ProposalRepository
-from saltapi.repository.target_repository import TargetRepository
 from saltapi.repository.unit_of_work import UnitOfWork
-from saltapi.repository.user_repository import UserRepository
 from saltapi.service.authentication_service import get_current_user
-from saltapi.service.block_service import BlockService
-from saltapi.service.permission_service import PermissionService
+from saltapi.service.block import BlockVisit as _BlockVisit
+from saltapi.service.block import BlockVisitStatus as _BlockVisitStatus
 from saltapi.service.user import User
-from saltapi.web.schema.common import BlockVisit, BlockVisitStatus
+from saltapi.web import services
+from saltapi.web.schema.common import BaseBlockVisit, BlockVisitStatus
 
 router = APIRouter(prefix="/block-visits", tags=["Block visit"])
 
 
-def create_block_repository(connection: Connection) -> BlockRepository:
-    return BlockRepository(
-        target_repository=TargetRepository(connection),
-        instrument_repository=InstrumentRepository(connection),
-        connection=connection,
-    )
-
-
-@router.get("/{block_visit_id}", summary="Get a block visit", response_model=BlockVisit)
+@router.get(
+    "/{block_visit_id}", summary="Get a block visit", response_model=BaseBlockVisit
+)
 def get_block_visit(
     block_visit_id: int = Path(
         ..., title="Block visit id", description="Unique identifier for block visits"
     ),
     user: User = Depends(get_current_user),
-) -> BlockVisit:
+) -> _BlockVisit:
     """
     Returns a block visit.
 
@@ -39,19 +27,12 @@ def get_block_visit(
     queue to be observed.
     """
     with UnitOfWork() as unit_of_work:
-        block_repository = create_block_repository(unit_of_work.connection)
-        permission_service = PermissionService(
-            user_repository=UserRepository(unit_of_work.connection),
-            proposal_repository=ProposalRepository(unit_of_work.connection),
-            block_repository=block_repository,
-        )
-        if permission_service.may_view_block_visit(user, block_visit_id):
-            block_service = BlockService(block_repository)
-            block_visit = block_service.get_block_visit(block_visit_id)
-            return block_visit
+        permission_service = services.permission_service(unit_of_work.connection)
+        permission_service.check_permission_to_view_block_visit(user, block_visit_id)
 
-        else:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
+        block_service = services.block_service(unit_of_work.connection)
+        block_visit = block_service.get_block_visit(block_visit_id)
+        return block_visit
 
 
 @router.get(
@@ -64,7 +45,7 @@ def get_block_visit_status(
         ..., title="Block visit id", description="Unique identifier for a block visit"
     ),
     user: User = Depends(get_current_user),
-) -> BlockVisitStatus:
+) -> _BlockVisitStatus:
     """
     Returns the status of a block visit.
 
@@ -77,17 +58,11 @@ def get_block_visit_status(
     Rejected | The observations are rejected.
     """
     with UnitOfWork() as unit_of_work:
-        block_repository = create_block_repository(unit_of_work.connection)
-        permission_service = PermissionService(
-            user_repository=UserRepository(unit_of_work.connection),
-            proposal_repository=ProposalRepository(unit_of_work.connection),
-            block_repository=block_repository,
-        )
-        if permission_service.may_view_block_visit(user, block_visit_id):
-            block_service = BlockService(block_repository)
-            return block_service.get_block_visit_status(block_visit_id)
-        else:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
+        permission_service = services.permission_service(unit_of_work.connection)
+        permission_service.check_permission_to_view_block_visit(user, block_visit_id)
+
+        block_service = services.block_service(unit_of_work.connection)
+        return block_service.get_block_visit_status(block_visit_id)
 
 
 @router.put("/{block_visit_id}/status", summary="Update the status of a block visit")
@@ -109,14 +84,10 @@ def update_block_visit_status(
     """
 
     with UnitOfWork() as unit_of_work:
-        block_repository = create_block_repository(unit_of_work.connection)
-        permission_service = PermissionService(
-            user_repository=UserRepository(unit_of_work.connection),
-            proposal_repository=ProposalRepository(unit_of_work.connection),
-            block_repository=block_repository,
+        permission_service = services.permission_service(unit_of_work.connection)
+        permission_service.check_permission_to_update_block_visit_status(user)
+
+        block_service = services.block_service(unit_of_work.connection)
+        return block_service.update_block_visit_status(
+            block_visit_id, block_visit_status
         )
-        if permission_service.may_update_block_visit_status(user):
-            block_service = BlockService(block_repository)
-            return block_service.update_block_visit_status(
-                block_visit_id, block_visit_status
-            )

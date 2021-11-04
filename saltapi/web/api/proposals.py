@@ -16,15 +16,11 @@ from fastapi import (
 )
 from fastapi.responses import FileResponse
 
-from saltapi.repository.proposal_repository import ProposalRepository
 from saltapi.repository.unit_of_work import UnitOfWork
-from saltapi.repository.user_repository import UserRepository
 from saltapi.service.authentication_service import get_current_user
-from saltapi.service.permission_service import PermissionService
 from saltapi.service.proposal import Proposal as _Proposal
 from saltapi.service.proposal import ProposalCode as _ProposalCode
 from saltapi.service.proposal import ProposalListItem as _ProposalListItem
-from saltapi.service.proposal_service import ProposalService
 from saltapi.service.user import User
 from saltapi.util import semester_start
 from saltapi.web.schema.common import (
@@ -33,6 +29,8 @@ from saltapi.web.schema.common import (
     Semester,
     Message,
 )
+from saltapi.web import services
+from saltapi.web.schema.common import BlockVisit, ProposalCode, Semester
 from saltapi.web.schema.proposal import (
     DataReleaseDate,
     DataReleaseDateUpdate,
@@ -89,8 +87,7 @@ def get_proposals(
                 detail="The from semester must not be later than the to semester.",
             )
 
-        proposal_repository = ProposalRepository(unit_of_work.connection)
-        proposal_service = ProposalService(proposal_repository)
+        proposal_service = services.proposal_service(unit_of_work.connection)
         return proposal_service.list_proposal_summaries(
             username=user.username,
             from_semester=from_semester,
@@ -152,12 +149,15 @@ def get_proposal(
         user_repository = UserRepository(unit_of_work.connection)
         proposal_repository = ProposalRepository(unit_of_work.connection)
         proposal_service = ProposalService(proposal_repository)
-        permission_service = PermissionService(user_repository, proposal_repository)
+        block_repository = create_block_repository(unit_of_work.connection)
+        permission_service = PermissionService(
+            user_repository, proposal_repository, block_repository
+        )
         if not permission_service.may_view_proposal(
             user, cast(_ProposalCode, proposal_code)
-        ):
-            raise HTTPException(status.HTTP_403_FORBIDDEN)
+        )
 
+        proposal_service = services.proposal_service(unit_of_work.connection)
         return proposal_service.get_proposal(proposal_code)
 
 
