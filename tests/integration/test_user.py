@@ -6,7 +6,6 @@ from starlette import status
 from tests.conftest import authenticate, misauthenticate
 
 USER_URL = "/user"
-
 USER_DATA = "api/user.yaml"
 
 

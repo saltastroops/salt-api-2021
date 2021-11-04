@@ -1,3 +1,4 @@
+import uuid
 from typing import Any, Callable, Optional, cast
 
 import pytest
@@ -6,6 +7,7 @@ from sqlalchemy.engine import Connection
 
 from saltapi.exceptions import NotFoundError
 from saltapi.repository.user_repository import UserRepository
+from saltapi.service.user import NewUserDetails, UserUpdate
 from tests.markers import nodatabase
 
 TEST_DATA_PATH = "repository/user_repository.yaml"
@@ -33,6 +35,23 @@ def test_get_user_raises_error_for_non_existing_user(dbconnection: Connection) -
 
 
 @nodatabase
+def test_get_user_by_id_returns_correct_user(
+    dbconnection: Connection, testdata: Callable[[str], Any]
+) -> None:
+    expected_user = testdata(TEST_DATA_PATH)["get_user_by_id"]
+    user_repository = UserRepository(dbconnection)
+    user = user_repository.get_by_id(expected_user["id"])
+
+    assert user.id == expected_user["id"]
+    assert user.username == expected_user["username"]
+    assert user.email == expected_user["email"]
+    assert user.given_name == expected_user["given_name"]
+    assert user.family_name == expected_user["family_name"]
+    assert user.password_hash is not None
+    assert user.roles == expected_user["roles"]
+
+
+@nodatabase
 def test_get_user_by_email_returns_correct_user(
     dbconnection: Connection, testdata: Callable[[str], Any]
 ) -> None:
@@ -42,8 +61,59 @@ def test_get_user_by_email_returns_correct_user(
 
     assert user.id == expected_user["id"]
     assert user.username == expected_user["username"]
+    assert user.email == expected_user["email"]
     assert user.given_name == expected_user["given_name"]
-    assert user.email is not None
+    assert user.family_name == expected_user["family_name"]
+    assert user.password_hash is not None
+    assert user.roles == expected_user["roles"]
+
+
+def _random_string() -> str:
+    return str(uuid.uuid4())[:8]
+
+
+@nodatabase
+def test_create_user_raisers_error_if_username_exists_already(
+    dbconnection: Connection,
+) -> None:
+    username = "hettlage"
+    new_user_details = NewUserDetails(
+        username=username,
+        email=f"{username}@example.com",
+        given_name=_random_string(),
+        family_name=_random_string(),
+        password="very_secret",
+        institute_id=5,
+    )
+    user_repository = UserRepository(dbconnection)
+    with pytest.raises(ValueError) as excinfo:
+        user_repository.create(new_user_details)
+
+    assert "username" in str(excinfo.value).lower()
+
+
+@nodatabase
+def test_create_user_creates_a_new_user(dbconnection: Connection) -> None:
+    username = _random_string()
+    new_user_details = NewUserDetails(
+        username=username,
+        password=_random_string(),
+        email=f"{username}@example.com",
+        given_name=_random_string(),
+        family_name=_random_string(),
+        institute_id=5,
+    )
+
+    user_repository = UserRepository(dbconnection)
+    user_repository.create(new_user_details)
+
+    created_user = user_repository.get(username)
+    assert created_user.username == username
+    assert created_user.password_hash is not None
+    assert created_user.email == new_user_details.email
+    assert created_user.given_name == new_user_details.given_name
+    assert created_user.family_name == new_user_details.family_name
+    assert created_user.roles == []
 
 
 @nodatabase
@@ -53,6 +123,74 @@ def test_get_user_by_email_raises_error_for_non_existing_user(
     user_repository = UserRepository(dbconnection)
     with pytest.raises(NotFoundError):
         user_repository.get("invalid@email.com")
+
+
+@nodatabase
+def test_patch_raises_error_for_non_existing_user(dbconnection: Connection) -> None:
+    user_repository = UserRepository(dbconnection)
+    with pytest.raises(NotFoundError):
+        user_repository.update("idontexist", UserUpdate(username=None, password=None))
+
+
+@nodatabase
+def test_patch_uses_existing_values_by_default(dbconnection: Connection) -> None:
+    user_repository = UserRepository(dbconnection)
+    username = "hettlage"
+    old_user_details = user_repository.get(username)
+    user_repository.update(username, UserUpdate(username=None, password=None))
+    new_user_details = user_repository.get(username)
+
+    assert old_user_details == new_user_details
+
+
+def test_patch_replaces_existing_values(dbconnection: Connection) -> None:
+    user_repository = UserRepository(dbconnection)
+    username = "hettlage"
+    old_user_details = user_repository.get(username)
+
+    new_username = "hettlage2"
+    new_password = "a_new_shiny_password"
+    assert not user_repository.verify_password(
+        new_password, old_user_details.password_hash
+    )
+
+    user_repository.update(
+        username, UserUpdate(username=new_username, password=new_password)
+    )
+    new_user_details = user_repository.get(new_username)
+
+    assert new_user_details.username == new_username
+    assert user_repository.verify_password(new_password, new_user_details.password_hash)
+
+
+def test_patch_is_idempotent(dbconnection: Connection) -> None:
+    user_repository = UserRepository(dbconnection)
+    username = "hettlage"
+    new_username = "hettlage2"
+    new_password = "a_new_shiny_password"
+
+    user_repository.update(
+        username, UserUpdate(username=new_username, password=new_password)
+    )
+    new_user_details_1 = user_repository.get(new_username)
+
+    user_repository.update(
+        new_username, UserUpdate(username=new_username, password=new_password)
+    )
+    new_user_details_2 = user_repository.get(new_username)
+
+    assert new_user_details_1 == new_user_details_2
+
+
+def test_patch_cannot_use_existing_username(dbconnection: Connection) -> None:
+    user_repository = UserRepository(dbconnection)
+    username = "hettlage"
+    existing_username = "nhlavutelo"
+
+    with pytest.raises(ValueError):
+        user_repository.update(
+            username, UserUpdate(username=existing_username, password=None)
+        )
 
 
 @nodatabase

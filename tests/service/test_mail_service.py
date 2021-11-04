@@ -27,6 +27,7 @@ user = User(
     family_name="valid",
     email="valid@mail.com",
     password_hash="hashed_password",
+    roles=[],
 )
 
 

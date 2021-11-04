@@ -2,29 +2,16 @@ from fastapi import APIRouter, Body, Depends, HTTPException, Path
 from sqlalchemy.engine import Connection
 from starlette import status
 
-from saltapi.repository.block_repository import BlockRepository
-from saltapi.repository.instrument_repository import InstrumentRepository
-from saltapi.repository.proposal_repository import ProposalRepository
-from saltapi.repository.target_repository import TargetRepository
 from saltapi.repository.unit_of_work import UnitOfWork
 from saltapi.repository.user_repository import UserRepository
 from saltapi.service.authentication_service import get_current_user
 from saltapi.service.block import Block as _Block
 from saltapi.service.block import BlockStatus as _BlockStatus
-from saltapi.service.block_service import BlockService
-from saltapi.service.permission_service import PermissionService
 from saltapi.service.user import User
+from saltapi.web import services
 from saltapi.web.schema.block import Block, BlockStatus, BlockStatusValue
 
 router = APIRouter(prefix="/blocks", tags=["Block"])
-
-
-def create_block_repository(connection: Connection) -> BlockRepository:
-    return BlockRepository(
-        target_repository=TargetRepository(connection),
-        instrument_repository=InstrumentRepository(connection),
-        connection=connection,
-    )
 
 
 @router.get("/{block_id}", summary="Get a block", response_model=Block)

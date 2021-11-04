@@ -15,22 +15,15 @@ from fastapi import (
     status,
 )
 from fastapi.responses import FileResponse
-from sqlalchemy.engine import Connection
 
-from saltapi.repository.block_repository import BlockRepository
-from saltapi.repository.instrument_repository import InstrumentRepository
-from saltapi.repository.proposal_repository import ProposalRepository
-from saltapi.repository.target_repository import TargetRepository
 from saltapi.repository.unit_of_work import UnitOfWork
-from saltapi.repository.user_repository import UserRepository
 from saltapi.service.authentication_service import get_current_user
-from saltapi.service.permission_service import PermissionService
 from saltapi.service.proposal import Proposal as _Proposal
 from saltapi.service.proposal import ProposalCode as _ProposalCode
 from saltapi.service.proposal import ProposalListItem as _ProposalListItem
-from saltapi.service.proposal_service import ProposalService
 from saltapi.service.user import User
 from saltapi.util import semester_start
+from saltapi.web import services
 from saltapi.web.schema.common import BlockVisit, ProposalCode, Semester
 from saltapi.web.schema.proposal import (
     DataReleaseDate,
@@ -49,14 +42,6 @@ router = APIRouter(prefix="/proposals", tags=["Proposals"])
 
 class PDFResponse(Response):
     media_type = "application/pdf"
-
-
-def create_block_repository(connection: Connection) -> BlockRepository:
-    return BlockRepository(
-        target_repository=TargetRepository(connection),
-        instrument_repository=InstrumentRepository(connection),
-        connection=connection,
-    )
 
 
 @router.get("/", summary="List proposals", response_model=List[ProposalListItem])
@@ -96,8 +81,7 @@ def get_proposals(
                 detail="The from semester must not be later than the to semester.",
             )
 
-        proposal_repository = ProposalRepository(unit_of_work.connection)
-        proposal_service = ProposalService(proposal_repository)
+        proposal_service = services.proposal_service(unit_of_work.connection)
         return proposal_service.list_proposal_summaries(
             username=user.username,
             from_semester=from_semester,
@@ -165,9 +149,9 @@ def get_proposal(
         )
         if not permission_service.may_view_proposal(
             user, cast(_ProposalCode, proposal_code)
-        ):
-            raise HTTPException(status.HTTP_403_FORBIDDEN)
+        )
 
+        proposal_service = services.proposal_service(unit_of_work.connection)
         return proposal_service.get_proposal(proposal_code)
 
 
