@@ -376,6 +376,13 @@ class ProgressReport(BaseModel):
 
     dummy: str
 
+class ProgressReportData(BaseModel):
+    """
+    Progress report data for a proposal and semester. TODO add description
+    """
+
+
+
 
 class ProposalContentType(str, Enum):
     """Content type for a proposal."""
