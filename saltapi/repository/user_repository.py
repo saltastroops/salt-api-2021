@@ -245,9 +245,7 @@ WHERE PC.Proposal_Code = :proposal_code AND PU.Username = :username
         )
         return cast(int, result.scalar_one()) > 0
 
-    def is_principal_investigator(
-        self, username: str, proposal_code: str
-    ) -> bool:
+    def is_principal_investigator(self, username: str, proposal_code: str) -> bool:
         """
         Check whether a user is the Principal Investigator of a proposal.
 
@@ -313,9 +311,7 @@ WHERE PU.Username = :username
         result = self.connection.execute(stmt, {"username": username})
         return cast(int, result.scalar_one()) > 0
 
-    def is_tac_member_for_proposal(
-        self, username: str, proposal_code: str
-    ) -> bool:
+    def is_tac_member_for_proposal(self, username: str, proposal_code: str) -> bool:
         """
         Check whether the user is member of a TAC from which a proposal requests time.
 
@@ -339,9 +335,7 @@ WHERE PC.Proposal_Code = :proposal_code
 
         return cast(int, result.scalar_one()) > 0
 
-    def is_tac_chair_for_proposal(
-        self, username: str, proposal_code: str
-    ) -> bool:
+    def is_tac_chair_for_proposal(self, username: str, proposal_code: str) -> bool:
         """
         Check whether the user is chair of a TAC from which a proposal requests time.
 

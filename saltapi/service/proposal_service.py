@@ -1,4 +1,4 @@
-from typing import List, Dict
+from typing import Dict, List
 
 from saltapi.repository.proposal_repository import ProposalRepository
 from saltapi.service.proposal import Proposal, ProposalListItem

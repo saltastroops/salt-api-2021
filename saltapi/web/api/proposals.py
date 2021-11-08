@@ -1,5 +1,5 @@
 from datetime import date
-from typing import List, Optional, cast, Dict
+from typing import List, Optional
 
 from fastapi import (
     APIRouter,
@@ -19,19 +19,18 @@ from fastapi.responses import FileResponse
 from saltapi.repository.unit_of_work import UnitOfWork
 from saltapi.service.authentication_service import get_current_user
 from saltapi.service.proposal import Proposal as _Proposal
-from saltapi.service.proposal import ProposalCode as _ProposalCode
 from saltapi.service.proposal import ProposalListItem as _ProposalListItem
 from saltapi.service.user import User
 from saltapi.util import semester_start
+from saltapi.web import services
 from saltapi.web.schema.common import (
     BlockVisit,
+    Message,
     ProposalCode,
     Semester,
-    Message,
 )
-from saltapi.web import services
-from saltapi.web.schema.common import BlockVisit, ProposalCode, Semester
 from saltapi.web.schema.proposal import (
+    Comment,
     DataReleaseDate,
     DataReleaseDateUpdate,
     ObservationComment,
@@ -41,7 +40,6 @@ from saltapi.web.schema.proposal import (
     ProposalListItem,
     ProposalStatusContent,
     SubmissionAcknowledgment,
-    Comment,
 )
 
 router = APIRouter(prefix="/proposals", tags=["Proposals"])

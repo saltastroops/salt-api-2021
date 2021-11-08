@@ -1,9 +1,6 @@
-from fastapi import APIRouter, Body, Depends, HTTPException, Path
-from sqlalchemy.engine import Connection
-from starlette import status
+from fastapi import APIRouter, Body, Depends, Path
 
 from saltapi.repository.unit_of_work import UnitOfWork
-from saltapi.repository.user_repository import UserRepository
 from saltapi.service.authentication_service import get_current_user
 from saltapi.service.block import Block as _Block
 from saltapi.service.block import BlockStatus as _BlockStatus

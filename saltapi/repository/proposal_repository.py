@@ -771,9 +771,9 @@ GROUP BY B.Block_Id
 SELECT B.Block_Id AS block_id
 FROM ObsConfig OC
          JOIN PayloadConfig PC ON OC.PayloadConfig_Id = PC.PayloadConfig_Id
-         JOIN PayloadConfigType PCT 
+         JOIN PayloadConfigType PCT
             ON PC.PayloadConfigType_Id = PCT.PayloadConfigType_Id
-         JOIN TelescopeConfigObsConfig TCOC 
+         JOIN TelescopeConfigObsConfig TCOC
             ON OC.ObsConfig_Id = TCOC.PlannedObsConfig_Id
          JOIN Pointing P ON TCOC.Pointing_Id = P.Pointing_Id
          JOIN Block B ON P.Block_Id = B.Block_Id
@@ -810,7 +810,7 @@ FROM RssMode RM
          JOIN RssPatternDetail RPD ON R.Rss_Id = RPD.Rss_Id
          JOIN RssPattern RP ON RPD.RssPattern_Id = RP.RssPattern_Id
          JOIN ObsConfig OC ON RP.RssPattern_Id = OC.RssPattern_Id
-         JOIN TelescopeConfigObsConfig TCOC 
+         JOIN TelescopeConfigObsConfig TCOC
             ON OC.ObsConfig_Id = TCOC.PlannedObsConfig_Id
          JOIN Pointing P ON TCOC.Pointing_Id = P.Pointing_Id
          JOIN Block B ON P.Block_Id = B.Block_Id
@@ -849,7 +849,7 @@ FROM HrsMode HM
          JOIN HrsPatternDetail HPD ON H.Hrs_Id = HPD.Hrs_Id
          JOIN HrsPattern HP ON HPD.HrsPattern_Id = HP.HrsPattern_Id
          JOIN ObsConfig OC ON HP.HrsPattern_Id = OC.HrsPattern_Id
-         JOIN TelescopeConfigObsConfig TCOC 
+         JOIN TelescopeConfigObsConfig TCOC
          ON OC.ObsConfig_Id = TCOC.PlannedObsConfig_Id
          JOIN Pointing P ON TCOC.Pointing_Id = P.Pointing_Id
          JOIN Block B ON P.Block_Id = B.Block_Id
@@ -883,7 +883,7 @@ GROUP BY B.Block_Id
             """
 SELECT B.Block_Id AS block_id
 FROM ObsConfig OC
-         JOIN TelescopeConfigObsConfig TCOC 
+         JOIN TelescopeConfigObsConfig TCOC
          ON OC.ObsConfig_Id = TCOC.PlannedObsConfig_Id
          JOIN Pointing P ON TCOC.Pointing_Id = P.Pointing_Id
          JOIN Block B ON P.Block_Id = B.Block_Id
@@ -1020,9 +1020,9 @@ FROM BlockVisit BV
     JOIN Proposal P ON B.Proposal_Id = P.Proposal_Id
     JOIN ProposalCode PC ON B.ProposalCode_Id = PC.ProposalCode_Id
     JOIN Semester S ON P.Semester_Id = S.Semester_Id
-WHERE PC.Proposal_Code = :proposal_code 
-    AND S.Year = :year 
-    AND S.Semester = :semester 
+WHERE PC.Proposal_Code = :proposal_code
+    AND S.Year = :year
+    AND S.Semester = :semester
     AND BVS.BlockVisitStatus = 'Accepted'
 GROUP BY B.Priority
         """
@@ -1065,7 +1065,7 @@ GROUP BY B.Priority
 SELECT B.Block_Id                                                           AS block_id,
        COUNT(DISTINCT DATE(DATE_SUB(BVW.VisibilityStart, INTERVAL 12 HOUR))) AS nights
 FROM BlockVisibilityWindow BVW
-         JOIN BlockVisibilityWindowType BVWT 
+         JOIN BlockVisibilityWindowType BVWT
          ON BVW.BlockVisibilityWindowType_Id = BVWT.BlockVisibilityWindowType_Id
          JOIN Block B ON BVW.Block_Id = B.Block_Id
          JOIN Proposal P ON B.Proposal_Id = P.Proposal_Id
@@ -1117,9 +1117,9 @@ ORDER BY PC.CommentDate, PC.ProposalComment_Id
         istmt = text(
             """
 INSERT INTO ProposalComment(
-    ProposalCode_Id, 
-    CommentDate, 
-    Investigator_Id, 
+    ProposalCode_Id,
+    CommentDate,
+    Investigator_Id,
     ProposalComment
 )
 VALUES (

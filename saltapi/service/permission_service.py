@@ -16,9 +16,7 @@ class PermissionService:
         self.proposal_repository = proposal_repository
         self.block_repository = block_repository
 
-    def check_permission_to_view_proposal(
-        self, user: User, proposal_code: str
-    ) -> None:
+    def check_permission_to_view_proposal(self, user: User, proposal_code: str) -> None:
         """
         Check whether the user may view a proposal.
 
@@ -61,6 +59,8 @@ class PermissionService:
 
         This is the case if the user is any of the following:
 
+        * the Principal Investigator (and the proposal can be activated by the PI or PC)
+        * the Principal Contact (and the proposal can be activated by the PI or PC)
         * a SALT Astronomer
         * an administrator
         """
@@ -93,8 +93,8 @@ class PermissionService:
 
         This is the case if the user is any of the following:
 
-        * a Principal Investigator
-        * a Principal Contact
+        * the Principal Investigator
+        * the Principal Contact
         * a SALT Astronomer
         * an administrator
         """
@@ -156,16 +156,10 @@ class PermissionService:
         self, user: User, proposal_code: str
     ) -> None:
         """
-        Checks if the user can view the observation comments
+        Checks if the user may view the observation comments
 
-        This is the case if the user is any of the following:
-
-        * a SALT Astronomer
-        * a Principal Investigator
-        * a Principal Contact
-        * an administrator
+        This is the case if the user may add observation comments.
         """
-        # User may view comments if they may add them.
         self.check_permission_to_add_observation_comment(user, proposal_code)
 
     def check_permission_to_view_block(self, user: User, block_id: int) -> None:
@@ -174,8 +168,8 @@ class PermissionService:
 
         This is the case if the user may view the proposal which the block belongs to.
         """
-        proposal_code: str = (
-            self.block_repository.get_proposal_code_for_block_id(block_id)
+        proposal_code: str = self.block_repository.get_proposal_code_for_block_id(
+            block_id
         )
 
         self.check_permission_to_view_proposal(user, proposal_code)
@@ -188,7 +182,9 @@ class PermissionService:
         """
         self.check_permission_to_view_block(user, block_id)
 
-    def check_permission_to_update_block_status(self, user: User, block_id: int) -> None:
+    def check_permission_to_update_block_status(
+        self, user: User, block_id: int
+    ) -> None:
         """
         Check whether the user may view a block status.
 
@@ -198,23 +194,24 @@ class PermissionService:
         * an administrator
         """
         username = user.username
-        may_update = (
-                self.user_repository.is_salt_astronomer(username)
-                or self.user_repository.is_administrator(username)
-        )
+        may_update = self.user_repository.is_salt_astronomer(
+            username
+        ) or self.user_repository.is_administrator(username)
 
         if not may_update:
             raise AuthorizationError()
 
-    def check_permission_to_view_block_visit(self, user: User, block_visit_id: int) -> None:
+    def check_permission_to_view_block_visit(
+        self, user: User, block_visit_id: int
+    ) -> None:
         """
         Check whether the user may view a block visit.
 
         This is the case if the user may view the proposal for which the block visit
         was taken.
         """
-        proposal_code: str = (
-            self.block_repository.get_proposal_code_for_block_visit_id(block_visit_id)
+        proposal_code: str = self.block_repository.get_proposal_code_for_block_visit_id(
+            block_visit_id
         )
 
         self.check_permission_to_view_proposal(user, proposal_code)
