@@ -29,7 +29,7 @@ class ProposalRepository:
         self.connection = connection
 
     def _list(
-            self, username: str, from_semester: str, to_semester: str, limit: int
+        self, username: str, from_semester: str, to_semester: str, limit: int
     ) -> List[ProposalListItem]:
         """
         Return a list of proposal summaries.
@@ -169,11 +169,11 @@ LIMIT :limit;
         return astronomer
 
     def list(
-            self,
-            username: str,
-            from_semester: str = "2000-1",
-            to_semester: str = "2099-2",
-            limit: int = 1000000,
+        self,
+        username: str,
+        from_semester: str = "2000-1",
+        to_semester: str = "2099-2",
+        limit: int = 1000000,
     ) -> List[Dict[str, Any]]:
         """
         Return a list of proposal summaries.
@@ -203,10 +203,10 @@ LIMIT :limit;
         )
 
     def _get(
-            self,
-            proposal_code: str,
-            semester: Optional[str],
-            phase: Optional[int],
+        self,
+        proposal_code: str,
+        semester: Optional[str],
+        phase: Optional[int],
     ) -> Proposal:
         """
         Return the proposal content for a semester.
@@ -246,10 +246,10 @@ LIMIT :limit;
         return proposal
 
     def get(
-            self,
-            proposal_code: str,
-            semester: Optional[str] = None,
-            phase: Optional[int] = None,
+        self,
+        proposal_code: str,
+        semester: Optional[str] = None,
+        phase: Optional[int] = None,
     ) -> Proposal:
         try:
             return self._get(
@@ -547,8 +547,8 @@ ORDER BY I.Surname, I.FirstName
             if investigator["approved"] == 1:
                 investigator["has_approved_proposal"] = True
             elif (
-                    investigator["approval_code"] is None
-                    or investigator["approval_code"] == ""
+                investigator["approval_code"] is None
+                or investigator["approval_code"] == ""
             ):
                 investigator["has_approved_proposal"] = False
             else:
@@ -923,7 +923,7 @@ WHERE C.Proposal_Code = :proposal_code
         return instruments
 
     def time_allocations(
-            self, proposal_code: str, semester: str
+        self, proposal_code: str, semester: str
     ) -> List[Dict[str, Any]]:
         """
         Return the time allocations and TAC comments for a semester.
@@ -1038,7 +1038,7 @@ GROUP BY B.Priority
         return time
 
     def _block_observable_nights(
-            self, proposal_code: str, semester: str, interval: TimeInterval
+        self, proposal_code: str, semester: str, interval: TimeInterval
     ) -> Dict[int, int]:
         """
         Return the number of nights in an interval when blocks are observable.
@@ -1091,7 +1091,7 @@ GROUP BY B.Block_Id
         )
         return {int(row.block_id): int(row.nights) for row in result}
 
-    def get_observation_comments(self, proposal_code: str) -> List[Dict]:
+    def get_observation_comments(self, proposal_code: str) -> List[Dict[str, Any]]:
         """
         Return the proposal comments ordered by the time when they were made.
         """
@@ -1112,8 +1112,8 @@ ORDER BY PC.CommentDate, PC.ProposalComment_Id
         return [dict(row) for row in result]
 
     def add_observation_comment(
-            self, proposal_code: str, comment: str, user: User
-    ) -> Dict:
+        self, proposal_code: str, comment: str, user: User
+    ) -> Dict[str, Any]:
         istmt = text(
             """
 INSERT INTO ProposalComment(
@@ -1132,12 +1132,13 @@ VALUES (
         )
         comment_date = date.today()
         insert_results = self.connection.execute(
-            istmt, {
+            istmt,
+            {
                 "proposal_code": proposal_code,
                 "username": user.username,
                 "comment": comment,
-                "date": comment_date
-            }
+                "date": comment_date,
+            },
         )
         sstmt = text(
             """

@@ -158,4 +158,3 @@ def not_authenticated(client: TestClient) -> None:
 
 def misauthenticate(client: TestClient) -> None:
     client.headers["Authorization"] = "Bearer some_invalid_token"
-

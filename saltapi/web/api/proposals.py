@@ -12,7 +12,7 @@ from fastapi import (
     Query,
     Response,
     UploadFile,
-    status
+    status,
 )
 from fastapi.responses import FileResponse
 
@@ -40,7 +40,8 @@ from saltapi.web.schema.proposal import (
     ProposalContentType,
     ProposalListItem,
     ProposalStatusContent,
-    SubmissionAcknowledgment, Comment,
+    SubmissionAcknowledgment,
+    Comment,
 )
 
 router = APIRouter(prefix="/proposals", tags=["Proposals"])
@@ -146,16 +147,8 @@ def get_proposal(
     """
 
     with UnitOfWork() as unit_of_work:
-        user_repository = UserRepository(unit_of_work.connection)
-        proposal_repository = ProposalRepository(unit_of_work.connection)
-        proposal_service = ProposalService(proposal_repository)
-        block_repository = create_block_repository(unit_of_work.connection)
-        permission_service = PermissionService(
-            user_repository, proposal_repository, block_repository
-        )
-        if not permission_service.may_view_proposal(
-            user, cast(_ProposalCode, proposal_code)
-        )
+        permission_service = services.permission_service(unit_of_work.connection)
+        permission_service.check_permission_to_view_proposal(user, proposal_code)
 
         proposal_service = services.proposal_service(unit_of_work.connection)
         return proposal_service.get_proposal(proposal_code)
@@ -344,18 +337,15 @@ def get_observation_comments(
         title="Proposal code",
         description="Proposal code of the proposal whose observation comments are requested.",
     ),
-    user: User = Depends(get_current_user)
+    user: User = Depends(get_current_user),
 ) -> List[ObservationComment]:
     with UnitOfWork() as unit_of_work:
-        proposal_repository = ProposalRepository(unit_of_work.connection)
-        user_repository = UserRepository(unit_of_work.connection)
-        proposal_service = ProposalService(proposal_repository)
-        permission_service = PermissionService(user_repository, proposal_repository)
-        if not permission_service.may_view_observation_comments(user, proposal_code):
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="User are not permitted to perform this action."
-            )
+        permission_service = services.permission_service(unit_of_work.connection)
+        permission_service.check_permission_to_view_observation_comments(
+            user, proposal_code
+        )
+
+        proposal_service = services.proposal_service(unit_of_work.connection)
         return [
             ObservationComment(**dict(row))
             for row in proposal_service.get_observation_comments(proposal_code)
@@ -366,7 +356,7 @@ def get_observation_comments(
     "/{proposal_code}/observation-comments",
     summary="Create an observation comment",
     response_model=Message,
-    status_code=201
+    status_code=201,
 )
 def post_observation_comment(
     proposal_code: ProposalCode = Path(
@@ -375,29 +365,23 @@ def post_observation_comment(
         description="Proposal code of the proposal for which an observation comment is added.",
     ),
     comment: Comment = Body(..., title="Comment", description="Text of the comment."),
-    user: User = Depends(get_current_user)
+    user: User = Depends(get_current_user),
 ) -> ObservationComment:
     """
     Adds a new comment related to an observation. The user submitting the request is
     recorded as the comment author.
     """
     with UnitOfWork() as unit_of_work:
-        proposal_repository = ProposalRepository(unit_of_work.connection)
-        user_repository = UserRepository(unit_of_work.connection)
-        proposal_service = ProposalService(proposal_repository)
-        permission_service = PermissionService(user_repository, proposal_repository)
-        if not permission_service.may_add_observation_comment(user, proposal_code):
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="User are not permitted to perform this action."
-            )
-
-        observation_comment = proposal_service.add_observation_comment(
-            proposal_code=proposal_code,
-            comment=comment.comment,
-            user=user
+        permission_service = services.permission_service(unit_of_work.connection)
+        permission_service.check_permission_to_add_observation_comment(
+            user, proposal_code
         )
-        proposal_repository.connection.commit()
+
+        proposal_service = services.proposal_service(unit_of_work.connection)
+        observation_comment = proposal_service.add_observation_comment(
+            proposal_code=proposal_code, comment=comment.comment, user=user
+        )
+        unit_of_work.connection.commit()
         return ObservationComment(**observation_comment)
 
 

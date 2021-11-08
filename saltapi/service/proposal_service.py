@@ -40,6 +40,6 @@ class ProposalService:
         return self.repository.get_observation_comments(proposal_code)
 
     def add_observation_comment(
-            self, proposal_code: str, comment: str, user: User
+        self, proposal_code: str, comment: str, user: User
     ) -> Dict[str, str]:
         return self.repository.add_observation_comment(proposal_code, comment, user)

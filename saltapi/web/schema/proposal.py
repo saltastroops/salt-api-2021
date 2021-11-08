@@ -212,6 +212,7 @@ class DataReleaseDateUpdate(BaseModel):
 
 class ObservationComment(BaseModel):
     """Comment related to an observation of a proposal."""
+
     id: int
     author: str = Field(..., title="Author", description="Author of the comment")
     comment: str = Field(..., title="Comment", description="Text of the comment")
@@ -234,7 +235,9 @@ class ObservationComment(BaseModel):
 
 class Comment(BaseModel):
     """Comment."""
+
     comment: str = Field(..., title="Comment", description="Text of the comment")
+
     class Config:
         schema_extra = {
             "example": {
