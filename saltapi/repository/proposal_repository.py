@@ -1150,14 +1150,13 @@ FROM ProposalComment PC
          JOIN Investigator I ON PC.Investigator_Id = I.Investigator_Id
          JOIN ProposalCode P ON PC.ProposalCode_Id = P.ProposalCode_Id
 WHERE PC.ProposalComment_Id = :proposal_comment_id
-)
     """
         )
         select_results = self.connection.execute(
             sstmt, {"proposal_comment_id": insert_results.lastrowid}
         )
 
-        return dict(select_results[0])
+        return dict(select_results.one())
 
     def get_proposal_status(self, proposal_code: str) -> str:
         """

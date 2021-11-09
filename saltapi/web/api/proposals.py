@@ -353,7 +353,7 @@ def get_observation_comments(
 @router.post(
     "/{proposal_code}/observation-comments",
     summary="Create an observation comment",
-    response_model=Message,
+    response_model=ObservationComment,
     status_code=201,
 )
 def post_observation_comment(

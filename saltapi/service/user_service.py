@@ -17,7 +17,7 @@ class UserService:
         mail_service = MailService()
         authentication_service = AuthenticationService(self.repository)
         reset_token = authentication_service.jwt_token(
-            {"username": user.username}, timedelta(hours=24)
+            {"sub": str(user.id)}, timedelta(hours=1)
         )
         user_full_name = f"{user.given_name} {user.family_name}"
 
@@ -65,7 +65,7 @@ SALT Team
 
     @staticmethod
     def password_reset_url(token: str) -> str:
-        return Settings().frontend_uri + "/update-password/" + token
+        return Settings().frontend_uri + "/change-password/" + token
 
     def get_user_roles(self, username: str) -> List[Role]:
         return self.repository.get_user_roles(username)
