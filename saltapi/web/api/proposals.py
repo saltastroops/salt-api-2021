@@ -1,5 +1,5 @@
 from datetime import date
-from typing import List, Optional, cast
+from typing import List, Optional
 
 from fastapi import (
     APIRouter,
@@ -19,13 +19,18 @@ from fastapi.responses import FileResponse
 from saltapi.repository.unit_of_work import UnitOfWork
 from saltapi.service.authentication_service import get_current_user
 from saltapi.service.proposal import Proposal as _Proposal
-from saltapi.service.proposal import ProposalCode as _ProposalCode
 from saltapi.service.proposal import ProposalListItem as _ProposalListItem
 from saltapi.service.user import User
 from saltapi.util import semester_start
 from saltapi.web import services
-from saltapi.web.schema.common import BlockVisit, ProposalCode, Semester
+from saltapi.web.schema.common import (
+    BlockVisit,
+    Message,
+    ProposalCode,
+    Semester,
+)
 from saltapi.web.schema.proposal import (
+    Comment,
     DataReleaseDate,
     DataReleaseDateUpdate,
     ObservationComment,
@@ -140,16 +145,8 @@ def get_proposal(
     """
 
     with UnitOfWork() as unit_of_work:
-        user_repository = UserRepository(unit_of_work.connection)
-        proposal_repository = ProposalRepository(unit_of_work.connection)
-        proposal_service = ProposalService(proposal_repository)
-        block_repository = create_block_repository(unit_of_work.connection)
-        permission_service = PermissionService(
-            user_repository, proposal_repository, block_repository
-        )
-        if not permission_service.may_view_proposal(
-            user, cast(_ProposalCode, proposal_code)
-        )
+        permission_service = services.permission_service(unit_of_work.connection)
+        permission_service.check_permission_to_view_proposal(user, proposal_code)
 
         proposal_service = services.proposal_service(unit_of_work.connection)
         return proposal_service.get_proposal(proposal_code)
@@ -337,15 +334,27 @@ def get_observation_comments(
         ...,
         title="Proposal code",
         description="Proposal code of the proposal whose observation comments are requested.",
-    )
+    ),
+    user: User = Depends(get_current_user),
 ) -> List[ObservationComment]:
-    raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED)
+    with UnitOfWork() as unit_of_work:
+        permission_service = services.permission_service(unit_of_work.connection)
+        permission_service.check_permission_to_view_observation_comments(
+            user, proposal_code
+        )
+
+        proposal_service = services.proposal_service(unit_of_work.connection)
+        return [
+            ObservationComment(**dict(row))
+            for row in proposal_service.get_observation_comments(proposal_code)
+        ]
 
 
 @router.post(
     "/{proposal_code}/observation-comments",
     summary="Create an observation comment",
     response_model=ObservationComment,
+    status_code=201,
 )
 def post_observation_comment(
     proposal_code: ProposalCode = Path(
@@ -353,13 +362,25 @@ def post_observation_comment(
         title="Proposal code",
         description="Proposal code of the proposal for which an observation comment is added.",
     ),
-    comment: str = Body(..., title="Comment", description="Text of the comment."),
+    comment: Comment = Body(..., title="Comment", description="Text of the comment."),
+    user: User = Depends(get_current_user),
 ) -> ObservationComment:
     """
     Adds a new comment related to an observation. The user submitting the request is
     recorded as the comment author.
     """
-    raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED)
+    with UnitOfWork() as unit_of_work:
+        permission_service = services.permission_service(unit_of_work.connection)
+        permission_service.check_permission_to_add_observation_comment(
+            user, proposal_code
+        )
+
+        proposal_service = services.proposal_service(unit_of_work.connection)
+        observation_comment = proposal_service.add_observation_comment(
+            proposal_code=proposal_code, comment=comment.comment, user=user
+        )
+        unit_of_work.connection.commit()
+        return ObservationComment(**observation_comment)
 
 
 @router.get(

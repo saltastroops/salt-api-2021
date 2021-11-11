@@ -1,7 +1,8 @@
-from typing import List
+from typing import Dict, List
 
 from saltapi.repository.proposal_repository import ProposalRepository
 from saltapi.service.proposal import Proposal, ProposalListItem
+from saltapi.service.user import User
 from saltapi.util import semester_start
 
 
@@ -19,7 +20,7 @@ class ProposalService:
         """
         Return the list of proposals for a semester range.
 
-        The maximum number of proposals to be returned csan be set with the limit
+        The maximum number of proposals to be returned can be set with the limit
         parameter; the default is 1000.
         """
         if semester_start(from_semester) > semester_start(to_semester):
@@ -34,3 +35,11 @@ class ProposalService:
 
     def get_proposal(self, proposal_code: str) -> Proposal:
         return self.repository.get(proposal_code)
+
+    def get_observation_comments(self, proposal_code: str) -> List[Dict[str, str]]:
+        return self.repository.get_observation_comments(proposal_code)
+
+    def add_observation_comment(
+        self, proposal_code: str, comment: str, user: User
+    ) -> Dict[str, str]:
+        return self.repository.add_observation_comment(proposal_code, comment, user)

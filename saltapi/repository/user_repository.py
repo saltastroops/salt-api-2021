@@ -8,7 +8,6 @@ from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
 from saltapi.exceptions import NotFoundError
-from saltapi.service.proposal import ProposalCode
 from saltapi.service.user import NewUserDetails, Role, User, UserUpdate
 
 pwd_context = CryptContext(
@@ -225,7 +224,7 @@ WHERE Username = :old_username
             stmt, {"new_username": new_username, "old_username": old_username}
         )
 
-    def is_investigator(self, username: str, proposal_code: ProposalCode) -> bool:
+    def is_investigator(self, username: str, proposal_code: str) -> bool:
         """
         Check whether a user is an investigator on a proposal.
 
@@ -246,9 +245,7 @@ WHERE PC.Proposal_Code = :proposal_code AND PU.Username = :username
         )
         return cast(int, result.scalar_one()) > 0
 
-    def is_principal_investigator(
-        self, username: str, proposal_code: ProposalCode
-    ) -> bool:
+    def is_principal_investigator(self, username: str, proposal_code: str) -> bool:
         """
         Check whether a user is the Principal Investigator of a proposal.
 
@@ -271,7 +268,7 @@ WHERE PCode.Proposal_Code = :proposal_code AND PU.Username = :username
         )
         return cast(int, result.scalar_one()) > 0
 
-    def is_principal_contact(self, username: str, proposal_code: ProposalCode) -> bool:
+    def is_principal_contact(self, username: str, proposal_code: str) -> bool:
         """
         Check whether a user is the Principal Contact of a proposal.
 
@@ -314,9 +311,7 @@ WHERE PU.Username = :username
         result = self.connection.execute(stmt, {"username": username})
         return cast(int, result.scalar_one()) > 0
 
-    def is_tac_member_for_proposal(
-        self, username: str, proposal_code: ProposalCode
-    ) -> bool:
+    def is_tac_member_for_proposal(self, username: str, proposal_code: str) -> bool:
         """
         Check whether the user is member of a TAC from which a proposal requests time.
 
@@ -340,9 +335,7 @@ WHERE PC.Proposal_Code = :proposal_code
 
         return cast(int, result.scalar_one()) > 0
 
-    def is_tac_chair_for_proposal(
-        self, username: str, proposal_code: ProposalCode
-    ) -> bool:
+    def is_tac_chair_for_proposal(self, username: str, proposal_code: str) -> bool:
         """
         Check whether the user is chair of a TAC from which a proposal requests time.
 

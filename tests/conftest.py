@@ -159,3 +159,20 @@ def not_authenticated(client: TestClient) -> None:
 def misauthenticate(client: TestClient) -> None:
     client.headers["Authorization"] = "Bearer some_invalid_token"
 
+
+def _random_string() -> str:
+    return str(uuid.uuid4())[:8]
+
+
+def create_user(client: TestClient) -> str:
+    username = _random_string()
+    new_user_details = dict(
+        username=username,
+        email=f"{username}@example.com",
+        given_name=_random_string(),
+        family_name=_random_string(),
+        password="very_secret",
+        institute_id=5,
+    )
+    response = client.post("/users/", json=new_user_details)
+    return cast(str, response.json()["username"])

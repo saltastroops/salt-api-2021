@@ -213,6 +213,7 @@ class DataReleaseDateUpdate(BaseModel):
 class ObservationComment(BaseModel):
     """Comment related to an observation of a proposal."""
 
+    id: int
     author: str = Field(..., title="Author", description="Author of the comment")
     comment: str = Field(..., title="Comment", description="Text of the comment")
     comment_date: date = Field(
@@ -224,9 +225,23 @@ class ObservationComment(BaseModel):
     class Config:
         schema_extra = {
             "example": {
+                "id": 123,
                 "author": "Sipho Mangana",
                 "comment": "Please check the position angle.",
-                "madeAt": "2019-08-24T14:15:22Z",
+                "comment_date": "2019-08-24",
+            }
+        }
+
+
+class Comment(BaseModel):
+    """Comment."""
+
+    comment: str = Field(..., title="Comment", description="Text of the comment")
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "comment": "Please check the finding chart",
             }
         }
 
