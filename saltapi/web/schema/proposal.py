@@ -151,7 +151,7 @@ class GeneralProposalInfo(BaseModel):
     is_self_activatable: bool = Field(
         ...,
         title="Can the proposal be self-activated?",
-        description="Can the proposal be activated by the Principal Investigator or Principal Contact",
+        description="Can the proposal be activated by the Principal Investigator or Principal Contact?",
     )
 
 

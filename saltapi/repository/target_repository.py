@@ -39,7 +39,7 @@ SELECT DISTINCT T.Target_Id                                      AS id,
                 TB.Time_Base                                     AS period_time_base,
                 HT.Identifier                                    AS horizons_identifier,
                 IF((MT1.Target_Id IS NOT NULL
-                    OR HT.HorizonsTarget_Id IS NOT NULL),
+                    OR MTF.Target_Id IS NOT NULL),
                     1,
                     0)                                           AS non_sidereal
 FROM Target T
@@ -54,6 +54,7 @@ FROM Target T
          LEFT JOIN TimeBase TB ON PT.TimeBase_Id = TB.TimeBase_Id
          LEFT JOIN HorizonsTarget HT ON T.HorizonsTarget_Id = HT.HorizonsTarget_Id
          LEFT JOIN MovingTable MT1 ON T.Target_Id = MT1.Target_Id
+         LEFT JOIN MovingTableFile MTF ON T.Target_Id = MTF.Target_Id
 WHERE T.Target_Id = :target_id;
         """
         )

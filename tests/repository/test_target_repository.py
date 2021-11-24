@@ -157,7 +157,7 @@ def test_non_sidereal_target(
     target = target_repository.get(target_id)
 
     assert target["horizons_identifier"] is None
-    assert target["non_sidereal"] == 0
+    assert target["non_sidereal"] is False
 
 
 @nodatabase
