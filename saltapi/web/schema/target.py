@@ -116,8 +116,8 @@ class Target(BaseModel):
 
     non_sidereal: bool = Field(
         ...,
-        title="Is a target a non sidereal?",
-        description="Indication of whether is target is non sidereal",
+        title="Is the target non-sidereal?",
+        description="Is the target a non-sidereal target?",
     )
 
 

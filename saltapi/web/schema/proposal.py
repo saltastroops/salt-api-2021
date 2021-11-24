@@ -63,7 +63,7 @@ class ProposalStatusValue(str, Enum):
 
 
 class ProposalStatus(BaseModel):
-    """Proposal status"""
+    """Proposal status."""
 
     value: ProposalStatusValue = Field(
         ..., title="Proposal status", description="Proposal status"
@@ -148,11 +148,10 @@ class GeneralProposalInfo(BaseModel):
         title="Summary for the night log",
         description="Brief (one-line) summary to include in the observing night log",
     )
-
-    is_self_activable: bool = Field(
+    is_self_activatable: bool = Field(
         ...,
-        title="Proposal activation by the Principal Investigator and Principal Contact",
-        description="Is the proposal self activable?",
+        title="Can the proposal be self-activated?",
+        description="Can the proposal be activated by the Principal Investigator or Principal Contact",
     )
 
 

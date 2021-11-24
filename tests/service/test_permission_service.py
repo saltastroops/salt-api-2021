@@ -23,6 +23,7 @@ class FakeUserRepository:
         is_board_member: bool = False,
         is_partner_affiliated_user: bool = False,
         is_administrator: bool = False,
+        is_self_activatable: bool = False,
     ) -> None:
         self._is_investigator = is_investigator
         self._is_principal_investigator = is_principal_investigator
@@ -33,6 +34,7 @@ class FakeUserRepository:
         self._is_board_member = is_board_member
         self._is_partner_affiliated_user = is_partner_affiliated_user
         self._is_administrator = is_administrator
+        self._is_self_activatable = is_self_activatable
 
     def is_investigator(self, username: str, proposal_code: ProposalCode) -> bool:
         # A Principal Investigator or Contact is an investigator as well
@@ -75,11 +77,11 @@ class FakeUserRepository:
 
 
 class FakeProposalRepository:
-    def __init__(self, is_self_activable: bool = False) -> None:
-        self._is_self_activable = is_self_activable
+    def __init__(self, is_self_activatable: bool = False) -> None:
+        self._is_self_activatable = is_self_activatable
 
-    def is_self_activable(self, proposal_code: str) -> bool:
-        return self._is_self_activable
+    def is_self_activatable(self, proposal_code: str) -> bool:
+        return self._is_self_activatable
 
     def get_proposal_type(self, proposal_code: str) -> str:
         return "Science " if "GW" not in proposal_code else "Gravitational Wave Event"
@@ -208,12 +210,12 @@ def test_check_permission_to_update_proposal_status() -> None:
 
 def test_check_permission_to_activate_proposal() -> None:
     for role in ALL_ROLES:
-        for is_self_activable in [True, False]:
+        for is_self_activatable in [True, False]:
             if role in [SALT_ASTRONOMER, ADMINISTRATOR]:
                 expected_permitted = True
             elif (
                 role in [PRINCIPAL_INVESTIGATOR, PRINCIPAL_CONTACT]
-                and is_self_activable
+                and is_self_activatable
             ):
                 expected_permitted = True
             else:
@@ -223,7 +225,7 @@ def test_check_permission_to_activate_proposal() -> None:
             user_repository = cast(UserRepository, FakeUserRepository(**kwargs))
             proposal_repository = cast(
                 ProposalRepository,
-                FakeProposalRepository(is_self_activable=is_self_activable),
+                FakeProposalRepository(is_self_activatable=is_self_activatable),
             )
             block_repository = cast(BlockRepository, FakeBlockRepository)
             permission_service = PermissionService(

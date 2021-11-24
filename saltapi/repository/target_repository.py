@@ -15,32 +15,33 @@ class TargetRepository:
     def get(self, target_id: int) -> Target:
         stmt = text(
             """
-SELECT T.Target_Id                          AS id,
-       T.Target_Name                    AS name,
-       TC.RaH                           AS ra_h,
-       TC.RaM                           AS ra_m,
-       TC.RaS                           AS ra_s,
-       TC.DecSign                       AS dec_sign,
-       TC.DecD                          AS dec_d,
-       TC.DecM                          AS dec_m,
-       TC.DecS                          AS dec_s,
-       TC.Equinox                       AS equinox,
-       TM.MinMag                        AS min_mag,
-       TM.MaxMag                        AS max_mag,
-       BP.FilterName                    AS bandpass,
-       TST.TargetSubType                AS target_sub_type,
-       TT.TargetType                    AS target_type,
-       MT.RaDot                         AS ra_dot,
-       MT.DecDot                        AS dec_dot,
-       MT.Epoch                         AS epoch,
-       PT.Period                        AS period,
-       PT.Pdot                          AS period_change_rate,
-       PT.T0                            AS period_zero_point,
-       TB.Time_Base                     AS period_time_base,
-       HT.Identifier                    AS horizons_identifier,
-       IF(MT1.Target_Id IS NOT NULL,
-          1,
-          0)                            AS non_sidereal
+SELECT DISTINCT T.Target_Id                                      AS id,
+                T.Target_Name                                    AS name,
+                TC.RaH                                           AS ra_h,
+                TC.RaM                                           AS ra_m,
+                TC.RaS                                           AS ra_s,
+                TC.DecSign                                       AS dec_sign,
+                TC.DecD                                          AS dec_d,
+                TC.DecM                                          AS dec_m,
+                TC.DecS                                          AS dec_s,
+                TC.Equinox                                       AS equinox,
+                TM.MinMag                                        AS min_mag,
+                TM.MaxMag                                        AS max_mag,
+                BP.FilterName                                    AS bandpass,
+                TST.TargetSubType                                AS target_sub_type,
+                TT.TargetType                                    AS target_type,
+                MT.RaDot                                         AS ra_dot,
+                MT.DecDot                                        AS dec_dot,
+                MT.Epoch                                         AS epoch,
+                PT.Period                                        AS period,
+                PT.Pdot                                          AS period_change_rate,
+                PT.T0                                            AS period_zero_point,
+                TB.Time_Base                                     AS period_time_base,
+                HT.Identifier                                    AS horizons_identifier,
+                IF((MT1.Target_Id IS NOT NULL
+                    OR HT.HorizonsTarget_Id IS NOT NULL),
+                    1,
+                    0)                                           AS non_sidereal
 FROM Target T
          LEFT JOIN TargetCoordinates TC
                    ON T.TargetCoordinates_Id = TC.TargetCoordinates_Id
@@ -68,7 +69,7 @@ WHERE T.Target_Id = :target_id;
             "target_type": self._target_type(row),
             "period_ephemeris": self._period_ephemeris(row),
             "horizons_identifier": row.horizons_identifier,
-            "non_sidereal": row.non_sidereal > 0
+            "non_sidereal": row.non_sidereal == 1,
         }
 
         return target
