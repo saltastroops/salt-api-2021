@@ -114,6 +114,12 @@ class Target(BaseModel):
         description="Identifier for the target in the JPL-Horizons database of solar-system targets",
     )
 
+    non_sidereal: bool = Field(
+        ...,
+        title="Is a target a non sidereal?",
+        description="Indication of whether is target is non sidereal",
+    )
+
 
 class Phase1Target(Target):
     """A target in a Phase 1 proposal."""
