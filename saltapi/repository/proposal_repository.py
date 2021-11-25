@@ -10,7 +10,7 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.exc import NoResultFound
 
 from saltapi.exceptions import NotFoundError
-from saltapi.service.proposal import Proposal, ProposalListItem
+from saltapi.service.proposal import Proposal, ProposalListItem, ProposalCode
 from saltapi.util import (
     TimeInterval,
     partner_name,
@@ -19,6 +19,7 @@ from saltapi.util import (
     semester_start,
     tonight,
 )
+from saltapi.web.schema.common import Semester, PartnerCode, Transparency
 
 
 class ProposalRepository:
@@ -1118,7 +1119,7 @@ WHERE PC.Proposal_Code = :proposal_code
         Update the status of a proposal.
         """
 
-        # We copuld query for the status id within the UPDATE query, but then it would
+        # We could query for the status id within the UPDATE query, but then it would
         # not be clear whether a failing query is due to a wrong proposal code or a
         # wrong status value.
         try:
@@ -1172,3 +1173,245 @@ WHERE PC.Proposal_Code = :proposal_code;
         one_or_none = result.scalar_one_or_none()
 
         return bool(one_or_none and cast(int, one_or_none) > 0)
+
+    def insert_progress_report(self, progress_report_data: Dict[str, Any],
+                           proposal_code: ProposalCode,
+                           semester: Semester) -> None:
+        """
+        Update the progress report.
+        """
+        stmt = text(
+            """
+INSERT INTO ProposalProgress (
+    ProposalCode_Id,
+    Semester_Id,
+    TimeRequestChangeReasons,
+    StatusSummary,
+    StrategyChanges,
+    ReportPath,
+    SupplementaryPath,
+    SubmissionDate
+)
+VALUES(
+    (SELECT ProposalCode_Id FROM ProposalCode WHERE Proposal_Code = :proposal_code),
+    (SELECT Semester_Id FROM Semester WHERE CONCAT(`Year`, "-", Semester) = :semester),
+    :time_request_reason,
+    :status_summary,
+    :strategy_changes,
+    :report_path,
+    :supplementary_path,
+    NOW()
+);
+        """
+        )
+        result = self.connection.execute(
+            stmt, {
+                "proposal_code": proposal_code,
+                "semester": semester,
+                "time_request_reason": progress_report_data["time_request_reason"],
+                "status_summary": progress_report_data["status_summary"],
+                "strategy_changes": progress_report_data["strategy_changes"],
+                "report_path": progress_report_data["report_path"],
+                "supplementary_path": progress_report_data["supplementary_path"]
+            }
+        )
+        if not result.rowcount:
+            raise NotFoundError()
+
+    def insert_progress_report_requested_time(
+            self,
+            proposal_code: ProposalCode,
+            semester: str,
+            partner_code: PartnerCode,
+            requested_time_percent: int,
+            requested_time_amount: int
+    ) -> None:
+        """
+
+        """
+        stmt = text(
+            """
+INSERT INTO MultiPartner(
+    ProposalCode_Id, 
+    Partner_Id, 
+    Semester_Id, 
+    ReqTimePercent, 
+    ReqTimeAmount
+)
+VALUES (
+    (SELECT ProposalCode_Id FROM ProposalCode WHERE Proposal_Code = :proposal_code),
+    (SELECT Partner_Id FROM Partner WHERE PartnerCode = :partner_code),
+    (SELECT Semester_Id FROM Semester WHERE CONCAT(`Year`, "-", Semester) = :semester),
+    :requested_time_percent,
+    :requested_time_amount
+)
+        """
+        )
+        result = self.connection.execute(
+            stmt, {
+                "proposal_code": proposal_code,
+                "semester": semester,
+                "partner_code": partner_code,
+                "requested_time_percent": requested_time_percent,
+                "requested_time_amount": requested_time_amount
+            }
+        )
+        if not result.rowcount:
+            raise NotFoundError()
+
+    def insert_observing_conditions(
+            self,
+            proposal_code: ProposalCode,
+            semester: str,
+            seeing: float,
+            transparency: Transparency,
+            observing_conditions_description: str
+    ) -> None:
+        """
+
+        """
+        stmt = text(
+            """
+INSERT INTO P1ObservingConditions (
+    ProposalCode_Id,
+    Semester_Id,
+    MaxSeeing,
+    Transparency_Id,
+    ObservingConditionsDescription
+)
+VALUES
+(
+    (SELECT ProposalCode_Id FROM ProposalCode WHERE Proposal_Code = :proposal_code),
+    (SELECT Semester_Id FROM Semester WHERE CONCAT(`Year`, "-", Semester) = :semester),
+    :maximum_seeing,
+    (SELECT Transparency_Id FROM Transparency WHERE Transparency = :transparency),
+    :observing_conditions_description
+)
+
+        """
+        )
+        result = self.connection.execute(
+            stmt, {
+                "proposal_code": proposal_code,
+                "semester": semester,
+                "seeing": seeing,
+                "transparency": transparency,
+                "observing_conditions_description": observing_conditions_description
+            }
+        )
+        if not result.rowcount:
+            raise NotFoundError()
+
+    def get_observing_conditions(self, proposal_code: ProposalCode, semester: Semester)\
+            -> Dict[str, Any]:
+        stmt = text(
+            """
+SELECT
+    MaxSeeing						AS seeing, 
+    Transparency					AS transparency, 
+    ObservingConditionsDescription	AS description 
+FROM P1ObservingConditions AS OC
+    JOIN Transparency AS T ON (OC.Transparency_Id = T.Transparency_Id)
+    JOIN ProposalCode AS PC ON (OC.ProposalCode_Id = PC.ProposalCode_Id)
+    JOIN Semester AS S ON (OC.Semester_Id = S.Semester_Id)
+WHERE PC.Proposal_Code = :proposal_code
+    AND CONCAT(S.`Year`, "-", S.Semester) = :semester
+    """
+        )
+        result = self.connection.execute(stmt, {
+            "proposal_code": proposal_code,
+            "semester": semester
+        })
+        try:
+            row = result.one()
+            return {
+                "seeing": row.seeing,
+                "transparency": row.transparency,
+                "description": row.description
+            }
+        except NoResultFound:
+            raise NotFoundError()
+
+    def get_observed_time(self, proposal_code: ProposalCode):
+        stmt = text(
+            """
+SELECT  
+    CONCAT(S.`Year`, "-", S.Semester) AS semester,
+    SUM(Obstime)                AS observed_time
+FROM Proposal		    AS P
+    JOIN ProposalCode 	AS PC USING (ProposalCode_Id)
+    JOIN `Block` 		AS B USING (Proposal_Id)
+    JOIN BlockVisit 	AS BV USING (Block_Id)
+    JOIN BlockVisitStatus AS BVS USING (BlockVisitStatus_Id)
+    JOIN Semester 		AS S ON (P.Semester_Id = S.Semester_Id)
+WHERE BlockVisitStatus = 'Accepted'
+    AND Proposal_Code = :proposal_code
+    GROUP BY S.Semester_Id
+    """
+        )
+        result = self.connection.execute(stmt, {
+            "proposal_code": proposal_code
+        })
+        try:
+            return [{
+                "semester": row.semester,
+                "observed_time": row.observed_time
+            }
+                for row in result
+            ]
+        except NoResultFound:
+            raise NotFoundError()
+
+    def get_allocated_requested_time(
+            self,
+            proposal_code: ProposalCode
+    ) -> List[Dict[str, Any]]:
+        stmt = text(
+            """
+SELECT
+    CONCAT(S.`Year`, "-", S.Semester) AS semester,
+    ReqTimeAmount 	AS requested_time,
+    SUM(TimeAlloc) 	AS allocated_time
+FROM MultiPartner 	AS MP
+    JOIN PriorityAlloc 	AS PA ON (MP.MultiPartner_Id = PA.MultiPartner_Id)
+    JOIN ProposalCode 	AS PC ON (MP.ProposalCode_Id = PC.ProposalCode_Id)
+    JOIN Semester 		AS S ON (MP.Semester_Id = S.Semester_Id)
+WHERE Proposal_Code='2020-1-MLT-005'
+    GROUP BY S.Semester_Id
+    """
+        )
+        result = self.connection.execute(stmt, {
+            "proposal_code": proposal_code
+        })
+        try:
+            return [
+                {
+                    "semester": row.semester,
+                    "requested_time": row.requested_time,
+                    "allocated_time": row.allocated_time
+                }
+                for row in result
+                    ]
+        except NoResultFound:
+            raise NotFoundError()
+
+    def get_requested_time(self, proposal_code: ProposalCode, semester: Semester):
+        stmt = text(
+            """
+SELECT TotalReqTime FROM Proposal AS P
+    JOIN ProposalCode AS PC ON (P.ProposalCode_Id = PC.ProposalCode_Id)
+    JOIN Semester AS S ON (P.Semester_Id = S.Semester_Id)
+WHERE PC.Proposal_Code = :proposal_code
+    AND CONCAT(S.`Year`, "-", S.Semester) = :semester
+    AND Current = 1
+    """
+        )
+        result = self.connection.execute(stmt, {
+            "proposal_code": proposal_code,
+            "semester": semester
+        })
+        try:
+            return cast(float, result.scalar_one())
+        except NoResultFound:
+            raise NotFoundError()
+

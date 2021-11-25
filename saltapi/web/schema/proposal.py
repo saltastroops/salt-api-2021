@@ -376,11 +376,65 @@ class ProgressReport(BaseModel):
 
     dummy: str
 
+
+class PartnerRequestedPercentage(BaseModel):
+    """
+    Requested Percentage for a partner
+    """
+    partner_code: PartnerCode = Field(
+        ..., title="Partner",
+        description="The partner code of the past and current SALT partners."
+    ),
+    partner_name: PartnerName = Field(
+        ..., title="Partner",
+        description="The partner name of the past and current SALT partners."
+    ),
+    percentage: int = Field(
+        ..., title="Percentage",
+        description="The percentage requested from a partner."
+    )
+
+
 class ProgressReportData(BaseModel):
     """
     Progress report data for a proposal and semester. TODO add description
     """
-
+    requested_time: int = Field(
+        ..., title="Requested time", description="A time requested for this semester"
+    ),
+    requested_percentages: List[PartnerRequestedPercentage] = Field(
+        ...,
+        title="Requested percentages",
+        description="Percentage requested from partners."
+    ),
+    maximum_seeing: Optional[float] = Field(
+        ...,
+        title="Seeing probability",
+        description="Seeing probability, which is derived from the cumulative "
+                    "distribution function of seeing measurements taken in Sutherland",
+        ge=0,
+        le=1,
+    ),
+    transparency: str = Field(
+        ...,
+        title="Transparency",
+        description="A transparency."
+    ),
+    observing_constraints: str = Field(
+        ..., title="Observing constraints",
+        description="Description of observing constraints"
+    )
+    reasons_time_request_changed: str = Field(
+        ..., title="Reasons time request changed",
+        description="Reason(s) why the time request has changed."
+    ),
+    summary_of_proposal_status: str = Field(
+        ..., title="Summary of proposal status",
+        description="A summary of proposal status"
+    ),
+    strategy_changes: str = Field(
+        ..., title="Strategy changes", description="A strategy changes"
+    )
 
 
 

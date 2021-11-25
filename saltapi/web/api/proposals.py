@@ -15,6 +15,7 @@ from fastapi import (
     status,
 )
 from fastapi.responses import FileResponse
+from pydantic import Field
 
 from saltapi.repository.proposal_repository import ProposalRepository
 from saltapi.repository.unit_of_work import UnitOfWork
@@ -41,7 +42,7 @@ from saltapi.web.schema.proposal import (
     ProposalContentType,
     ProposalListItem,
     ProposalStatusContent,
-    SubmissionAcknowledgment,
+    SubmissionAcknowledgment, ProgressReportData,
 )
 
 router = APIRouter(prefix="/proposals", tags=["Proposals"])
@@ -298,7 +299,7 @@ def get_proposal_status(
     Active | The proposal is in the queue.
     Completed | The proposal has been completed.
     Deleted | The proposal has been deleted.
-    Expired | The proposal was submitted in a previous semester and will not be observed any longer.
+    Expired | The proposal was submitted in a previous_requests semester and will not be observed any longer.
     In preparation | The proposal submission was preliminary only. This is a legacy status that should not be used any longer.
     Inactive | The proposal currently is not in the queue and will not be observed.
     Rejected | The proposal has been rejected by the TAC(s).
@@ -418,8 +419,12 @@ def put_progress_report(
         description="Proposal code of the proposal whose progress report is created or updated.",
     ),
     semester: Semester = Path(..., title="Semester", description="Semester"),
-    progress_report: ProgressReportData = File(...),
-    file: UploadFile = File(...)
+    progress_report: ProgressReportData = Body(
+        ...,
+        title="Progress report",
+        description="Data required to complete the progress request."
+    ),
+    file: Optional[UploadFile] = File(...)
 ) -> ProgressReport:
     """
     Creates or updates the progress report for a proposal and semester. The semester
@@ -433,10 +438,12 @@ def put_progress_report(
 
     # TODO Ask about what to do with the requested times for partners?
     # * how to add the requested times correctly to the database.
-    # TODO add form to database.
-    # TODO create a pdf from a form.
-    # * Is there any templates for the PDF or the format
-    # * Can users add a pdf instead of filling the form from the frontend.
+    with UnitOfWork() as unit_of_work:
+        proposal_repository = ProposalRepository(unit_of_work.connection)
+        proposal_service = ProposalService(proposal_repository)
+
+
+
     # TODO Save the pdfs. Both the supplementary PDF and the newly created file.
     # * Where to save the created files.
     raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED)
@@ -540,7 +547,7 @@ def update_data_release_date(
     As data is released at the beginning of a month, the updated release date may be
     later than the requested date.
 
-    The request returns the new release date. This is the same as the previous date
+    The request returns the new release date. This is the same as the previous_requests date
     if the request needs to be approved.
     """
     raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED)

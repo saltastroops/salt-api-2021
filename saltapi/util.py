@@ -1,8 +1,11 @@
 """Utility functions."""
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from typing import NamedTuple
 
 import pytz
+from dateutil.relativedelta import relativedelta
+
+from saltapi.web.schema.common import Semester
 
 
 class TimeInterval(NamedTuple):
@@ -131,3 +134,7 @@ def semester_of_datetime(t: datetime) -> str:
         semester = 2
 
     return f"{year}-{semester}"
+
+
+def next_semester() -> Semester:
+    return Semester(semester_of_datetime(datetime.today() + relativedelta(months=+6)))
