@@ -68,7 +68,7 @@ class PermissionService:
 
         may_activate = (
             (
-                self.proposal_repository.is_self_activable(proposal_code)
+                self.proposal_repository.is_self_activatable(proposal_code)
                 and (
                     self.user_repository.is_principal_investigator(
                         username, proposal_code

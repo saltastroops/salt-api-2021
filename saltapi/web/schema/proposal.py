@@ -46,8 +46,8 @@ class ContactDetails(BaseModel):
         orm_mode = True
 
 
-class ProposalStatus(str, Enum):
-    """Proposal status."""
+class ProposalStatusValue(str, Enum):
+    """Proposal status value."""
 
     ACCEPTED = "Accepted"
     ACTIVE = "Active"
@@ -60,6 +60,17 @@ class ProposalStatus(str, Enum):
     SUPERSEDED = "Superseded"
     UNDER_SCIENTIFIC_REVIEW = "Under scientific review"
     UNDER_TECHNICAL_REVIEW = "Under technical review"
+
+
+class ProposalStatus(BaseModel):
+    """Proposal status."""
+
+    value: ProposalStatusValue = Field(
+        ..., title="Proposal status", description="Proposal status"
+    )
+    reason: Optional[str] = Field(
+        ..., title="Proposal status reason", description="Proposal status reason"
+    )
 
 
 class ProposalType(str, Enum):
@@ -136,6 +147,11 @@ class GeneralProposalInfo(BaseModel):
         ...,
         title="Summary for the night log",
         description="Brief (one-line) summary to include in the observing night log",
+    )
+    is_self_activatable: bool = Field(
+        ...,
+        title="Can the proposal be self-activated?",
+        description="Can the proposal be activated by the Principal Investigator or Principal Contact?",
     )
 
 

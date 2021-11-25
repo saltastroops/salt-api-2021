@@ -145,3 +145,32 @@ def test_horizons_identifier(
         identifier = target["horizons_identifier"]
 
         assert identifier == expected_identifier
+
+
+@nodatabase
+def test_non_sidereal_target(
+    dbconnection: Connection, testdata: Callable[[str], Any]
+) -> None:
+    data = testdata(TEST_DATA)["non_sidereal_target"]
+    target_id = data["target_id"]
+    target_repository = TargetRepository(dbconnection)
+    target = target_repository.get(target_id)
+
+    assert target["horizons_identifier"] is None
+    assert target["non_sidereal"] is False
+
+
+@nodatabase
+def test_sidereal_target(
+    dbconnection: Connection, testdata: Callable[[str], Any]
+) -> None:
+    data = testdata(TEST_DATA)["sidereal_targets"]
+    for d in data:
+        target_id = d["target_id"]
+        target_repository = TargetRepository(dbconnection)
+        target = target_repository.get(target_id)
+        expected_horizon_identifier = target["horizons_identifier"]
+        expected_non_sidereal = target["non_sidereal"]
+
+        assert d["identifier"] == expected_horizon_identifier
+        assert d["non_sidereal"] == expected_non_sidereal
