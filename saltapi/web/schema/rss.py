@@ -15,7 +15,7 @@ class ArcBibleEntry(BaseModel):
         title="Preferred lamp?",
         description="Is the lamp of the entry the preferred one for the RSS setup?",
     )
-    original_exposure_time: float = Field(
+    original_exposure_time: Optional[float] = Field(
         ...,
         title="Original exposure time",
         description="Original exposure time, in seconds",

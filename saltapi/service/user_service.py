@@ -1,10 +1,11 @@
 from datetime import timedelta
-from typing import Any, Dict, List
+from typing import List
 
+from saltapi.exceptions import NotFoundError, ValidationError
 from saltapi.repository.user_repository import UserRepository
 from saltapi.service.authentication_service import AuthenticationService
 from saltapi.service.mail_service import MailService
-from saltapi.service.user import Role, User
+from saltapi.service.user import NewUserDetails, Role, User, UserUpdate
 from saltapi.settings import Settings
 
 
@@ -12,14 +13,11 @@ class UserService:
     def __init__(self, repository: UserRepository):
         self.repository = repository
 
-    def get_user(self, username: str) -> User:
-        return self.repository.get(username)
-
     def send_password_reset_email(self, user: User) -> None:
         mail_service = MailService()
         authentication_service = AuthenticationService(self.repository)
         reset_token = authentication_service.jwt_token(
-            {"username": user.username}, timedelta(hours=24)
+            {"sub": str(user.id)}, timedelta(hours=1)
         )
         user_full_name = f"{user.given_name} {user.family_name}"
 
@@ -67,19 +65,35 @@ SALT Team
 
     @staticmethod
     def password_reset_url(token: str) -> str:
-        return Settings().frontend_uri + "/reset-password/" + token
+        return Settings().frontend_uri + "/change-password/" + token
 
     def get_user_roles(self, username: str) -> List[Role]:
         return self.repository.get_user_roles(username)
 
-    def get_user_details(self, username: str) -> Dict[str, Any]:
-        contact_details = self.repository.get(username)
-        roles = self.repository.get_user_roles(username)
+    def _does_user_exist(self, username: str) -> bool:
+        try:
+            self.get_user(username)
+        except NotFoundError:
+            return False
 
-        return {
-            "username": username,
-            "given_name": contact_details.given_name,
-            "family_name": contact_details.family_name,
-            "email": contact_details.email,
-            "roles": roles,
-        }
+        return True
+
+    def create_user(self, user: NewUserDetails) -> None:
+        if self._does_user_exist(user.username):
+            raise ValidationError(f"The username {user.username} exists already.")
+        self.repository.create(user)
+
+    def get_user(self, username: str) -> User:
+        user = self.repository.get(username)
+        user.password_hash = "***"  # Just in case the password hash ends uop somewhere
+        return user
+
+    def get_user_by_email(self, email: str) -> User:
+        user = self.repository.get_by_email(email)
+        user.password_hash = "***"  # Just in case the password hash ends uop somewhere
+        return user
+
+    def update_user(self, username: str, user: UserUpdate) -> None:
+        if user.username and self._does_user_exist(user.username):
+            raise ValidationError(f"The username {user.username} exists already.")
+        self.repository.update(username, user)
