@@ -513,3 +513,18 @@ class SubmissionAcknowledgment(BaseModel):
 
     class Config:
         schema_extra = {"example": {"submission_id": 41318}}
+
+
+class Partner(BaseModel):
+    """SALT Partner, name and code"""
+
+    name: str = Field(
+        ...,
+        title=" Partner name",
+        description="The SALT partner name."
+    )
+    code: str = Field(
+        ...,
+        title=" Partner code",
+        description="The SALT partner code."
+    )

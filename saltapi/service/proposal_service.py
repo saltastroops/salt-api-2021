@@ -116,3 +116,9 @@ class ProposalService:
                 'no-outline': None
             }
             pdfkit.from_file(f, output_file, options=options)
+
+    def get_progress_report(self, proposal_code: ProposalCode, semester: Semester):
+        return self.repository.get_progress_report(proposal_code, semester)
+
+    def get_partners(self, proposal_code: str) -> List[Dict[str, str]]:
+        return self.repository.get_partners(proposal_code)

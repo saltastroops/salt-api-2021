@@ -1479,3 +1479,45 @@ WHERE PC.Proposal_Code = :proposal_code
         except NoResultFound:
             raise NotFoundError()
 
+    def get_progress_report(self, proposal_code: ProposalCode, semester:Semester) -> Dict[str, str]:
+        stmt = text(
+            """
+SELECT TotalReqTime FROM Proposal AS P
+    JOIN ProposalCode AS PC ON (P.ProposalCode_Id = PC.ProposalCode_Id)
+    JOIN Semester AS S ON (P.Semester_Id = S.Semester_Id)
+WHERE PC.Proposal_Code = :proposal_code
+    AND CONCAT(S.`Year`, "-", S.Semester) = :semester
+    AND Current = 1
+    """
+        )
+        result = self.connection.execute(stmt, {
+            "proposal_code": proposal_code,
+            "semester": semester
+        })
+
+    def get_partners(self, proposal_code: str) -> List[Dict[str, str]]:
+        stmt = text(
+            """
+SELECT DISTINCT 
+    Partner_Name AS partner_name, 
+    Partner_Code AS partner_code 
+FROM MultiPartner AS MP
+    JOIN ProposalCode AS PC ON (MP.ProposalCode_Id = PC.ProposalCode_Id)
+    JOIN Partner AS P ON (MP.Partner_Id = P.Partner_Id)
+WHERE Proposal_Code = :proposal_code
+    """
+        )
+        result = self.connection.execute(stmt, {
+            "proposal_code": proposal_code
+        })
+        try:
+            return [
+                {
+                    "name": row.partner_name,
+                    "code": row.partner_code
+                }
+                for row in result
+            ]
+        except NoResultFound:
+            raise NotFoundError()
+

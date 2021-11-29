@@ -41,7 +41,7 @@ from saltapi.web.schema.proposal import (
     ProposalContentType,
     ProposalListItem,
     ProposalStatusContent,
-    SubmissionAcknowledgment, ProgressReportData,
+    SubmissionAcknowledgment, ProgressReportData, Partner,
 )
 
 router = APIRouter(prefix="/proposals", tags=["Proposals"])
@@ -398,6 +398,7 @@ def get_progress_report(
         description="Proposal code of the proposal whose progress report is requested.",
     ),
     semester: Semester = Path(..., title="Semester", description="Semester"),
+    user: User = Depends(get_current_user)
 ) -> Response:
     """
     Returns the progress report for a proposal and semester. The semester is the
@@ -421,7 +422,11 @@ def get_progress_report(
     case of the pdf file the response contains an `Content-Disposition` HTTP header
     with a filename of the form "ProgressReport_{proposal_code}_{semester}.pdf".
     """
-    raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED)
+    with UnitOfWork() as unit_of_work:
+        permission_service = services.permission_service(unit_of_work.connection)
+        permission_service.check_permission_to_view_proposal(user, proposal_code)
+
+        proposal_service = services.proposal_service(unit_of_work.connection)
 
 
 @router.put(
@@ -441,7 +446,8 @@ def put_progress_report(
         title="Progress report",
         description="Data required to complete the progress request."
     ),
-    file: Optional[UploadFile] = File(...)
+    file: Optional[UploadFile] = File(...),
+    user: User = Depends(get_current_user),
 ) -> ProgressReport:
     """
     Creates or updates the progress report for a proposal and semester. The semester
@@ -456,8 +462,10 @@ def put_progress_report(
     # TODO Ask about what to do with the requested times for partners?
     # * how to add the requested times correctly to the database.
     with UnitOfWork() as unit_of_work:
-        proposal_repository = ProposalRepository(unit_of_work.connection)
-        proposal_service = ProposalService(proposal_repository)
+        permission_service = services.permission_service(unit_of_work.connection)
+        permission_service.check_permission_to_view_proposal(user, proposal_code)
+
+        proposal_service = services.proposal_service(unit_of_work.connection)
 
 
 
@@ -568,3 +576,27 @@ def update_data_release_date(
     if the request needs to be approved.
     """
     raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED)
+
+
+@router.get(
+    "/{proposal_code}/partners",
+    summary="Get the list of partners a proposal belonging to.",
+    response_model=List[Partner],
+)
+def get_proposal_partners(
+    proposal_code: ProposalCode = Path(
+        ...,
+        title="Proposal code",
+        description="Proposal code of the proposal whose data release date is requested.",
+    ),
+    user: User = Depends(get_current_user)
+) -> List[Partner]:
+    """
+    Returns the list of partners a proposal belonging to.
+    """
+    with UnitOfWork() as unit_of_work:
+        proposal_service = services.proposal_service(unit_of_work.connection)
+        return [
+            Partner(**row)
+            for row in proposal_service.get_partners(proposal_code)
+        ]
