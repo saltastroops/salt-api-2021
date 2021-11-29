@@ -43,6 +43,7 @@ SELECT DISTINCT P.Proposal_Id                   AS id,
                 PT.Title                        AS title,
                 P.Phase                         AS phase,
                 PS.Status                       AS status,
+                PIR.InactiveReason              AS reason,
                 T.ProposalType                  AS proposal_type,
                 Leader.FirstName                AS pi_given_name,
                 Leader.Surname                  AS pi_family_name,
@@ -61,6 +62,7 @@ FROM Proposal P
          JOIN ProposalStatus PS ON PGI.ProposalStatus_Id = PS.ProposalStatus_Id
          JOIN ProposalType T ON PGI.ProposalType_Id = T.ProposalType_Id
          JOIN ProposalContact C ON PC.ProposalCode_Id = C.ProposalCode_Id
+         LEFT JOIN ProposalInactiveReason PIR ON PGI.ProposalInactiveReason_Id = PIR.ProposalInactiveReason_Id
          LEFT JOIN Investigator Astronomer
                    ON C.Astronomer_Id = Astronomer.Investigator_Id
          JOIN Investigator Contact ON C.Contact_Id = Contact.Investigator_Id
@@ -137,7 +139,7 @@ LIMIT :limit;
                 "semester": row.semester,
                 "title": row.title,
                 "phase": row.phase,
-                "status": row.status,
+                "status": {"value": row.status, "reason": row.reason},
                 "proposal_type": self._map_proposal_type(row.proposal_type),
                 "principal_investigator": {
                     "given_name": row.pi_given_name,
@@ -432,6 +434,7 @@ SELECT PT.Title                            AS title,
        PT.NightlogSummary                  AS summary_for_night_log,
        P.Submission                        AS submission_number,
        PS.Status                           AS status,
+       PIR.InactiveReason                  AS reason,
        T.ProposalType                      AS proposal_type,
        PGI.ActOnAlert                      AS target_of_opportunity,
        P.TotalReqTime                      AS total_requested_time,
@@ -441,7 +444,7 @@ SELECT PT.Title                            AS title,
        I.Email                             AS astronomer_email,
        IF(PSA.PiPcMayActivate IS NOT NULL,
           PSA.PiPcMayActivate,
-          0)                               AS self_activable
+          0)                               AS self_activatable
 FROM Proposal P
          JOIN Semester S ON P.Semester_Id = S.Semester_Id
          JOIN ProposalCode PC ON P.ProposalCode_Id = PC.ProposalCode_Id
@@ -451,6 +454,7 @@ FROM Proposal P
          JOIN ProposalType T ON PGI.ProposalType_Id = T.ProposalType_Id
          JOIN ProposalStatus PS ON PGI.ProposalStatus_Id = PS.ProposalStatus_Id
          JOIN ProposalContact C ON PC.ProposalCode_Id = C.ProposalCode_Id
+         LEFT JOIN ProposalInactiveReason PIR ON PGI.ProposalInactiveReason_Id = PIR.ProposalInactiveReason_Id
          LEFT JOIN Investigator I ON C.Astronomer_Id = I.Investigator_Id
          LEFT JOIN ProposalSelfActivation PSA ON P.ProposalCode_Id = PSA.ProposalCode_Id
 WHERE PC.Proposal_Code = :proposal_code
@@ -470,12 +474,12 @@ WHERE PC.Proposal_Code = :proposal_code
             "summary_for_salt_astronomer": row.summary_for_salt_astronomer,
             "summary_for_night_log": row.summary_for_night_log,
             "submission_number": row.submission_number,
-            "status": row.status,
+            "status": {"value": row.status, "reason": row.reason},
             "proposal_type": self._map_proposal_type(row.proposal_type),
             "target_of_opportunity": row.target_of_opportunity,
             "total_requested_time": row.total_requested_time,
             "proprietary_period": row.proprietary_period,
-            "is_self_activable": row.self_activable > 0,
+            "is_self_activatable": row.self_activatable > 0,
         }
 
         if info["proposal_type"] == "Director Discretionary Time (DDT)":
@@ -1220,9 +1224,9 @@ WHERE PS.Status = :status
         result = self.connection.execute(stmt, {"status": status})
         return cast(int, result.scalar_one())
 
-    def is_self_activable(self, proposal_code: str) -> bool:
+    def is_self_activatable(self, proposal_code: str) -> bool:
         """
-        Check whether the proposal may be activated the Principal Investigator and
+        Check whether the proposal may be activated by the Principal Investigator and
         Principal Contact.
         """
         stmt = text(
