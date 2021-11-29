@@ -383,7 +383,7 @@ def post_observation_comment(
 @router.get(
     "{proposal_code}/progress-reports/{semester}",
     summary="Get a progress report",
-    response_model=ProgressReport,
+    response_model=List[ProgressReport],
     responses={200: {"content": {"application/pdf": {}}}},
 )
 def get_progress_report(
@@ -394,7 +394,7 @@ def get_progress_report(
     ),
     semester: Semester = Path(..., title="Semester", description="Semester"),
     user: User = Depends(get_current_user)
-) -> Response:
+) -> List[ProgressReport]:
     """
     Returns the progress report for a proposal and semester. The semester is the
     semester for which the progress is reported. For example, if the semester is
@@ -422,6 +422,10 @@ def get_progress_report(
         permission_service.check_permission_to_view_proposal(user, proposal_code)
 
         proposal_service = services.proposal_service(unit_of_work.connection)
+        return [
+            ProgressReport(**row)
+            for row in proposal_service.get_progress_report(proposal_code, semester)
+        ]
 
 
 @router.put(

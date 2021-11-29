@@ -1483,21 +1483,64 @@ WHERE PC.Proposal_Code = :proposal_code
         except NoResultFound:
             raise NotFoundError()
 
-    def get_progress_report(self, proposal_code: ProposalCode, semester:Semester) -> Dict[str, str]:
+    def get_progress_report(self, proposal_code: ProposalCode, semester: Semester) -> \
+            List[Dict[str, any]]:
         stmt = text(
             """
-SELECT TotalReqTime FROM Proposal AS P
-    JOIN ProposalCode AS PC ON (P.ProposalCode_Id = PC.ProposalCode_Id)
-    JOIN Semester AS S ON (P.Semester_Id = S.Semester_Id)
+SELECT  
+    ReqTimeAmount 						AS requested_time,
+    CONCAT(S.`Year`, "-", S.Semester) 	AS semester,
+    Partner_Code 						AS partner_code,
+    Partner_Name 						AS partner_name,
+    MaxSeeing							AS maximum_seeing,
+    Transparency						AS transparency,
+    ObservingConditionsDescription		AS description_of_observing_constraints,
+    TimeRequestChangeReasons			AS why_time_request_changed,
+    StatusSummary						AS summary_of_proposal_status,
+    StrategyChanges						AS strategy_changes
+FROM MultiPartner AS MP
+    JOIN ProposalCode AS PC ON (MP.ProposalCode_Id = PC.ProposalCode_Id)
+    JOIN Semester AS S ON (MP.Semester_Id = S.Semester_Id)
+    JOIN Partner AS P ON (MP.Partner_Id = P.Partner_Id)
+    LEFT JOIN P1ObservingConditions AS POC
+        ON (
+            MP.ProposalCode_Id = POC.ProposalCode_Id
+            AND MP.Semester_Id = POC.Semester_Id
+        )
+    LEFT JOIN Transparency AS T ON (POC.Transparency_Id = T.Transparency_Id)
+    LEFT JOIN ProposalProgress AS PP 
+    ON (
+        MP.ProposalCode_Id = PP.ProposalCode_Id
+        AND MP.Semester_Id = PP.Semester_Id
+    )
 WHERE PC.Proposal_Code = :proposal_code
     AND CONCAT(S.`Year`, "-", S.Semester) = :semester
-    AND Current = 1
     """
         )
         result = self.connection.execute(stmt, {
             "proposal_code": proposal_code,
             "semester": semester
         })
+        try:
+            return [
+                {
+                    "requested_time": row.requested_time,
+                    "semester": row.semester,
+                    "partner_code": row.partner_code,
+                    "partner_name": row.partner_name,
+                    "maximum_seeing": row.maximum_seeing,
+                    "transparency": row.transparency,
+                    "description_of_observing_constraints":
+                        row.description_of_observing_constraints,
+                    "why_time_request_changed": row.why_time_request_changed,
+                    "summary_of_proposal_status": row.summary_of_proposal_status,
+                    "strategy_changes": row.strategy_changes
+                }
+                for row in result
+            ]
+        except NoResultFound:
+            raise NotFoundError()
+
 
     def get_partners(self, proposal_code: str) -> List[Dict[str, str]]:
         stmt = text(

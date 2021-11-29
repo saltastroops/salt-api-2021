@@ -405,7 +405,51 @@ class ProgressReport(BaseModel):
     the 2021-2 semester.
     """
 
-    dummy: str
+    requestedTime: int = Field(
+        ...,
+        title="Requested time",
+        description="Requested time per partner.",
+    )
+    semester: str = Field(
+        ...,
+        title="Semester",
+        description="The semester for this progress report.",
+    )
+    requestedPartner: Partner = Field(
+        ...,
+        title="Partner",
+        description="The partner requesting time from.",
+    )
+    maximumSeeing: int = Field(
+        ...,
+        title="Seeing",
+        description="The maximum seeing.",
+    )
+    transparency: str = Field(
+        ...,
+        title="Transparency",
+        description="The transparency.",
+    )
+    descriptionOfObservingConstraints: str = Field(
+        ...,
+        title="Description of observing constraints",
+        description="The escription of observing constraints.",
+    )
+    whyTimeRequestChanged: str = Field(
+        ...,
+        title="Time request change reasons",
+        description="The reason why the time request has changed.",
+    )
+    summaryOfProposalStatus: str = Field(
+        ...,
+        title="Summary of proposal status",
+        description="The summary of proposal status.",
+    )
+    strategyChanges: str = Field(
+        ...,
+        title="Strategy changes",
+        description="The strategy changes.",
+    )
 
 
 class PartnerRequestedPercentage(BaseModel):
