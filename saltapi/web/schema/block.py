@@ -156,6 +156,8 @@ class BlockSummary(BaseModel):
     id: int = Field(
         ..., title="Block id", description="Unique identifier for the block"
     )
+    semester: Semester = Field(..., title="Semester to which the block belongs")
+    status: BlockStatus = Field(..., title="Block status", description="Block status")
     name: str = Field(..., title="Name", description="Block name")
     observation_time: int = Field(
         ...,
