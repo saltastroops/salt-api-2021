@@ -397,61 +397,6 @@ class Proposal(BaseModel):
     )
 
 
-class ProgressReport(BaseModel):
-    """
-    Progress report for a proposal and semester. The semester is the semester for which
-    the progress is reported. For example, if the semester is 2021-1, the report covers
-    the observations up to and including the 2021-1 semester and it requests time for
-    the 2021-2 semester.
-    """
-
-    requestedTime: int = Field(
-        ...,
-        title="Requested time",
-        description="Requested time per partner.",
-    )
-    semester: str = Field(
-        ...,
-        title="Semester",
-        description="The semester for this progress report.",
-    )
-    requestedPartner: Partner = Field(
-        ...,
-        title="Partner",
-        description="The partner requesting time from.",
-    )
-    maximumSeeing: int = Field(
-        ...,
-        title="Seeing",
-        description="The maximum seeing.",
-    )
-    transparency: str = Field(
-        ...,
-        title="Transparency",
-        description="The transparency.",
-    )
-    descriptionOfObservingConstraints: str = Field(
-        ...,
-        title="Description of observing constraints",
-        description="The escription of observing constraints.",
-    )
-    whyTimeRequestChanged: str = Field(
-        ...,
-        title="Time request change reasons",
-        description="The reason why the time request has changed.",
-    )
-    summaryOfProposalStatus: str = Field(
-        ...,
-        title="Summary of proposal status",
-        description="The summary of proposal status.",
-    )
-    strategyChanges: str = Field(
-        ...,
-        title="Strategy changes",
-        description="The strategy changes.",
-    )
-
-
 class PartnerRequestedPercentage(BaseModel):
     """
     Requested Percentage for a partner
@@ -575,7 +520,7 @@ class SubmissionAcknowledgment(BaseModel):
         schema_extra = {"example": {"submission_id": 41318}}
 
 
-class Partner(BaseModel):
+class PartnersRequest(BaseModel):
     """SALT Partner, name and code"""
 
     name: str = Field(
@@ -587,4 +532,64 @@ class Partner(BaseModel):
         ...,
         title=" Partner code",
         description="The SALT partner code."
+    )
+    requested_percentage: float = Field(
+        ...,
+        title="Requested percentage",
+        description="The requested percentage from a partner."
+    )
+
+
+class ProgressReport(BaseModel):
+    """
+    Progress report for a proposal and semester. The semester is the semester for which
+    the progress is reported. For example, if the semester is 2021-1, the report covers
+    the observations up to and including the 2021-1 semester and it requests time for
+    the 2021-2 semester.
+    """
+
+    requested_time: Optional[int] = Field(
+        ...,
+        title="Requested time",
+        description="Requested time per partner.",
+    )
+    semester: Optional[str] = Field(
+        ...,
+        title="Semester",
+        description="The semester for this progress report.",
+    )
+    requested_amount: List[PartnersRequest] = Field(
+        ...,
+        title="Partner",
+        description="The partner requesting time from.",
+    )
+    maximum_seeing: Optional[float] = Field(
+        ...,
+        title="Seeing",
+        description="The maximum seeing.",
+    )
+    transparency: Optional[str] = Field(
+        ...,
+        title="Transparency",
+        description="The transparency.",
+    )
+    description_of_observing_constraints: Optional[str] = Field(
+        ...,
+        title="Description of observing constraints",
+        description="The escription of observing constraints.",
+    )
+    why_time_request_changed: Optional[str] = Field(
+        ...,
+        title="Time request change reasons",
+        description="The reason why the time request has changed.",
+    )
+    summary_of_proposal_status: Optional[str] = Field(
+        ...,
+        title="Summary of proposal status",
+        description="The summary of proposal status.",
+    )
+    strategy_changes: Optional[str] = Field(
+        ...,
+        title="Strategy changes",
+        description="The strategy changes.",
     )

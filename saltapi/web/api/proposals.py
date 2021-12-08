@@ -36,7 +36,8 @@ from saltapi.web.schema.proposal import (
     ProposalContentType,
     ProposalListItem,
     ProposalStatusContent,
-    SubmissionAcknowledgment, ProgressReportData, Partner,
+    SubmissionAcknowledgment,
+    ProgressReportData
 )
 
 router = APIRouter(prefix="/proposals", tags=["Proposals"])
@@ -381,9 +382,9 @@ def post_observation_comment(
 
 
 @router.get(
-    "{proposal_code}/progress-reports/{semester}",
+    "/{proposal_code}/progress-report/{semester}",
     summary="Get a progress report",
-    response_model=List[ProgressReport],
+    response_model=Optional[ProgressReport],
     responses={200: {"content": {"application/pdf": {}}}},
 )
 def get_progress_report(
@@ -394,7 +395,7 @@ def get_progress_report(
     ),
     semester: Semester = Path(..., title="Semester", description="Semester"),
     user: User = Depends(get_current_user)
-) -> List[ProgressReport]:
+) -> Optional[ProgressReport]:
     """
     Returns the progress report for a proposal and semester. The semester is the
     semester for which the progress is reported. For example, if the semester is
@@ -422,10 +423,13 @@ def get_progress_report(
         permission_service.check_permission_to_view_proposal(user, proposal_code)
 
         proposal_service = services.proposal_service(unit_of_work.connection)
-        return [
-            ProgressReport(**row)
-            for row in proposal_service.get_progress_report(proposal_code, semester)
-        ]
+        progress_report = proposal_service.get_progress_report(proposal_code, semester)
+        print(progress_report)
+        if progress_report:
+            return ProgressReport(
+                **progress_report
+            )
+        return None
 
 
 @router.put(
@@ -575,27 +579,3 @@ def update_data_release_date(
     if the request needs to be approved.
     """
     raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED)
-
-
-@router.get(
-    "/{proposal_code}/partners",
-    summary="Get the list of partners a proposal belonging to.",
-    response_model=List[Partner],
-)
-def get_proposal_partners(
-    proposal_code: ProposalCode = Path(
-        ...,
-        title="Proposal code",
-        description="Proposal code of the proposal whose data release date is requested.",
-    ),
-    user: User = Depends(get_current_user)
-) -> List[Partner]:
-    """
-    Returns the list of partners a proposal belonging to.
-    """
-    with UnitOfWork() as unit_of_work:
-        proposal_service = services.proposal_service(unit_of_work.connection)
-        return [
-            Partner(**row)
-            for row in proposal_service.get_partners(proposal_code)
-        ]

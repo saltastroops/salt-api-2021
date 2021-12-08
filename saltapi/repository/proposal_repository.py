@@ -1444,7 +1444,7 @@ FROM MultiPartner 	AS MP
     JOIN PriorityAlloc 	AS PA ON (MP.MultiPartner_Id = PA.MultiPartner_Id)
     JOIN ProposalCode 	AS PC ON (MP.ProposalCode_Id = PC.ProposalCode_Id)
     JOIN Semester 		AS S ON (MP.Semester_Id = S.Semester_Id)
-WHERE Proposal_Code='2020-1-MLT-005'
+WHERE Proposal_Code=:proposal_code
     GROUP BY S.Semester_Id
     """
         )
@@ -1484,11 +1484,13 @@ WHERE PC.Proposal_Code = :proposal_code
             raise NotFoundError()
 
     def get_progress_report(self, proposal_code: ProposalCode, semester: Semester) -> \
-            List[Dict[str, any]]:
+            Optional[Dict[str, any]]:
+        # TODO this query is wrong I query from the table I need to edit and some data might be available on other tables
         stmt = text(
             """
 SELECT  
     ReqTimeAmount 						AS requested_time,
+    ReqTimePercent						AS requested_percentage,
     CONCAT(S.`Year`, "-", S.Semester) 	AS semester,
     Partner_Code 						AS partner_code,
     Partner_Name 						AS partner_name,
@@ -1522,49 +1524,29 @@ WHERE PC.Proposal_Code = :proposal_code
             "semester": semester
         })
         try:
-            return [
-                {
-                    "requested_time": row.requested_time,
-                    "semester": row.semester,
-                    "partner_code": row.partner_code,
-                    "partner_name": row.partner_name,
-                    "maximum_seeing": row.maximum_seeing,
-                    "transparency": row.transparency,
-                    "description_of_observing_constraints":
-                        row.description_of_observing_constraints,
-                    "why_time_request_changed": row.why_time_request_changed,
-                    "summary_of_proposal_status": row.summary_of_proposal_status,
-                    "strategy_changes": row.strategy_changes
-                }
-                for row in result
-            ]
+            if result.rowcount > 0:
+                progress_report = {"requested_amount": []}
+                for row in result:
+                    progress_report["requested_amount"].append(
+                        {
+                            "code": row.partner_code,
+                            "name": row.partner_name,
+                            "requested_percentage": row.requested_percentage
+                        }
+                    )
+                    progress_report["requested_time"] = row.requested_time
+                    progress_report["semester"] = row.semester
+                    progress_report["maximum_seeing"] = row.maximum_seeing
+                    progress_report["transparency"] = row.transparency
+                    progress_report["description_of_observing_constraints"] = \
+                        row.description_of_observing_constraints
+                    progress_report["why_time_request_changed"] = \
+                        row.why_time_request_changed
+                    progress_report["summary_of_proposal_status"] = \
+                        row.summary_of_proposal_status
+                    progress_report["strategy_changes"] = row.strategy_changes
+
+                return  progress_report
+            return None
         except NoResultFound:
             raise NotFoundError()
-
-
-    def get_partners(self, proposal_code: str) -> List[Dict[str, str]]:
-        stmt = text(
-            """
-SELECT DISTINCT 
-    Partner_Name AS partner_name, 
-    Partner_Code AS partner_code 
-FROM MultiPartner AS MP
-    JOIN ProposalCode AS PC ON (MP.ProposalCode_Id = PC.ProposalCode_Id)
-    JOIN Partner AS P ON (MP.Partner_Id = P.Partner_Id)
-WHERE Proposal_Code = :proposal_code
-    """
-        )
-        result = self.connection.execute(stmt, {
-            "proposal_code": proposal_code
-        })
-        try:
-            return [
-                {
-                    "name": row.partner_name,
-                    "code": row.partner_code
-                }
-                for row in result
-            ]
-        except NoResultFound:
-            raise NotFoundError()
-
