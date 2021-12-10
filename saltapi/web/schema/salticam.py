@@ -164,3 +164,4 @@ class SalticamSummary(BaseModel):
     modes: List[Literal[""]] = Field(
         ..., title="Instrument modes", description="Used instrument modes"
     )
+    grating: Optional[str] = Field(..., title="Grating", description="Grating")

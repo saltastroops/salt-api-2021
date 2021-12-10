@@ -810,7 +810,8 @@ WHERE C.Proposal_Code = :proposal_code
         stmt = text(
             """
 SELECT B.Block_Id AS block_id,
-       GROUP_CONCAT(DISTINCT RM.Mode ORDER BY RM.Mode SEPARATOR :separator) AS modes
+       GROUP_CONCAT(DISTINCT RM.Mode ORDER BY RM.Mode SEPARATOR :separator) AS modes,
+       RG.Grating AS grating
 FROM RssMode RM
          JOIN RssConfig RC ON RM.RssMode_Id = RC.RssMode_Id
          JOIN Rss R ON RC.RssConfig_Id = R.RssConfig_Id
@@ -822,6 +823,8 @@ FROM RssMode RM
          JOIN Pointing P ON TCOC.Pointing_Id = P.Pointing_Id
          JOIN Block B ON P.Block_Id = B.Block_Id
          JOIN ProposalCode PC ON B.ProposalCode_Id = PC.ProposalCode_Id
+         LEFT JOIN RssSpectroscopy RS ON RC.RssSpectroscopy_Id = RS.RssSpectroscopy_Id
+         LEFT JOIN RssGrating RG ON RS.RssGrating_Id = RG.RssGrating_Id
 WHERE PC.Proposal_Code = :proposal_code
 GROUP BY B.Block_Id
         """
@@ -833,7 +836,9 @@ GROUP BY B.Block_Id
                 "proposal_code": proposal_code,
             },
         )
-        return {row.block_id: row.modes.split(separator) for row in result}
+        return {
+            row.block_id: [row.modes.split(separator), row.grating] for row in result
+        }
 
     def _block_hrs_modes(self, proposal_code: str) -> Dict[int, List[str]]:
         """
@@ -919,13 +924,17 @@ WHERE C.Proposal_Code = :proposal_code
 
         instruments: DefaultDict[int, List[Dict[str, Any]]] = defaultdict(list)
         for block_id, m in salticam_modes.items():
-            instruments[block_id].append({"name": "Salticam", "modes": m})
+            instruments[block_id].append(
+                {"name": "Salticam", "modes": m, "grating": None}
+            )
         for block_id, m in rss_modes.items():
-            instruments[block_id].append({"name": "RSS", "modes": m})
+            instruments[block_id].append(
+                {"name": "RSS", "modes": m[0], "grating": m[1]}
+            )
         for block_id, m in hrs_modes.items():
-            instruments[block_id].append({"name": "HRS", "modes": m})
+            instruments[block_id].append({"name": "HRS", "modes": m, "grating": None})
         for block_id, m in bvit_modes.items():
-            instruments[block_id].append({"name": "BVIT", "modes": m})
+            instruments[block_id].append({"name": "BVIT", "modes": m, "grating": None})
 
         return instruments
 
@@ -1165,22 +1174,28 @@ WHERE PC.ProposalComment_Id = :proposal_comment_id
 
         return dict(select_results.one())
 
-    def get_proposal_status(self, proposal_code: str) -> str:
+    def get_proposal_status(self, proposal_code: str) -> Dict[str, Any]:
         """
         Return the proposal status for a proposal.
         """
         stmt = text(
             """
-SELECT PS.Status
+SELECT PS.Status AS status, PIR.InactiveReason AS reason
 FROM ProposalStatus PS
          JOIN ProposalGeneralInfo PGI ON PS.ProposalStatus_Id = PGI.ProposalStatus_Id
          JOIN ProposalCode PC ON PGI.ProposalCode_Id = PC.ProposalCode_Id
+         LEFT JOIN ProposalInactiveReason PIR ON PGI.ProposalInactiveReason_Id = PIR.ProposalInactiveReason_Id
 WHERE PC.Proposal_Code = :proposal_code
         """
         )
         result = self.connection.execute(stmt, {"proposal_code": proposal_code})
         try:
-            return cast(str, result.scalar_one())
+            row = result.one()
+
+            status = {"value": row.status, "reason": row.reason}
+
+            return status
+
         except NoResultFound:
             raise NotFoundError()
 

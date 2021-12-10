@@ -27,7 +27,7 @@ class BlockStatusValue(str, Enum):
     DELETED = "Deleted"
     EXPIRED = "Expired"
     NOT_SET = "Not set"
-    ON_HOLD = "On hold"
+    ON_HOLD = "On Hold"
     SUPERSEDED = "Superseded"
 
 

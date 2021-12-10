@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import List, Literal
+from typing import List, Literal, Optional
 
 from pydantic import BaseModel, Field
 
@@ -64,3 +64,4 @@ class BvitSummary(BaseModel):
     modes: List[Literal[""]] = Field(
         ..., title="Instrument modes", description="Used instrument modes"
     )
+    grating: Optional[str] = Field(..., title="Grating", description="Grating")

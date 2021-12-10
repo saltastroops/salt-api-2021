@@ -367,3 +367,4 @@ class RssSummary(BaseModel):
     modes: List[RssMode] = Field(
         ..., title="Instrument modes", description="Used instrument modes"
     )
+    grating: Optional[RssGrating] = Field(..., title="Grating", description="Grating")
