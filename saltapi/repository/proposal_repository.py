@@ -813,7 +813,7 @@ WHERE C.Proposal_Code = :proposal_code
         stmt = text(
             """
 SELECT B.Block_Id AS block_id,
-       GROUP_CONCAT(DISTINCT CONCAT_WS(',',RM.Mode,RG.Grating) ORDER BY RM.Mode SEPARATOR :separator) AS modes
+       GROUP_CONCAT(DISTINCT CONCAT_WS(' ' ,RM.Mode ,RG.Grating) ORDER BY RM.Mode SEPARATOR :separator) AS modes
 FROM RssMode RM
          JOIN RssConfig RC ON RM.RssMode_Id = RC.RssMode_Id
          JOIN Rss R ON RC.RssConfig_Id = R.RssConfig_Id
@@ -839,7 +839,7 @@ GROUP BY B.Block_Id
             },
         )
         return {
-            row.block_id: row.modes.split(separator)[0].split(",") for row in result
+            row.block_id: row.modes.split(separator)[0].split(" ") for row in result
         }
 
     def _block_hrs_modes(self, proposal_code: str) -> Dict[int, List[str]]:

@@ -422,7 +422,7 @@ def test_get_proposal_status(
         assert expected_status == status
 
 
-def test_get_proposal_status_raises_error_for_wring_proposal_code(
+def test_get_proposal_status_raises_error_for_wrong_proposal_code(
     dbconnection: Connection,
 ) -> None:
     proposal_repository = ProposalRepository(dbconnection)
@@ -445,6 +445,22 @@ def test_update_proposal_status(dbconnection: Connection) -> None:
         proposal_repository.get_proposal_status(proposal_code)["value"]
         == "Under technical review"
     )
+
+
+def test_update_proposal_status_for_not_none_status_reason(
+    dbconnection: Connection,
+) -> None:
+    # Set the status to "Expired"
+    proposal_repository = ProposalRepository(dbconnection)
+    proposal_code = "2019-1-SCI-010"
+    proposal_repository.update_proposal_status(proposal_code, "Expired")
+    status = proposal_repository.get_proposal_status(proposal_code)
+    assert status["value"] == "Expired"
+    assert status["reason"] == "Other"
+
+    # Now set it to "Deleted"
+    proposal_repository.update_proposal_status(proposal_code, "Deleted")
+    assert proposal_repository.get_proposal_status(proposal_code)["value"] == "Deleted"
 
 
 def test_update_proposal_status_raises_error_for_wrong_proposal_code(
