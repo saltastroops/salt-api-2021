@@ -644,7 +644,10 @@ WHERE BS.BlockStatus NOT IN :excluded_status_values
                 "id": row.id,
                 "semester": row.semester,
                 "name": row.name,
-                "status": {"value": row.status, "reason": row.reason},
+                "status": {
+                    "value": row.status if row.status != "On Hold" else "On hold",
+                    "reason": row.reason,
+                },
                 "observation_time": row.observation_time,
                 "priority": row.priority,
                 "requested_observations": row.requested_observations,
@@ -810,8 +813,7 @@ WHERE C.Proposal_Code = :proposal_code
         stmt = text(
             """
 SELECT B.Block_Id AS block_id,
-       GROUP_CONCAT(DISTINCT RM.Mode ORDER BY RM.Mode SEPARATOR :separator) AS modes,
-       RG.Grating AS grating
+       GROUP_CONCAT(DISTINCT CONCAT_WS(',',RM.Mode,RG.Grating) ORDER BY RM.Mode SEPARATOR :separator) AS modes
 FROM RssMode RM
          JOIN RssConfig RC ON RM.RssMode_Id = RC.RssMode_Id
          JOIN Rss R ON RC.RssConfig_Id = R.RssConfig_Id
@@ -837,7 +839,7 @@ GROUP BY B.Block_Id
             },
         )
         return {
-            row.block_id: [row.modes.split(separator), row.grating] for row in result
+            row.block_id: row.modes.split(separator)[0].split(",") for row in result
         }
 
     def _block_hrs_modes(self, proposal_code: str) -> Dict[int, List[str]]:
@@ -921,21 +923,16 @@ WHERE C.Proposal_Code = :proposal_code
         rss_modes = self._block_rss_modes(proposal_code)
         hrs_modes = self._block_hrs_modes(proposal_code)
         bvit_modes = self._block_bvit_modes(proposal_code)
-
         instruments: DefaultDict[int, List[Dict[str, Any]]] = defaultdict(list)
-        for block_id, m in salticam_modes.items():
-            instruments[block_id].append(
-                {"name": "Salticam", "modes": m, "grating": None}
-            )
-        for block_id, m in rss_modes.items():
-            instruments[block_id].append(
-                {"name": "RSS", "modes": m[0], "grating": m[1]}
-            )
-        for block_id, m in hrs_modes.items():
-            instruments[block_id].append({"name": "HRS", "modes": m, "grating": None})
-        for block_id, m in bvit_modes.items():
-            instruments[block_id].append({"name": "BVIT", "modes": m, "grating": None})
 
+        for block_id, m in salticam_modes.items():
+            instruments[block_id].append({"name": "Salticam", "modes": m})
+        for block_id, m in rss_modes.items():
+            instruments[block_id].append({"name": "RSS", "modes": m})
+        for block_id, m in hrs_modes.items():
+            instruments[block_id].append({"name": "HRS", "modes": m})
+        for block_id, m in bvit_modes.items():
+            instruments[block_id].append({"name": "BVIT", "modes": m})
         return instruments
 
     def time_allocations(

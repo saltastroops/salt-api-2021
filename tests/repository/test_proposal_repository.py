@@ -435,7 +435,9 @@ def test_update_proposal_status(dbconnection: Connection) -> None:
     proposal_repository = ProposalRepository(dbconnection)
     proposal_code = "2020-2-SCI-043"
     proposal_repository.update_proposal_status(proposal_code, "Active")
-    assert proposal_repository.get_proposal_status(proposal_code)["value"] == "Active"
+    status = proposal_repository.get_proposal_status(proposal_code)
+    assert status["value"] == "Active"
+    assert status["reason"] is None
 
     # Now set it to "Under technical review"
     proposal_repository.update_proposal_status(proposal_code, "Under technical review")

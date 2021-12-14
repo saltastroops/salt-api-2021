@@ -194,4 +194,3 @@ class HrsSummary(BaseModel):
     modes: List[HrsMode] = Field(
         ..., title="Instrument modes", description="Used instrument modes"
     )
-    grating: Optional[str] = Field(..., title="Grating", description="Grating")
