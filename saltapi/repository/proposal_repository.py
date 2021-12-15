@@ -801,7 +801,9 @@ WHERE C.Proposal_Code = :proposal_code
         )
         return {row.block_id: [""] for row in result}
 
-    def _block_rss_modes(self, proposal_code: str) -> Dict[int, List[str]]:
+    def _block_rss_modes(
+        self, proposal_code: str
+    ) -> Dict[int, List[Dict[str, List[str]]]]:
         """
         Return the dictionary of block ids and lists of RSS modes contained in the
         blocks.
@@ -813,7 +815,8 @@ WHERE C.Proposal_Code = :proposal_code
         stmt = text(
             """
 SELECT B.Block_Id AS block_id,
-       GROUP_CONCAT(DISTINCT CONCAT_WS(' ' ,RM.Mode ,RG.Grating) ORDER BY RM.Mode SEPARATOR :separator) AS modes
+       GROUP_CONCAT(DISTINCT RM.Mode ORDER BY RM.Mode SEPARATOR :separator) AS modes,
+       GROUP_CONCAT(DISTINCT RG.Grating ORDER BY RG.Grating SEPARATOR :separator) AS gratings
 FROM RssMode RM
          JOIN RssConfig RC ON RM.RssMode_Id = RC.RssMode_Id
          JOIN Rss R ON RC.RssConfig_Id = R.RssConfig_Id
@@ -839,7 +842,15 @@ GROUP BY B.Block_Id
             },
         )
         return {
-            row.block_id: row.modes.split(separator)[0].split(" ") for row in result
+            row.block_id: [
+                {
+                    "modes": row.modes.split(separator),
+                    "gratings": row.gratings.split(separator)
+                    if row.gratings is not None
+                    else row.gratings,
+                }
+            ]
+            for row in result
         }
 
     def _block_hrs_modes(self, proposal_code: str) -> Dict[int, List[str]]:
@@ -927,8 +938,10 @@ WHERE C.Proposal_Code = :proposal_code
 
         for block_id, m in salticam_modes.items():
             instruments[block_id].append({"name": "Salticam", "modes": m})
-        for block_id, m in rss_modes.items():
-            instruments[block_id].append({"name": "RSS", "modes": m})
+        for block_id_, m_ in rss_modes.items():
+            instruments[block_id_].append(
+                {"name": "RSS", "modes": m_[0]["modes"], "gratings": m_[0]["gratings"]}
+            )
         for block_id, m in hrs_modes.items():
             instruments[block_id].append({"name": "HRS", "modes": m})
         for block_id, m in bvit_modes.items():

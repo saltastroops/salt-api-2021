@@ -364,6 +364,9 @@ class RssSummary(BaseModel):
     name: Literal["RSS"] = Field(
         ..., title="Instrument name", description="Instrument name"
     )
-    modes: List[Union[RssMode, RssGrating]] = Field(
+    modes: List[RssMode] = Field(
         ..., title="Instrument modes", description="Used instrument modes"
+    )
+    gratings: Optional[List[RssGrating]] = Field(
+        ..., title="Instrument gratings", description="Used instrument gratings"
     )
