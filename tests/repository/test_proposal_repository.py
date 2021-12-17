@@ -496,3 +496,20 @@ def test_is_self_activatable(
             proposal_repository.is_self_activatable(proposal_code)
             == expected_self_activatable
         )
+
+
+@nodatabase
+def test_get_returns_additional_instrument_details(
+    dbconnection: Connection, testdata: Callable[[str], Any]
+) -> None:
+    data = testdata(TEST_DATA)["get_instrument_additional_configurations"]
+    proposal_code = data["proposal_code"]
+    expected_blocks = data["blocks"]
+    proposal_repository = ProposalRepository(dbconnection)
+    proposal = proposal_repository.get(proposal_code)
+    blocks = proposal["blocks"]
+    for expected_block in expected_blocks:
+        block = next(b for b in blocks if b["id"] == expected_block["block_id"])
+        expected_instruments = expected_block["instruments"]
+        instruments = block["instruments"][0]
+        assert instruments["name"] == expected_instruments["name"]
