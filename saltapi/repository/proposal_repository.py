@@ -805,7 +805,7 @@ WHERE C.Proposal_Code = :proposal_code
 
     def _block_rss_configurations(
         self, proposal_code: str
-    ) -> Dict[int, Dict[str, Any]]:
+    ) -> Dict[int, Dict[str, List[str]]]:
         """
         Return the dictionary of block ids and a dictionary of RSS configurations contained in the
         blocks.
@@ -819,10 +819,11 @@ WHERE C.Proposal_Code = :proposal_code
 SELECT B.Block_Id AS block_id,
        GROUP_CONCAT(DISTINCT RM.Mode ORDER BY RM.Mode SEPARATOR :separator) AS modes,
        GROUP_CONCAT(DISTINCT RG.Grating ORDER BY RG.Grating SEPARATOR :separator) AS gratings,
-       GROUP_CONCAT(DISTINCT RMT.RssMaskType  ORDER BY RMT.RssMaskType  SEPARATOR :separator) AS mask_types
+       GROUP_CONCAT(DISTINCT RF.Barcode  ORDER BY RF.Barcode  SEPARATOR :separator) AS filters
 FROM RssMode RM
          JOIN RssConfig RC ON RM.RssMode_Id = RC.RssMode_Id
          JOIN Rss R ON RC.RssConfig_Id = R.RssConfig_Id
+         JOIN RssFilter RF ON RC.RssFilter_Id = RF.RssFilter_Id
          JOIN RssPatternDetail RPD ON R.Rss_Id = RPD.Rss_Id
          JOIN RssPattern RP ON RPD.RssPattern_Id = RP.RssPattern_Id
          JOIN ObsConfig OC ON RP.RssPattern_Id = OC.RssPattern_Id
@@ -833,8 +834,6 @@ FROM RssMode RM
          JOIN ProposalCode PC ON B.ProposalCode_Id = PC.ProposalCode_Id
          LEFT JOIN RssSpectroscopy RS ON RC.RssSpectroscopy_Id = RS.RssSpectroscopy_Id
          LEFT JOIN RssGrating RG ON RS.RssGrating_Id = RG.RssGrating_Id
-         LEFT JOIN RssMask RMA ON RC.RssMask_Id = RMA.RssMask_Id
-         LEFT JOIN RssMaskType RMT ON RMA.RssMaskType_Id = RMT.RssMaskType_Id
 WHERE PC.Proposal_Code = :proposal_code
 GROUP BY B.Block_Id
         """
@@ -849,14 +848,12 @@ GROUP BY B.Block_Id
         return {
             row.block_id: {
                 "modes": row.modes.split(separator),
-                "additional_details": {
-                    "gratings": row.gratings.split(separator)
-                    if row.gratings is not None
-                    else row.gratings,
-                    "mask_types": row.mask_types.split(separator)
-                    if row.mask_types is not None
-                    else row.mask_types,
-                },
+                "gratings": row.gratings.split(separator)
+                if row.gratings is not None
+                else row.gratings,
+                "filters": row.filters.split(separator)
+                if row.filters is not None
+                else row.filters,
             }
             for row in result
         }
@@ -956,7 +953,8 @@ WHERE C.Proposal_Code = :proposal_code
                 {
                     "name": "RSS",
                     "modes": c_["modes"],
-                    "additional_details": c_["additional_details"],
+                    "gratings": c_["gratings"],
+                    "filters": c_["filters"],
                 }
             )
         for block_id, c in hrs_configurations.items():

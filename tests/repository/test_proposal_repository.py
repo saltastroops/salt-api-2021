@@ -503,13 +503,22 @@ def test_get_returns_additional_instrument_details(
     dbconnection: Connection, testdata: Callable[[str], Any]
 ) -> None:
     data = testdata(TEST_DATA)["get_instrument_additional_configurations"]
-    proposal_code = data["proposal_code"]
-    expected_blocks = data["blocks"]
-    proposal_repository = ProposalRepository(dbconnection)
-    proposal = proposal_repository.get(proposal_code)
-    blocks = proposal["blocks"]
-    for expected_block in expected_blocks:
-        block = next(b for b in blocks if b["id"] == expected_block["block_id"])
-        expected_instruments = expected_block["instruments"]
-        instruments = block["instruments"][0]
-        assert instruments["name"] == expected_instruments["name"]
+    for d in data:
+        proposal_code = d["proposal_code"]
+        expected_blocks = d["blocks"]
+        proposal_repository = ProposalRepository(dbconnection)
+        proposal = proposal_repository.get(proposal_code)
+        blocks = proposal["blocks"]
+        for expected_block in expected_blocks:
+            block = next(b for b in blocks if b["id"] == expected_block["block_id"])
+            expected_instruments = expected_block["instruments"]
+            instruments = block["instruments"]
+            for expected_instrument in expected_instruments:
+                instrument = next(
+                    i for i in instruments if i["name"] == expected_instrument["name"]
+                )
+                assert set(instrument["modes"]) == set(expected_instrument["modes"])
+                assert set(instrument["gratings"]) == set(
+                    expected_instrument["gratings"]
+                )
+                assert set(instrument["filters"]) == set(expected_instrument["filters"])
