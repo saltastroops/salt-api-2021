@@ -120,3 +120,7 @@ class ProposalService:
     def get_progress_report(self, proposal_code: ProposalCode, semester: Semester) -> \
             Optional[Dict[str, any]]:
         return self.repository.get_progress_report(proposal_code, semester)
+
+    def get_previous_time_requests(self, proposal_code: ProposalCode) -> \
+            List[Dict[str, any]]:
+        return self.repository.get_previous_time_requests(proposal_code)

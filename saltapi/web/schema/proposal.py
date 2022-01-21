@@ -540,6 +540,28 @@ class PartnersRequest(BaseModel):
     )
 
 
+class PreviousTimRequest(BaseModel):
+    """Comment related to an observation of a proposal."""
+
+    semester: str = Field(..., title="Semester", description="The semester")
+    requested_time: int = Field(..., title="Requested time",
+                                description="The requested time")
+    allocated_time: int = Field(..., title="Allocated time",
+                                description="The allocated time")
+    observed_time: int = Field(..., title="Observed time",
+                               description="The observed time")
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "semester": "2022-1",
+                "requested_time": 19000,
+                "allocated_time": 18000,
+                "observed_time": 17000
+            }
+        }
+
+
 class ProgressReport(BaseModel):
     """
     Progress report for a proposal and semester. The semester is the semester for which
@@ -592,4 +614,9 @@ class ProgressReport(BaseModel):
         ...,
         title="Strategy changes",
         description="The strategy changes.",
+    )
+    previous_time_requests: List[PreviousTimRequest] = Field(
+        ...,
+        title="Previous tim requests",
+        description="The request from previous semesters"
     )

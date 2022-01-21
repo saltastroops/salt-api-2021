@@ -1463,28 +1463,24 @@ WHERE Proposal_Code=:proposal_code
         except NoResultFound:
             raise NotFoundError()
 
-    def get_requested_time(self, proposal_code: ProposalCode, semester: Semester):
-        stmt = text(
-            """
-SELECT TotalReqTime FROM Proposal AS P
-    JOIN ProposalCode AS PC ON (P.ProposalCode_Id = PC.ProposalCode_Id)
-    JOIN Semester AS S ON (P.Semester_Id = S.Semester_Id)
-WHERE PC.Proposal_Code = :proposal_code
-    AND CONCAT(S.`Year`, "-", S.Semester) = :semester
-    AND Current = 1
-    """
-        )
-        result = self.connection.execute(stmt, {
-            "proposal_code": proposal_code,
-            "semester": semester
-        })
-        try:
-            return cast(float, result.scalar_one())
-        except NoResultFound:
-            raise NotFoundError()
+    def get_previous_time_requests(self, proposal_code: ProposalCode) -> List[Dict[str, Any]]:
+        previous_allocated_requested = self.get_allocated_requested_time(
+            proposal_code)
+        previous_observed_time = self.get_observed_time(proposal_code)
+        previous_time_requests = []
+        for ar in previous_allocated_requested:
+            for ot in previous_observed_time:
+                if ot["semester"] == ar["semester"]:
+                    previous_time_requests.append({
+                        "semester": ar["semester"],
+                        "requested_time": ar["requested_time"],
+                        "allocated_time": ar["allocated_time"],
+                        "observed_time": ot["observed_time"]
+                    })
+        return previous_time_requests
 
     def get_progress_report(self, proposal_code: ProposalCode, semester: Semester) -> \
-            Optional[Dict[str, any]]:
+            Dict[str, any]:
         # TODO this query is wrong I query from the table I need to edit and some data might be available on other tables
         stmt = text(
             """
@@ -1519,11 +1515,12 @@ WHERE PC.Proposal_Code = :proposal_code
     AND CONCAT(S.`Year`, "-", S.Semester) = :semester
     """
         )
-        result = self.connection.execute(stmt, {
-            "proposal_code": proposal_code,
-            "semester": semester
-        })
         try:
+            result = self.connection.execute(stmt, {
+                "proposal_code": proposal_code,
+                "semester": semester
+            })
+
             if result.rowcount > 0:
                 progress_report = {"requested_amount": []}
                 for row in result:
@@ -1545,8 +1542,23 @@ WHERE PC.Proposal_Code = :proposal_code
                     progress_report["summary_of_proposal_status"] = \
                         row.summary_of_proposal_status
                     progress_report["strategy_changes"] = row.strategy_changes
+                progress_report["previous_time_requests"] = \
+                    self.get_previous_time_requests(proposal_code)
+                return progress_report
+            else:
+                previous_time_request = self.get_previous_time_requests(proposal_code)
+                return {
+                    "requested_time": None,
+                    "semester": None,
+                    "maximum_seeing": None,
+                    "transparency": None,
+                    "description_of_observing_constraints": None,
+                    "why_time_request_changed": None,
+                    "summary_of_proposal_status": None,
+                    "strategy_changes": None,
+                    "requested_amount": [],
+                    "previous_time_requests": self.get_previous_time_requests(proposal_code)
+                }
 
-                return  progress_report
-            return None
         except NoResultFound:
             raise NotFoundError()

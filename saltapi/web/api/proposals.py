@@ -424,7 +424,7 @@ def get_progress_report(
 
         proposal_service = services.proposal_service(unit_of_work.connection)
         progress_report = proposal_service.get_progress_report(proposal_code, semester)
-        print(progress_report)
+
         if progress_report:
             return ProgressReport(
                 **progress_report
