@@ -438,7 +438,7 @@ class ProgressReportData(BaseModel):
     transparency: str = Field(
         ...,
         title="Transparency",
-        description="A transparency."
+        description="The transparency."
     ),
     observing_constraints: str = Field(
         ..., title="Observing constraints",
@@ -525,12 +525,12 @@ class PartnersRequest(BaseModel):
 
     name: str = Field(
         ...,
-        title=" Partner name",
+        title="Partner name",
         description="The SALT partner name."
     )
     code: str = Field(
         ...,
-        title=" Partner code",
+        title="Partner code",
         description="The SALT partner code."
     )
     requested_percentage: float = Field(
@@ -540,7 +540,18 @@ class PartnersRequest(BaseModel):
     )
 
 
-class PreviousTimRequest(BaseModel):
+class ObservingConstraints(BaseModel):
+    seeing: float = Field(..., title="Seeing", description="The seeing")
+    transparency: str = Field(..., title="Transparency",
+                              description="The transparency"),
+    description: str = Field(
+        ...,
+        title="Description",
+        description="The brief description of observing constraints"
+    )
+
+
+class TimeStatistic(BaseModel):
     """Comment related to an observation of a proposal."""
 
     semester: str = Field(..., title="Semester", description="The semester")
@@ -562,7 +573,20 @@ class PreviousTimRequest(BaseModel):
         }
 
 
-class ProgressReport(BaseModel):
+class Pdf(BaseModel):
+    filename: str = Field(
+        ...,
+        title="Filename",
+        description="The name of the additional file."
+    )
+    uri: str = Field(
+        ...,
+        title="File name location",
+        description="The link to the file."
+    )
+
+
+class RequestChangeReasons(BaseModel):
     """
     Progress report for a proposal and semester. The semester is the semester for which
     the progress is reported. For example, if the semester is 2021-1, the report covers
@@ -615,8 +639,18 @@ class ProgressReport(BaseModel):
         title="Strategy changes",
         description="The strategy changes.",
     )
-    previous_time_requests: List[PreviousTimRequest] = Field(
+    previous_time_requests: List[TimeStatistic] = Field(
         ...,
         title="Previous tim requests",
         description="The request from previous semesters"
+    )
+    last_observing_constraints: ObservingConstraints = Field(
+        ...,
+        title="Last requested observing conditions",
+        description="The last observing conditions."
+    )
+    additional_pdf: Optional[Pdf] = Field(
+        ...,
+        title="Addition file",
+        description="The supplementary PDF file"
     )

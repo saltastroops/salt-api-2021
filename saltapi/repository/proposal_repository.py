@@ -1370,7 +1370,7 @@ VALUES
         if not result.rowcount:
             raise NotFoundError()
 
-    def get_observing_conditions(self, proposal_code: ProposalCode, semester: Semester)\
+    def get_observing_conditions(self, proposal_code: ProposalCode)\
             -> Dict[str, Any]:
         stmt = text(
             """
@@ -1378,17 +1378,15 @@ SELECT
     MaxSeeing						AS seeing, 
     Transparency					AS transparency, 
     ObservingConditionsDescription	AS description 
-FROM P1ObservingConditions AS OC
-    JOIN Transparency AS T ON (OC.Transparency_Id = T.Transparency_Id)
-    JOIN ProposalCode AS PC ON (OC.ProposalCode_Id = PC.ProposalCode_Id)
-    JOIN Semester AS S ON (OC.Semester_Id = S.Semester_Id)
-WHERE PC.Proposal_Code = :proposal_code
-    AND CONCAT(S.`Year`, "-", S.Semester) = :semester
+    MAX(Semester_Id)
+FROM P1ObservingConditions OC
+    JOIN ProposalCode PC ON (OC.ProposalCode_Id = PC.ProposalCode_Id)
+    JOIN Transparency T  ON (T.Transparency_Id = OC.Transparency_Id)
+WHERE Proposal_Code=:proposal_code
     """
         )
         result = self.connection.execute(stmt, {
-            "proposal_code": proposal_code,
-            "semester": semester
+            "proposal_code": proposal_code
         })
         try:
             row = result.one()
@@ -1479,6 +1477,26 @@ WHERE Proposal_Code=:proposal_code
                     })
         return previous_time_requests
 
+    def get_previous_observing_conditions(self, proposal_code: ProposalCode) -> List[Dict[str, Any]]:
+        stmt = text(
+            """
+SELECT 
+    MaxSeeing                       max_seeing, 
+    Transparency                    transparency, 
+    ObservingConditionsDescription  observing_conditions_description, 
+    MAX(Semester_Id)
+FROM P1ObservingConditions OC
+    JOIN ProposalCode PC ON (OC.ProposalCode_Id = PC.ProposalCode_Id)
+    JOIN Transparency T  ON (T.Transparency_Id = OC.Transparency_Id)
+WHERE Proposal_Code=:proposal_code
+    """
+        )
+        result = self.connection.execute(stmt, {
+            "proposal_code": proposal_code
+        })
+
+        return
+
     def get_progress_report(self, proposal_code: ProposalCode, semester: Semester) -> \
             Dict[str, any]:
         # TODO this query is wrong I query from the table I need to edit and some data might be available on other tables
@@ -1544,9 +1562,10 @@ WHERE PC.Proposal_Code = :proposal_code
                     progress_report["strategy_changes"] = row.strategy_changes
                 progress_report["previous_time_requests"] = \
                     self.get_previous_time_requests(proposal_code)
+                progress_report["last_observing_constraints"] = \
+                    self.get_observing_conditions(proposal_code)
                 return progress_report
             else:
-                previous_time_request = self.get_previous_time_requests(proposal_code)
                 return {
                     "requested_time": None,
                     "semester": None,
@@ -1557,7 +1576,10 @@ WHERE PC.Proposal_Code = :proposal_code
                     "summary_of_proposal_status": None,
                     "strategy_changes": None,
                     "requested_amount": [],
-                    "previous_time_requests": self.get_previous_time_requests(proposal_code)
+                    "previous_time_requests":
+                        self.get_previous_time_requests(proposal_code),
+                    "last_observing_constraints":
+                        self.get_observing_conditions(proposal_code)
                 }
 
         except NoResultFound:

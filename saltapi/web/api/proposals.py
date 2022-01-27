@@ -31,7 +31,7 @@ from saltapi.web.schema.proposal import (
     DataReleaseDate,
     DataReleaseDateUpdate,
     ObservationComment,
-    ProgressReport,
+    RequestChangeReasons,
     Proposal,
     ProposalContentType,
     ProposalListItem,
@@ -384,7 +384,7 @@ def post_observation_comment(
 @router.get(
     "/{proposal_code}/progress-report/{semester}",
     summary="Get a progress report",
-    response_model=Optional[ProgressReport],
+    response_model=Optional[RequestChangeReasons],
     responses={200: {"content": {"application/pdf": {}}}},
 )
 def get_progress_report(
@@ -395,7 +395,7 @@ def get_progress_report(
     ),
     semester: Semester = Path(..., title="Semester", description="Semester"),
     user: User = Depends(get_current_user)
-) -> Optional[ProgressReport]:
+) -> RequestChangeReasons:
     """
     Returns the progress report for a proposal and semester. The semester is the
     semester for which the progress is reported. For example, if the semester is
@@ -425,17 +425,15 @@ def get_progress_report(
         proposal_service = services.proposal_service(unit_of_work.connection)
         progress_report = proposal_service.get_progress_report(proposal_code, semester)
 
-        if progress_report:
-            return ProgressReport(
-                **progress_report
-            )
-        return None
+        return RequestChangeReasons(
+            **progress_report
+        )
 
 
 @router.put(
     "/{proposal_code}/progress-reports/{semester}",
     summary="Create or update a progress report",
-    response_model=ProgressReport,
+    response_model=RequestChangeReasons,
 )
 def put_progress_report(
     proposal_code: ProposalCode = Path(
@@ -451,7 +449,7 @@ def put_progress_report(
     ),
     file: Optional[UploadFile] = File(...),
     user: User = Depends(get_current_user),
-) -> ProgressReport:
+) -> RequestChangeReasons:
     """
     Creates or updates the progress report for a proposal and semester. The semester
     is the semester for which the progress is reported. For example, if the semester

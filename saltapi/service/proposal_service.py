@@ -99,9 +99,7 @@ class ProposalService:
             proposal_code=proposal_code,
             semester=semester,
             previous_requests=previous_requests,
-            previous_conditions=self.repository.get_observing_conditions(
-                proposal_code, semester
-            ),
+            previous_conditions=self.repository.get_observing_conditions(proposal_code),
             new_request=new_request
         )
         output_file = "ProposalProgressReport.pdf"
@@ -118,7 +116,7 @@ class ProposalService:
             pdfkit.from_file(f, output_file, options=options)
 
     def get_progress_report(self, proposal_code: ProposalCode, semester: Semester) -> \
-            Optional[Dict[str, any]]:
+            Dict[str, any]:
         return self.repository.get_progress_report(proposal_code, semester)
 
     def get_previous_time_requests(self, proposal_code: ProposalCode) -> \
