@@ -1,11 +1,10 @@
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 import pdfkit
 
 from saltapi.repository.proposal_repository import ProposalRepository
 from saltapi.service.create_html import create_html
 from saltapi.service.proposal import Proposal, ProposalListItem
 from saltapi.service.user import User
-from saltapi.util import semester_start
 from saltapi.util import semester_start, next_semester
 from saltapi.web.schema.common import Semester, ProposalCode
 
@@ -54,7 +53,8 @@ class ProposalService:
             progress_report_data: Dict[str, Any]
     ):
         semester = next_semester()
-        self.repository.insert_progress_report(progress_report_data, proposal_code, semester)
+        self.repository.insert_progress_report(
+            progress_report_data, proposal_code, semester)
 
         requested_time = progress_report_data["requested_time"]
         for rp in progress_report_data["requested_percentages"]:
@@ -78,12 +78,13 @@ class ProposalService:
 
     def create_progress_report_pdf(
             self,
-            proposal_code: ProposalCode,
+            proposal_code: str,
             semester: Semester,
             new_request: Dict["str", Any]
     ):
 
-        previous_allocated_requested = self.repository.get_allocated_requested_time(proposal_code)
+        previous_allocated_requested = self.repository.get_allocated_requested_time(
+            proposal_code)
         previous_observed_time = self.repository.get_observed_time(proposal_code)
         previous_requests = []
         for ar in previous_allocated_requested:

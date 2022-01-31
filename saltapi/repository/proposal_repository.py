@@ -20,7 +20,6 @@ from saltapi.util import (
     semester_start,
     tonight,
 )
-from saltapi.web.schema.common import Semester, PartnerCode, Transparency
 
 
 class ProposalRepository:
@@ -62,9 +61,10 @@ FROM Proposal P
          JOIN ProposalStatus PS ON PGI.ProposalStatus_Id = PS.ProposalStatus_Id
          JOIN ProposalType T ON PGI.ProposalType_Id = T.ProposalType_Id
          JOIN ProposalContact C ON PC.ProposalCode_Id = C.ProposalCode_Id
-         LEFT JOIN ProposalInactiveReason PIR ON PGI.ProposalInactiveReason_Id = PIR.ProposalInactiveReason_Id
+         LEFT JOIN ProposalInactiveReason PIR 
+            ON PGI.ProposalInactiveReason_Id = PIR.ProposalInactiveReason_Id
          LEFT JOIN Investigator Astronomer
-                   ON C.Astronomer_Id = Astronomer.Investigator_Id
+            ON C.Astronomer_Id = Astronomer.Investigator_Id
          JOIN Investigator Contact ON C.Contact_Id = Contact.Investigator_Id
          JOIN Investigator Leader ON C.Leader_Id = Leader.Investigator_Id
          JOIN ProposalInvestigator PI ON PC.ProposalCode_Id = PI.ProposalCode_Id
@@ -181,8 +181,8 @@ LIMIT :limit;
         """
         Return a list of proposal summaries.
 
-        The from and to semester are inclusive. The from semester must not be later than
-        the to semester.
+        The from and to semester are inclusive. The "from" semester must not be later
+        than the "to" semester.
         """
 
         if not re.match(r"^\d{4}-\d$", from_semester):
@@ -454,7 +454,8 @@ FROM Proposal P
          JOIN ProposalType T ON PGI.ProposalType_Id = T.ProposalType_Id
          JOIN ProposalStatus PS ON PGI.ProposalStatus_Id = PS.ProposalStatus_Id
          JOIN ProposalContact C ON PC.ProposalCode_Id = C.ProposalCode_Id
-         LEFT JOIN ProposalInactiveReason PIR ON PGI.ProposalInactiveReason_Id = PIR.ProposalInactiveReason_Id
+         LEFT JOIN ProposalInactiveReason PIR 
+            ON PGI.ProposalInactiveReason_Id = PIR.ProposalInactiveReason_Id
          LEFT JOIN Investigator I ON C.Astronomer_Id = I.Investigator_Id
          LEFT JOIN ProposalSelfActivation PSA ON P.ProposalCode_Id = PSA.ProposalCode_Id
 WHERE PC.Proposal_Code = :proposal_code
@@ -1242,11 +1243,14 @@ WHERE PC.Proposal_Code = :proposal_code;
 
         return bool(one_or_none and cast(int, one_or_none) > 0)
 
-    def insert_progress_report(self, progress_report_data: Dict[str, Any],
-                           proposal_code: ProposalCode,
-                           semester: Semester) -> None:
+    def insert_progress_report(
+            self,
+            progress_report_data: Dict[str, Any],
+            proposal_code: str,
+            semester: str
+    ) -> None:
         """
-        Update the progress report.
+        Insert the progress report.
         """
         stmt = text(
             """
@@ -1290,7 +1294,7 @@ VALUES(
             self,
             proposal_code: ProposalCode,
             semester: str,
-            partner_code: PartnerCode,
+            partner_code: str,
             requested_time_percent: int,
             requested_time_amount: int
     ) -> None:
@@ -1329,10 +1333,10 @@ VALUES (
 
     def insert_observing_conditions(
             self,
-            proposal_code: ProposalCode,
+            proposal_code: str,
             semester: str,
             seeing: float,
-            transparency: Transparency,
+            transparency: str,
             observing_conditions_description: str
     ) -> None:
         """
@@ -1370,14 +1374,14 @@ VALUES
         if not result.rowcount:
             raise NotFoundError()
 
-    def get_observing_conditions(self, proposal_code: ProposalCode)\
+    def get_observing_conditions(self, proposal_code: str)\
             -> Dict[str, Any]:
         stmt = text(
             """
 SELECT
     MaxSeeing						AS seeing, 
     Transparency					AS transparency, 
-    ObservingConditionsDescription	AS description 
+    ObservingConditionsDescription	AS description,
     MAX(Semester_Id)
 FROM P1ObservingConditions OC
     JOIN ProposalCode PC ON (OC.ProposalCode_Id = PC.ProposalCode_Id)
@@ -1398,7 +1402,7 @@ WHERE Proposal_Code=:proposal_code
         except NoResultFound:
             raise NotFoundError()
 
-    def get_observed_time(self, proposal_code: ProposalCode):
+    def get_observed_time(self, proposal_code: str):
         stmt = text(
             """
 SELECT  
@@ -1430,7 +1434,7 @@ WHERE BlockVisitStatus = 'Accepted'
 
     def get_allocated_requested_time(
             self,
-            proposal_code: ProposalCode
+            proposal_code: str
     ) -> List[Dict[str, Any]]:
         stmt = text(
             """
@@ -1461,7 +1465,7 @@ WHERE Proposal_Code=:proposal_code
         except NoResultFound:
             raise NotFoundError()
 
-    def get_previous_time_requests(self, proposal_code: ProposalCode) -> List[Dict[str, Any]]:
+    def get_previous_time_requests(self, proposal_code: str) -> List[Dict[str, Any]]:
         previous_allocated_requested = self.get_allocated_requested_time(
             proposal_code)
         previous_observed_time = self.get_observed_time(proposal_code)
@@ -1477,29 +1481,10 @@ WHERE Proposal_Code=:proposal_code
                     })
         return previous_time_requests
 
-    def get_previous_observing_conditions(self, proposal_code: ProposalCode) -> List[Dict[str, Any]]:
-        stmt = text(
-            """
-SELECT 
-    MaxSeeing                       max_seeing, 
-    Transparency                    transparency, 
-    ObservingConditionsDescription  observing_conditions_description, 
-    MAX(Semester_Id)
-FROM P1ObservingConditions OC
-    JOIN ProposalCode PC ON (OC.ProposalCode_Id = PC.ProposalCode_Id)
-    JOIN Transparency T  ON (T.Transparency_Id = OC.Transparency_Id)
-WHERE Proposal_Code=:proposal_code
-    """
-        )
-        result = self.connection.execute(stmt, {
-            "proposal_code": proposal_code
-        })
-
-        return
-
-    def get_progress_report(self, proposal_code: ProposalCode, semester: Semester) -> \
+    def get_progress_report(self, proposal_code: str, semester: str) -> \
             Dict[str, any]:
-        # TODO this query is wrong I query from the table I need to edit and some data might be available on other tables
+        # TODO this query is wrong I query from the table I need to edit and some data
+        #  might be available on other tables
         stmt = text(
             """
 SELECT  
@@ -1513,7 +1498,9 @@ SELECT
     ObservingConditionsDescription		AS description_of_observing_constraints,
     TimeRequestChangeReasons			AS why_time_request_changed,
     StatusSummary						AS summary_of_proposal_status,
-    StrategyChanges						AS strategy_changes
+    StrategyChanges						AS strategy_changes,
+    SupplementaryPath                   AS additional_pdf,
+    ReportPath                          AS proposal_progress_pdf
 FROM MultiPartner AS MP
     JOIN ProposalCode AS PC ON (MP.ProposalCode_Id = PC.ProposalCode_Id)
     JOIN Semester AS S ON (MP.Semester_Id = S.Semester_Id)
@@ -1553,6 +1540,8 @@ WHERE PC.Proposal_Code = :proposal_code
                     progress_report["semester"] = row.semester
                     progress_report["maximum_seeing"] = row.maximum_seeing
                     progress_report["transparency"] = row.transparency
+                    progress_report["additional_pdf"] = row.additional_pdf
+                    progress_report["proposal_progress_pdf"] = row.proposal_progress_pdf
                     progress_report["description_of_observing_constraints"] = \
                         row.description_of_observing_constraints
                     progress_report["why_time_request_changed"] = \
@@ -1571,6 +1560,8 @@ WHERE PC.Proposal_Code = :proposal_code
                     "semester": None,
                     "maximum_seeing": None,
                     "transparency": None,
+                    "additional_pdf": None,
+                    "proposal_progress_pdf": None,
                     "description_of_observing_constraints": None,
                     "why_time_request_changed": None,
                     "summary_of_proposal_status": None,

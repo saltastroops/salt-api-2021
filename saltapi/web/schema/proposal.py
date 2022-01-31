@@ -402,22 +402,22 @@ class PartnerRequestedPercentage(BaseModel):
     Requested Percentage for a partner
     """
     partner_code: PartnerCode = Field(
-        ..., title="Partner",
-        description="The partner code of the past and current SALT partners."
+        ..., title="Partner code",
+        description="Partner code, such as IUCAA."
     ),
     partner_name: PartnerName = Field(
-        ..., title="Partner",
-        description="The partner name of the past and current SALT partners."
+        ..., title="Partner name ",
+        description="Name of the partner."
     ),
-    percentage: int = Field(
+    percentage: float = Field(
         ..., title="Percentage",
-        description="The percentage requested from a partner."
+        description="Percentage requested from a partner."
     )
 
 
 class ProgressReportData(BaseModel):
     """
-    Progress report data for a proposal and semester. TODO add description
+    Progress report data for a proposal and semester.
     """
     requested_time: int = Field(
         ..., title="Requested time", description="A time requested for this semester"
@@ -442,17 +442,17 @@ class ProgressReportData(BaseModel):
     ),
     observing_constraints: str = Field(
         ..., title="Observing constraints",
-        description="Description of observing constraints"
+        description="Observing constraints."
     )
-    reasons_time_request_changed: str = Field(
+    change_reason: str = Optional[Field](
         ..., title="Reasons time request changed",
         description="Reason(s) why the time request has changed."
     ),
     summary_of_proposal_status: str = Field(
-        ..., title="Summary of proposal status",
-        description="A summary of proposal status"
+        ..., title="Summary of the proposal status",
+        description="Summary of the proposal status"
     ),
-    strategy_changes: str = Field(
+    strategy_changes: str = Optional[Field](
         ..., title="Strategy changes", description="A strategy changes"
     )
 
@@ -556,11 +556,11 @@ class TimeStatistic(BaseModel):
 
     semester: str = Field(..., title="Semester", description="The semester")
     requested_time: int = Field(..., title="Requested time",
-                                description="The requested time")
+                                description="Requested time for the semester.")
     allocated_time: int = Field(..., title="Allocated time",
-                                description="The allocated time")
+                                description="Allocated time for the semester")
     observed_time: int = Field(..., title="Observed time",
-                               description="The observed time")
+                               description="Observed time for the semester")
 
     class Config:
         schema_extra = {
@@ -571,19 +571,6 @@ class TimeStatistic(BaseModel):
                 "observed_time": 17000
             }
         }
-
-
-class Pdf(BaseModel):
-    filename: str = Field(
-        ...,
-        title="Filename",
-        description="The name of the additional file."
-    )
-    uri: str = Field(
-        ...,
-        title="File name location",
-        description="The link to the file."
-    )
 
 
 class RequestChangeReasons(BaseModel):
@@ -649,7 +636,12 @@ class RequestChangeReasons(BaseModel):
         title="Last requested observing conditions",
         description="The last observing conditions."
     )
-    additional_pdf: Optional[Pdf] = Field(
+    proposal_progress_pdf: Optional[str] = Field(
+        ...,
+        title="Proposal progress file",
+        description="The PDF file of the progress report"
+    )
+    additional_pdf: Optional[str] = Field(
         ...,
         title="Addition file",
         description="The supplementary PDF file"

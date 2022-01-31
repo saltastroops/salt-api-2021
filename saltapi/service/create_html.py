@@ -1,11 +1,10 @@
-import webbrowser
 from typing import Dict, List, Any
 
-from saltapi.web.schema.common import Semester, ProposalCode
+from saltapi.web.schema.common import Semester
 
 
 def create_html(
-        proposal_code: ProposalCode,
+        proposal_code: str,
         semester: Semester,
         previous_requests: List[Dict[str, Any]],
         previous_conditions: Dict[str, Any],
@@ -69,7 +68,7 @@ def create_html(
     '''
     html_content += f'''
             <h2>
-                {proposal_code} -- TODO -- (Oppor)
+                {proposal_code}
             </h2>
             <div class="section"><div>This report is for semester {semester}</div></div>
             <div class="section">
@@ -79,7 +78,9 @@ def create_html(
                     <div></div>
                     <div>
                       <i>
-                        This section lists the originally requested times, as well as the allocated times and the completion. It also gives the originally requested observing conditions.
+                        This section lists the originally requested times, as well as
+                         the allocated times and the completion. It also gives the 
+                         originally requested observing conditions.
                       </i>
                     </div>
                 </div>
@@ -111,17 +112,23 @@ def create_html(
                     <div>
                         <div class="has-two-columns">
                             <div class="left"><b>Maximum seeing:</b></div>
-                            <div class="right">{previous_conditions['seeing']} arcseconds</div>
+                            <div class="right">
+                                {previous_conditions['seeing']} arcseconds
+                            </div>
                         </div>
                         <div class="has-two-columns">
                             <div class="left"><b>Transparency:</b></div>
-                            <div class="right">{previous_conditions['transparency']}</div>
+                            <div class="right">
+                                {previous_conditions['transparency']}
+                            </div>
                         </div>    
                         <div>
                             <b>Brief description of observing conditions:</b>
                         </div>
                         <div>
-                            <div class="left-shifted">{previous_conditions['description']}</div>
+                            <div class="left-shifted">
+                                {previous_conditions['description']}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -131,7 +138,9 @@ def create_html(
                     <div><h3>2.</h3></div>
                     <div><h3> REQUEST FOR THE NEXT SEMESTER</h3></div>
                     <div></div>
-                    <div><i>This section lists the requests for the next semester.</i></div>
+                    <div>
+                        <i>This section lists the requests for the next semester.</i>
+                    </div>
                 </div>
                 <hr>
                 <div>
@@ -139,7 +148,9 @@ def create_html(
                     <div>
                         <div class="has-two-columns">
                             <div class="left"><b>Requested time:</b></div>
-                            <div class="right">{new_request['requested_time']} seconds</div>
+                            <div class="right">
+                                {new_request['requested_time']} seconds
+                            </div>
                         </div>
                         <div class="has-two-columns">
                             <div class="left"><b>Maximum seeing:</b></div>
@@ -155,7 +166,12 @@ def create_html(
                         </div>
                     </div>
                     <br>
-                    <div><b>The following reasons are given for changes from the original requests.</b></div>
+                    <div>
+                        <b>
+                            The following reasons are given for changes from the 
+                            original requests.
+                        </b>
+                    </div>
                     <div class="left-shifted">Please see the attached document. -- TODO Double Check this content --</div>
                     <br>
                     <div><b>A supplementary pdf is attached to this report -- TODO: this needs to be a boolean to show --</b></div>
@@ -207,32 +223,3 @@ def create_html(
 
     with open('./pdf_report.html', 'w') as f:
         f.write(html_content)
-
-
-    imaginary_prev = [
-        {
-            "semester": "2020-1",
-            "requested": 119000,
-            "allocated": 101150,
-            "observed": 14346
-        },
-        {
-            "semester": "2020-2",
-            "requested": 119000,
-            "allocated": 101150,
-            "observed": 14346
-        },
-        {
-            "semester": "2021-1",
-            "requested": 119000,
-            "allocated": 101150,
-            "observed": 14346
-        }
-    ]
-    imaginary_next = {
-        "semester": '2021-2',
-        "requested_time": 119000,
-        "seeing": 1,
-        "transparency": "Thin clouds",
-        "description": "1\" slit required for spectral resolution, despite the seeing constraint of 2.5\""
-    }

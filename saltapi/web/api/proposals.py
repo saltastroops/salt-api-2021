@@ -1,4 +1,5 @@
 from datetime import date
+from pprint import pprint
 from typing import List, Optional
 
 from fastapi import (
@@ -445,7 +446,7 @@ def put_progress_report(
     progress_report: ProgressReportData = Body(
         ...,
         title="Progress report",
-        description="Data required to complete the progress request."
+        description="Progress report for a proposal."
     ),
     file: Optional[UploadFile] = File(...),
     user: User = Depends(get_current_user),
