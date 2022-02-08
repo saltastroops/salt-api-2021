@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <title>Title</title>
+    </head>
+    <style>
+      body{
+        margin: 2em 4em 3em;
+        line-height: 1.5;
+      }
+      table, th {
+        border:1px solid black;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      td {
+        padding-left: 10px;
+        border-right:1px solid black;
+      }
+      .section {
+        border:1px solid black;
+        padding: 1.5em;
+        margin-bottom: 2em;
+      }
+      .upper-margin{
+        border-top:1px solid black;
+      }
+      hr {
+        margin-right: -1.5em;
+        margin-left: -1.5em;
+      }
+      table, tr, td, th, tbody, thead, tfoot, .section {
+        page-break-inside: avoid !important;
+      }
+      .has-two-columns {
+        display: grid;
+        grid-template-columns: 200px 1fr;
+      }
+      .left-shifted {
+        margin-left: 1em;
+      }
+      .numbering {
+        display: grid;
+        grid-template-columns: 25px 1fr;
+      }
+    </style>
+    <body>
+        <div>
+            <h2>Multisemester Proposal Progress Report: {{proposal_code}}</h2>
+            <div class="section"><div>This report is for semester {{semester}}</div></div>
+        </div>
+    </body>
+</html>

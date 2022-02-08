@@ -79,7 +79,7 @@ class ProposalService:
     def create_progress_report_pdf(
             self,
             proposal_code: str,
-            semester: Semester,
+            semester: str,
             new_request: Dict["str", Any]
     ):
 
@@ -100,7 +100,7 @@ class ProposalService:
             proposal_code=proposal_code,
             semester=semester,
             previous_requests=previous_requests,
-            previous_conditions=self.repository.get_observing_conditions(proposal_code),
+            previous_conditions=self.repository.get_observing_conditions(proposal_code, semester),
             new_request=new_request
         )
         output_file = "ProposalProgressReport.pdf"

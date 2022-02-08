@@ -32,7 +32,7 @@ from saltapi.web.schema.proposal import (
     DataReleaseDate,
     DataReleaseDateUpdate,
     ObservationComment,
-    RequestChangeReasons,
+    ProposalProgress,
     Proposal,
     ProposalContentType,
     ProposalListItem,
@@ -385,7 +385,7 @@ def post_observation_comment(
 @router.get(
     "/{proposal_code}/progress-report/{semester}",
     summary="Get a progress report",
-    response_model=Optional[RequestChangeReasons],
+    response_model=Optional[ProposalProgress],
     responses={200: {"content": {"application/pdf": {}}}},
 )
 def get_progress_report(
@@ -396,7 +396,7 @@ def get_progress_report(
     ),
     semester: Semester = Path(..., title="Semester", description="Semester"),
     user: User = Depends(get_current_user)
-) -> RequestChangeReasons:
+) -> ProposalProgress:
     """
     Returns the progress report for a proposal and semester. The semester is the
     semester for which the progress is reported. For example, if the semester is
@@ -426,7 +426,7 @@ def get_progress_report(
         proposal_service = services.proposal_service(unit_of_work.connection)
         progress_report = proposal_service.get_progress_report(proposal_code, semester)
 
-        return RequestChangeReasons(
+        return ProposalProgress(
             **progress_report
         )
 
@@ -434,7 +434,7 @@ def get_progress_report(
 @router.put(
     "/{proposal_code}/progress-reports/{semester}",
     summary="Create or update a progress report",
-    response_model=RequestChangeReasons,
+    response_model=ProposalProgress,
 )
 def put_progress_report(
     proposal_code: ProposalCode = Path(
@@ -450,7 +450,7 @@ def put_progress_report(
     ),
     file: Optional[UploadFile] = File(...),
     user: User = Depends(get_current_user),
-) -> RequestChangeReasons:
+) -> ProposalProgress:
     """
     Creates or updates the progress report for a proposal and semester. The semester
     is the semester for which the progress is reported. For example, if the semester

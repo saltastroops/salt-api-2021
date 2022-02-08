@@ -5,6 +5,7 @@ from typing import Any, DefaultDict, Dict, List, Optional, cast
 
 import pytz
 from dateutil.relativedelta import relativedelta
+from jinja2 import Template
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
 from sqlalchemy.exc import NoResultFound
@@ -1243,6 +1244,21 @@ WHERE PC.Proposal_Code = :proposal_code;
 
         return bool(one_or_none and cast(int, one_or_none) > 0)
 
+    def _get_proposal_progress_path(self, proposal_code: str, semester: str) -> str:
+        """
+        Returns the next available name for the proposal progress filename.
+        """
+        stmt = text(
+            """
+        SELECT PSA.PiPcMayActivate
+FROM ProposalSelfActivation PSA
+         JOIN ProposalCode PC ON PSA.ProposalCode_Id = PC.ProposalCode_Id
+WHERE PC.Proposal_Code = :proposal_code;
+        """
+        )
+        result = self.connection.execute(stmt, {"proposal_code": proposal_code})
+        one_or_none = result.scalar_one_or_none()
+
     def insert_progress_report(
             self,
             progress_report_data: Dict[str, Any],
@@ -1374,23 +1390,25 @@ VALUES
         if not result.rowcount:
             raise NotFoundError()
 
-    def get_observing_conditions(self, proposal_code: str)\
+    def get_observing_conditions(self, proposal_code: str, semester: str)\
             -> Dict[str, Any]:
         stmt = text(
             """
 SELECT
-    MaxSeeing						AS seeing, 
-    Transparency					AS transparency, 
-    ObservingConditionsDescription	AS description,
-    MAX(Semester_Id)
-FROM P1ObservingConditions OC
-    JOIN ProposalCode PC ON (OC.ProposalCode_Id = PC.ProposalCode_Id)
-    JOIN Transparency T  ON (T.Transparency_Id = OC.Transparency_Id)
-WHERE Proposal_Code=:proposal_code
+    MaxSeeing						AS seeing,
+    Transparency					AS transparency,
+    ObservingConditionsDescription	AS description
+FROM P1ObservingConditions AS OC
+    JOIN Transparency AS T ON (OC.Transparency_Id = T.Transparency_Id)
+    JOIN ProposalCode AS PC ON (OC.ProposalCode_Id = PC.ProposalCode_Id)
+    JOIN Semester AS S ON (OC.Semester_Id = S.Semester_Id)
+WHERE PC.Proposal_Code = :proposal_code
+    AND CONCAT(S.`Year`, "-", S.Semester) = :semester
     """
         )
         result = self.connection.execute(stmt, {
-            "proposal_code": proposal_code
+            "proposal_code": proposal_code,
+            "semester": semester
         })
         try:
             row = result.one()
@@ -1481,40 +1499,60 @@ WHERE Proposal_Code=:proposal_code
                     })
         return previous_time_requests
 
-    def get_progress_report(self, proposal_code: str, semester: str) -> \
-            Dict[str, any]:
-        # TODO this query is wrong I query from the table I need to edit and some data
-        #  might be available on other tables
+    def _get_partner_requested_percentage(self, proposal_code:str, semester: str) -> \
+            List[Dict[str, Any]]:
         stmt = text(
             """
-SELECT  
-    ReqTimeAmount 						AS requested_time,
-    ReqTimePercent						AS requested_percentage,
-    CONCAT(S.`Year`, "-", S.Semester) 	AS semester,
+SELECT
     Partner_Code 						AS partner_code,
     Partner_Name 						AS partner_name,
+    ReqTimePercent						AS requested_percentage
+FROM MultiPartner MP
+    JOIN ProposalCode PC ON MP.ProposalCode_Id = PC.ProposalCode_Id
+    JOIN Semester S ON MP.Semester_Id = S.Semester_Id
+    JOIN Partner AS P ON (MP.Partner_Id = P.Partner_Id)
+WHERE PC.Proposal_Code = "2020-1-MLT-005"
+    AND CONCAT(S.`Year`, "-", S.Semester) = "2020-1"
+    """
+        )
+        result = self.connection.execute(stmt, {
+            "proposal_code": proposal_code
+        })
+        try:
+            return [
+                {
+                    "partner_code": row.partner_code,
+                    "partner_name": row.partner_name,
+                    "requested_percentage": row.requested_percentage
+                }
+                for row in result
+            ]
+        except NoResultFound:
+            raise NotFoundError()
+
+    def get_progress_report(self, proposal_code: str, semester: str) -> \
+            Dict[str, any]:
+        stmt = text(
+            """
+SELECT *,
+    P1MinimumUsefulTime 						AS requested_time,
     MaxSeeing							AS maximum_seeing,
     Transparency						AS transparency,
     ObservingConditionsDescription		AS description_of_observing_constraints,
     TimeRequestChangeReasons			AS why_time_request_changed,
     StatusSummary						AS summary_of_proposal_status,
-    StrategyChanges						AS strategy_changes,
-    SupplementaryPath                   AS additional_pdf,
-    ReportPath                          AS proposal_progress_pdf
-FROM MultiPartner AS MP
-    JOIN ProposalCode AS PC ON (MP.ProposalCode_Id = PC.ProposalCode_Id)
-    JOIN Semester AS S ON (MP.Semester_Id = S.Semester_Id)
-    JOIN Partner AS P ON (MP.Partner_Id = P.Partner_Id)
-    LEFT JOIN P1ObservingConditions AS POC
-        ON (
-            MP.ProposalCode_Id = POC.ProposalCode_Id
-            AND MP.Semester_Id = POC.Semester_Id
-        )
-    LEFT JOIN Transparency AS T ON (POC.Transparency_Id = T.Transparency_Id)
-    LEFT JOIN ProposalProgress AS PP 
-    ON (
-        MP.ProposalCode_Id = PP.ProposalCode_Id
-        AND MP.Semester_Id = PP.Semester_Id
+    StrategyChanges						AS strategy_changes
+FROM P1ObservingConditions OC
+    JOIN Transparency T ON (OC.Transparency_Id = T.Transparency_Id)
+    JOIN ProposalCode PC ON (OC.ProposalCode_Id = PC.ProposalCode_Id)
+    JOIN Semester S ON (OC.Semester_Id = S.Semester_Id)
+    JOIN P1MinTime MT ON (
+        OC.ProposalCode_Id = MT.ProposalCode_Id 
+        AND OC.Semester_Id = MT.Semester_Id
+    )
+    LEFT JOIN ProposalProgress PP ON (
+        OC.ProposalCode_Id = PP.ProposalCode_Id
+        AND OC.Semester_Id = PP.Semester_Id
     )
 WHERE PC.Proposal_Code = :proposal_code
     AND CONCAT(S.`Year`, "-", S.Semester) = :semester
@@ -1527,15 +1565,8 @@ WHERE PC.Proposal_Code = :proposal_code
             })
 
             if result.rowcount > 0:
-                progress_report = {"requested_amount": []}
+                progress_report = {}
                 for row in result:
-                    progress_report["requested_amount"].append(
-                        {
-                            "code": row.partner_code,
-                            "name": row.partner_name,
-                            "requested_percentage": row.requested_percentage
-                        }
-                    )
                     progress_report["requested_time"] = row.requested_time
                     progress_report["semester"] = row.semester
                     progress_report["maximum_seeing"] = row.maximum_seeing
@@ -1551,8 +1582,10 @@ WHERE PC.Proposal_Code = :proposal_code
                     progress_report["strategy_changes"] = row.strategy_changes
                 progress_report["previous_time_requests"] = \
                     self.get_previous_time_requests(proposal_code)
-                progress_report["last_observing_constraints"] = \
-                    self.get_observing_conditions(proposal_code)
+                progress_report["observing_constraints"] = \
+                    self.get_observing_conditions(proposal_code, semester)
+                progress_report["requested_amount"] = \
+                    self._get_partner_requested_percentage(proposal_code, semester)
                 return progress_report
             else:
                 return {
@@ -1569,8 +1602,8 @@ WHERE PC.Proposal_Code = :proposal_code
                     "requested_amount": [],
                     "previous_time_requests":
                         self.get_previous_time_requests(proposal_code),
-                    "last_observing_constraints":
-                        self.get_observing_conditions(proposal_code)
+                    "observing_constraints":
+                        self.get_observing_conditions(proposal_code, semester)
                 }
 
         except NoResultFound:

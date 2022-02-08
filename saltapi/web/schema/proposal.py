@@ -262,7 +262,7 @@ class Comment(BaseModel):
         }
 
 
-class PartnerPercentage(BaseModel):
+class PartnerPercentage(BaseModel):  # TODO There is a similar class to this just missing a partner code
     """A percentage (for example of the requested time) for a partner."""
 
     partner: PartnerName = Field(..., title="SALT partner", description="SALT partner")
@@ -444,7 +444,7 @@ class ProgressReportData(BaseModel):
         ..., title="Observing constraints",
         description="Observing constraints."
     )
-    change_reason: str = Optional[Field](
+    change_reason: str = Field(
         ..., title="Reasons time request changed",
         description="Reason(s) why the time request has changed."
     ),
@@ -452,10 +452,9 @@ class ProgressReportData(BaseModel):
         ..., title="Summary of the proposal status",
         description="Summary of the proposal status"
     ),
-    strategy_changes: str = Optional[Field](
+    strategy_changes: str = Field(
         ..., title="Strategy changes", description="A strategy changes"
     )
-
 
 
 class ProposalContentType(str, Enum):
@@ -520,26 +519,6 @@ class SubmissionAcknowledgment(BaseModel):
         schema_extra = {"example": {"submission_id": 41318}}
 
 
-class PartnersRequest(BaseModel):
-    """SALT Partner, name and code"""
-
-    name: str = Field(
-        ...,
-        title="Partner name",
-        description="The SALT partner name."
-    )
-    code: str = Field(
-        ...,
-        title="Partner code",
-        description="The SALT partner code."
-    )
-    requested_percentage: float = Field(
-        ...,
-        title="Requested percentage",
-        description="The requested percentage from a partner."
-    )
-
-
 class ObservingConstraints(BaseModel):
     seeing: float = Field(..., title="Seeing", description="The seeing")
     transparency: str = Field(..., title="Transparency",
@@ -551,8 +530,8 @@ class ObservingConstraints(BaseModel):
     )
 
 
-class TimeStatistic(BaseModel):
-    """Comment related to an observation of a proposal."""
+class TimeStatistics(BaseModel):
+    """Time statistics for a proposal."""
 
     semester: str = Field(..., title="Semester", description="The semester")
     requested_time: int = Field(..., title="Requested time",
@@ -573,7 +552,7 @@ class TimeStatistic(BaseModel):
         }
 
 
-class RequestChangeReasons(BaseModel):
+class ProposalProgress(BaseModel):
     """
     Progress report for a proposal and semester. The semester is the semester for which
     the progress is reported. For example, if the semester is 2021-1, the report covers
@@ -591,7 +570,7 @@ class RequestChangeReasons(BaseModel):
         title="Semester",
         description="The semester for this progress report.",
     )
-    requested_amount: List[PartnersRequest] = Field(
+    requested_amount: List[PartnerRequestedPercentage] = Field(
         ...,
         title="Partner",
         description="The partner requesting time from.",
@@ -626,12 +605,12 @@ class RequestChangeReasons(BaseModel):
         title="Strategy changes",
         description="The strategy changes.",
     )
-    previous_time_requests: List[TimeStatistic] = Field(
+    previous_time_requests: List[TimeStatistics] = Field(
         ...,
         title="Previous tim requests",
         description="The request from previous semesters"
     )
-    last_observing_constraints: ObservingConstraints = Field(
+    observing_constraints: ObservingConstraints = Field(
         ...,
         title="Last requested observing conditions",
         description="The last observing conditions."
@@ -643,6 +622,6 @@ class RequestChangeReasons(BaseModel):
     )
     additional_pdf: Optional[str] = Field(
         ...,
-        title="Addition file",
+        title="Additional file",
         description="The supplementary PDF file"
     )
