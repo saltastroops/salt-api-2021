@@ -1,6 +1,6 @@
 """Utility functions."""
 from datetime import datetime, timedelta
-from typing import NamedTuple
+from typing import NamedTuple, List
 
 import pytz
 
@@ -131,3 +131,16 @@ def semester_of_datetime(t: datetime) -> str:
         semester = 2
 
     return f"{year}-{semester}"
+
+
+def list_search(array: List, value: int, key: str):
+    """
+    Search the list for the value key pair and return the matched dictionary.
+    """
+    match = None
+    for a in array:
+        if a[key] == value:
+            match = a
+            break
+    return match
+

@@ -267,3 +267,17 @@ class PermissionService:
 
         if not may_update:
             raise AuthorizationError()
+
+    def check_permission_to_view_mos_data(self, user: User) -> None:
+        """
+       Check whether the user may view mos data.
+
+       Administrators and SALT Astronomers may view MOS data.
+       details.
+       """
+
+        if self.user_repository.is_administrator(user.username) or \
+                self.user_repository.is_salt_astronomer(user.username):
+            pass
+        else:
+            raise AuthorizationError()
