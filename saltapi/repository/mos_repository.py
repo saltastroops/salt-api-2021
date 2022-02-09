@@ -125,7 +125,7 @@ SELECT Semester_Id FROM Semester semester WHERE CONCAT(Year, "-", Semester) = :s
 
         return {
             "mos_data":  self._get(semester_ids),
-            "current_mask": self._get_mask_in_magazine()
+            "current_masks": self._get_mask_in_magazine()
         }
 
 

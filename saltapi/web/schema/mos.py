@@ -28,5 +28,5 @@ class MosData(BaseModel):
 
     mos_data: List[SlitMask] = Field(
         ..., title="Comment", description="Text of the comment")
-    current_mask: List[str] = Field(
+    current_masks: List[str] = Field(
         ..., title="Comment", description="Text of the comment")
