@@ -133,14 +133,18 @@ def semester_of_datetime(t: datetime) -> str:
     return f"{year}-{semester}"
 
 
-def list_search(array: List, value: int, key: str):
+def list_search(array: List, value: any, key: str):
     """
     Search the list for the value key pair and return the matched dictionary.
+    If key can not be found it should return None
     """
     match = None
     for a in array:
-        if a[key] == value:
-            match = a
-            break
+        try:
+            if a[key] == value:
+                match = a
+                break
+        except KeyError:
+            pass
     return match
 

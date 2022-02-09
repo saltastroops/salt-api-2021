@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import freezegun
 import pytest
 from dateutil.parser import parse
@@ -8,7 +10,7 @@ from saltapi.util import (
     semester_end,
     semester_of_datetime,
     semester_start,
-    tonight,
+    tonight, list_search,
 )
 
 
@@ -90,3 +92,62 @@ def test_semester_end_returns_correct_datetime(semester: str, end: str) -> None:
 def test_semester_end_raises_error_for_incorrect_semester() -> None:
     with pytest.raises(ValueError):
         semester_end("2021-3")
+
+
+def test_list_search_return_correct_results() -> None:
+    test_list = [
+        {"a": "apple"},
+        {"b": 2},
+        {"c": {"c1": "carrot"}},
+        {"d": datetime(2022, 10, 10, 12, 0, 0)},
+    ]
+    assert list_search(test_list, "apple", "a") == {"a": "apple"}
+    assert list_search(test_list, 2, "b") == {"b": 2}
+    assert list_search(test_list, {"c1": "carrot"}, "c") == {"c": {"c1": "carrot"}}
+    assert list_search(test_list, datetime(2022, 10, 10, 12, 0, 0), "d") == {"d": datetime(2022, 10, 10, 12, 0, 0)}
+
+
+def test__search_return_is_consistent() -> None:
+    test_list = [
+        {"a": "apple"},
+        {"b": "banana"},
+        {"c": "carrot"},
+        {"d": "dog"}
+    ]
+    assert list_search(test_list, "apple", "a") == {"a": "apple"}
+    assert list_search(test_list, "banana", "b") == {"b": "banana"}
+    assert list_search(test_list, "carrot", "c") == {"c": "carrot"}
+    assert list_search(test_list, "dog", "d") == {"d": "dog"}
+
+
+def test__search_return_none_if_no_value_matched() -> None:
+    test_list = [
+        {"a": "apple"},
+        {"b": "banana"},
+        {"c": "carrot"},
+        {"d": "dog"}
+    ]
+    assert list_search(test_list, "apples", "a") is None
+    assert list_search(test_list, "dogs", "d") is None
+
+
+def test__search_return_none_if_no_key_matched() -> None:
+    test_list = [
+        {"a": "apple"},
+        {"b": "banana"},
+        {"c": "carrot"},
+        {"d": "dog"}
+    ]
+    assert list_search(test_list, "apple", "aa") is None
+    assert list_search(test_list, "dog", "dd") is None
+
+
+def test__search_return_none_if_no_key_value_matched() -> None:
+    test_list = [
+        {"a": "apple"},
+        {"b": "banana"},
+        {"c": "carrot"},
+        {"d": "dog"}
+    ]
+    assert list_search(test_list, "apples", "aa") is None
+    assert list_search(test_list, "dogs", "dd") is None
