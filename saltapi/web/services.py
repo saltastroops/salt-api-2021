@@ -61,6 +61,6 @@ def user_service(connection: Connection) -> UserService:
 
 
 def mos_service(connection: Connection) -> MosService:
-    """Return a mos service instance."""
+    """Return a MOS service instance."""
     mos_repository = MosRepository(connection)
     return MosService(mos_repository)

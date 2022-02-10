@@ -1,5 +1,4 @@
-from datetime import datetime
-from typing import Any, Optional, Dict, List, Tuple, cast
+from typing import Any, Optional, Dict, List, Tuple
 
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
@@ -15,22 +14,22 @@ class MosRepository:
         stmt = text(
             """
 SELECT DISTINCT
-    P.Proposal_Id       proposal_id,
-    Proposal_Code       proposal_code,
-    PC.ProposalCode_Id  proposal_code_id,
-    PI.Surname          pi_surname,
-    BlockStatus         block_status,
-    `Status`            status,
-    Block_Name          block_name,
-    Priority            priority,
-    NVisits             n_visits,
-    NDone               n_done,
-    RssMask_Id          mask_id,
-    Barcode             barcode,
-    15.0 * RaH + 15.0 * RaM / 60.0 + 15.0 * RaS / 3600.0    ra_centre,
-    CutBy               cut_by,
-    CutDate             cut_date,
-    SaComment           sa_comment
+    P.Proposal_Id       AS proposal_id,
+    Proposal_Code       AS proposal_code,
+    PC.ProposalCode_Id  AS proposal_code_id,
+    PI.Surname          AS pi_surname,
+    BlockStatus         AS block_status,
+    `Status`            AS status,
+    Block_Name          AS block_name,
+    Priority            AS priority,
+    NVisits             AS n_visits,
+    NDone               AS n_done,
+    RssMask_Id          AS mask_id,
+    Barcode             AS barcode,
+    15.0 * RaH + 15.0 * RaM / 60.0 + 15.0 * RaS / 3600.0 AS ra_centre,
+    CutBy               AS cut_by,
+    CutDate             AS cut_date,
+    SaComment           AS sa_comment
 FROM Proposal P 
     JOIN ProposalCode PC ON (P.ProposalCode_Id=PC.ProposalCode_Id)
     JOIN Semester S ON (P.Semester_Id=S.Semester_Id)
@@ -54,7 +53,7 @@ FROM Proposal P
     JOIN TargetCoordinates USING (TargetCoordinates_Id)
 WHERE RssMaskType='MOS' AND O.Observation_Order=1 
     AND P.Semester_Id IN :semester_ids
-ORDER BY P.Semester_Id ASC, Proposal_Code ASC, Proposal_Id DESC
+ORDER BY P.Semester_Id, Proposal_Code, Proposal_Id DESC
         """
         )
         results = self.connection.execute(stmt, {"semester_ids": tuple(semester_ids)})
@@ -67,8 +66,8 @@ ORDER BY P.Semester_Id ASC, Proposal_Code ASC, Proposal_Id DESC
 
         qsla = text("""
 SELECT DISTINCT 
-    ProposalCode_Id proposal_code_id, 
-    Surname         surname
+    ProposalCode_Id AS proposal_code_id, 
+    Surname         AS surname
 FROM Proposal
     JOIN ProposalContact PCO USING (ProposalCode_Id)
     JOIN Investigator I ON (PCO.Astronomer_Id=I.Investigator_Id)
@@ -88,13 +87,13 @@ WHERE ProposalCode_Id IN :proposal_code_ids
             mask.append(m)
         return mask
 
-    def _get_mask_in_magazine(self):
+    def _get_masks_in_magazine(self):
         """
-        The list is slit masks on the magazine
+        The list of slit masks which are currently in the magazine
         """
         stmt = text(
             """
-SELECT Barcode barcode
+SELECT Barcode AS barcode
 FROM RssCurrentMasks RCM 
     JOIN RssMask RM ON RCM.RssMask_Id = RM.RssMask_Id 
         """
@@ -108,10 +107,10 @@ FROM RssCurrentMasks RCM
             semester: str,
             include_next_semester: Optional[bool],
             include_previous_semester: Optional[bool]
-    ) -> Dict[str, List]:
+    ) -> Dict[str, List[Any]]:
         qsid = text(
             """
-SELECT Semester_Id FROM Semester semester WHERE CONCAT(Year, "-", Semester) = :semester          
+SELECT Semester_Id FROM Semester semester WHERE CONCAT(Year, '-', Semester) = :semester         
         """
         )
         result = self.connection.execute(qsid, {"semester": semester})
@@ -125,7 +124,7 @@ SELECT Semester_Id FROM Semester semester WHERE CONCAT(Year, "-", Semester) = :s
 
         return {
             "mos_data":  self._get(semester_ids),
-            "current_masks": self._get_mask_in_magazine()
+            "current_masks": self._get_masks_in_magazine()
         }
 
 

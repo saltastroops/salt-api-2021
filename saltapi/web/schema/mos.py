@@ -24,7 +24,7 @@ class SlitMask(BaseModel):
 
 
 class MosData(BaseModel):
-    """Mos Data."""
+    """MOS data."""
 
     mos_data: List[SlitMask] = Field(
         ..., title="Comment", description="Text of the comment")

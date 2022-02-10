@@ -1,6 +1,6 @@
 from typing import Optional
 
-from fastapi import Path, APIRouter, Body, Depends
+from fastapi import APIRouter, Body, Depends
 
 from saltapi.service.authentication_service import get_current_user
 from saltapi.repository.unit_of_work import UnitOfWork
@@ -14,7 +14,7 @@ router = APIRouter(tags=["MosData"])
 
 @router.post(
     "/mos",
-    summary="Get MOS ata",
+    summary="Get MOS data",
     response_model=MosData,
     status_code=200,
 )
