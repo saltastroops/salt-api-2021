@@ -270,14 +270,14 @@ class PermissionService:
 
     def check_permission_to_view_mos_data(self, user: User) -> None:
         """
-       Check whether the user may view mos data.
+        Check whether the user may view MOS data.
 
-       Administrators and SALT Astronomers may view MOS data.
-       details.
-       """
+        Administrators and SALT Astronomers may view MOS data.
+        details.
+        """
 
-        if self.user_repository.is_administrator(user.username) or \
-                self.user_repository.is_salt_astronomer(user.username):
-            pass
-        else:
+        may_view = self.user_repository.is_administrator(user.username) or \
+                   self.user_repository.is_salt_astronomer(user.username)
+
+        if not may_view:
             raise AuthorizationError()
