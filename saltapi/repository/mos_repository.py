@@ -8,6 +8,23 @@ class MosRepository:
     def __init__(self, connection: Connection) -> None:
         self.connection = connection
 
+    def _get_liaison_astronomers(self, proposal_code_ids: List[int]) -> Dict[int, str]:
+        stmt = text("""
+        SELECT DISTINCT 
+            ProposalCode_Id AS proposal_code_id, 
+            Surname         AS surname
+        FROM Proposal
+            JOIN ProposalContact PCO USING (ProposalCode_Id)
+            JOIN Investigator I ON (PCO.Astronomer_Id=I.Investigator_Id)
+        WHERE ProposalCode_Id IN :proposal_code_ids
+                """)
+        results = self.connection.execute(stmt, {
+            "proposal_code_ids": tuple(proposal_code_ids)})
+        liaison_astronomers = dict()
+        for row in results:
+            liaison_astronomers[row["proposal_code_id"]] = row["surname"]
+        return liaison_astronomers
+
     def get(self, semesters: List[str]) -> List[Dict[str, Any]]:
         stmt = text(
             """
@@ -55,27 +72,15 @@ ORDER BY P.Semester_Id, Proposal_Code, Proposal_Id DESC
         results = self.connection.execute(stmt, {"semesters": tuple(semesters)})
 
         proposal_code_ids = []
-        mask_data = []
+        mos_block = []
         for row in results:
-            mask_data.append(dict(row))
+            mos_block.append(dict(row))
             proposal_code_ids.append(row.proposal_code_id)
 
-        stmt = text("""
-SELECT DISTINCT 
-    ProposalCode_Id AS proposal_code_id, 
-    Surname         AS surname
-FROM Proposal
-    JOIN ProposalContact PCO USING (ProposalCode_Id)
-    JOIN Investigator I ON (PCO.Astronomer_Id=I.Investigator_Id)
-WHERE ProposalCode_Id IN :proposal_code_ids
-        """)
-        results = self.connection.execute(stmt, {"proposal_code_ids": tuple(proposal_code_ids)})
-        liaison_astronomers = dict()
-        for row in results:
-            liaison_astronomers[row["proposal_code_id"]] = row["surname"]
+        liaison_astronomers = self._get_liaison_astronomers(proposal_code_ids)
 
-        mask = []
-        for m in mask_data:
-            m["liaison_astronomers"] = liaison_astronomers[m["proposal_code_id"]]
-            mask.append(m)
-        return mask
+        mb = []
+        for m in mos_block:
+            m["liaison_astronomer"] = liaison_astronomers[m["proposal_code_id"]]
+            mb.append(m)
+        return mb

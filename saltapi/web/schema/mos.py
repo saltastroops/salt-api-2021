@@ -6,7 +6,6 @@ from pydantic import BaseModel, Field
 
 class MosBlock(BaseModel):
     """MOS data for a block."""
-    proposal_id: int = Field(..., title="Proposal id", description="The proposal id")
     proposal_code: str = Field(..., title="Proposal code", description="The proposal code")
     proposal_code_id: int = Field(..., title="Proposal code id", description="The proposal code id")
     pi_surname: str = Field(..., title="Principal investigator's surname", description="The principal investigator's surname")
@@ -20,4 +19,5 @@ class MosBlock(BaseModel):
     cut_by: Optional[str] = Field(..., title="Cutting person", description="The name of the person who cut the slit mask")
     cut_date: Optional[date] = Field(..., title="Cut date ", description="The date when the slit mask was cut.")
     mask_comment:Optional[str] = Field(..., title="Slit mask comment", description="A comment on the slit mask")
+    liaison_astronomer: Optional[str] = Field(..., title="Liaison astronomer", description="The liaison astronomer")
 

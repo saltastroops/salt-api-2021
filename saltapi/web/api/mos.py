@@ -23,7 +23,7 @@ def get_mos_data(
     semesters: List[Semester] = Query(..., title="Semester", description="Semester")
 ) -> List[MosBlock]:
     """
-    GGet a list of blocks using MOS.
+    Get the list of blocks using MOS.
     """
     with UnitOfWork() as unit_of_work:
         permission_service = services.permission_service(unit_of_work.connection)
