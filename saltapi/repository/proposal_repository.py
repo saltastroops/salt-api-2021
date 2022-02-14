@@ -605,6 +605,8 @@ WHERE P.Proposal_Code = :proposal_code
 SELECT B.Block_Id                      AS id,
        CONCAT(S.Year, '-', S.Semester) AS semester,
        B.Block_Name                    AS name,
+       BS.BlockStatus                  AS status,
+       B.BlockStatusReason             AS reason,
        B.ObsTime                       AS observation_time,
        B.Priority                      AS priority,
        B.NVisits                       AS requested_observations,
@@ -642,6 +644,10 @@ WHERE BS.BlockStatus NOT IN :excluded_status_values
                 "id": row.id,
                 "semester": row.semester,
                 "name": row.name,
+                "status": {
+                    "value": row.status if row.status != "On Hold" else "On hold",
+                    "reason": row.reason,
+                },
                 "observation_time": row.observation_time,
                 "priority": row.priority,
                 "requested_observations": row.requested_observations,
@@ -762,9 +768,11 @@ GROUP BY B.Block_Id
         )
         return {row.block_id: row.targets.split(separator) for row in result}
 
-    def _block_salticam_modes(self, proposal_code: str) -> Dict[int, List[str]]:
+    def _block_salticam_configurations(
+        self, proposal_code: str
+    ) -> Dict[int, Dict[str, List[str]]]:
         """
-        Return the dictionary of block ids and lists of Salticam modes contained in the
+        Return the dictionary of block ids and Salticam configurations contained in the
         blocks.
 
         A block is only included in the dictionary if it is using Salticam. There is
@@ -793,24 +801,29 @@ WHERE C.Proposal_Code = :proposal_code
                 "proposal_code": proposal_code,
             },
         )
-        return {row.block_id: [""] for row in result}
+        return {row.block_id: {"modes": [""]} for row in result}
 
-    def _block_rss_modes(self, proposal_code: str) -> Dict[int, List[str]]:
+    def _block_rss_configurations(
+        self, proposal_code: str
+    ) -> Dict[int, Dict[str, List[str]]]:
         """
-        Return the dictionary of block ids and lists of RSS modes contained in the
+        Return the dictionary of block ids and a dictionary of RSS configurations contained in the
         blocks.
 
-        A block is only included in the dictionary if it is using RSS. The modes are
+        A block is only included in the dictionary if it is using RSS. The configurations are
         ordered alphabetically for every block.
         """
         separator = "::::"
         stmt = text(
             """
 SELECT B.Block_Id AS block_id,
-       GROUP_CONCAT(DISTINCT RM.Mode ORDER BY RM.Mode SEPARATOR :separator) AS modes
+       GROUP_CONCAT(DISTINCT RM.Mode ORDER BY RM.Mode SEPARATOR :separator) AS modes,
+       GROUP_CONCAT(DISTINCT RG.Grating ORDER BY RG.Grating SEPARATOR :separator) AS gratings,
+       GROUP_CONCAT(DISTINCT RF.Barcode  ORDER BY RF.Barcode  SEPARATOR :separator) AS filters
 FROM RssMode RM
          JOIN RssConfig RC ON RM.RssMode_Id = RC.RssMode_Id
          JOIN Rss R ON RC.RssConfig_Id = R.RssConfig_Id
+         JOIN RssFilter RF ON RC.RssFilter_Id = RF.RssFilter_Id
          JOIN RssPatternDetail RPD ON R.Rss_Id = RPD.Rss_Id
          JOIN RssPattern RP ON RPD.RssPattern_Id = RP.RssPattern_Id
          JOIN ObsConfig OC ON RP.RssPattern_Id = OC.RssPattern_Id
@@ -819,6 +832,8 @@ FROM RssMode RM
          JOIN Pointing P ON TCOC.Pointing_Id = P.Pointing_Id
          JOIN Block B ON P.Block_Id = B.Block_Id
          JOIN ProposalCode PC ON B.ProposalCode_Id = PC.ProposalCode_Id
+         LEFT JOIN RssSpectroscopy RS ON RC.RssSpectroscopy_Id = RS.RssSpectroscopy_Id
+         LEFT JOIN RssGrating RG ON RS.RssGrating_Id = RG.RssGrating_Id
 WHERE PC.Proposal_Code = :proposal_code
 GROUP BY B.Block_Id
         """
@@ -830,11 +845,24 @@ GROUP BY B.Block_Id
                 "proposal_code": proposal_code,
             },
         )
-        return {row.block_id: row.modes.split(separator) for row in result}
+        return {
+            row.block_id: {
+                "modes": row.modes.split(separator),
+                "gratings": row.gratings.split(separator)
+                if row.gratings
+                else None,
+                "filters": row.filters.split(separator)
+                if row.filters
+                else None,
+            }
+            for row in result
+        }
 
-    def _block_hrs_modes(self, proposal_code: str) -> Dict[int, List[str]]:
+    def _block_hrs_configurations(
+        self, proposal_code: str
+    ) -> Dict[int, Dict[str, List[str]]]:
         """
-        Return the dictionary of block ids and lists of HRS modes contained in the
+        Return the dictionary of block ids and a dictionary of HRS configurations contained in the
         blocks.
 
         A block is only included in the dictionary if it is using HRS. The modes are
@@ -871,13 +899,17 @@ GROUP BY B.Block_Id
         )
 
         return {
-            row.block_id: [mode.title() for mode in row.modes.split(separator)]
+            row.block_id: {
+                "modes": [mode.title() for mode in row.modes.split(separator)]
+            }
             for row in result
         }
 
-    def _block_bvit_modes(self, proposal_code: str) -> Dict[int, List[str]]:
+    def _block_bvit_configurations(
+        self, proposal_code: str
+    ) -> Dict[int, Dict[str, List[str]]]:
         """
-        Return the dictionary of block ids and lists of BVIT modes contained in the
+        Return the dictionary of block ids and a dictionary of BVIT configurations contained in the
         blocks.
 
         A block is only included in the dictionary if it is using BVIT. There is only
@@ -903,27 +935,32 @@ WHERE C.Proposal_Code = :proposal_code
                 "proposal_code": proposal_code,
             },
         )
-        return {row.block_id: [""] for row in result}
+        return {row.block_id: {"modes": [""]} for row in result}
 
     def _block_instruments(self, proposal_code: str) -> Dict[int, List[Dict[str, Any]]]:
         """
-        Return the dictionary of block ids and dictionaries of instruments and modes.
+        Return the dictionary of block ids and dictionaries of instruments configurations.
         """
-        salticam_modes = self._block_salticam_modes(proposal_code)
-        rss_modes = self._block_rss_modes(proposal_code)
-        hrs_modes = self._block_hrs_modes(proposal_code)
-        bvit_modes = self._block_bvit_modes(proposal_code)
-
+        salticam_configurations = self._block_salticam_configurations(proposal_code)
+        rss_configurations = self._block_rss_configurations(proposal_code)
+        hrs_configurations = self._block_hrs_configurations(proposal_code)
+        bvit_configurations = self._block_bvit_configurations(proposal_code)
         instruments: DefaultDict[int, List[Dict[str, Any]]] = defaultdict(list)
-        for block_id, m in salticam_modes.items():
-            instruments[block_id].append({"name": "Salticam", "modes": m})
-        for block_id, m in rss_modes.items():
-            instruments[block_id].append({"name": "RSS", "modes": m})
-        for block_id, m in hrs_modes.items():
-            instruments[block_id].append({"name": "HRS", "modes": m})
-        for block_id, m in bvit_modes.items():
-            instruments[block_id].append({"name": "BVIT", "modes": m})
-
+        for block_id, c in salticam_configurations.items():
+            instruments[block_id].append({"name": "Salticam", "modes": c["modes"]})
+        for block_id_, c_ in rss_configurations.items():
+            instruments[block_id_].append(
+                {
+                    "name": "RSS",
+                    "modes": c_["modes"],
+                    "gratings": c_["gratings"],
+                    "filters": c_["filters"],
+                }
+            )
+        for block_id, c in hrs_configurations.items():
+            instruments[block_id].append({"name": "HRS", "modes": c["modes"]})
+        for block_id, c in bvit_configurations.items():
+            instruments[block_id].append({"name": "BVIT", "modes": c["modes"]})
         return instruments
 
     def time_allocations(
@@ -1162,22 +1199,28 @@ WHERE PC.ProposalComment_Id = :proposal_comment_id
 
         return dict(select_results.one())
 
-    def get_proposal_status(self, proposal_code: str) -> str:
+    def get_proposal_status(self, proposal_code: str) -> Dict[str, Any]:
         """
         Return the proposal status for a proposal.
         """
         stmt = text(
             """
-SELECT PS.Status
+SELECT PS.Status AS status, PIR.InactiveReason AS reason
 FROM ProposalStatus PS
          JOIN ProposalGeneralInfo PGI ON PS.ProposalStatus_Id = PGI.ProposalStatus_Id
          JOIN ProposalCode PC ON PGI.ProposalCode_Id = PC.ProposalCode_Id
+         LEFT JOIN ProposalInactiveReason PIR ON PGI.ProposalInactiveReason_Id = PIR.ProposalInactiveReason_Id
 WHERE PC.Proposal_Code = :proposal_code
         """
         )
         result = self.connection.execute(stmt, {"proposal_code": proposal_code})
         try:
-            return cast(str, result.scalar_one())
+            row = result.one()
+
+            status = {"value": row.status, "reason": row.reason}
+
+            return status
+
         except NoResultFound:
             raise NotFoundError()
 

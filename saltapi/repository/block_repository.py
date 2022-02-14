@@ -104,7 +104,10 @@ WHERE B.Block_Id = :block_id;
             "proposal_code": row.proposal_code,
             "submission_date": pytz.utc.localize(row.submission_date),
             "semester": row.semester,
-            "status": {"value": row.status, "reason": row.reason},
+            "status": {
+                "value": row.status if row.status != "On Hold" else "On hold",
+                "reason": row.reason,
+            },
             "priority": row.priority,
             "ranking": row.ranking,
             "wait_period": row.wait_period,

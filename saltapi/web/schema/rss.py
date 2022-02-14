@@ -358,6 +358,17 @@ class Rss(BaseModel):
     )
 
 
+class AdditionalRssConfigurations(BaseModel):
+    """Additional instrument configurations"""
+
+    gratings: Optional[List[RssGrating]] = Field(
+        ..., title="Gratings", description="Used gratings"
+    )
+    filters: Optional[List[str]] = Field(
+        ..., title="Filters", description="Filters"
+    )
+
+
 class RssSummary(BaseModel):
     """Summary information for RSS."""
 
@@ -367,3 +378,7 @@ class RssSummary(BaseModel):
     modes: List[RssMode] = Field(
         ..., title="Instrument modes", description="Used instrument modes"
     )
+    gratings: Optional[List[RssGrating]] = Field(
+        ..., title="Grating", description="Grating"
+    )
+    filters: Optional[List[str]] = Field(..., title="Filters", description="Filters")

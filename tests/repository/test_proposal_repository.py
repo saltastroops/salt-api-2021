@@ -422,7 +422,7 @@ def test_get_proposal_status(
         assert expected_status == status
 
 
-def test_get_proposal_status_raises_error_for_wring_proposal_code(
+def test_get_proposal_status_raises_error_for_wrong_proposal_code(
     dbconnection: Connection,
 ) -> None:
     proposal_repository = ProposalRepository(dbconnection)
@@ -435,14 +435,32 @@ def test_update_proposal_status(dbconnection: Connection) -> None:
     proposal_repository = ProposalRepository(dbconnection)
     proposal_code = "2020-2-SCI-043"
     proposal_repository.update_proposal_status(proposal_code, "Active")
-    assert proposal_repository.get_proposal_status(proposal_code) == "Active"
+    status = proposal_repository.get_proposal_status(proposal_code)
+    assert status["value"] == "Active"
+    assert status["reason"] is None
 
     # Now set it to "Under technical review"
     proposal_repository.update_proposal_status(proposal_code, "Under technical review")
     assert (
-        proposal_repository.get_proposal_status(proposal_code)
+        proposal_repository.get_proposal_status(proposal_code)["value"]
         == "Under technical review"
     )
+
+
+def test_update_proposal_status_for_not_none_status_reason(
+    dbconnection: Connection,
+) -> None:
+    # Set the status to "Expired"
+    proposal_repository = ProposalRepository(dbconnection)
+    proposal_code = "2019-1-SCI-010"
+    proposal_repository.update_proposal_status(proposal_code, "Expired")
+    status = proposal_repository.get_proposal_status(proposal_code)
+    assert status["value"] == "Expired"
+    assert status["reason"] == "Other"
+
+    # Now set it to "Deleted"
+    proposal_repository.update_proposal_status(proposal_code, "Deleted")
+    assert proposal_repository.get_proposal_status(proposal_code)["value"] == "Deleted"
 
 
 def test_update_proposal_status_raises_error_for_wrong_proposal_code(
@@ -478,3 +496,29 @@ def test_is_self_activatable(
             proposal_repository.is_self_activatable(proposal_code)
             == expected_self_activatable
         )
+
+
+@nodatabase
+def test_get_returns_additional_instrument_details(
+    dbconnection: Connection, testdata: Callable[[str], Any]
+) -> None:
+    data = testdata(TEST_DATA)["get_instrument_additional_configurations"]
+    for d in data:
+        proposal_code = d["proposal_code"]
+        expected_blocks = d["blocks"]
+        proposal_repository = ProposalRepository(dbconnection)
+        proposal = proposal_repository.get(proposal_code)
+        blocks = proposal["blocks"]
+        for expected_block in expected_blocks:
+            block = next(b for b in blocks if b["id"] == expected_block["block_id"])
+            expected_instruments = expected_block["instruments"]
+            instruments = block["instruments"]
+            for expected_instrument in expected_instruments:
+                instrument = next(
+                    i for i in instruments if i["name"] == expected_instrument["name"]
+                )
+                assert set(instrument["modes"]) == set(expected_instrument["modes"])
+                assert set(instrument["gratings"]) == set(
+                    expected_instrument["gratings"]
+                )
+                assert set(instrument["filters"]) == set(expected_instrument["filters"])
