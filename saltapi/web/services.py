@@ -7,6 +7,7 @@ from saltapi.repository.target_repository import TargetRepository
 from saltapi.repository.user_repository import UserRepository
 from saltapi.service.authentication_service import AuthenticationService
 from saltapi.service.block_service import BlockService
+from saltapi.service.instrument_service import InstrumentService
 from saltapi.service.mail_service import MailService
 from saltapi.service.permission_service import PermissionService
 from saltapi.service.proposal_service import ProposalService
@@ -56,3 +57,9 @@ def user_service(connection: Connection) -> UserService:
     """Return a user service instance."""
     user_repository = UserRepository(connection)
     return UserService(user_repository)
+
+
+def instrument_service(connection: Connection) -> InstrumentService:
+    """Return an instrument service instance."""
+    instrument_repository = InstrumentRepository(connection)
+    return InstrumentService(instrument_repository)

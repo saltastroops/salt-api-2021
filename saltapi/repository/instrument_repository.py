@@ -1,3 +1,5 @@
+from typing import List
+
 from sqlalchemy.engine import Connection
 
 from saltapi.repository.bvit_repository import BvitRepository
@@ -29,3 +31,7 @@ class InstrumentRepository:
     def get_bvit(self, bvit_id: int) -> BVIT:
         """Return a BVIT setup."""
         return self.bvit_repository.get(bvit_id)
+
+    def get_mos_mask_in_magazine(self) -> List[str]:
+        """The list of MOS masks on the magazine"""
+        return self.rss_repository.get_mos_mask_in_magazine()
