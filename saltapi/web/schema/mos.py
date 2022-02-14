@@ -4,7 +4,8 @@ from typing import List, Optional
 from pydantic import BaseModel, Field
 
 
-class SlitMask(BaseModel):
+class MosBlock(BaseModel):
+    """MOS data."""
     proposal_id: int = Field(..., title="Proposal id", description="The proposal id")
     proposal_code: str = Field(..., title="Proposal code", description="The proposal code")
     proposal_code_id: int = Field(..., title="Proposal code id", description="The proposal code id")
@@ -22,11 +23,3 @@ class SlitMask(BaseModel):
     cut_date: Optional[date] = Field(..., title="Cut date ", description="The slit mask cut date ")
     sa_comment: Optional[str] = Field(..., title="SALT astronomer comment", description="The SALT astronomer comment")
 
-
-class MosData(BaseModel):
-    """MOS data."""
-
-    mos_data: List[SlitMask] = Field(
-        ..., title="Comment", description="Text of the comment")
-    current_masks: List[str] = Field(
-        ..., title="Comment", description="Text of the comment")

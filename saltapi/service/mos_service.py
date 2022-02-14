@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, List
 
 from saltapi.repository.mos_repository import MosRepository
 
@@ -9,12 +9,9 @@ class MosService:
 
     def get_mos_data(
             self,
-            semester: str,
-            include_next_semester: Optional[bool],
-            include_previous_semester: Optional[bool]) -> Any:
+            semesters: List[str]) -> List[Dict[str, Any]]:
         """
         Return MOS data
         """
 
-        return self.mos_repository.get(
-            semester, include_next_semester, include_previous_semester)
+        return self.mos_repository.get(semesters)

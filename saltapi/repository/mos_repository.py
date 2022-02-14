@@ -10,7 +10,7 @@ class MosRepository:
     def __init__(self, connection: Connection) -> None:
         self.connection = connection
 
-    def _get(self, semester_ids: Tuple[int]) -> List[Dict[str, Any]]:
+    def get(self, semesters: List[str]) -> List[Dict[str, Any]]:
         stmt = text(
             """
 SELECT DISTINCT
@@ -52,11 +52,11 @@ FROM Proposal P
     JOIN Target USING (Target_Id)
     JOIN TargetCoordinates USING (TargetCoordinates_Id)
 WHERE RssMaskType='MOS' AND O.Observation_Order=1 
-    AND P.Semester_Id IN :semester_ids
+    AND CONCAT(S.Year, "-", S.Semester) IN :semesters
 ORDER BY P.Semester_Id, Proposal_Code, Proposal_Id DESC
         """
         )
-        results = self.connection.execute(stmt, {"semester_ids": tuple(semester_ids)})
+        results = self.connection.execute(stmt, {"semesters": tuple(semesters)})
 
         proposal_code_ids = []
         mask_data = []
@@ -78,53 +78,7 @@ WHERE ProposalCode_Id IN :proposal_code_ids
 
         mask = []
         for m in mask_data:
-            la = list_search(
-                liaison_astronomers,
-                m["proposal_code_id"],
-                "proposal_code_id"
-            )
+            la = next((x for x in liaison_astronomers if x["proposal_code_id"] == m["proposal_code_id"]), [None])
             m["liaison_astronomers"] = la["surname"]
             mask.append(m)
         return mask
-
-    def _get_masks_in_magazine(self):
-        """
-        The list of slit masks which are currently in the magazine
-        """
-        stmt = text(
-            """
-SELECT Barcode AS barcode
-FROM RssCurrentMasks RCM 
-    JOIN RssMask RM ON RCM.RssMask_Id = RM.RssMask_Id 
-        """
-        )
-        results = self.connection.execute(stmt, {})
-
-        return [row.barcode for row in results]
-
-    def get(
-            self,
-            semester: str,
-            include_next_semester: Optional[bool],
-            include_previous_semester: Optional[bool]
-    ) -> Dict[str, List[Any]]:
-        qsid = text(
-            """
-SELECT Semester_Id FROM Semester semester WHERE CONCAT(Year, '-', Semester) = :semester         
-        """
-        )
-        result = self.connection.execute(qsid, {"semester": semester})
-        semester_ids = result.one()
-        semester_id = semester_ids[0]
-
-        if include_next_semester:
-            semester_ids.append(semester_id + 1)
-        if include_previous_semester:
-            semester_ids.append(semester_id - 1)
-
-        return {
-            "mos_data":  self._get(semester_ids),
-            "current_masks": self._get_masks_in_magazine()
-        }
-
-
