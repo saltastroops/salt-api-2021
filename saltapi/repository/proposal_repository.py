@@ -849,11 +849,11 @@ GROUP BY B.Block_Id
             row.block_id: {
                 "modes": row.modes.split(separator),
                 "gratings": row.gratings.split(separator)
-                if row.gratings is not None
-                else row.gratings,
+                if row.gratings
+                else None,
                 "filters": row.filters.split(separator)
-                if row.filters is not None
-                else row.filters,
+                if row.filters
+                else None,
             }
             for row in result
         }
