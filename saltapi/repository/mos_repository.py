@@ -3,8 +3,6 @@ from typing import Any, Optional, Dict, List, Tuple
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
-from saltapi.util import list_search
-
 
 class MosRepository:
     def __init__(self, connection: Connection) -> None:
@@ -19,17 +17,15 @@ SELECT DISTINCT
     PC.ProposalCode_Id  AS proposal_code_id,
     PI.Surname          AS pi_surname,
     BlockStatus         AS block_status,
-    `Status`            AS status,
     Block_Name          AS block_name,
     Priority            AS priority,
     NVisits             AS n_visits,
     NDone               AS n_done,
-    RssMask_Id          AS mask_id,
     Barcode             AS barcode,
-    15.0 * RaH + 15.0 * RaM / 60.0 + 15.0 * RaS / 3600.0 AS ra_centre,
+    15.0 * RaH + 15.0 * RaM / 60.0 + 15.0 * RaS / 3600.0 AS ra_center,
     CutBy               AS cut_by,
     CutDate             AS cut_date,
-    SaComment           AS sa_comment
+    SaComment           AS mask_comment
 FROM Proposal P 
     JOIN ProposalCode PC ON (P.ProposalCode_Id=PC.ProposalCode_Id)
     JOIN Semester S ON (P.Semester_Id=S.Semester_Id)
@@ -64,7 +60,7 @@ ORDER BY P.Semester_Id, Proposal_Code, Proposal_Id DESC
             mask_data.append(dict(row))
             proposal_code_ids.append(row.proposal_code_id)
 
-        qsla = text("""
+        stmt = text("""
 SELECT DISTINCT 
     ProposalCode_Id AS proposal_code_id, 
     Surname         AS surname
@@ -73,12 +69,13 @@ FROM Proposal
     JOIN Investigator I ON (PCO.Astronomer_Id=I.Investigator_Id)
 WHERE ProposalCode_Id IN :proposal_code_ids
         """)
-        results = self.connection.execute(qsla, {"proposal_code_ids": tuple(proposal_code_ids)})
-        liaison_astronomers = [dict(row) for row in results]
+        results = self.connection.execute(stmt, {"proposal_code_ids": tuple(proposal_code_ids)})
+        liaison_astronomers = dict()
+        for row in results:
+            liaison_astronomers[row["proposal_code_id"]] = row["surname"]
 
         mask = []
         for m in mask_data:
-            la = next((x for x in liaison_astronomers if x["proposal_code_id"] == m["proposal_code_id"]), [None])
-            m["liaison_astronomers"] = la["surname"]
+            m["liaison_astronomers"] = liaison_astronomers[m["proposal_code_id"]]
             mask.append(m)
         return mask

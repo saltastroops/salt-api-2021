@@ -1,5 +1,3 @@
-from datetime import datetime
-
 import freezegun
 import pytest
 from dateutil.parser import parse

@@ -1,6 +1,6 @@
 from typing import Optional, List
 
-from fastapi import APIRouter, Body, Depends
+from fastapi import APIRouter, Body, Depends, Query
 
 from saltapi.service.authentication_service import get_current_user
 from saltapi.repository.unit_of_work import UnitOfWork
@@ -12,7 +12,7 @@ from saltapi.web.schema.mos import MosBlock
 router = APIRouter(tags=["MosBlock"])
 
 
-@router.post(
+@router.get(
     "/mos",
     summary="Get MOS data",
     response_model=List[MosBlock],
@@ -20,10 +20,10 @@ router = APIRouter(tags=["MosBlock"])
 )
 def get_mos_data(
     user: User = Depends(get_current_user),
-    semesters: List[Semester] = Body(..., title="Semester", description="Semester", embed=True)
+    semesters: List[Semester] = Query(..., title="Semester", description="Semester")
 ) -> List[MosBlock]:
     """
-    Get MOS block.
+    GGet a list of blocks using MOS.
     """
     with UnitOfWork() as unit_of_work:
         permission_service = services.permission_service(unit_of_work.connection)
@@ -33,4 +33,4 @@ def get_mos_data(
 
         mos_service = services.mos_service(unit_of_work.connection)
         mos_data = mos_service.get_mos_data(semesters)
-        return [MosBlock(**i) for i in mos_data]
+        return [MosBlock(**md) for md in mos_data]
