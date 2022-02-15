@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Set
 
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
@@ -11,8 +11,8 @@ class MosRepository:
     def _get_liaison_astronomers(self, proposal_code_ids: Set[int]) -> Dict[int, str]:
         stmt = text(
             """
-        SELECT DISTINCT 
-            ProposalCode_Id AS proposal_code_id, 
+        SELECT DISTINCT
+            ProposalCode_Id AS proposal_code_id,
             Surname         AS surname
         FROM Proposal
             JOIN ProposalContact PCO USING (ProposalCode_Id)
@@ -46,7 +46,7 @@ SELECT DISTINCT
     CutBy               AS cut_by,
     CutDate             AS cut_date,
     SaComment           AS mask_comment
-FROM Proposal P 
+FROM Proposal P
     JOIN ProposalCode PC ON (P.ProposalCode_Id=PC.ProposalCode_Id)
     JOIN Semester S ON (P.Semester_Id=S.Semester_Id)
     JOIN ProposalGeneralInfo PGI ON (P.ProposalCode_Id=PGI.ProposalCode_Id)
@@ -67,7 +67,7 @@ FROM Proposal P
     JOIN Observation O ON (PO.Pointing_Id=O.Pointing_Id)
     JOIN Target USING (Target_Id)
     JOIN TargetCoordinates USING (TargetCoordinates_Id)
-WHERE RssMaskType='MOS' AND O.Observation_Order=1 
+WHERE RssMaskType='MOS' AND O.Observation_Order=1
     AND CONCAT(S.Year, '-', S.Semester) IN :semesters
 ORDER BY P.Semester_Id, Proposal_Code, Proposal_Id DESC
         """
