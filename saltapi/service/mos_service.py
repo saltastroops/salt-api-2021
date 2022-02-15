@@ -7,9 +7,7 @@ class MosService:
     def __init__(self, mos_repository: MosRepository):
         self.mos_repository = mos_repository
 
-    def get_mos_data(
-            self,
-            semesters: List[str]) -> List[Dict[str, Any]]:
+    def get_mos_data(self, semesters: List[str]) -> List[Dict[str, Any]]:
         """
         Return MOS data
         """

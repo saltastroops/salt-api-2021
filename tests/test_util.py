@@ -8,7 +8,7 @@ from saltapi.util import (
     semester_end,
     semester_of_datetime,
     semester_start,
-    tonight
+    tonight,
 )
 
 

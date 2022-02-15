@@ -9,7 +9,8 @@ class MosRepository:
         self.connection = connection
 
     def _get_liaison_astronomers(self, proposal_code_ids: Set[int]) -> Dict[int, str]:
-        stmt = text("""
+        stmt = text(
+            """
         SELECT DISTINCT 
             ProposalCode_Id AS proposal_code_id, 
             Surname         AS surname
@@ -17,9 +18,11 @@ class MosRepository:
             JOIN ProposalContact PCO USING (ProposalCode_Id)
             JOIN Investigator I ON (PCO.Astronomer_Id=I.Investigator_Id)
         WHERE ProposalCode_Id IN :proposal_code_ids
-                """)
-        results = self.connection.execute(stmt, {
-            "proposal_code_ids": tuple(proposal_code_ids)})
+                """
+        )
+        results = self.connection.execute(
+            stmt, {"proposal_code_ids": tuple(proposal_code_ids)}
+        )
         liaison_astronomers = dict()
         for row in results:
             liaison_astronomers[row["proposal_code_id"]] = row["surname"]
@@ -79,6 +82,10 @@ ORDER BY P.Semester_Id, Proposal_Code, Proposal_Id DESC
         liaison_astronomers = self._get_liaison_astronomers(proposal_code_ids)
         for m in mos_blocks:
             proposal_code_id = m["proposal_code_id"]
-            liaison_astronomer = liaison_astronomers[proposal_code_id] if proposal_code_id in liaison_astronomers else None
+            liaison_astronomer = (
+                liaison_astronomers[proposal_code_id]
+                if proposal_code_id in liaison_astronomers
+                else None
+            )
             m["liaison_astronomer"] = liaison_astronomer
         return mos_blocks

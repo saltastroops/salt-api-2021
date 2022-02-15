@@ -20,16 +20,14 @@ router = APIRouter(tags=["MosBlock"])
 )
 def get_mos_data(
     user: User = Depends(get_current_user),
-    semesters: List[Semester] = Query(..., title="Semester", description="Semester")
+    semesters: List[Semester] = Query(..., title="Semester", description="Semester"),
 ) -> List[MosBlock]:
     """
     Get the list of blocks using MOS.
     """
     with UnitOfWork() as unit_of_work:
         permission_service = services.permission_service(unit_of_work.connection)
-        permission_service.check_permission_to_view_mos_data(
-            user
-        )
+        permission_service.check_permission_to_view_mos_data(user)
 
         mos_service = services.mos_service(unit_of_work.connection)
         mos_data = mos_service.get_mos_data(semesters)
