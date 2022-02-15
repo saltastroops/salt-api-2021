@@ -1,4 +1,4 @@
-from typing import Any, Optional, Dict, List, Tuple
+from typing import Any, Optional, Dict, List, Tuple, Set
 
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
@@ -8,7 +8,7 @@ class MosRepository:
     def __init__(self, connection: Connection) -> None:
         self.connection = connection
 
-    def _get_liaison_astronomers(self, proposal_code_ids: List[int]) -> Dict[int, str]:
+    def _get_liaison_astronomers(self, proposal_code_ids: Set[int]) -> Dict[int, str]:
         stmt = text("""
         SELECT DISTINCT 
             ProposalCode_Id AS proposal_code_id, 
@@ -71,16 +71,14 @@ ORDER BY P.Semester_Id, Proposal_Code, Proposal_Id DESC
         )
         results = self.connection.execute(stmt, {"semesters": tuple(semesters)})
 
-        proposal_code_ids = []
-        mos_block = []
+        mos_blocks = []
         for row in results:
-            mos_block.append(dict(row))
-            proposal_code_ids.append(row.proposal_code_id)
+            mos_blocks.append(dict(row))
 
+        proposal_code_ids = set([m["proposal_code_id"] for m in mos_blocks])
         liaison_astronomers = self._get_liaison_astronomers(proposal_code_ids)
-
-        mb = []
-        for m in mos_block:
-            m["liaison_astronomer"] = liaison_astronomers[m["proposal_code_id"]]
-            mb.append(m)
-        return mb
+        for m in mos_blocks:
+            proposal_code_id = m["proposal_code_id"]
+            liaison_astronomer = liaison_astronomers[proposal_code_id] if proposal_code_id in liaison_astronomers else None
+            m["liaison_astronomer"] = liaison_astronomer
+        return mos_blocks
