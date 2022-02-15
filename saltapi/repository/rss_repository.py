@@ -402,11 +402,12 @@ ORDER BY is_preferred_lamp DESC
 
     def get_mos_mask_in_magazine(self) -> List[str]:
         """
-        The list of MOS masks on the magazine
+        The list of MOS masks in the magazine.
         """
         stmt = text(
             """
-SELECT Barcode AS barcode
+SELECT 
+    Barcode AS barcode
 FROM RssCurrentMasks AS RCM
     JOIN RssMask AS RM ON RCM.RssMask_Id = RM.RssMask_Id
     JOIN RssMaskType AS RMT ON RM.RssMaskType_Id = RMT.RssMaskType_Id

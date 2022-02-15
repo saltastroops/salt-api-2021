@@ -8,5 +8,5 @@ class InstrumentService:
         self.instrument_repository = instrument_repository
 
     def get_mos_mask_in_magazine(self) -> List[str]:
-        """The list of MOS masks on the magazine"""
+        """The list of MOS masks in the magazine."""
         return self.instrument_repository.get_mos_mask_in_magazine()
