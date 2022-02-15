@@ -1,12 +1,12 @@
-from typing import Optional, List
+from typing import List, Optional
 
 from fastapi import APIRouter, Body, Depends, Query
 
-from saltapi.service.authentication_service import get_current_user
 from saltapi.repository.unit_of_work import UnitOfWork
+from saltapi.service.authentication_service import get_current_user
 from saltapi.service.user import User
-from saltapi.web.schema.common import Semester
 from saltapi.web import services
+from saltapi.web.schema.common import Semester
 from saltapi.web.schema.mos import MosBlock
 
 router = APIRouter(tags=["MosBlock"])

@@ -1,4 +1,4 @@
-from typing import Any, Optional, Dict, List, Tuple, Set
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 from sqlalchemy import text
 from sqlalchemy.engine import Connection

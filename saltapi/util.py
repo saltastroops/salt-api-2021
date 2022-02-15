@@ -1,6 +1,6 @@
 """Utility functions."""
 from datetime import datetime, timedelta
-from typing import NamedTuple, List
+from typing import List, NamedTuple
 
 import pytz
 
