@@ -68,7 +68,7 @@ FROM Proposal P
     JOIN Target USING (Target_Id)
     JOIN TargetCoordinates USING (TargetCoordinates_Id)
 WHERE RssMaskType='MOS' AND O.Observation_Order=1 
-    AND CONCAT(S.Year, "-", S.Semester) IN :semesters
+    AND CONCAT(S.Year, '-', S.Semester) IN :semesters
 ORDER BY P.Semester_Id, Proposal_Code, Proposal_Id DESC
         """
         )
