@@ -56,7 +56,7 @@ class Bvit(BaseModel):
 
 
 class BvitSummary(BaseModel):
-    """Summary information for Salticam."""
+    """Summary information for BVIT."""
 
     name: Literal["BVIT"] = Field(
         ..., title="Instrument name", description="Instrument name"
