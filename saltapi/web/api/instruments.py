@@ -15,7 +15,7 @@ router = APIRouter(tags=["Instrument"])
     summary="Get current MOS masks in the magazine",
     response_model=List[str]
 )
-def get_current_mos_mask(
+def get_current_mos_masks(
     user: User = Depends(get_current_user),
 ) -> List[str]:
     """
