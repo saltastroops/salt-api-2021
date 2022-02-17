@@ -439,7 +439,7 @@ WHERE RssMaskType = "MOS"
             liaison_astronomers[row["proposal_code_id"]] = row["surname"]
         return liaison_astronomers
 
-    def get_mos_block(self, semesters: List[str]) -> List[Dict[str, Any]]:
+    def get_mos_blocks(self, semesters: List[str]) -> List[Dict[str, Any]]:
         stmt = text(
             """
 SELECT DISTINCT

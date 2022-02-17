@@ -64,8 +64,3 @@ def instrument_service(connection: Connection) -> InstrumentService:
     instrument_repository = InstrumentRepository(connection)
     return InstrumentService(instrument_repository)
 
-
-def mos_service(connection: Connection) -> InstrumentService:
-    """Return a MOS service instance."""
-    mos_repository = InstrumentRepository(connection)
-    return InstrumentService(mos_repository)

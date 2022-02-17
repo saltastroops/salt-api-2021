@@ -11,9 +11,7 @@ class InstrumentService:
         """The list of MOS masks in the magazine."""
         return self.instrument_repository.get_mos_mask_in_magazine()
 
-    def get_mos_data(self, semesters: List[str]) -> List[Dict[str, Any]]:
-        """
-        Return MOS data
-        """
+    def get_mos_blocks(self, semesters: List[str]) -> List[Dict[str, Any]]:
+        """The list of MOS blocks."""
 
-        return self.instrument_repository.get_mos_block(semesters)
+        return self.instrument_repository.get_mos_blocks(semesters)
