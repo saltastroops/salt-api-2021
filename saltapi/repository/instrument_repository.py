@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Dict, Any
 
 from sqlalchemy.engine import Connection
 
@@ -35,3 +35,7 @@ class InstrumentRepository:
     def get_mos_mask_in_magazine(self) -> List[str]:
         """The list of MOS masks in the magazine."""
         return self.rss_repository.get_mos_mask_in_magazine()
+
+    def get_mos_block(self, semesters: List[str]) -> List[Dict[str, Any]]:
+        """The list of Mos block"""
+        return self.rss_repository.get_mos_block(semesters)

@@ -2,7 +2,6 @@ from sqlalchemy.engine import Connection
 
 from saltapi.repository.block_repository import BlockRepository
 from saltapi.repository.instrument_repository import InstrumentRepository
-from saltapi.repository.mos_repository import MosRepository
 from saltapi.repository.proposal_repository import ProposalRepository
 from saltapi.repository.target_repository import TargetRepository
 from saltapi.repository.user_repository import UserRepository
@@ -10,7 +9,6 @@ from saltapi.service.authentication_service import AuthenticationService
 from saltapi.service.block_service import BlockService
 from saltapi.service.instrument_service import InstrumentService
 from saltapi.service.mail_service import MailService
-from saltapi.service.mos_service import MosService
 from saltapi.service.permission_service import PermissionService
 from saltapi.service.proposal_service import ProposalService
 from saltapi.service.user_service import UserService
@@ -67,7 +65,7 @@ def instrument_service(connection: Connection) -> InstrumentService:
     return InstrumentService(instrument_repository)
 
 
-def mos_service(connection: Connection) -> MosService:
+def mos_service(connection: Connection) -> InstrumentService:
     """Return a MOS service instance."""
-    mos_repository = MosRepository(connection)
-    return MosService(mos_repository)
+    mos_repository = InstrumentRepository(connection)
+    return InstrumentService(mos_repository)
