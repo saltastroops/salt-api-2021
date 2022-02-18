@@ -276,9 +276,8 @@ class PermissionService:
         details.
         """
 
-        may_view = self.user_repository.is_administrator(
-            user.username
-        ) or self.user_repository.is_salt_astronomer(user.username)
+        may_view = self.user_repository.is_administrator(user.username) or \
+                   self.user_repository.is_salt_astronomer(user.username)
 
         if not may_view:
             raise AuthorizationError()
