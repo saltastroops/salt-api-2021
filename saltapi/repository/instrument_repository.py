@@ -37,5 +37,5 @@ class InstrumentRepository:
         return self.rss_repository.get_mos_mask_in_magazine()
 
     def get_mos_blocks(self, semesters: List[str]) -> List[Dict[str, Any]]:
-        """The list of MOS block"""
+        """The list of MOS blocks."""
         return self.rss_repository.get_mos_blocks(semesters)
