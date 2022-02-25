@@ -439,6 +439,45 @@ WHERE RssMaskType = "MOS"
             liaison_astronomers[row["proposal_code_id"]] = row["surname"]
         return liaison_astronomers
 
+    def _get_mos_masks(self, barcodes: Set[str]) -> Dict[str, any]:
+        stmt = text(
+            """
+SELECT
+    Barcode  		AS barcode,
+    RssMaskSlot 	AS rss_mask_slot,
+    EncodedContent  AS encoded_content
+FROM RssMask AS RM
+    JOIN RssMaskType AS RMT ON RM.RssMaskType_Id = RMT.RssMaskType_Id
+    LEFT JOIN RssMosMaskDetails AS RMMD ON RM.RssMask_Id = RMMD.RssMask_Id
+    LEFT JOIN RssCurrentMasks  AS RCM ON RM.RssMask_Id = RCM.RssMask_Id
+WHERE Barcode IN :barcodes
+        """
+        )
+        results = self.connection.execute(
+            stmt, {"barcodes": tuple(barcodes)}
+        )
+        slit_masks = dict()
+        temp_barcodes = barcodes
+
+        for row in results:
+            slit_masks[row.barcode] = {
+                "barcode": row.barcode,
+                "in_magazine": row.rss_mask_slot is not None,
+                "is_cut": True,
+                "encoded_content": row.encoded_content
+            }
+            temp_barcodes.discard(row.barcode)
+
+        for code in list(temp_barcodes):
+            slit_masks[code] = {
+                "barcode": code,
+                "in_magazine": False,
+                "is_cut": False,
+                "encoded_content": None
+            }
+
+        return slit_masks
+
     def get_mos_blocks(self, semesters: List[str]) -> List[Dict[str, Any]]:
         stmt = text(
             """
@@ -490,7 +529,11 @@ ORDER BY P.Semester_Id, Proposal_Code, Proposal_Id DESC
             mos_blocks.append(dict(row))
 
         proposal_code_ids = set([m["proposal_code_id"] for m in mos_blocks])
+        barcodes = set([m["barcode"] for m in mos_blocks])
+
         liaison_astronomers = self._get_liaison_astronomers(proposal_code_ids)
+        slit_masks = self._get_mos_masks(barcodes)
+
         for m in mos_blocks:
             proposal_code_id = m["proposal_code_id"]
             liaison_astronomer = (
@@ -499,4 +542,6 @@ ORDER BY P.Semester_Id, Proposal_Code, Proposal_Id DESC
                 else None
             )
             m["liaison_astronomer"] = liaison_astronomer
+            m["slit_mask"] = slit_masks[m["barcode"]]
+            del m["barcode"]
         return mos_blocks

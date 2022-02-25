@@ -385,6 +385,13 @@ class RssSummary(BaseModel):
     filters: Optional[List[str]] = Field(..., title="Filters", description="Filters")
 
 
+class SlitMask(BaseModel):
+    barcode: str = Field(..., title="Barcode", description="The slit mask barcode")
+    in_magazine: bool = Field(..., title="In magazine", description="Is the slit mask in the magazine")
+    is_cut: bool = Field(..., title="Is Slit mask cut", description="Is the slit mask in cut.")
+    encoded_content: Optional[str] = Field(..., title="Encoded content", description="The uniqie identifier of the slit mask.")
+
+
 class MosBlock(BaseModel):
     """MOS data for a block."""
 
@@ -412,7 +419,7 @@ class MosBlock(BaseModel):
         title="Number of completed visits",
         description="The number of completed visits",
     )
-    barcode: str = Field(..., title="Barcode", description="The slit mask barcode")
+    slit_mask: SlitMask = Field(..., title="The slit mask", description="The slit mask.")
     ra_center: float = Field(
         ...,
         title="Right ascension of the mask centre",
