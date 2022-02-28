@@ -365,9 +365,7 @@ class AdditionalRssConfigurations(BaseModel):
     gratings: Optional[List[RssGrating]] = Field(
         ..., title="Gratings", description="Used gratings"
     )
-    filters: Optional[List[str]] = Field(
-        ..., title="Filters", description="Filters"
-    )
+    filters: Optional[List[str]] = Field(..., title="Filters", description="Filters")
 
 
 class RssSummary(BaseModel):
@@ -399,11 +397,9 @@ class MosBlock(BaseModel):
         title="Principal investigator's surname",
         description="The principal investigator's surname",
     )
-    block_status: str = Field(..., title="Block status",
-                              description="The block status")
+    block_status: str = Field(..., title="Block status", description="The block status")
     block_name: str = Field(..., title="block name", description="The block name")
-    priority: int = Field(..., title="Block priority",
-                          description="The block priority")
+    priority: int = Field(..., title="Block priority", description="The block priority")
     n_visits: int = Field(
         ..., title="Number of visits", description="The number of visits"
     )
@@ -432,4 +428,3 @@ class MosBlock(BaseModel):
     liaison_astronomer: Optional[str] = Field(
         ..., title="Liaison astronomer", description="The liaison astronomer"
     )
-
