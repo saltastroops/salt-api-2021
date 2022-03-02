@@ -458,6 +458,14 @@ WHERE PS.PiptSetting_Name = 'RightAdmin'
         return cast(int, result.scalar()) > 0
 
     @staticmethod
+    def is_engineer() -> bool:
+        """
+        Method not implemented.
+        Should check if the user is an engineer
+        """
+        return False
+
+    @staticmethod
     def get_password_hash(password: str) -> str:
         """Hash a plain text password."""
         return hashlib.md5(password.encode("utf-8")).hexdigest()  # nosec

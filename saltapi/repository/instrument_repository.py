@@ -39,3 +39,7 @@ class InstrumentRepository:
     def get_mos_blocks(self, semesters: List[str]) -> List[Dict[str, Any]]:
         """The list of MOS blocks."""
         return self.rss_repository.get_mos_blocks(semesters)
+
+    def update_slit_mask(self, slit_mask: dict[str, Any]) -> dict[str, Any]:
+        """Add or update slit mask cut information"""
+        return self.rss_repository.update_slit_mask(slit_mask)

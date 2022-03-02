@@ -433,3 +433,17 @@ class MosBlock(BaseModel):
         ..., title="Liaison astronomer", description="The liaison astronomer"
     )
 
+
+class SlitMask(BaseModel):
+    barcode: str = Field(..., title="Barcode", description="The slit mask barcode")
+    cut_by: Optional[str] = Field(
+        ...,
+        title="Cutting person",
+        description="The name of the person who cut the slit mask",
+    )
+    cut_date: Optional[date] = Field(
+        ..., title="Cut date ", description="The date when the slit mask was cut."
+    )
+    mask_comment: Optional[str] = Field(
+        ..., title="Slit mask comment", description="A comment on the slit mask"
+    )

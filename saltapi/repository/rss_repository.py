@@ -500,3 +500,16 @@ ORDER BY P.Semester_Id, Proposal_Code, Proposal_Id DESC
             )
             m["liaison_astronomer"] = liaison_astronomer
         return mos_blocks
+
+    def update_slit_mask(self, slit_mask: Dict[str, Any]) -> Dict[str, Any]:
+        """Add or update slit mask cut information"""
+        stmt = text(
+            """
+UPDATE RssMosMaskDetails
+SET CutBy = :cut_by, CutDate = :cut_date, saComment = :mask_comment
+WHERE RssMask_Id = ( SELECT RssMask_Id FROM RssMask WHERE Barcode = :barcode )
+    """
+        )
+        self.connection.execute(stmt, slit_mask)
+
+        return slit_mask

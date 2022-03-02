@@ -7,10 +7,10 @@ from saltapi.service.user import User
 
 class PermissionService:
     def __init__(
-        self,
-        user_repository: UserRepository,
-        proposal_repository: ProposalRepository,
-        block_repository: BlockRepository,
+            self,
+            user_repository: UserRepository,
+            proposal_repository: ProposalRepository,
+            block_repository: BlockRepository,
     ) -> None:
         self.user_repository = user_repository
         self.proposal_repository = proposal_repository
@@ -32,27 +32,27 @@ class PermissionService:
 
         if proposal_type != "Gravitational Wave Event":
             may_view = (
-                self.user_repository.is_salt_astronomer(username)
-                or self.user_repository.is_investigator(username, proposal_code)
-                or self.user_repository.is_tac_member_for_proposal(
-                    username, proposal_code
-                )
-                or self.user_repository.is_administrator(username)
+                    self.user_repository.is_salt_astronomer(username)
+                    or self.user_repository.is_investigator(username, proposal_code)
+                    or self.user_repository.is_tac_member_for_proposal(
+                username, proposal_code
+            )
+                    or self.user_repository.is_administrator(username)
             )
         else:
             # Gravitational wave event proposals are a special case; they can be viewed
             # by anyone who belongs to a SALT partner.
             may_view = (
-                self.user_repository.is_salt_astronomer(username)
-                or self.user_repository.is_partner_affiliated_user(username)
-                or self.user_repository.is_administrator(username)
+                    self.user_repository.is_salt_astronomer(username)
+                    or self.user_repository.is_partner_affiliated_user(username)
+                    or self.user_repository.is_administrator(username)
             )
 
         if not may_view:
             raise AuthorizationError()
 
     def check_permission_to_activate_proposal(
-        self, user: User, proposal_code: str
+            self, user: User, proposal_code: str
     ) -> None:
         """
         Check whether the user may activate a proposal.
@@ -67,26 +67,26 @@ class PermissionService:
         username = user.username
 
         may_activate = (
-            (
-                self.proposal_repository.is_self_activatable(proposal_code)
-                and (
-                    self.user_repository.is_principal_investigator(
-                        username, proposal_code
-                    )
-                    or self.user_repository.is_principal_contact(
-                        username, proposal_code
-                    )
+                (
+                        self.proposal_repository.is_self_activatable(proposal_code)
+                        and (
+                                self.user_repository.is_principal_investigator(
+                                    username, proposal_code
+                                )
+                                or self.user_repository.is_principal_contact(
+                            username, proposal_code
+                        )
+                        )
                 )
-            )
-            or self.user_repository.is_salt_astronomer(username)
-            or self.user_repository.is_administrator(username)
+                or self.user_repository.is_salt_astronomer(username)
+                or self.user_repository.is_administrator(username)
         )
 
         if not may_activate:
             raise AuthorizationError()
 
     def check_permission_to_deactivate_proposal(
-        self, user: User, proposal_code: str
+            self, user: User, proposal_code: str
     ) -> None:
         """
         Check whether the user may deactivate a proposal.
@@ -101,10 +101,10 @@ class PermissionService:
         username = user.username
 
         may_deactivate = (
-            self.user_repository.is_principal_investigator(username, proposal_code)
-            or self.user_repository.is_principal_contact(username, proposal_code)
-            or self.user_repository.is_salt_astronomer(username)
-            or self.user_repository.is_administrator(username)
+                self.user_repository.is_principal_investigator(username, proposal_code)
+                or self.user_repository.is_principal_contact(username, proposal_code)
+                or self.user_repository.is_salt_astronomer(username)
+                or self.user_repository.is_administrator(username)
         )
 
         if not may_deactivate:
@@ -129,7 +129,7 @@ class PermissionService:
             raise AuthorizationError()
 
     def check_permission_to_add_observation_comment(
-        self, user: User, proposal_code: str
+            self, user: User, proposal_code: str
     ) -> None:
         """
         Checks if the user can add an observation comment
@@ -143,17 +143,17 @@ class PermissionService:
         """
         username = user.username
         may_add = (
-            self.user_repository.is_principal_investigator(username, proposal_code)
-            or self.user_repository.is_principal_contact(username, proposal_code)
-            or self.user_repository.is_salt_astronomer(username)
-            or self.user_repository.is_administrator(username)
+                self.user_repository.is_principal_investigator(username, proposal_code)
+                or self.user_repository.is_principal_contact(username, proposal_code)
+                or self.user_repository.is_salt_astronomer(username)
+                or self.user_repository.is_administrator(username)
         )
 
         if not may_add:
             raise AuthorizationError()
 
     def check_permission_to_view_observation_comments(
-        self, user: User, proposal_code: str
+            self, user: User, proposal_code: str
     ) -> None:
         """
         Checks if the user may view the observation comments
@@ -183,7 +183,7 @@ class PermissionService:
         self.check_permission_to_view_block(user, block_id)
 
     def check_permission_to_update_block_status(
-        self, user: User, block_id: int
+            self, user: User, block_id: int
     ) -> None:
         """
         Check whether the user may view a block status.
@@ -202,7 +202,7 @@ class PermissionService:
             raise AuthorizationError()
 
     def check_permission_to_view_block_visit(
-        self, user: User, block_visit_id: int
+            self, user: User, block_visit_id: int
     ) -> None:
         """
         Check whether the user may view a block visit.
@@ -251,7 +251,7 @@ class PermissionService:
             raise AuthorizationError()
 
     def check_permission_to_update_user(
-        self, user: User, updated_username: str
+            self, user: User, updated_username: str
     ) -> None:
         """
         Check whether the user may update a user.
@@ -280,4 +280,15 @@ class PermissionService:
                    self.user_repository.is_salt_astronomer(user.username)
 
         if not may_view:
+            raise AuthorizationError()
+
+    def check_permission_to_update_mos_slit_mask(self, user):
+        """
+        Check whether the user can update or add a slit mask.
+        """
+        may_update = self.user_repository.is_administrator(user.username) or \
+                     self.user_repository.is_salt_astronomer(user.username) or \
+                     self.user_repository.is_engineer()
+
+        if not may_update:
             raise AuthorizationError()

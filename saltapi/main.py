@@ -22,7 +22,7 @@ app = FastAPI()
 
 
 settings = Settings()
-origins = [settings.frontend_uri]
+origins = [settings.frontend_uri, "http://localhost:4200"]
 
 setup_logging(app)
 
