@@ -54,7 +54,7 @@ def get_mos_data(
     "/rss/update-slit-mask",
     summary="Update a MOS mask",
     response_model=SlitMask,
-    status_code=201,
+    status_code=200,
 )
 def update_slit_mask(
     slit_mask: SlitMask = Body(..., title="The Slit mask", description="Semester"),
