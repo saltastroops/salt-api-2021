@@ -41,5 +41,5 @@ class InstrumentRepository:
         return self.rss_repository.get_mos_blocks(semesters)
 
     def update_slit_mask(self, slit_mask: dict[str, Any]) -> dict[str, Any]:
-        """Add or update slit mask cut information"""
+        """Update slit mask information"""
         return self.rss_repository.update_slit_mask(slit_mask)

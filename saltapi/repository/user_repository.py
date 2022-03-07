@@ -457,12 +457,11 @@ WHERE PS.PiptSetting_Name = 'RightAdmin'
         result = self.connection.execute(stmt, {"username": username})
         return cast(int, result.scalar()) > 0
 
-    @staticmethod
-    def is_engineer() -> bool:
+    def is_engineer(self) -> bool:
         """
-        Method not implemented.
-        Should check if the user is an engineer
+        Should check whether the user is an engineer
         """
+        # TODO Method need to be implemented.
         return False
 
     @staticmethod

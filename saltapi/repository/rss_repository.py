@@ -502,14 +502,28 @@ ORDER BY P.Semester_Id, Proposal_Code, Proposal_Id DESC
         return mos_blocks
 
     def update_slit_mask(self, slit_mask: Dict[str, Any]) -> Dict[str, Any]:
-        """Add or update slit mask cut information"""
-        stmt = text(
+        """Update slit mask information"""
+        insert_stmt = text(
             """
 UPDATE RssMosMaskDetails
 SET CutBy = :cut_by, CutDate = :cut_date, saComment = :mask_comment
 WHERE RssMask_Id = ( SELECT RssMask_Id FROM RssMask WHERE Barcode = :barcode )
     """
         )
-        self.connection.execute(stmt, slit_mask)
+        self.connection.execute(insert_stmt, slit_mask)
 
-        return slit_mask
+        query_stmt = text(
+            """
+SELECT
+    CutBy		AS cut_by,
+    CutDate		AS cut_date,
+    SaComment	AS mask_comment,
+    Barcode		As barcode
+FROM RssMosMaskDetails AS RMMD
+    JOIN RssMask AS RM ON RMMD.RssMask_Id = RM.RssMask_Id
+WHERE Barcode = :barcode
+            """
+        )
+        result = self.connection.execute(query_stmt, {"barcode": slit_mask["barcode"]})
+        row = result.one()
+        return {**row}

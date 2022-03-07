@@ -17,5 +17,5 @@ class InstrumentService:
         return self.instrument_repository.get_mos_blocks(semesters)
 
     def update_slit_mask(self, slit_mask: Dict[str, Any]) -> Dict[str, Any]:
-        """Add or update slit mask cut information"""
+        """Update slit mask information"""
         return self.instrument_repository.update_slit_mask(slit_mask)

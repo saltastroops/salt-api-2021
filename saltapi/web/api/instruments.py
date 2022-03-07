@@ -1,5 +1,5 @@
 from typing import List
-from fastapi import APIRouter, Depends, Query, Body
+from fastapi import APIRouter, Depends, Query, Body, Path
 
 from saltapi.repository.unit_of_work import UnitOfWork
 from saltapi.service.authentication_service import get_current_user
@@ -50,7 +50,7 @@ def get_mos_data(
         return [MosBlock(**md) for md in mos_blocks]
 
 
-@router.post(
+@router.put(
     "/rss/update-slit-mask",
     summary="Update a MOS mask",
     response_model=SlitMask,
@@ -61,7 +61,7 @@ def update_slit_mask(
     user: User = Depends(get_current_user),
 ) -> SlitMask:
     """
-    Update or add MOS slit mask.
+    Update MOS slit mask.
     """
     with UnitOfWork() as unit_of_work:
         permission_service = services.permission_service(unit_of_work.connection)
