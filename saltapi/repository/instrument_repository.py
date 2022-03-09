@@ -1,4 +1,4 @@
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 from sqlalchemy.engine import Connection
 
@@ -32,9 +32,9 @@ class InstrumentRepository:
         """Return a BVIT setup."""
         return self.bvit_repository.get(bvit_id)
 
-    def get_mos_mask_in_magazine(self) -> List[str]:
+    def get_mask_in_magazine(self, mask_type: Optional[str]) -> List[str]:
         """The list of MOS masks in the magazine."""
-        return self.rss_repository.get_mos_mask_in_magazine()
+        return self.rss_repository.get_mask_in_magazine(mask_type)
 
     def get_mos_blocks(self, semesters: List[str]) -> List[Dict[str, Any]]:
         """The list of MOS blocks."""

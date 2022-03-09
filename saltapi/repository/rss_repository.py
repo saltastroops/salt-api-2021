@@ -400,21 +400,21 @@ ORDER BY is_preferred_lamp DESC
         ]
         return entries
 
-    def get_mos_mask_in_magazine(self) -> List[str]:
+    def get_mask_in_magazine(self, mask_type: Optional[str]) -> List[str]:
         """
-        The list of MOS masks in the magazine.
+        The list of masks in the magazine.
         """
-        stmt = text(
-            """
+        stmt = """
 SELECT 
     Barcode AS barcode
 FROM RssCurrentMasks AS RCM
     JOIN RssMask AS RM ON RCM.RssMask_Id = RM.RssMask_Id
-    JOIN RssMaskType AS RMT ON RM.RssMaskType_Id = RMT.RssMaskType_Id
-WHERE RssMaskType = "MOS"
+    JOIN RssMaskType AS RMT ON RM.RssMaskType_Id = RMT.RssMaskType_Id        
         """
-        )
-        results = self.connection.execute(stmt, {})
+        if mask_type:
+            stmt += " WHERE RssMaskType = :mask_type"
+
+        results = self.connection.execute(text(stmt), {"mask_type": mask_type})
 
         return [row.barcode for row in results]
 
@@ -490,6 +490,8 @@ ORDER BY P.Semester_Id, Proposal_Code, Proposal_Id DESC
             mos_blocks.append(dict(row))
 
         proposal_code_ids = set([m["proposal_code_id"] for m in mos_blocks])
+        if not proposal_code_ids:
+            return []
         liaison_astronomers = self._get_liaison_astronomers(proposal_code_ids)
         for m in mos_blocks:
             proposal_code_id = m["proposal_code_id"]

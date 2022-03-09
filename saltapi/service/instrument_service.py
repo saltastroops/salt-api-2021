@@ -1,4 +1,4 @@
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 from saltapi.repository.instrument_repository import InstrumentRepository
 
@@ -7,9 +7,9 @@ class InstrumentService:
     def __init__(self, instrument_repository: InstrumentRepository):
         self.instrument_repository = instrument_repository
 
-    def get_mos_mask_in_magazine(self) -> List[str]:
+    def get_mask_in_magazine(self, mask_type: Optional[str]) -> List[str]:
         """The list of MOS masks in the magazine."""
-        return self.instrument_repository.get_mos_mask_in_magazine()
+        return self.instrument_repository.get_mask_in_magazine(mask_type)
 
     def get_mos_blocks(self, semesters: List[str]) -> List[Dict[str, Any]]:
         """The list of MOS blocks."""
