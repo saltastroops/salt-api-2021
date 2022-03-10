@@ -547,7 +547,6 @@ def test_get_user_roles_returns_correct_roles(
     user_repository = UserRepository(dbconnection)
     for d in data:
         username = d["username"]
-        print(username)
         expected_roles = set(d["roles"])
         roles = set(role.value for role in user_repository.get_user_roles(username))
 
