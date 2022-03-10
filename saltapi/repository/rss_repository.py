@@ -439,7 +439,7 @@ FROM RssCurrentMasks AS RCM
             liaison_astronomers[row["proposal_code_id"]] = row["surname"]
         return liaison_astronomers
 
-    def get_mos_blocks(self, semesters: List[str]) -> List[Dict[str, Any]]:
+    def get_mos_mask_matadata(self, semesters: List[str]) -> List[Dict[str, Any]]:
         stmt = text(
             """
 SELECT DISTINCT
@@ -503,7 +503,7 @@ ORDER BY P.Semester_Id, Proposal_Code, Proposal_Id DESC
             m["liaison_astronomer"] = liaison_astronomer
         return mos_blocks
 
-    def update_slit_mask(self, slit_mask: Dict[str, Any]) -> Dict[str, Any]:
+    def update_mos_mask_matadata(self, mos_mask_matadata: Dict[str, Any]) -> Dict[str, Any]:
         """Update slit mask information"""
         insert_stmt = text(
             """
@@ -512,7 +512,7 @@ SET CutBy = :cut_by, CutDate = :cut_date, saComment = :mask_comment
 WHERE RssMask_Id = ( SELECT RssMask_Id FROM RssMask WHERE Barcode = :barcode )
     """
         )
-        self.connection.execute(insert_stmt, slit_mask)
+        self.connection.execute(insert_stmt, mos_mask_matadata)
 
         query_stmt = text(
             """
@@ -526,6 +526,6 @@ FROM RssMosMaskDetails AS RMMD
 WHERE Barcode = :barcode
             """
         )
-        result = self.connection.execute(query_stmt, {"barcode": slit_mask["barcode"]})
+        result = self.connection.execute(query_stmt, {"barcode": mos_mask_matadata["barcode"]})
         row = result.one()
         return {**row}

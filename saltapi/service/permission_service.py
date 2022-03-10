@@ -282,7 +282,7 @@ class PermissionService:
         if not may_view:
             raise AuthorizationError()
 
-    def check_permission_to_update_mos_slit_mask(self, user):
+    def check_permission_to_update_mos_mask_matadata(self, user):
         """
         Check whether the user can update or add a slit mask.
         """

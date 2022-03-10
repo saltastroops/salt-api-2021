@@ -32,14 +32,14 @@ class InstrumentRepository:
         """Return a BVIT setup."""
         return self.bvit_repository.get(bvit_id)
 
-    def get_mask_in_magazine(self, mask_type: Optional[str]) -> List[str]:
+    def get_masks_in_magazine(self, mask_type: Optional[str]) -> List[str]:
         """The list of MOS masks in the magazine."""
         return self.rss_repository.get_mask_in_magazine(mask_type)
 
-    def get_mos_blocks(self, semesters: List[str]) -> List[Dict[str, Any]]:
+    def get_mos_mask_matadata(self, semesters: List[str]) -> List[Dict[str, Any]]:
         """The list of MOS blocks."""
-        return self.rss_repository.get_mos_blocks(semesters)
+        return self.rss_repository.get_mos_mask_matadata(semesters)
 
-    def update_slit_mask(self, slit_mask: dict[str, Any]) -> dict[str, Any]:
-        """Update slit mask information"""
-        return self.rss_repository.update_slit_mask(slit_mask)
+    def update_most_mask_matadata(self, mos_mask_matadata: dict[str, Any]) -> dict[str, Any]:
+        """Update MOS mask metadata"""
+        return self.rss_repository.update_mos_mask_matadata(mos_mask_matadata)

@@ -9,13 +9,13 @@ class InstrumentService:
 
     def get_mask_in_magazine(self, mask_type: Optional[str]) -> List[str]:
         """The list of MOS masks in the magazine."""
-        return self.instrument_repository.get_mask_in_magazine(mask_type)
+        return self.instrument_repository.get_masks_in_magazine(mask_type)
 
-    def get_mos_blocks(self, semesters: List[str]) -> List[Dict[str, Any]]:
+    def get_mos_mask_matadata(self, semesters: List[str]) -> List[Dict[str, Any]]:
         """The list of MOS blocks."""
 
-        return self.instrument_repository.get_mos_blocks(semesters)
+        return self.instrument_repository.get_mos_mask_matadata(semesters)
 
-    def update_slit_mask(self, slit_mask: Dict[str, Any]) -> Dict[str, Any]:
+    def update_mos_mask_matadata(self, mos_mask_matadata: Dict[str, Any]) -> Dict[str, Any]:
         """Update slit mask information"""
-        return self.instrument_repository.update_slit_mask(slit_mask)
+        return self.instrument_repository.update_most_mask_matadata(mos_mask_matadata)
