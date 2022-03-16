@@ -23,7 +23,6 @@ def get_mask_in_magazine(
     """
     Returns the list of masks that are currently on the magazine.
     """
-
     with UnitOfWork() as unit_of_work:
         instrument_service = services.instrument_service(unit_of_work.connection)
         return instrument_service.get_mask_in_magazine(mask_type)
@@ -37,7 +36,8 @@ def get_mask_in_magazine(
 )
 def get_mos_mask_matadata(
     user: User = Depends(get_current_user),
-    semesters: List[Semester] = Query(..., title="Semester", description="Semester"),
+    semesters: List[Semester] = Query(
+        ..., alias='semester', title="Semester", description="Semester"),
 ) -> List[MosBlock]:
     """
     Get the list of blocks using MOS.
@@ -52,7 +52,7 @@ def get_mos_mask_matadata(
 
 
 @router.put(
-    "/rss/update-slit-mask",
+    "/rss/update-mos-mask",
     summary="Update a MOS mask matadata",
     response_model=MosMaskMatadata,
     status_code=200,
@@ -73,5 +73,5 @@ def update_mos_mask_matadata(
         arg = dict(mos_mask_matadata)
         arg["barcode"] = barcode
         response = instrument_service.update_mos_mask_matadata(arg)
-        # unit_of_work.connection.commit()
+        unit_of_work.connection.commit()
         return MosMaskMatadata(**response)
