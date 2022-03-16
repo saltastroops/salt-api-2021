@@ -18,4 +18,4 @@ class InstrumentService:
 
     def update_mos_mask_matadata(self, mos_mask_matadata: Dict[str, Any]) -> Dict[str, Any]:
         """Update slit mask information"""
-        return self.instrument_repository.update_most_mask_matadata(mos_mask_matadata)
+        return self.instrument_repository.update_mos_mask_matadata(mos_mask_matadata)
