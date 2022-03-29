@@ -406,7 +406,7 @@ ORDER BY is_preferred_lamp DESC
         """
         stmt = text(
             """
-SELECT 
+SELECT
     Barcode AS barcode
 FROM RssCurrentMasks AS RCM
     JOIN RssMask AS RM ON RCM.RssMask_Id = RM.RssMask_Id
@@ -418,8 +418,7 @@ WHERE RssMaskType = "MOS"
 
         return [row.barcode for row in results]
 
-    def _get_liaison_astronomers(self, proposal_code_ids: Set[int]) -> Dict[
-        int, str]:
+    def _get_liaison_astronomers(self, proposal_code_ids: Set[int]) -> Dict[int, str]:
         stmt = text(
             """
         SELECT DISTINCT

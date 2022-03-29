@@ -63,4 +63,3 @@ def instrument_service(connection: Connection) -> InstrumentService:
     """Return an instrument service instance."""
     instrument_repository = InstrumentRepository(connection)
     return InstrumentService(instrument_repository)
-

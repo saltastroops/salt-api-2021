@@ -848,12 +848,8 @@ GROUP BY B.Block_Id
         return {
             row.block_id: {
                 "modes": row.modes.split(separator),
-                "gratings": row.gratings.split(separator)
-                if row.gratings
-                else None,
-                "filters": row.filters.split(separator)
-                if row.filters
-                else None,
+                "gratings": row.gratings.split(separator) if row.gratings else None,
+                "filters": row.filters.split(separator) if row.filters else None,
             }
             for row in result
         }

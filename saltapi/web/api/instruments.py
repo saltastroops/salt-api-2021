@@ -1,4 +1,5 @@
 from typing import List
+
 from fastapi import APIRouter, Depends, Query
 
 from saltapi.repository.unit_of_work import UnitOfWork
@@ -14,7 +15,7 @@ router = APIRouter(tags=["Instrument"])
 @router.get(
     "/rss/current-mos-masks",
     summary="Get current MOS masks in the magazine",
-    response_model=List[str]
+    response_model=List[str],
 )
 def get_current_mos_masks(
     user: User = Depends(get_current_user),
@@ -26,6 +27,7 @@ def get_current_mos_masks(
     with UnitOfWork() as unit_of_work:
         instrument_service = services.instrument_service(unit_of_work.connection)
         return instrument_service.get_mos_mask_in_magazine()
+
 
 @router.get(
     "/rss/mos",
