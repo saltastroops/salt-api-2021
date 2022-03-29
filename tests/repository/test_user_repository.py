@@ -51,23 +51,6 @@ def test_get_user_by_id_returns_correct_user(
     assert user.roles == expected_user["roles"]
 
 
-@nodatabase
-def test_get_user_by_email_returns_correct_user(
-    dbconnection: Connection, testdata: Callable[[str], Any]
-) -> None:
-    expected_user = testdata(TEST_DATA_PATH)["get_user_by_email"]
-    user_repository = UserRepository(dbconnection)
-    user = user_repository.get_by_email(expected_user["email"])
-
-    assert user.id == expected_user["id"]
-    assert user.username == expected_user["username"]
-    assert user.email == expected_user["email"]
-    assert user.given_name == expected_user["given_name"]
-    assert user.family_name == expected_user["family_name"]
-    assert user.password_hash is not None
-    assert user.roles == expected_user["roles"]
-
-
 def _random_string() -> str:
     return str(uuid.uuid4())[:8]
 

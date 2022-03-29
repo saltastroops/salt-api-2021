@@ -36,6 +36,7 @@ class Affiliation(BaseModel):
 
 
 class ContactDetails(BaseModel):
+    id: int = Field(..., title="User id", description='User id.')
     given_name: str = Field(..., title="Given name", description='Given ("first") name')
     family_name: str = Field(
         ..., title="Family name", description='Family ("last") name'
