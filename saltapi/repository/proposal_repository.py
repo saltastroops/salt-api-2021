@@ -44,6 +44,7 @@ SELECT DISTINCT P.Proposal_Id                   AS id,
                 PS.Status                       AS status,
                 PIR.InactiveReason              AS reason,
                 T.ProposalType                  AS proposal_type,
+                Leader.PiptUser_Id              AS pi_user_id,
                 Leader.FirstName                AS pi_given_name,
                 Leader.Surname                  AS pi_family_name,
                 Leader.Email                    AS pi_email,
@@ -142,7 +143,7 @@ LIMIT :limit;
                 "status": {"value": row.status, "reason": row.reason},
                 "proposal_type": self._map_proposal_type(row.proposal_type),
                 "principal_investigator": {
-                    "id": self._principal_investigator_user_id(row.proposal_code),
+                    "id": row.pi_user_id,
                     "given_name": row.pi_given_name,
                     "family_name": row.pi_family_name,
                     "email": row.pi_email,
@@ -513,7 +514,7 @@ WHERE PC.Proposal_Code = :proposal_code
         """
         stmt = text(
             """
-SELECT PU.PiptUser_Id          AS user_id,
+SELECT PU.PiptUser_Id          AS id,
        I.FirstName             AS given_name,
        I.Surname               AS family_name,
        I.Email                 AS email,
@@ -854,12 +855,8 @@ GROUP BY B.Block_Id
         return {
             row.block_id: {
                 "modes": row.modes.split(separator),
-                "gratings": row.gratings.split(separator)
-                if row.gratings
-                else None,
-                "filters": row.filters.split(separator)
-                if row.filters
-                else None,
+                "gratings": row.gratings.split(separator) if row.gratings else None,
+                "filters": row.filters.split(separator) if row.filters else None,
             }
             for row in result
         }

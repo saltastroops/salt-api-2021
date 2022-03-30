@@ -3,7 +3,7 @@ from typing import List, Optional
 
 from pydantic import BaseModel, Field
 
-from saltapi.web.schema.proposal import ContactDetails
+from saltapi.web.schema.proposal import ContactDetails, ProposalUser
 
 
 class UserRole(str, Enum):
@@ -23,7 +23,7 @@ class UserRole(str, Enum):
     BOARD_MEMBER = "Board Member"
 
 
-class User(ContactDetails):
+class User(ProposalUser):
     """User details, including username, contact details and roles."""
 
     username: str = Field(..., title="Username", description="Username.")

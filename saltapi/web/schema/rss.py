@@ -364,9 +364,7 @@ class AdditionalRssConfigurations(BaseModel):
     gratings: Optional[List[RssGrating]] = Field(
         ..., title="Gratings", description="Used gratings"
     )
-    filters: Optional[List[str]] = Field(
-        ..., title="Filters", description="Filters"
-    )
+    filters: Optional[List[str]] = Field(..., title="Filters", description="Filters")
 
 
 class RssSummary(BaseModel):
