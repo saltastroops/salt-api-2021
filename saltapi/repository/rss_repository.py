@@ -402,7 +402,7 @@ ORDER BY is_preferred_lamp DESC
 
     def get_mask_in_magazine(self, mask_type: Optional[str]) -> List[str]:
         """
-        The list of masks in the magazine.
+        The list of masks in the magazine, optionally filtered by a mask type.
         """
         stmt = """
 SELECT 

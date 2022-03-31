@@ -40,6 +40,6 @@ class InstrumentRepository:
         """The list of MOS blocks."""
         return self.rss_repository.get_mos_mask_matadata(semesters)
 
-    def update_mos_mask_matadata(self, mos_mask_matadata: dict[str, Any]) -> dict[str, Any]:
+    def update_mos_mask_matadata(self, mos_mask_matadata: dict[str, Any]) -> Dict[str, Any]:
         """Update mask metadata"""
         return self.rss_repository.update_mos_mask_matadata(mos_mask_matadata)

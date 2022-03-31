@@ -7,7 +7,7 @@ class InstrumentService:
     def __init__(self, instrument_repository: InstrumentRepository):
         self.instrument_repository = instrument_repository
 
-    def get_mask_in_magazine(self, mask_type: Optional[str]) -> List[str]:
+    def get_masks_in_magazine(self, mask_type: Optional[str]) -> List[str]:
         """The list of MOS masks in the magazine."""
         return self.instrument_repository.get_masks_in_magazine(mask_type)
 

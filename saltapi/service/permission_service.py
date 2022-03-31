@@ -268,7 +268,7 @@ class PermissionService:
         if not may_update:
             raise AuthorizationError()
 
-    def check_permission_to_view_mos_data(self, user: User) -> None:
+    def check_permission_to_view_mos_matadata(self, user: User) -> None:
         """
         Check whether the user may view MOS data.
 
@@ -284,7 +284,7 @@ class PermissionService:
 
     def check_permission_to_update_mos_mask_matadata(self, user):
         """
-        Check whether the user can update or add a slit mask.
+        Check whether the user can update a slit mask.
         """
         may_update = self.user_repository.is_administrator(user.username) or \
                      self.user_repository.is_salt_astronomer(user.username) or \
