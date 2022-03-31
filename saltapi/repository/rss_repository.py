@@ -412,6 +412,7 @@ FROM RssCurrentMasks AS RCM
     JOIN RssMask AS RM ON RCM.RssMask_Id = RM.RssMask_Id
     JOIN RssMaskType AS RMT ON RM.RssMaskType_Id = RMT.RssMaskType_Id        
         """
+        )
         if mask_type:
             stmt += " WHERE RssMaskType = :mask_type"
 
