@@ -404,8 +404,9 @@ ORDER BY is_preferred_lamp DESC
         """
         The list of masks in the magazine, optionally filtered by a mask type.
         """
-        stmt = """
-SELECT 
+        stmt = text(
+            """
+SELECT
     Barcode AS barcode
 FROM RssCurrentMasks AS RCM
     JOIN RssMask AS RM ON RCM.RssMask_Id = RM.RssMask_Id
@@ -418,8 +419,7 @@ FROM RssCurrentMasks AS RCM
 
         return [row.barcode for row in results]
 
-    def _get_liaison_astronomers(self, proposal_code_ids: Set[int]) -> Dict[
-        int, str]:
+    def _get_liaison_astronomers(self, proposal_code_ids: Set[int]) -> Dict[int, str]:
         stmt = text(
             """
         SELECT DISTINCT

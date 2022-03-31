@@ -14,7 +14,7 @@ router = APIRouter(tags=["Instrument"])
 @router.get(
     "/rss/masks-in-magazine",
     summary="Get current MOS masks in the magazine",
-    response_model=List[str]
+    response_model=List[str],
 )
 def get_masks_in_magazine(
     mask_type: Optional[str] = Query(
