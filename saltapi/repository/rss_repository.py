@@ -404,15 +404,13 @@ ORDER BY is_preferred_lamp DESC
         """
         The list of masks in the magazine, optionally filtered by a mask type.
         """
-        stmt = text(
-            """
+        stmt = """
 SELECT
     Barcode AS barcode
 FROM RssCurrentMasks AS RCM
     JOIN RssMask AS RM ON RCM.RssMask_Id = RM.RssMask_Id
     JOIN RssMaskType AS RMT ON RM.RssMaskType_Id = RMT.RssMaskType_Id        
         """
-        )
         if mask_type:
             stmt += " WHERE RssMaskType = :mask_type"
 
