@@ -430,7 +430,7 @@ class MosBlock(BaseModel):
     )
 
 
-class UpdateMosMaskMatadata(BaseModel):
+class UpdateMosMaskMetadata(BaseModel):
     cut_by: Optional[str] = Field(
         ...,
         title="Cutting person",
@@ -443,5 +443,5 @@ class UpdateMosMaskMatadata(BaseModel):
         None , title="Slit mask comment", description="A comment on the slit mask"
     )
 
-class MosMaskMatadata(UpdateMosMaskMatadata):
+class MosMaskMetadata(UpdateMosMaskMetadata):
     barcode: str = Field(..., title="Barcode", description="The slit mask barcode")

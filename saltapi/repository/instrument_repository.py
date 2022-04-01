@@ -36,10 +36,10 @@ class InstrumentRepository:
         """The list of masks in the magazine."""
         return self.rss_repository.get_mask_in_magazine(mask_type)
 
-    def get_mos_mask_matadata(self, semesters: List[str]) -> List[Dict[str, Any]]:
-        """The list of MOS blocks."""
-        return self.rss_repository.get_mos_mask_matadata(semesters)
+    def get_mos_mask_metadata(self, semesters: List[str]) -> List[Dict[str, Any]]:
+        """The list of MOS metadata."""
+        return self.rss_repository.get_mos_masks_metadata(semesters)
 
-    def update_mos_mask_matadata(self, mos_mask_matadata: dict[str, Any]) -> Dict[str, Any]:
-        """Update mask metadata"""
-        return self.rss_repository.update_mos_mask_matadata(mos_mask_matadata)
+    def update_mos_mask_metadata(self, mos_mask_metadata: dict[str, Any]) -> Dict[str, Any]:
+        """Update MOS mask metadata"""
+        return self.rss_repository.update_mos_mask_metadata(mos_mask_metadata)

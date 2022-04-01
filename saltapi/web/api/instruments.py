@@ -6,7 +6,7 @@ from saltapi.service.authentication_service import get_current_user
 from saltapi.service.user import User
 from saltapi.web import services
 from saltapi.web.schema.common import Semester
-from saltapi.web.schema.rss import MosBlock, UpdateMosMaskMatadata, MosMaskMatadata
+from saltapi.web.schema.rss import MosBlock, UpdateMosMaskMetadata, MosMaskMetadata
 
 router = APIRouter(tags=["Instrument"])
 
@@ -34,7 +34,7 @@ def get_masks_in_magazine(
     response_model=List[MosBlock],
     status_code=200,
 )
-def get_mos_mask_matadata(
+def get_mos_mask_metadata(
     user: User = Depends(get_current_user),
     semesters: List[Semester] = Query(
         ..., alias='semester', title="Semester", description="Semester"),
@@ -44,34 +44,34 @@ def get_mos_mask_matadata(
     """
     with UnitOfWork() as unit_of_work:
         permission_service = services.permission_service(unit_of_work.connection)
-        permission_service.check_permission_to_view_mos_matadata(user)
+        permission_service.check_permission_to_view_mos_metadata(user)
 
         instrument_service = services.instrument_service(unit_of_work.connection)
-        mos_blocks = instrument_service.get_mos_mask_matadata([str(s) for s in semesters])
+        mos_blocks = instrument_service.get_mos_mask_metadata([str(s) for s in semesters])
         return [MosBlock(**md) for md in mos_blocks]
 
 
 @router.put(
     "/rss/mos-mask-metadata/{barcode}",
-    summary="Update MOS mask matadata",
-    response_model=MosMaskMatadata,
-    status_code=201,
+    summary="Update MOS mask metadata",
+    response_model=MosMaskMetadata,
+    status_code=200,
 )
-def update_mos_mask_matadata(
-    mos_mask_matadata: UpdateMosMaskMatadata = Body(..., title="The Slit mask", description="Semester"),
+def update_mos_mask_metadata(
+    mos_mask_metadata: UpdateMosMaskMetadata = Body(..., title="The Slit mask", description="Semester"),
     barcode: str = Path(..., title="Barcode", description="The barcode of slit mask"),
     user: User = Depends(get_current_user),
-) -> MosMaskMatadata:
+) -> MosMaskMetadata:
     """
-    Update MOS mask matadata.
+    Update MOS mask metadata.
     """
     with UnitOfWork() as unit_of_work:
         permission_service = services.permission_service(unit_of_work.connection)
-        permission_service.check_permission_to_update_mos_mask_matadata(user)
+        permission_service.check_permission_to_update_mos_mask_metadata(user)
 
         instrument_service = services.instrument_service(unit_of_work.connection)
-        args = dict(mos_mask_matadata)
+        args = dict(mos_mask_metadata)
         args["barcode"] = barcode
-        response = instrument_service.update_mos_mask_matadata(args)
+        response = instrument_service.update_mos_mask_metadata(args)
         unit_of_work.connection.commit()
-        return MosMaskMatadata(**response)
+        return MosMaskMetadata(**response)

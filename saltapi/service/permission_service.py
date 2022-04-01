@@ -268,7 +268,7 @@ class PermissionService:
         if not may_update:
             raise AuthorizationError()
 
-    def check_permission_to_view_mos_matadata(self, user: User) -> None:
+    def check_permission_to_view_mos_metadata(self, user: User) -> None:
         """
         Check whether the user may view MOS data.
 
@@ -283,7 +283,7 @@ class PermissionService:
         if not may_view:
             raise AuthorizationError()
 
-    def check_permission_to_update_mos_mask_matadata(self, user):
+    def check_permission_to_update_mos_mask_metadata(self, user):
         """
         Check whether the user can update a slit mask.
         """
