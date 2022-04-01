@@ -409,7 +409,7 @@ SELECT
     Barcode AS barcode
 FROM RssCurrentMasks AS RCM
     JOIN RssMask AS RM ON RCM.RssMask_Id = RM.RssMask_Id
-    JOIN RssMaskType AS RMT ON RM.RssMaskType_Id = RMT.RssMaskType_Id        
+    JOIN RssMaskType AS RMT ON RM.RssMaskType_Id = RMT.RssMaskType_Id
         """
         if mask_type:
             stmt += " WHERE RssMaskType = :mask_type"
@@ -502,7 +502,7 @@ ORDER BY P.Semester_Id, Proposal_Code, Proposal_Id DESC
             m["liaison_astronomer"] = liaison_astronomer
         return mos_blocks
 
-    def get_mos_mask_metadata(self, barcode):
+    def get_mos_mask_metadata(self, barcode: str) -> Dict[str, Any]:
         stmt = text(
             """
 SELECT
@@ -520,7 +520,8 @@ WHERE Barcode = :barcode
         row = result.one()
         return {**row}
 
-    def update_mos_mask_metadata(self, mos_mask_metadata: Dict[str, Any]) -> Dict[str, Any]:
+    def update_mos_mask_metadata(self, mos_mask_metadata: Dict[str, Any])\
+            -> Dict[str, Any]:
         """Update MOS mask metadata"""
         stmt = text(
             """

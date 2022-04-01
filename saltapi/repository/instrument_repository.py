@@ -1,4 +1,4 @@
-from typing import Any, Dict, List,Optional
+from typing import Any, Dict, List, Optional
 
 from sqlalchemy.engine import Connection
 
@@ -40,6 +40,7 @@ class InstrumentRepository:
         """The list of MOS metadata."""
         return self.rss_repository.get_mos_masks_metadata(semesters)
 
-    def update_mos_mask_metadata(self, mos_mask_metadata: dict[str, Any]) -> Dict[str, Any]:
+    def update_mos_mask_metadata(self, mos_mask_metadata: dict[str, Any])\
+            -> Dict[str, Any]:
         """Update MOS mask metadata"""
         return self.rss_repository.update_mos_mask_metadata(mos_mask_metadata)

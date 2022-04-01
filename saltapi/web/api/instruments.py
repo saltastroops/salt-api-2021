@@ -1,12 +1,12 @@
+from fastapi import APIRouter, Body, Depends, Path, Query
 from typing import List, Optional
-from fastapi import APIRouter, Depends, Query, Body, Path
 
 from saltapi.repository.unit_of_work import UnitOfWork
 from saltapi.service.authentication_service import get_current_user
 from saltapi.service.user import User
 from saltapi.web import services
 from saltapi.web.schema.common import Semester
-from saltapi.web.schema.rss import MosBlock, UpdateMosMaskMetadata, MosMaskMetadata
+from saltapi.web.schema.rss import MosBlock, MosMaskMetadata, UpdateMosMaskMetadata
 
 router = APIRouter(tags=["Instrument"])
 
@@ -47,7 +47,8 @@ def get_mos_mask_metadata(
         permission_service.check_permission_to_view_mos_metadata(user)
 
         instrument_service = services.instrument_service(unit_of_work.connection)
-        mos_blocks = instrument_service.get_mos_mask_metadata([str(s) for s in semesters])
+        mos_blocks = instrument_service.get_mos_mask_metadata(
+            [str(s) for s in semesters])
         return [MosBlock(**md) for md in mos_blocks]
 
 
@@ -58,7 +59,11 @@ def get_mos_mask_metadata(
     status_code=200,
 )
 def update_mos_mask_metadata(
-    mos_mask_metadata: UpdateMosMaskMetadata = Body(..., title="The Slit mask", description="Semester"),
+    mos_mask_metadata: UpdateMosMaskMetadata = Body(
+        ...,
+        title="The Slit mask",
+        description="Semester"
+    ),
     barcode: str = Path(..., title="Barcode", description="The barcode of slit mask"),
     user: User = Depends(get_current_user),
 ) -> MosMaskMetadata:

@@ -35,8 +35,7 @@ class PermissionService:
                     self.user_repository.is_salt_astronomer(username)
                     or self.user_repository.is_investigator(username, proposal_code)
                     or self.user_repository.is_tac_member_for_proposal(
-                username, proposal_code
-            )
+                        username, proposal_code)
                     or self.user_repository.is_administrator(username)
             )
         else:
@@ -74,8 +73,7 @@ class PermissionService:
                                     username, proposal_code
                                 )
                                 or self.user_repository.is_principal_contact(
-                            username, proposal_code
-                        )
+                                    username, proposal_code)
                         )
                 )
                 or self.user_repository.is_salt_astronomer(username)
@@ -283,13 +281,13 @@ class PermissionService:
         if not may_view:
             raise AuthorizationError()
 
-    def check_permission_to_update_mos_mask_metadata(self, user):
+    def check_permission_to_update_mos_mask_metadata(self, user: User) -> None:
         """
         Check whether the user can update a slit mask.
         """
         may_update = self.user_repository.is_administrator(user.username) or \
-                     self.user_repository.is_salt_astronomer(user.username) or \
-                     self.user_repository.is_engineer()
+            self.user_repository.is_salt_astronomer(user.username) or \
+            self.user_repository.is_engineer()
 
         if not may_update:
             raise AuthorizationError()

@@ -440,8 +440,8 @@ class UpdateMosMaskMetadata(BaseModel):
         ..., title="Cut date ", description="The date when the slit mask was cut."
     )
     mask_comment: Optional[str] = Field(
-        None , title="Slit mask comment", description="A comment on the slit mask"
-    )
+        None, title="Slit mask comment", description="A comment on the slit mask")
+
 
 class MosMaskMetadata(UpdateMosMaskMetadata):
     barcode: str = Field(..., title="Barcode", description="The slit mask barcode")
