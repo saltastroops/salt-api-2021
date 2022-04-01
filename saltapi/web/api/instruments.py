@@ -1,12 +1,17 @@
-from fastapi import APIRouter, Body, Depends, Path, Query
 from typing import List, Optional
+
+from fastapi import APIRouter, Body, Depends, Path, Query
 
 from saltapi.repository.unit_of_work import UnitOfWork
 from saltapi.service.authentication_service import get_current_user
 from saltapi.service.user import User
 from saltapi.web import services
 from saltapi.web.schema.common import Semester
-from saltapi.web.schema.rss import MosBlock, MosMaskMetadata, UpdateMosMaskMetadata
+from saltapi.web.schema.rss import (
+    MosBlock,
+    MosMaskMetadata,
+    UpdateMosMaskMetadata,
+)
 
 router = APIRouter(tags=["Instrument"])
 
@@ -18,7 +23,8 @@ router = APIRouter(tags=["Instrument"])
 )
 def get_masks_in_magazine(
     mask_type: Optional[str] = Query(
-        None, title="Mask type", description="The mask type."),
+        None, title="Mask type", description="The mask type."
+    ),
 ) -> List[str]:
     """
     Returns the list of masks in the magazine, optionally filtered by mask type.
@@ -37,7 +43,8 @@ def get_masks_in_magazine(
 def get_mos_mask_metadata(
     user: User = Depends(get_current_user),
     semesters: List[Semester] = Query(
-        ..., alias='semester', title="Semester", description="Semester"),
+        ..., alias="semester", title="Semester", description="Semester"
+    ),
 ) -> List[MosBlock]:
     """
     Get the list of blocks using MOS.
@@ -48,7 +55,8 @@ def get_mos_mask_metadata(
 
         instrument_service = services.instrument_service(unit_of_work.connection)
         mos_blocks = instrument_service.get_mos_mask_metadata(
-            [str(s) for s in semesters])
+            [str(s) for s in semesters]
+        )
         return [MosBlock(**md) for md in mos_blocks]
 
 
@@ -60,9 +68,7 @@ def get_mos_mask_metadata(
 )
 def update_mos_mask_metadata(
     mos_mask_metadata: UpdateMosMaskMetadata = Body(
-        ...,
-        title="The Slit mask",
-        description="Semester"
+        ..., title="The Slit mask", description="Semester"
     ),
     barcode: str = Path(..., title="Barcode", description="The barcode of slit mask"),
     user: User = Depends(get_current_user),

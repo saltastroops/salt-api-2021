@@ -15,7 +15,8 @@ class InstrumentService:
         """The list of MOS masks metadata."""
         return self.instrument_repository.get_mos_mask_metadata(semesters)
 
-    def update_mos_mask_metadata(self, mos_mask_metadata: Dict[str, Any]) \
-            -> Dict[str, Any]:
+    def update_mos_mask_metadata(
+        self, mos_mask_metadata: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Update slit mask information"""
         return self.instrument_repository.update_mos_mask_metadata(mos_mask_metadata)

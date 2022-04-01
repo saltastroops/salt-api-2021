@@ -515,13 +515,13 @@ FROM RssMosMaskDetails AS RMMD
 WHERE Barcode = :barcode
             """
         )
-        result = self.connection.execute(stmt,
-                                         {"barcode": barcode})
+        result = self.connection.execute(stmt, {"barcode": barcode})
         row = result.one()
         return {**row}
 
-    def update_mos_mask_metadata(self, mos_mask_metadata: Dict[str, Any])\
-            -> Dict[str, Any]:
+    def update_mos_mask_metadata(
+        self, mos_mask_metadata: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Update MOS mask metadata"""
         stmt = text(
             """
