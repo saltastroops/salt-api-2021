@@ -42,8 +42,17 @@ def get_masks_in_magazine(
 )
 def get_mos_mask_metadata(
     user: User = Depends(get_current_user),
-    semesters: List[Semester] = Query(
-        ..., alias="semester", title="Semester", description="Semester"
+    from_semester: Semester = Query(
+        "2000-1",
+        alias="from",
+        description="Only include proposals for this semester and later.",
+        title="From semester",
+    ),
+    to_semester: Semester = Query(
+        "2099-2",
+        alias="to",
+        description="Only include proposals for this semester and earlier.",
+        title="To semester",
     ),
 ) -> List[MosBlock]:
     """
@@ -55,7 +64,7 @@ def get_mos_mask_metadata(
 
         instrument_service = services.instrument_service(unit_of_work.connection)
         mos_blocks = instrument_service.get_mos_mask_metadata(
-            [str(s) for s in semesters]
+            from_semester, to_semester
         )
         return [MosBlock(**md) for md in mos_blocks]
 
@@ -86,3 +95,33 @@ def update_mos_mask_metadata(
         response = instrument_service.update_mos_mask_metadata(args)
         unit_of_work.connection.commit()
         return MosMaskMetadata(**response)
+
+
+@router.get(
+    "/rss/obsolete-masks",
+    summary="Get the masks that are no longer needed",
+    response_model=List[str],
+)
+def get_obsolete_masks(
+    from_semester: Semester = Query(
+        "2000-1",
+        alias="from",
+        description="Only include proposals for this semester and later.",
+        title="From semester",
+    ),
+    to_semester: Semester = Query(
+        "2099-2",
+        alias="to",
+        description="Only include proposals for this semester and earlier.",
+        title="To semester",
+    ),
+    mask_type: Optional[str] = Query(
+        None, title="Mask type", description="The mask type."
+    ),
+) -> List[str]:
+    """
+    Returns the list of obsolete masks, optionally filtered by mask type.
+    """
+    with UnitOfWork() as unit_of_work:
+        instrument_service = services.instrument_service(unit_of_work.connection)
+        return instrument_service.get_obsolete_masks(from_semester, to_semester, mask_type)

@@ -438,7 +438,8 @@ FROM RssCurrentMasks AS RCM
             liaison_astronomers[row["proposal_code_id"]] = row["surname"]
         return liaison_astronomers
 
-    def get_mos_masks_metadata(self, semesters: List[str]) -> List[Dict[str, Any]]:
+    def get_mos_masks_metadata(self, from_semester: str, to_semester: str) -> List[Dict[str, Any]]:
+
         stmt = text(
             """
 SELECT DISTINCT
@@ -478,11 +479,12 @@ FROM Proposal P
     JOIN Target USING (Target_Id)
     JOIN TargetCoordinates USING (TargetCoordinates_Id)
 WHERE RssMaskType='MOS' AND O.Observation_Order=1
-    AND CONCAT(S.Year, '-', S.Semester) IN :semesters
+    AND CONCAT(S.Year, '-', S.Semester) >= :from_semester
+    AND CONCAT(S.Year, '-', S.Semester) <= :to_semester
 ORDER BY P.Semester_Id, Proposal_Code, Proposal_Id DESC
         """
         )
-        results = self.connection.execute(stmt, {"semesters": tuple(semesters)})
+        results = self.connection.execute(stmt, {"from_semester": from_semester, "to_semester": to_semester})
 
         mos_blocks = []
         for row in results:
@@ -533,3 +535,20 @@ WHERE RssMask_Id = ( SELECT RssMask_Id FROM RssMask WHERE Barcode = :barcode )
         self.connection.execute(stmt, mos_mask_metadata)
 
         return self.get_mos_mask_metadata(mos_mask_metadata["barcode"])
+
+    def get_obsolete_masks(self, from_semester: str, to_semester: str, mask_type: Optional[str]) -> List[str]:
+        """
+        The list of obsolete masks, optionally filtered by a mask type.
+        """
+        mos_masks = self.get_mos_masks_metadata(from_semester, to_semester)
+        mask_in_magazine = self.get_mask_in_magazine(mask_type)
+        needed_masks = []
+        for m in self.get_mos_masks_metadata(from_semester, to_semester):
+            if m["n_visits"] > m["n_done"] and m["block_status"] == "Active":
+                needed_masks.append(m["barcode"])
+
+        obsolete_masks = []
+        for m in self.get_mask_in_magazine(mask_type):
+            if m not in needed_masks:
+                obsolete_masks.append(m)
+        return obsolete_masks
