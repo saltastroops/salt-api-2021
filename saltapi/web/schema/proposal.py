@@ -46,6 +46,10 @@ class ContactDetails(BaseModel):
         orm_mode = True
 
 
+class ProposalUser(ContactDetails):
+    id: int = Field(..., title="User id", description="User id.")
+
+
 class ProposalStatusValue(str, Enum):
     """Proposal status value."""
 
@@ -133,7 +137,7 @@ class GeneralProposalInfo(BaseModel):
         title="Data release date",
         description="Date when the proposal data is scheduled to become public",
     )
-    liaison_salt_astronomer: Optional[ContactDetails] = Field(
+    liaison_salt_astronomer: Optional[ProposalUser] = Field(
         ...,
         title="Liaison astronomer",
         description="SALT Astronomer who is the liaison astronomer for the proposal",
@@ -155,12 +159,9 @@ class GeneralProposalInfo(BaseModel):
     )
 
 
-class Investigator(ContactDetails):
+class Investigator(ProposalUser):
     """An investigator on a proposal."""
 
-    user_id: int = Field(
-        ..., title="User id", description="User id of the investigator"
-    )
     affiliation: Affiliation = Field(
         ..., title="Affiliation", description="Affiliation of the investigator"
     )
@@ -438,13 +439,13 @@ class ProposalListItem(BaseModel):
     proposal_type: ProposalType = Field(
         ..., title="Proposal type", description="Proposal type"
     )
-    principal_investigator: ContactDetails = Field(
+    principal_investigator: ProposalUser = Field(
         ..., title="Principal Investigator", description="Principal Investigator"
     )
-    principal_contact: ContactDetails = Field(
+    principal_contact: ProposalUser = Field(
         ..., title="Principal Contact", description="Principal Contact"
     )
-    liaison_astronomer: Optional[ContactDetails] = Field(
+    liaison_astronomer: Optional[ProposalUser] = Field(
         ..., title="Liaison Astronomer", description="Liaison Astronomer"
     )
 

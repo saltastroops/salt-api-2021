@@ -44,12 +44,15 @@ SELECT DISTINCT P.Proposal_Id                   AS id,
                 PS.Status                       AS status,
                 PIR.InactiveReason              AS reason,
                 T.ProposalType                  AS proposal_type,
+                Leader.PiptUser_Id              AS pi_user_id,
                 Leader.FirstName                AS pi_given_name,
                 Leader.Surname                  AS pi_family_name,
                 Leader.Email                    AS pi_email,
+                Contact.PiptUser_Id             AS pc_user_id,
                 Contact.FirstName               AS pc_given_name,
                 Contact.Surname                 AS pc_family_name,
                 Contact.Email                   AS pc_email,
+                Astronomer.PiptUser_Id          AS la_user_id,
                 Astronomer.FirstName            AS la_given_name,
                 Astronomer.Surname              AS la_family_name
 FROM Proposal P
@@ -141,11 +144,13 @@ LIMIT :limit;
                 "status": {"value": row.status, "reason": row.reason},
                 "proposal_type": self._map_proposal_type(row.proposal_type),
                 "principal_investigator": {
+                    "id": row.pi_user_id,
                     "given_name": row.pi_given_name,
                     "family_name": row.pi_family_name,
                     "email": row.pi_email,
                 },
                 "principal_contact": {
+                    "id": row.pc_user_id,
                     "given_name": row.pc_given_name,
                     "family_name": row.pc_family_name,
                     "email": row.pc_email,
@@ -163,6 +168,7 @@ LIMIT :limit;
             return None
 
         astronomer = {
+            "id": row.la_user_id,
             "given_name": row.la_given_name,
             "family_name": row.la_family_name,
             "email": "salthelp@salt.ac.za",
@@ -438,6 +444,7 @@ SELECT PT.Title                            AS title,
        PGI.ActOnAlert                      AS target_of_opportunity,
        P.TotalReqTime                      AS total_requested_time,
        PGI.ProprietaryPeriod               AS proprietary_period,
+       I.PiptUser_Id                       AS astronomer_user_id,
        I.FirstName                         AS astronomer_given_name,
        I.Surname                           AS astronomer_family_name,
        I.Email                             AS astronomer_email,
@@ -486,6 +493,7 @@ WHERE PC.Proposal_Code = :proposal_code
 
         if row.astronomer_email:
             info["liaison_salt_astronomer"] = {
+                "id": row.astronomer_user_id,
                 "given_name": row.astronomer_given_name,
                 "family_name": row.astronomer_family_name,
                 "email": row.astronomer_email,
@@ -507,7 +515,7 @@ WHERE PC.Proposal_Code = :proposal_code
         """
         stmt = text(
             """
-SELECT PU.PiptUser_Id          AS user_id,
+SELECT PU.PiptUser_Id          AS id,
        I.FirstName             AS given_name,
        I.Surname               AS family_name,
        I.Email                 AS email,
