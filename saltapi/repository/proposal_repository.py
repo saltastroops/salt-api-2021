@@ -542,8 +542,8 @@ ORDER BY I.Surname, I.FirstName
         pc_id = self._principal_contact_user_id(proposal_code)
 
         for investigator in investigators:
-            investigator["is_pi"] = investigator["user_id"] == pi_id
-            investigator["is_pc"] = investigator["user_id"] == pc_id
+            investigator["is_pi"] = investigator["id"] == pi_id
+            investigator["is_pc"] = investigator["id"] == pc_id
 
             partner_code = investigator["partner_code"]
             investigator["affiliation"] = {
