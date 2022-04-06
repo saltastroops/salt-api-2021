@@ -102,10 +102,10 @@ def update_mos_mask_metadata(
     summary="Get the masks that are no longer needed",
     response_model=List[str],
 )
-def get_mos_obsolete_masks_in_magazine() -> List[str]:
+def get_obsolete_mos_masks_in_magazine() -> List[str]:
     """
     Returns the list of MOS obsolete masks, optionally filtered by mask type.
     """
     with UnitOfWork() as unit_of_work:
         instrument_service = services.instrument_service(unit_of_work.connection)
-        return instrument_service.get_mos_obsolete_masks_in_magazine()
+        return instrument_service.get_obsolete_mos_masks_in_magazine()

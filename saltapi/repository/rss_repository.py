@@ -539,7 +539,7 @@ WHERE RssMask_Id = ( SELECT RssMask_Id FROM RssMask WHERE Barcode = :barcode )
 
         return self.get_mos_mask_metadata(mos_mask_metadata["barcode"])
 
-    def get_mos_obsolete_masks_in_magazine(self) -> List[str]:
+    def get_obsolete_mos_masks_in_magazine(self) -> List[str]:
         """
         The list of MOS obsolete masks, optionally filtered by a mask type.
         """
