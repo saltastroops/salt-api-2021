@@ -45,13 +45,13 @@ def get_mos_mask_metadata(
     from_semester: Semester = Query(
         "2000-1",
         alias="from",
-        description="Only include proposals for this semester and later.",
+        description="Only include MOS masks for this semester and later.",
         title="From semester",
     ),
     to_semester: Semester = Query(
         "2099-2",
         alias="to",
-        description="Only include proposals for this semester and earlier.",
+        description="Only include MOS masks for this semester and earlier.",
         title="To semester",
     ),
 ) -> List[MosBlock]:
@@ -98,30 +98,14 @@ def update_mos_mask_metadata(
 
 
 @router.get(
-    "/rss/obsolete-masks",
+    "/rss/mos-obsolete-masks-in-magazine",
     summary="Get the masks that are no longer needed",
     response_model=List[str],
 )
-def get_obsolete_masks(
-    from_semester: Semester = Query(
-        "2000-1",
-        alias="from",
-        description="Only include proposals for this semester and later.",
-        title="From semester",
-    ),
-    to_semester: Semester = Query(
-        "2099-2",
-        alias="to",
-        description="Only include proposals for this semester and earlier.",
-        title="To semester",
-    ),
-    mask_type: Optional[str] = Query(
-        None, title="Mask type", description="The mask type."
-    ),
-) -> List[str]:
+def get_mos_obsolete_masks_in_magazine() -> List[str]:
     """
-    Returns the list of obsolete masks, optionally filtered by mask type.
+    Returns the list of MOS obsolete masks, optionally filtered by mask type.
     """
     with UnitOfWork() as unit_of_work:
         instrument_service = services.instrument_service(unit_of_work.connection)
-        return instrument_service.get_obsolete_masks(from_semester, to_semester, mask_type)
+        return instrument_service.get_mos_obsolete_masks_in_magazine()

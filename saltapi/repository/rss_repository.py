@@ -1,9 +1,12 @@
+from datetime import datetime
 from typing import Any, Dict, List, Optional, Set
 
+from dateutil.parser import parse
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
 from saltapi.service.instrument import RSS
+from saltapi.util import semester_of_datetime
 
 
 class RssRepository:
@@ -536,19 +539,40 @@ WHERE RssMask_Id = ( SELECT RssMask_Id FROM RssMask WHERE Barcode = :barcode )
 
         return self.get_mos_mask_metadata(mos_mask_metadata["barcode"])
 
-    def get_obsolete_masks(self, from_semester: str, to_semester: str, mask_type: Optional[str]) -> List[str]:
+    def get_mos_obsolete_masks_in_magazine(self) -> List[str]:
         """
-        The list of obsolete masks, optionally filtered by a mask type.
+        The list of MOS obsolete masks, optionally filtered by a mask type.
         """
-        mos_masks = self.get_mos_masks_metadata(from_semester, to_semester)
-        mask_in_magazine = self.get_mask_in_magazine(mask_type)
+        stmt = """
+SELECT DISTINCT 
+    Barcode AS barcode,
+    BlockStatus         AS block_status,
+    NVisits             AS n_visits,
+    NDone               AS n_done
+FROM Proposal P
+    JOIN Semester S ON (P.Semester_Id=S.Semester_Id)
+    JOIN Block B ON (P.Proposal_Id=B.Proposal_Id)
+    JOIN BlockStatus BS ON (B.BlockStatus_Id=BS.BlockStatus_Id)
+    JOIN Pointing PO USING (Block_Id)
+    JOIN TelescopeConfigObsConfig USING (Pointing_Id)
+    JOIN ObsConfig ON (PlannedObsConfig_Id=ObsConfig_Id)
+    JOIN RssPatternDetail USING (RssPattern_Id)
+    JOIN Rss using (Rss_Id)
+    JOIN RssConfig USING (RssConfig_Id)
+    JOIN RssMask RM USING (RssMask_Id)
+    JOIN RssMaskType RMT ON (RM.RssMaskType_Id=RMT.RssMaskType_Id)
+    JOIN RssMosMaskDetails USING (RssMask_Id)
+WHERE CONCAT(S.Year, '-', S.Semester) >= :semester
+"""
         needed_masks = []
-        for m in self.get_mos_masks_metadata(from_semester, to_semester):
+        for m in self.connection.execute(text(stmt), {
+            "semester": semester_of_datetime(datetime.now().astimezone()),
+        }):
             if m["n_visits"] > m["n_done"] and m["block_status"] == "Active":
                 needed_masks.append(m["barcode"])
 
         obsolete_masks = []
-        for m in self.get_mask_in_magazine(mask_type):
+        for m in self.get_mask_in_magazine("MOS"):
             if m not in needed_masks:
                 obsolete_masks.append(m)
         return obsolete_masks

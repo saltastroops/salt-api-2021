@@ -46,6 +46,6 @@ class InstrumentRepository:
         """Update MOS mask metadata"""
         return self.rss_repository.update_mos_mask_metadata(mos_mask_metadata)
 
-    def get_obsolete_masks(self, from_semester: str, to_semester: str, mask_type: Optional[str]):
-        """The list of obsolete masks."""
-        return self.rss_repository.get_obsolete_masks(from_semester, to_semester, mask_type)
+    def get_mos_obsolete_masks_in_magazine(self):
+        """The list of MOS obsolete masks."""
+        return self.rss_repository.get_mos_obsolete_masks_in_magazine()
