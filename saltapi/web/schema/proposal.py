@@ -86,6 +86,7 @@ class ProposalType(str, Enum):
     GRAVITATIONAL_WAVE_EVENT = "Gravitational Wave Event"
     KEY_SCIENCE_PROGRAM = "Key Science Program"
     LARGE_SCIENCE_PROPOSAL = "Large Science Proposal"
+    OPTICON_RADIO_PILOT = "OPTICON-Radionet Pilot"
     SCIENCE = "Science"
     SCIENCE_LONG_TERM = "Science - Long Term"
     SCIENCE_VERIFICATION = "Science Verification"
