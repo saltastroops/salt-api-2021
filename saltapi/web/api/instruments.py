@@ -69,8 +69,8 @@ def get_mos_mask_metadata(
         return [MosBlock(**md) for md in mos_blocks]
 
 
-@router.put(
-    "/rss/mos-mask-metadata/{barcode}",
+@router.patch(
+    "/rss/mos-mask/{barcode}",
     summary="Update MOS mask metadata",
     response_model=MosMaskMetadata,
     status_code=200,
