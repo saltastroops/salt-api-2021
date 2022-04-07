@@ -36,7 +36,9 @@ class InstrumentRepository:
         """The list of masks in the magazine."""
         return self.rss_repository.get_mask_in_magazine(mask_type)
 
-    def get_mos_masks_metadata(self, from_semester: str, to_semester: str) -> List[Dict[str, Any]]:
+    def get_mos_masks_metadata(
+        self, from_semester: str, to_semester: str
+    ) -> List[Dict[str, Any]]:
         """The list of MOS masks metadata."""
         return self.rss_repository.get_mos_masks_metadata(from_semester, to_semester)
 
@@ -46,6 +48,6 @@ class InstrumentRepository:
         """Update MOS mask metadata"""
         return self.rss_repository.update_mos_mask_metadata(mos_mask_metadata)
 
-    def get_obsolete_mos_masks_in_magazine(self):
+    def get_obsolete_mos_masks_in_magazine(self) -> List[str]:
         """The list of MOS obsolete masks."""
         return self.rss_repository.get_obsolete_mos_masks_in_magazine()

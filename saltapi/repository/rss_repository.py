@@ -1,7 +1,6 @@
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Set
 
-from dateutil.parser import parse
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
@@ -441,7 +440,9 @@ FROM RssCurrentMasks AS RCM
             liaison_astronomers[row["proposal_code_id"]] = row["surname"]
         return liaison_astronomers
 
-    def get_mos_masks_metadata(self, from_semester: str, to_semester: str) -> List[Dict[str, Any]]:
+    def get_mos_masks_metadata(
+        self, from_semester: str, to_semester: str
+    ) -> List[Dict[str, Any]]:
 
         stmt = text(
             """
@@ -487,7 +488,9 @@ WHERE RssMaskType='MOS' AND O.Observation_Order=1
 ORDER BY P.Semester_Id, Proposal_Code, Proposal_Id DESC
         """
         )
-        results = self.connection.execute(stmt, {"from_semester": from_semester, "to_semester": to_semester})
+        results = self.connection.execute(
+            stmt, {"from_semester": from_semester, "to_semester": to_semester}
+        )
 
         mos_blocks = []
         for row in results:
@@ -544,7 +547,7 @@ WHERE RssMask_Id = ( SELECT RssMask_Id FROM RssMask WHERE Barcode = :barcode )
         The list of MOS obsolete masks, optionally filtered by a mask type.
         """
         stmt = """
-SELECT DISTINCT 
+SELECT DISTINCT
     Barcode AS barcode
 FROM Proposal P
     JOIN Semester S ON (P.Semester_Id=S.Semester_Id)
@@ -562,9 +565,12 @@ WHERE CONCAT(S.Year, '-', S.Semester) >= :semester
     AND NVisits >= NDone
 """
         needed_masks = [
-            m["barcode"] for m in self.connection.execute(text(stmt), {
-                "semester": semester_of_datetime(datetime.now().astimezone())
-            })]
+            m["barcode"]
+            for m in self.connection.execute(
+                text(stmt),
+                {"semester": semester_of_datetime(datetime.now().astimezone())},
+            )
+        ]
 
         obsolete_masks = []
         for m in self.get_mask_in_magazine():
