@@ -403,7 +403,7 @@ ORDER BY is_preferred_lamp DESC
         ]
         return entries
 
-    def get_mask_in_magazine(self, mask_type: Optional[str]) -> List[str]:
+    def get_mask_in_magazine(self, mask_type: Optional[str] = None) -> List[str]:
         """
         The list of masks in the magazine, optionally filtered by a mask type.
         """
@@ -545,10 +545,7 @@ WHERE RssMask_Id = ( SELECT RssMask_Id FROM RssMask WHERE Barcode = :barcode )
         """
         stmt = """
 SELECT DISTINCT 
-    Barcode AS barcode,
-    BlockStatus         AS block_status,
-    NVisits             AS n_visits,
-    NDone               AS n_done
+    Barcode AS barcode
 FROM Proposal P
     JOIN Semester S ON (P.Semester_Id=S.Semester_Id)
     JOIN Block B ON (P.Proposal_Id=B.Proposal_Id)
@@ -560,19 +557,17 @@ FROM Proposal P
     JOIN Rss using (Rss_Id)
     JOIN RssConfig USING (RssConfig_Id)
     JOIN RssMask RM USING (RssMask_Id)
-    JOIN RssMaskType RMT ON (RM.RssMaskType_Id=RMT.RssMaskType_Id)
-    JOIN RssMosMaskDetails USING (RssMask_Id)
 WHERE CONCAT(S.Year, '-', S.Semester) >= :semester
+    AND (BlockStatus = "Active" OR BlockStatus = "On Hold")
+    AND NVisits >= NDone
 """
-        needed_masks = []
-        for m in self.connection.execute(text(stmt), {
-            "semester": semester_of_datetime(datetime.now().astimezone()),
-        }):
-            if m["n_visits"] > m["n_done"] and m["block_status"] == "Active":
-                needed_masks.append(m["barcode"])
+        needed_masks = [
+            m["barcode"] for m in self.connection.execute(text(stmt), {
+                "semester": semester_of_datetime(datetime.now().astimezone())
+            })]
 
         obsolete_masks = []
-        for m in self.get_mask_in_magazine("MOS"):
+        for m in self.get_mask_in_magazine():
             if m not in needed_masks:
                 obsolete_masks.append(m)
         return obsolete_masks
