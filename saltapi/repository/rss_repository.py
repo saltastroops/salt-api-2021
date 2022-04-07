@@ -1,9 +1,11 @@
+from datetime import datetime
 from typing import Any, Dict, List, Optional, Set
 
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
 from saltapi.service.instrument import RSS
+from saltapi.util import semester_of_datetime
 
 
 class RssRepository:
@@ -400,21 +402,21 @@ ORDER BY is_preferred_lamp DESC
         ]
         return entries
 
-    def get_mos_mask_in_magazine(self) -> List[str]:
+    def get_mask_in_magazine(self, mask_type: Optional[str] = None) -> List[str]:
         """
-        The list of MOS masks in the magazine.
+        The list of masks in the magazine, optionally filtered by a mask type.
         """
-        stmt = text(
-            """
+        stmt = """
 SELECT
     Barcode AS barcode
 FROM RssCurrentMasks AS RCM
     JOIN RssMask AS RM ON RCM.RssMask_Id = RM.RssMask_Id
     JOIN RssMaskType AS RMT ON RM.RssMaskType_Id = RMT.RssMaskType_Id
-WHERE RssMaskType = "MOS"
         """
-        )
-        results = self.connection.execute(stmt, {})
+        if mask_type:
+            stmt += " WHERE RssMaskType = :mask_type"
+
+        results = self.connection.execute(text(stmt), {"mask_type": mask_type})
 
         return [row.barcode for row in results]
 
@@ -438,7 +440,10 @@ WHERE RssMaskType = "MOS"
             liaison_astronomers[row["proposal_code_id"]] = row["surname"]
         return liaison_astronomers
 
-    def get_mos_blocks(self, semesters: List[str]) -> List[Dict[str, Any]]:
+    def get_mos_masks_metadata(
+        self, from_semester: str, to_semester: str
+    ) -> List[Dict[str, Any]]:
+
         stmt = text(
             """
 SELECT DISTINCT
@@ -478,17 +483,22 @@ FROM Proposal P
     JOIN Target USING (Target_Id)
     JOIN TargetCoordinates USING (TargetCoordinates_Id)
 WHERE RssMaskType='MOS' AND O.Observation_Order=1
-    AND CONCAT(S.Year, '-', S.Semester) IN :semesters
+    AND CONCAT(S.Year, '-', S.Semester) >= :from_semester
+    AND CONCAT(S.Year, '-', S.Semester) <= :to_semester
 ORDER BY P.Semester_Id, Proposal_Code, Proposal_Id DESC
         """
         )
-        results = self.connection.execute(stmt, {"semesters": tuple(semesters)})
+        results = self.connection.execute(
+            stmt, {"from_semester": from_semester, "to_semester": to_semester}
+        )
 
         mos_blocks = []
         for row in results:
             mos_blocks.append(dict(row))
 
         proposal_code_ids = set([m["proposal_code_id"] for m in mos_blocks])
+        if not proposal_code_ids:
+            return []
         liaison_astronomers = self._get_liaison_astronomers(proposal_code_ids)
         for m in mos_blocks:
             proposal_code_id = m["proposal_code_id"]
@@ -499,3 +509,71 @@ ORDER BY P.Semester_Id, Proposal_Code, Proposal_Id DESC
             )
             m["liaison_astronomer"] = liaison_astronomer
         return mos_blocks
+
+    def get_mos_mask_metadata(self, barcode: str) -> Dict[str, Any]:
+        stmt = text(
+            """
+SELECT
+    CutBy		AS cut_by,
+    CutDate		AS cut_date,
+    SaComment	AS mask_comment,
+    Barcode		As barcode
+FROM RssMosMaskDetails AS RMMD
+    JOIN RssMask AS RM ON RMMD.RssMask_Id = RM.RssMask_Id
+WHERE Barcode = :barcode
+            """
+        )
+        result = self.connection.execute(stmt, {"barcode": barcode})
+        row = result.one()
+        return {**row}
+
+    def update_mos_mask_metadata(
+        self, mos_mask_metadata: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Update MOS mask metadata"""
+        stmt = text(
+            """
+UPDATE RssMosMaskDetails
+SET CutBy = :cut_by, CutDate = :cut_date, saComment = :mask_comment
+WHERE RssMask_Id = ( SELECT RssMask_Id FROM RssMask WHERE Barcode = :barcode )
+    """
+        )
+        self.connection.execute(stmt, mos_mask_metadata)
+
+        return self.get_mos_mask_metadata(mos_mask_metadata["barcode"])
+
+    def get_obsolete_mos_masks_in_magazine(self) -> List[str]:
+        """
+        The list of MOS obsolete masks, optionally filtered by a mask type.
+        """
+        stmt = """
+SELECT DISTINCT
+    Barcode AS barcode
+FROM Proposal P
+    JOIN Semester S ON (P.Semester_Id=S.Semester_Id)
+    JOIN Block B ON (P.Proposal_Id=B.Proposal_Id)
+    JOIN BlockStatus BS ON (B.BlockStatus_Id=BS.BlockStatus_Id)
+    JOIN Pointing PO USING (Block_Id)
+    JOIN TelescopeConfigObsConfig USING (Pointing_Id)
+    JOIN ObsConfig ON (PlannedObsConfig_Id=ObsConfig_Id)
+    JOIN RssPatternDetail USING (RssPattern_Id)
+    JOIN Rss using (Rss_Id)
+    JOIN RssConfig USING (RssConfig_Id)
+    JOIN RssMask RM USING (RssMask_Id)
+WHERE CONCAT(S.Year, '-', S.Semester) >= :semester
+    AND (BlockStatus = "Active" OR BlockStatus = "On Hold")
+    AND NVisits >= NDone
+"""
+        needed_masks = [
+            m["barcode"]
+            for m in self.connection.execute(
+                text(stmt),
+                {"semester": semester_of_datetime(datetime.now().astimezone())},
+            )
+        ]
+
+        obsolete_masks = []
+        for m in self.get_mask_in_magazine():
+            if m not in needed_masks:
+                obsolete_masks.append(m)
+        return obsolete_masks

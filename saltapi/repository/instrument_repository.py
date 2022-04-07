@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from sqlalchemy.engine import Connection
 
@@ -32,10 +32,22 @@ class InstrumentRepository:
         """Return a BVIT setup."""
         return self.bvit_repository.get(bvit_id)
 
-    def get_mos_mask_in_magazine(self) -> List[str]:
-        """The list of MOS masks in the magazine."""
-        return self.rss_repository.get_mos_mask_in_magazine()
+    def get_masks_in_magazine(self, mask_type: Optional[str]) -> List[str]:
+        """The list of masks in the magazine."""
+        return self.rss_repository.get_mask_in_magazine(mask_type)
 
-    def get_mos_blocks(self, semesters: List[str]) -> List[Dict[str, Any]]:
-        """The list of MOS blocks."""
-        return self.rss_repository.get_mos_blocks(semesters)
+    def get_mos_masks_metadata(
+        self, from_semester: str, to_semester: str
+    ) -> List[Dict[str, Any]]:
+        """The list of MOS masks metadata."""
+        return self.rss_repository.get_mos_masks_metadata(from_semester, to_semester)
+
+    def update_mos_mask_metadata(
+        self, mos_mask_metadata: dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Update MOS mask metadata"""
+        return self.rss_repository.update_mos_mask_metadata(mos_mask_metadata)
+
+    def get_obsolete_mos_masks_in_magazine(self) -> List[str]:
+        """The list of MOS obsolete masks."""
+        return self.rss_repository.get_obsolete_mos_masks_in_magazine()

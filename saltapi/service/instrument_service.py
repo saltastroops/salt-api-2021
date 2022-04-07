@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from saltapi.repository.instrument_repository import InstrumentRepository
 
@@ -7,11 +7,24 @@ class InstrumentService:
     def __init__(self, instrument_repository: InstrumentRepository):
         self.instrument_repository = instrument_repository
 
-    def get_mos_mask_in_magazine(self) -> List[str]:
-        """The list of MOS masks in the magazine."""
-        return self.instrument_repository.get_mos_mask_in_magazine()
+    def get_masks_in_magazine(self, mask_type: Optional[str]) -> List[str]:
+        """The list of masks in the magazine."""
+        return self.instrument_repository.get_masks_in_magazine(mask_type)
 
-    def get_mos_blocks(self, semesters: List[str]) -> List[Dict[str, Any]]:
-        """The list of MOS blocks."""
+    def get_mos_mask_metadata(
+        self, from_semester: str, to_semester: str
+    ) -> List[Dict[str, Any]]:
+        """The list of MOS masks metadata."""
+        return self.instrument_repository.get_mos_masks_metadata(
+            from_semester, to_semester
+        )
 
-        return self.instrument_repository.get_mos_blocks(semesters)
+    def update_mos_mask_metadata(
+        self, mos_mask_metadata: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Update slit mask information"""
+        return self.instrument_repository.update_mos_mask_metadata(mos_mask_metadata)
+
+    def get_obsolete_mos_masks_in_magazine(self) -> List[str]:
+        """The list of MOS obsolete masks."""
+        return self.instrument_repository.get_obsolete_mos_masks_in_magazine()

@@ -457,6 +457,13 @@ WHERE PS.PiptSetting_Name = 'RightAdmin'
         result = self.connection.execute(stmt, {"username": username})
         return cast(int, result.scalar()) > 0
 
+    def is_engineer(self) -> bool:
+        """
+        Should check whether the user is an engineer
+        """
+        # TODO Method need to be implemented.
+        return False
+
     @staticmethod
     def get_password_hash(password: str) -> str:
         """Hash a plain text password."""
