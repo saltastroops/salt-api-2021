@@ -104,7 +104,7 @@ def update_mos_mask_metadata(
 )
 def get_obsolete_rss_masks_in_magazine() -> List[str]:
     """
-    Returns the list of MOS masks.
+    Returns the list of obsolete RSS masks.
     """
     with UnitOfWork() as unit_of_work:
         instrument_service = services.instrument_service(unit_of_work.connection)

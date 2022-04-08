@@ -50,4 +50,4 @@ class InstrumentRepository:
 
     def get_obsolete_rss_masks_in_magazine(self) -> List[str]:
         """The list of obsolete RSS masks."""
-        return self.rss_repository.get_obsolete_masks_in_magazine()
+        return self.rss_repository.get_obsolete_rss_masks_in_magazine()
