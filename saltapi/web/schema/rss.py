@@ -428,6 +428,14 @@ class MosBlock(BaseModel):
     liaison_astronomer: Optional[str] = Field(
         ..., title="Liaison astronomer", description="The liaison astronomer"
     )
+    other_barcodes: Optional[List[str]] = Field(
+        ..., title="Other barcode", description="The other masks with the same cut."
+    )
+    remaining_nights: int = Field(
+        ...,
+        title="Remaining nights",
+        description="The number of night of which the block is visible"
+    )
 
 
 class UpdateMosMaskMetadata(BaseModel):
