@@ -19,6 +19,14 @@ class ContactDetails:
 
 
 @dataclass()
+class UserInfo(ContactDetails):
+    id: int
+    partner: str
+    institute: str
+    phone: str
+
+
+@dataclass()
 class User:
     id: int
     username: str

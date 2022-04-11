@@ -1,3 +1,5 @@
+from typing import List, Dict, Any
+
 from fastapi import APIRouter, Body, Depends, HTTPException, Path
 from starlette import status
 
@@ -6,6 +8,7 @@ from saltapi.repository.unit_of_work import UnitOfWork
 from saltapi.service.authentication_service import get_current_user
 from saltapi.service.user import NewUserDetails as _NewUserDetails
 from saltapi.service.user import User as _User
+from saltapi.service.user import UserInfo as _UserDetails
 from saltapi.service.user import UserUpdate as _UserUpdate
 from saltapi.web import services
 from saltapi.web.schema.common import Message
@@ -13,6 +16,7 @@ from saltapi.web.schema.user import (
     NewUserDetails,
     PasswordResetRequest,
     User,
+    UserInfo,
     UserUpdate,
 )
 
@@ -83,6 +87,17 @@ def create_user(
         return user_service.get_user(user.username)
 
 
+@router.get(
+    "/users-info", summary="Get users information", response_model=List[Dict[str, Any]]
+)
+def get_users_info(
+    user: _User = Depends(get_current_user),
+) -> List[Dict[str, Any]]:
+    with UnitOfWork() as unit_of_work:
+        user_service = services.user_service(unit_of_work.connection)
+        return user_service.get_users_info()
+
+
 @router.get("/{username}", summary="Get user details", response_model=User)
 def get_user(
     username: str = Path(
@@ -98,6 +113,23 @@ def get_user(
 
         user_service = services.user_service(unit_of_work.connection)
         return user_service.get_user(username)
+
+
+@router.get("/{username}/info", summary="Get user information", response_model=UserInfo)
+def get_user_info(
+    username: str = Path(
+        ...,
+        title="Username",
+        description="Username of the user whose information is requested.",
+    ),
+    user: _User = Depends(get_current_user),
+) -> _UserDetails:
+    with UnitOfWork() as unit_of_work:
+        permission_service = services.permission_service(unit_of_work.connection)
+        permission_service.check_permission_to_view_user(user, username)
+
+        user_service = services.user_service(unit_of_work.connection)
+        return user_service.get_user_info(username)
 
 
 @router.patch("/{username}", summary="Update user details", response_model=User)

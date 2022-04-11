@@ -1,14 +1,21 @@
 import hashlib
 import secrets
 import uuid
-from typing import List, cast
+from typing import Any, Dict, List, cast
 
 from passlib.context import CryptContext
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
 from saltapi.exceptions import NotFoundError
-from saltapi.service.user import NewUserDetails, Role, User, UserUpdate
+from saltapi.service.user import (
+    NewUserDetails,
+    Role,
+    User,
+    UserInfo,
+    UserUpdate,
+)
+from saltapi.util import is_valid_email
 
 pwd_context = CryptContext(
     schemes=["bcrypt", "md5_crypt"], default="bcrypt", deprecated="auto"
@@ -43,6 +50,77 @@ WHERE PU.Username = :username
         if not user:
             raise NotFoundError("Unknown username")
         return User(**user, roles=self.get_user_roles(username))
+
+    def get_user_info(self, username: str) -> UserInfo:
+        """
+        Returns user information with a given username
+
+        If the username does not exist, a NotFoundError is raised.
+        """
+        stmt = text(
+            """
+SELECT PU.PiptUser_Id          AS id,
+       I.FirstName             AS given_name,
+       I.Surname               AS family_name,
+       I.Email                 AS email,
+       P.Partner_Name          AS partner,
+       `IN`.InstituteName_Name AS institute,
+       I.Phone                 AS phone
+FROM PiptUser PU
+         JOIN Investigator I ON I.Investigator_Id = PU.Investigator_Id
+         JOIN Institute I2 ON I.Institute_Id = I2.Institute_Id
+         JOIN Partner P ON I2.Partner_Id = P.Partner_Id
+         JOIN InstituteName `IN` ON I2.InstituteName_Id = `IN`.InstituteName_Id
+WHERE PU.Username = :username
+        """
+        )
+        result = self.connection.execute(stmt, {"username": username})
+        user_details = result.one_or_none()
+        if not user_details:
+            raise NotFoundError("Unknown username")
+        return UserInfo(**user_details)
+
+    def get_users_info(self) -> List[Dict[str, Any]]:
+        """
+        Returns a list of users information
+
+        If the username does not exist, a NotFoundError is raised.
+        """
+        stmt = text(
+            """
+SELECT DISTINCT PU.PiptUser_Id          AS id,
+                I.FirstName             AS given_name,
+                I.Surname               AS family_name,
+                I.Email                 AS email,
+                P.Partner_Name          AS partner,
+                `IN`.InstituteName_Name AS institute,
+                I.Phone                 AS phone
+FROM PiptUser PU
+         JOIN Investigator I ON I.Investigator_Id = PU.Investigator_Id
+         JOIN Institute I2 ON I.Institute_Id = I2.Institute_Id
+         JOIN Partner P ON I2.Partner_Id = P.Partner_Id
+         JOIN InstituteName `IN` ON I2.InstituteName_Id = `IN`.InstituteName_Id
+WHERE I.FirstName != 'Guest' 
+ORDER BY I.Surname, I.FirstName
+        """
+        )
+
+        result = self.connection.execute(stmt)
+
+        users_details = [
+            {
+                "id": row.id,
+                "given_name": row.given_name,
+                "family_name": row.family_name,
+                "email": row.email,
+                "partner": row.partner,
+                "institute": row.institute,
+                "phone": row.phone,
+            }
+            for row in result
+            if is_valid_email(row.email)
+        ]
+        return users_details
 
     def get_by_id(self, user_id: str) -> User:
         """

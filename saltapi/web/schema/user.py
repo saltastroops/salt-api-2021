@@ -30,6 +30,18 @@ class User(ProposalUser):
     roles: List[UserRole] = Field(..., title="User roles", description="User roles.")
 
 
+class UserInfo(ProposalUser):
+    """User details, including contact details, partner and institution."""
+
+    partner: str = Field(
+        ..., title="Partner institution", description="Partner institution"
+    )
+    institute: str = Field(..., title="Institute", description="Institute")
+    phone: Optional[str] = Field(
+        ..., title="Phone numbers", description="Phone numbers"
+    )
+
+
 class NewUserDetails(ContactDetails):
     """Details for creating a user."""
 
