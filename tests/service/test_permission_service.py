@@ -8,7 +8,7 @@ from saltapi.repository.proposal_repository import ProposalRepository
 from saltapi.repository.user_repository import UserRepository
 from saltapi.service.permission_service import PermissionService
 from saltapi.service.proposal import ProposalCode
-from saltapi.service.user import User
+from saltapi.service.user import Affiliation, User
 
 
 class FakeUserRepository:
@@ -119,6 +119,7 @@ USER = User(
     family_name="One",
     email="someone@example.com",
     password_hash="1234",
+    affiliation=Affiliation(partner="aff", institute="inst"),
     roles=[],
 )
 

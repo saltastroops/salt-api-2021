@@ -1,5 +1,4 @@
 """Utility functions."""
-import re
 from datetime import datetime, timedelta
 from typing import NamedTuple
 
@@ -40,16 +39,6 @@ def partner_name(partner_code: str) -> str:
         raise ValueError(f"Unknown partner code: {partner_code}")
 
     return _partners[partner_code]
-
-
-def is_valid_email(email: str) -> bool:
-    """
-    Validate email address
-    """
-    regex = re.compile(
-        r"([A-Za-z0-9]+[.-_])*[A-Za-z0-9]+@[A-Za-z0-9-]+(\.[A-Z|a-z]{2,})+"
-    )
-    return True if re.fullmatch(regex, email) else False
 
 
 def tonight() -> TimeInterval:

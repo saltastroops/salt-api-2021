@@ -1,16 +1,16 @@
 from datetime import timedelta
-from typing import Any, Dict, List
+from typing import List
 
 from saltapi.exceptions import NotFoundError, ValidationError
 from saltapi.repository.user_repository import UserRepository
 from saltapi.service.authentication_service import AuthenticationService
 from saltapi.service.mail_service import MailService
 from saltapi.service.user import (
+    AffiliationListItem,
     NewUserDetails,
     Role,
     User,
-    UserInfo,
-    UserUpdate,
+    UserUpdate, UserListItem,
 )
 from saltapi.settings import Settings
 
@@ -94,13 +94,13 @@ SALT Team
         user.password_hash = "***"  # Just in case the password hash ends up somewhere
         return user
 
-    def get_user_info(self, username: str) -> UserInfo:
-        user_details = self.repository.get_user_info(username)
-        return user_details
-
-    def get_users_info(self) -> List[Dict[str, Any]]:
-        users_details = self.repository.get_users_info()
+    def get_users(self) -> List[UserListItem]:
+        users_details = self.repository.get_users()
         return users_details
+
+    def get_affiliations(self) -> List[AffiliationListItem]:
+        affiliations = self.repository.get_affiliations()
+        return affiliations
 
     def get_user_by_email(self, email: str) -> User:
         user = self.repository.get_by_email(email)

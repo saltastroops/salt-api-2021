@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from enum import Enum
 from typing import List, NamedTuple, Optional
 
@@ -19,11 +19,28 @@ class ContactDetails:
 
 
 @dataclass()
-class UserInfo(ContactDetails):
+class UserListItem:
     id: int
+    family_name: str
+    given_name: str
+
+    def asdict(self):  # type: ignore # noqa
+        return asdict(self)
+
+
+@dataclass()
+class AffiliationListItem:
+    partner: str
+    institutes: List[str]
+
+    def asdict(self):  # type: ignore # noqa
+        return asdict(self)
+
+
+@dataclass()
+class Affiliation:
     partner: str
     institute: str
-    phone: str
 
 
 @dataclass()
@@ -34,6 +51,7 @@ class User:
     given_name: str
     family_name: str
     password_hash: str
+    affiliation: Affiliation
     roles: List[Role]
 
 

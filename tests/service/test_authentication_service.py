@@ -7,7 +7,7 @@ from freezegun import freeze_time
 from saltapi.exceptions import NotFoundError
 from saltapi.repository.user_repository import UserRepository
 from saltapi.service.authentication_service import AuthenticationService
-from saltapi.service.user import User
+from saltapi.service.user import Affiliation, User
 from saltapi.settings import Settings
 
 TEST_DATA_PATH = "service/authentication_service.yaml"
@@ -21,6 +21,9 @@ USER = User(
     id=1,
     email="jdoe@email.com",
     password_hash="PasswordHash",
+    affiliation=Affiliation(
+        partner="South Africa", institute="South African Astronomical Observatory"
+    ),
     roles=[],
 )
 
@@ -35,6 +38,10 @@ class FakeUserRepository:
                 family_name="Doe",
                 email="johndoe@email.com",
                 password_hash="hashedpassword",
+                affiliation=Affiliation(
+                    partner="South Africa",
+                    institute="South African Astronomical Observatory",
+                ),
                 roles=[],
             )
         return None
@@ -50,6 +57,10 @@ class FakeUserRepository:
                 family_name="Doe",
                 email="johndoe@email.com",
                 password_hash="hashedpassword",
+                affiliation=Affiliation(
+                    partner="South Africa",
+                    institute="South African Astronomical Observatory",
+                ),
                 roles=[],
             )
 

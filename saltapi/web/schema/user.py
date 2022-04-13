@@ -23,22 +23,41 @@ class UserRole(str, Enum):
     BOARD_MEMBER = "Board Member"
 
 
-class User(ProposalUser):
-    """User details, including username, contact details and roles."""
+class AffiliationListItem(BaseModel):
+    """List of institutes affiliations."""
 
-    username: str = Field(..., title="Username", description="Username.")
-    roles: List[UserRole] = Field(..., title="User roles", description="User roles.")
+    partner: str = Field(
+        ..., title="Partner institution", description="Partner institution"
+    )
+    institutes: List[str] = Field(..., title="Institutes", description="Institutes")
 
 
-class UserInfo(ProposalUser):
-    """User details, including contact details, partner and institution."""
+class Affiliation(BaseModel):
+    """User institute affiliation."""
 
     partner: str = Field(
         ..., title="Partner institution", description="Partner institution"
     )
     institute: str = Field(..., title="Institute", description="Institute")
-    phone: Optional[str] = Field(
-        ..., title="Phone numbers", description="Phone numbers"
+
+
+class UserListItem(BaseModel):
+    """Item in a list of users."""
+
+    id: int = Field(..., title="User id", description="User id.")
+    given_name: str = Field(..., title="Given name", description='Given ("first") name')
+    family_name: str = Field(
+        ..., title="Family name", description='Family ("last") name'
+    )
+
+
+class User(ProposalUser):
+    """List of affiliations of the users."""
+
+    username: str = Field(..., title="Username", description="Username.")
+    roles: List[UserRole] = Field(..., title="User roles", description="User roles.")
+    affiliation: Affiliation = Field(
+        ..., title="Affiliation", description="Affiliation of the user"
     )
 
 
