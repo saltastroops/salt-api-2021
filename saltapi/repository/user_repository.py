@@ -1,7 +1,7 @@
 import hashlib
 import secrets
 import uuid
-from typing import List, cast
+from typing import Any, Dict, List, cast
 
 from passlib.context import CryptContext
 from sqlalchemy import text
@@ -9,11 +9,9 @@ from sqlalchemy.engine import Connection
 
 from saltapi.exceptions import NotFoundError
 from saltapi.service.user import (
-    AffiliationListItem,
     NewUserDetails,
     Role,
     User,
-    UserListItem,
     UserUpdate,
 )
 
@@ -32,6 +30,7 @@ class UserRepository:
 
         If the username does not exist, a NotFoundError is raised.
         """
+        separator = "::::"
         stmt = text(
             """
 SELECT PU.PiptUser_Id           AS id,
@@ -40,17 +39,21 @@ SELECT PU.PiptUser_Id           AS id,
        FirstName                AS given_name,
        Password                 AS password_hash,
        Username                 AS username,
-       P.Partner_Name           AS partner,
-       `IN`.InstituteName_Name  AS institute
+       GROUP_CONCAT(DISTINCT P.Partner_Name ORDER BY P.Partner_Name SEPARATOR :separator) AS partners,
+       GROUP_CONCAT(DISTINCT `IN`.InstituteName_Name ORDER BY P.Partner_Name SEPARATOR :separator) AS institutes,
+       GROUP_CONCAT(DISTINCT I2.Institute_Id ORDER BY P.Partner_Name SEPARATOR :separator) AS institutes_ids,
+       GROUP_CONCAT(DISTINCT I2.Department ORDER BY P.Partner_Name SEPARATOR :separator) AS departments
 FROM PiptUser AS PU
-         JOIN Investigator AS I ON (PU.Investigator_Id = I.Investigator_Id)
+         JOIN Investigator AS I ON (PU.PiptUser_Id = I.PiptUser_Id)
          JOIN Institute I2 ON I.Institute_Id = I2.Institute_Id
          JOIN Partner P ON I2.Partner_Id = P.Partner_Id
          JOIN InstituteName `IN` ON I2.InstituteName_Id = `IN`.InstituteName_Id
 WHERE PU.Username = :username
         """
         )
-        result = self.connection.execute(stmt, {"username": username})
+        result = self.connection.execute(
+            stmt, {"separator": separator, "username": username}
+        )
         row = result.one()
         user = {
             "id": row.id,
@@ -59,38 +62,129 @@ WHERE PU.Username = :username
             "given_name": row.given_name,
             "email": row.email,
             "password_hash": row.password_hash,
-            "affiliation": {"partner": row.partner, "institute": row.institute},
+            "institutions": [
+                {
+                    "partners": row.partners.split(separator)[i],
+                    "institutes": {
+                        "institute_id": row.institutes_ids.split(separator)[i],
+                        "name": row.institutes.split(separator)[i],
+                        "department": row.departments.split(separator)[i],
+                    },
+                }
+                for i in range(len(row.partners.split(separator)))
+            ],
         }
         if not user:
             raise NotFoundError("Unknown username")
         return User(**user, roles=self.get_user_roles(username))
 
-    def get_affiliations(self) -> List[AffiliationListItem]:
+    def get_by_id(self, user_id: int) -> User:
         """
-        Returns a list of affiliations
+        Returns the user with a given user id.
+
+        If there is no such user, a NotFoundError is raised.
         """
         separator = "::::"
         stmt = text(
             """
-SELECT P.Partner_Name   AS partner,
-       GROUP_CONCAT(DISTINCT `IN`.InstituteName_Name ORDER BY `IN`.InstituteName_Name SEPARATOR :separator) AS institutes
-FROM Partner P
-         JOIN Institute I2 ON P.Partner_Id = I2.Partner_Id
+SELECT PU.PiptUser_Id           AS id,
+       Email                    AS email,
+       Surname                  AS family_name,
+       FirstName                AS given_name,
+       Password                 AS password_hash,
+       Username                 AS username,
+       GROUP_CONCAT(DISTINCT P.Partner_Name ORDER BY P.Partner_Name SEPARATOR :separator) AS partners,
+       GROUP_CONCAT(DISTINCT `IN`.InstituteName_Name ORDER BY P.Partner_Name SEPARATOR :separator) AS institutes,
+       GROUP_CONCAT(DISTINCT I2.Institute_Id ORDER BY P.Partner_Name SEPARATOR :separator) AS institutes_ids,
+       GROUP_CONCAT(DISTINCT I2.Department ORDER BY P.Partner_Name SEPARATOR :separator) AS departments
+FROM PiptUser AS PU
+         JOIN Investigator AS I ON (PU.Investigator_Id = I.Investigator_Id)
+         JOIN Institute I2 ON I.Institute_Id = I2.Institute_Id
+         JOIN Partner P ON I2.Partner_Id = P.Partner_Id
          JOIN InstituteName `IN` ON I2.InstituteName_Id = `IN`.InstituteName_Id
-GROUP BY P.Partner_Name
-            """
+WHERE PU.PiptUser_Id = :pipt_user_id
+        """
         )
-        result = self.connection.execute(stmt, {"separator": separator})
-        affiliations = [
-            {"partner": row.partner, "institutes": row.institutes.split(separator)}
-            for row in result
-        ]
-        affiliations = [
-            AffiliationListItem(**affiliation).asdict() for affiliation in affiliations
-        ]
-        return affiliations
+        result = self.connection.execute(
+            stmt, {"pipt_user_id": user_id, "separator": separator}
+        )
+        row = result.fetchone()
+        user = {
+            "id": row.id,
+            "username": row.username,
+            "family_name": row.family_name,
+            "given_name": row.given_name,
+            "email": row.email,
+            "password_hash": row.password_hash,
+            "institutions": [
+                {
+                    "partners": row.partners.split(separator)[i],
+                    "institutes": {
+                        "institute_id": row.institutes_ids.split(separator)[i],
+                        "name": row.institutes.split(separator)[i],
+                        "department": row.departments.split(separator)[i],
+                    },
+                }
+                for i in range(len(row.partners.split(separator)))
+            ],
+        }
+        if not user:
+            raise NotFoundError("Unknown user id")
+        return User(**user, roles=self.get_user_roles(user["username"]))
 
-    def get_users(self) -> List[UserListItem]:
+    def get_by_email(self, email: str) -> User:
+        """
+        Returns the user with a given email
+
+        If there is no such user, a NotFoundError is raised.
+        """
+        separator = "::::"
+        stmt = text(
+            """
+SELECT PU.PiptUser_Id           AS id,
+       Email                    AS email,
+       Surname                  AS family_name,
+       FirstName                AS given_name,
+       Password                 AS password_hash,
+       Username                 AS username,
+       GROUP_CONCAT(DISTINCT P.Partner_Name ORDER BY P.Partner_Name SEPARATOR :separator) AS partners,
+       GROUP_CONCAT(DISTINCT `IN`.InstituteName_Name ORDER BY P.Partner_Name SEPARATOR :separator) AS institutes,
+       GROUP_CONCAT(DISTINCT I2.Institute_Id ORDER BY P.Partner_Name SEPARATOR :separator) AS institutes_ids,
+       GROUP_CONCAT(DISTINCT I2.Department ORDER BY P.Partner_Name SEPARATOR :separator) AS departments
+FROM PiptUser AS PU
+         JOIN Investigator AS I ON (PU.Investigator_Id = I.Investigator_Id)
+         JOIN Institute I2 ON I.Institute_Id = I2.Institute_Id
+         JOIN Partner P ON I2.Partner_Id = P.Partner_Id
+         JOIN InstituteName `IN` ON I2.InstituteName_Id = `IN`.InstituteName_Id
+WHERE I.Email = :email
+        """
+        )
+        result = self.connection.execute(stmt, {"email": email, "separator": separator})
+        row = result.one_or_none()
+        user = {
+            "id": row.id,
+            "username": row.username,
+            "family_name": row.family_name,
+            "given_name": row.given_name,
+            "email": row.email,
+            "password_hash": row.password_hash,
+            "institutions": [
+                {
+                    "partners": row.partners.split(separator)[i],
+                    "institutes": {
+                        "institute_id": row.institutes_ids.split(separator)[i],
+                        "name": row.institutes.split(separator)[i],
+                        "department": row.departments.split(separator)[i],
+                    },
+                }
+                for i in range(len(row.partners.split(separator)))
+            ],
+        }
+        if not user:
+            raise NotFoundError("Unknown email address")
+        return User(**user, roles=self.get_user_roles(user["username"]))
+
+    def get_users(self) -> List[Dict[str, Any]]:
         """
         Returns a list of users information
         """
@@ -116,86 +210,7 @@ ORDER BY I.Surname, I.FirstName
             }
             for row in result
         ]
-        users = [UserListItem(**user).asdict() for user in users]
         return users
-
-    def get_by_id(self, user_id: str) -> User:
-        """
-        Returns the user with a given user id.
-
-        If there is no such user, a NotFoundError is raised.
-        """
-        stmt = text(
-            """
-SELECT PU.PiptUser_Id           AS id,
-       Email                    AS email,
-       Surname                  AS family_name,
-       FirstName                AS given_name,
-       Password                 AS password_hash,
-       Username                 AS username,
-       P.Partner_Name           AS partner,
-       `IN`.InstituteName_Name  AS institute
-FROM PiptUser AS PU
-         JOIN Investigator AS I ON (PU.Investigator_Id = I.Investigator_Id)
-         JOIN Institute I2 ON I.Institute_Id = I2.Institute_Id
-         JOIN Partner P ON I2.Partner_Id = P.Partner_Id
-         JOIN InstituteName `IN` ON I2.InstituteName_Id = `IN`.InstituteName_Id
-WHERE PU.PiptUser_Id = :pipt_user_id
-        """
-        )
-        result = self.connection.execute(stmt, {"pipt_user_id": user_id})
-        row = result.one_or_none()
-        user = {
-            "id": row.id,
-            "username": row.username,
-            "family_name": row.family_name,
-            "given_name": row.given_name,
-            "email": row.email,
-            "password_hash": row.password_hash,
-            "affiliation": {"partner": row.partner, "institute": row.institute},
-        }
-        if not user:
-            raise NotFoundError("Unknown email address")
-        return User(**user, roles=self.get_user_roles(user["username"]))
-
-    def get_by_email(self, email: str) -> User:
-        """
-        Returns the user with a given email
-
-        If there is no such user, a NotFoundError is raised.
-        """
-        stmt = text(
-            """
-SELECT PU.PiptUser_Id           AS id,
-       Email                    AS email,
-       Surname                  AS family_name,
-       FirstName                AS given_name,
-       Password                 AS password_hash,
-       Username                 AS username,
-       P.Partner_Name           AS partner,
-       `IN`.InstituteName_Name  AS institute
-FROM PiptUser AS PU
-         JOIN Investigator AS I ON (PU.Investigator_Id = I.Investigator_Id)
-         JOIN Institute I2 ON I.Institute_Id = I2.Institute_Id
-         JOIN Partner P ON I2.Partner_Id = P.Partner_Id
-         JOIN InstituteName `IN` ON I2.InstituteName_Id = `IN`.InstituteName_Id
-WHERE I.Email = :email
-        """
-        )
-        result = self.connection.execute(stmt, {"email": email})
-        row = result.one_or_none()
-        user = {
-            "id": row.id,
-            "username": row.username,
-            "family_name": row.family_name,
-            "given_name": row.given_name,
-            "email": row.email,
-            "password_hash": row.password_hash,
-            "affiliation": {"partner": row.partner, "institute": row.institute},
-        }
-        if not user:
-            raise NotFoundError("Unknown email address")
-        return User(**user, roles=self.get_user_roles(user["username"]))
 
     def create(self, new_user_details: NewUserDetails) -> None:
         """Creates a new user."""

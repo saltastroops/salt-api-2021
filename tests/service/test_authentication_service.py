@@ -7,7 +7,7 @@ from freezegun import freeze_time
 from saltapi.exceptions import NotFoundError
 from saltapi.repository.user_repository import UserRepository
 from saltapi.service.authentication_service import AuthenticationService
-from saltapi.service.user import Affiliation, User
+from saltapi.service.user import Institute, PartnerInstitutes, User
 from saltapi.settings import Settings
 
 TEST_DATA_PATH = "service/authentication_service.yaml"
@@ -21,9 +21,12 @@ USER = User(
     id=1,
     email="jdoe@email.com",
     password_hash="PasswordHash",
-    affiliation=Affiliation(
-        partner="South Africa", institute="South African Astronomical Observatory"
-    ),
+    institutions=[
+        PartnerInstitutes(
+            partners="aff",
+            institutes=Institute(institute_id=1, name="Ins", department="Dept"),
+        )
+    ],
     roles=[],
 )
 
@@ -38,10 +41,14 @@ class FakeUserRepository:
                 family_name="Doe",
                 email="johndoe@email.com",
                 password_hash="hashedpassword",
-                affiliation=Affiliation(
-                    partner="South Africa",
-                    institute="South African Astronomical Observatory",
-                ),
+                institutions=[
+                    PartnerInstitutes(
+                        partners="part",
+                        institutes=Institute(
+                            institute_id=1332, name="Other", department="Other"
+                        ),
+                    )
+                ],
                 roles=[],
             )
         return None
@@ -57,10 +64,14 @@ class FakeUserRepository:
                 family_name="Doe",
                 email="johndoe@email.com",
                 password_hash="hashedpassword",
-                affiliation=Affiliation(
-                    partner="South Africa",
-                    institute="South African Astronomical Observatory",
-                ),
+                institutions=[
+                    PartnerInstitutes(
+                        partners="part",
+                        institutes=Institute(
+                            institute_id=1332, name="Other", department="Other"
+                        ),
+                    )
+                ],
                 roles=[],
             )
 

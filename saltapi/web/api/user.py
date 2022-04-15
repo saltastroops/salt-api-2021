@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Path
 
 from saltapi.repository.unit_of_work import UnitOfWork
 from saltapi.service.authentication_service import get_current_user
@@ -25,3 +25,18 @@ def who_am_i(user: _User = Depends(get_current_user)) -> _User:
         user_details = user_service.get_user(user.username)
 
         return user_details
+
+
+@router.get("/{user_id}", summary="Get user details", response_model=User)
+def get_user_by_id(
+    user_id: int = Path(
+        ...,
+        alias="user_id",
+        title="User id",
+        description="User id of the user making the request.",
+    ),
+    user: _User = Depends(get_current_user),
+) -> _User:
+    with UnitOfWork() as unit_of_work:
+        user_service = services.user_service(unit_of_work.connection)
+        return user_service.get_user_by_id(user_id)

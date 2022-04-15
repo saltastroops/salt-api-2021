@@ -3,6 +3,7 @@ from typing import List, Optional
 
 from pydantic import BaseModel, Field
 
+from saltapi.web.schema.institution import PartnerInstitutes
 from saltapi.web.schema.proposal import ContactDetails, ProposalUser
 
 
@@ -23,22 +24,13 @@ class UserRole(str, Enum):
     BOARD_MEMBER = "Board Member"
 
 
-class AffiliationListItem(BaseModel):
+class Affiliation(BaseModel):
     """List of institutes affiliations."""
 
     partner: str = Field(
         ..., title="Partner institution", description="Partner institution"
     )
     institutes: List[str] = Field(..., title="Institutes", description="Institutes")
-
-
-class Affiliation(BaseModel):
-    """User institute affiliation."""
-
-    partner: str = Field(
-        ..., title="Partner institution", description="Partner institution"
-    )
-    institute: str = Field(..., title="Institute", description="Institute")
 
 
 class UserListItem(BaseModel):
@@ -56,7 +48,7 @@ class User(ProposalUser):
 
     username: str = Field(..., title="Username", description="Username.")
     roles: List[UserRole] = Field(..., title="User roles", description="User roles.")
-    affiliation: Affiliation = Field(
+    institutions: List[PartnerInstitutes] = Field(
         ..., title="Affiliation", description="Affiliation of the user"
     )
 
