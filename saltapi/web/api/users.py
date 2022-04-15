@@ -95,6 +95,21 @@ def get_users(
         return user_service.get_users()
 
 
+@router.get("/{user_id}", summary="Get user details", response_model=User)
+def get_user_by_id(
+    user_id: int = Path(
+        ...,
+        alias="user_id",
+        title="User id",
+        description="User id of the user making the request.",
+    ),
+    user: _User = Depends(get_current_user),
+) -> _User:
+    with UnitOfWork() as unit_of_work:
+        user_service = services.user_service(unit_of_work.connection)
+        return user_service.get_user_by_id(user_id)
+
+
 @router.get("/{username}", summary="Get user details", response_model=User)
 def get_user(
     username: str = Path(
