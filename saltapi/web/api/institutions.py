@@ -6,7 +6,7 @@ from saltapi.repository.unit_of_work import UnitOfWork
 from saltapi.service.authentication_service import get_current_user
 from saltapi.service.user import User as _User
 from saltapi.web import services
-from saltapi.web.schema.user import Affiliation
+from saltapi.web.schema.institution import Affiliation
 
 router = APIRouter(prefix="/institutions", tags=["Institutions"])
 

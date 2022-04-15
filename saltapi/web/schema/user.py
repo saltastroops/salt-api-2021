@@ -24,15 +24,6 @@ class UserRole(str, Enum):
     BOARD_MEMBER = "Board Member"
 
 
-class Affiliation(BaseModel):
-    """List of institutes affiliations."""
-
-    partner: str = Field(
-        ..., title="Partner institution", description="Partner institution"
-    )
-    institutes: List[str] = Field(..., title="Institutes", description="Institutes")
-
-
 class UserListItem(BaseModel):
     """Item in a list of users."""
 

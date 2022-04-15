@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 
 from pydantic import BaseModel, Field
 
@@ -24,3 +24,12 @@ class PartnerInstitutes(BaseModel):
         title="Institutes for the partner",
         description="Institutes for the partner",
     )
+
+
+class Affiliation(BaseModel):
+    """List of institutes affiliations."""
+
+    partner: str = Field(
+        ..., title="Partner institution", description="Partner institution"
+    )
+    institutes: List[str] = Field(..., title="Institutes", description="Institutes")
