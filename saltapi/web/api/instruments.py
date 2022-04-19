@@ -70,7 +70,7 @@ def get_mos_mask_metadata(
 
 
 @router.patch(
-    "/rss/mos-mask/{barcode}",
+    "/rss/mos-mask-metadata/{barcode}",
     summary="Update MOS mask metadata",
     response_model=MosMaskMetadata,
     status_code=200,
@@ -98,14 +98,14 @@ def update_mos_mask_metadata(
 
 
 @router.get(
-    "/rss/mos-obsolete-masks-in-magazine",
-    summary="Get the masks that are no longer needed",
+    "/rss/obsolete-masks-in-magazine",
+    summary="Get the RSS masks in the magazine that are no longer needed",
     response_model=List[str],
 )
-def get_obsolete_mos_masks_in_magazine() -> List[str]:
+def get_obsolete_rss_masks_in_magazine() -> List[str]:
     """
-    Returns the list of MOS obsolete masks, optionally filtered by mask type.
+    Returns the list of obsolete RSS masks.
     """
     with UnitOfWork() as unit_of_work:
         instrument_service = services.instrument_service(unit_of_work.connection)
-        return instrument_service.get_obsolete_mos_masks_in_magazine()
+        return instrument_service.get_obsolete_rss_masks_in_magazine()
