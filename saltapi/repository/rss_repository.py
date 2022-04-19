@@ -1,5 +1,6 @@
+from collections import defaultdict
 from copy import copy
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Set
 
 from sqlalchemy import text
@@ -441,9 +442,9 @@ FROM RssCurrentMasks AS RCM
             liaison_astronomers[row["proposal_code_id"]] = row["surname"]
         return liaison_astronomers
 
-    def _get_barcodes(self, encoded_contents: Set[str]):
+    def _get_barcodes_for_encoded_content(self, encoded_contents: Set[str]):
         """
-        Get other barcodes with the same encoded content.
+        Get barcodes with the same encoded content.
         """
         stmt = text(
             """
@@ -455,10 +456,8 @@ FROM RssMosMaskDetails RMMD
 WHERE EncodedContent IN :encoded_contents
             """
         )
-        ec = dict()
+        ec = defaultdict(list)
         for row in self.connection.execute(stmt, {"encoded_contents": tuple(encoded_contents)}):
-            if not row.encoded_content in ec:
-                ec[row.encoded_content] = []
             ec[row.encoded_content].append(row.barcode)
         return ec
 
@@ -472,14 +471,16 @@ FROM BlockVisibilityWindow BVW
          JOIN BlockVisibilityWindowType BVWT
          ON BVW.BlockVisibilityWindowType_Id = BVWT.BlockVisibilityWindowType_Id
          JOIN Block B ON BVW.Block_Id = B.Block_Id
-         JOIN Proposal P ON B.Proposal_Id = P.Proposal_Id
 WHERE BVW.VisibilityStart BETWEEN :start AND :end
   AND B.Block_Id IN :block_ids
+  AND BVWT.BlockVisibilityWindowType='Strict'
 GROUP BY B.Block_Id
             """
         )
         start = datetime.now()
-        end = semester_end(semester_of_datetime(start.astimezone()))
+        end = semester_end(semester_of_datetime(start.astimezone())) \
+              + timedelta(hours=12)
+        print("End: ", end)
         remaining_nights = dict()
         for n in self.connection.execute(
             stmt, {"block_ids": tuple(block_ids), "start": start, "end": end}
@@ -550,14 +551,12 @@ ORDER BY P.Semester_Id, Proposal_Code, Proposal_Id DESC
             block_ids.append(row.block_id)
 
             encoded_contents.append(row.encoded_content)
-        print(sorted(block_ids))
         proposal_code_ids = set([m["proposal_code_id"] for m in mos_blocks])
         if not proposal_code_ids:
             return []
         liaison_astronomers = self._get_liaison_astronomers(proposal_code_ids)
-        barcodes = self._get_barcodes(set(encoded_contents))
+        barcodes = self._get_barcodes_for_encoded_content(set(encoded_contents))
         remaining_nights = self._get_blocks_remaining_nights(set(block_ids))
-        print(remaining_nights)
         for m in mos_blocks:
             proposal_code_id = m["proposal_code_id"]
             liaison_astronomer = (
@@ -565,9 +564,10 @@ ORDER BY P.Semester_Id, Proposal_Code, Proposal_Id DESC
                 if proposal_code_id in liaison_astronomers
                 else None
             )
-            m["other_barcodes"] = copy(barcodes[m["encoded_content"]])
-            m["remaining_nights"] = remaining_nights[m["block_id"]] if m["block_id"] in remaining_nights else 0
-            m["other_barcodes"].remove(m['barcode'])
+            m["other_barcodes"] = \
+                [b for b in barcodes[m["encoded_content"]] if b != m["barcode"]]
+            m["remaining_nights"] = remaining_nights[m["block_id"]] \
+                if m["block_id"] in remaining_nights else 0
             m["liaison_astronomer"] = liaison_astronomer
         return mos_blocks
 
@@ -603,7 +603,7 @@ WHERE RssMask_Id = ( SELECT RssMask_Id FROM RssMask WHERE Barcode = :barcode )
 
         return self.get_mos_mask_metadata(mos_mask_metadata["barcode"])
 
-    def get_obsolete_rss_masks_in_magazine(self) -> List[str]:
+    def get_obsolete_rss_masks_in_magazine(self, mask_type: str) -> List[str]:
         """
         The list of obsolete RSS masks, optionally filtered by a mask type.
         """
@@ -625,6 +625,8 @@ WHERE CONCAT(S.Year, '-', S.Semester) >= :semester
     AND (BlockStatus = "Active" OR BlockStatus = "On Hold")
     AND NVisits >= NDone
 """
+        if mask_type:
+            stmt += " AND "
         needed_masks = [
             m["barcode"]
             for m in self.connection.execute(
