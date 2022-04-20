@@ -482,8 +482,8 @@ GROUP BY B.Block_Id
             """
         )
         start = datetime.now()
-        end = semester_end(semester_of_datetime(start.astimezone())) \
-              + timedelta(hours=12)
+        end = semester_end(semester_of_datetime(start.astimezone()))
+
         remaining_nights = dict()
         for n in self.connection.execute(
             stmt, {"block_ids": tuple(block_ids), "start": start, "end": end}
