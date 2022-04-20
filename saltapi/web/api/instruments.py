@@ -18,10 +18,10 @@ router = APIRouter(tags=["Instrument"])
 
 @router.get(
     "/rss/masks-in-magazine",
-    summary="Get current MOS masks in the magazine",
+    summary="Get current RSS masks in the magazine",
     response_model=List[str],
 )
-def get_masks_in_magazine(
+def get_rss_masks_in_magazine(
     mask_type: Optional[str] = Query(
         None, title="Mask type", description="The mask type."
     ),
@@ -31,7 +31,7 @@ def get_masks_in_magazine(
     """
     with UnitOfWork() as unit_of_work:
         instrument_service = services.instrument_service(unit_of_work.connection)
-        return instrument_service.get_masks_in_magazine(mask_type)
+        return instrument_service.get_rss_masks_in_magazine(mask_type)
 
 
 @router.get(
@@ -102,10 +102,14 @@ def update_mos_mask_metadata(
     summary="Get the RSS masks in the magazine that are no longer needed",
     response_model=List[str],
 )
-def get_obsolete_rss_masks_in_magazine() -> List[str]:
+def get_obsolete_rss_masks_in_magazine(
+        mask_type: Optional[str] = Query(
+            None, title="Mask type", description="The mask type."
+        ),
+) -> List[str]:
     """
     Returns the list of obsolete RSS masks.
     """
     with UnitOfWork() as unit_of_work:
         instrument_service = services.instrument_service(unit_of_work.connection)
-        return instrument_service.get_obsolete_rss_masks_in_magazine()
+        return instrument_service.get_obsolete_rss_masks_in_magazine(mask_type)
