@@ -617,25 +617,29 @@ FROM Proposal P
     JOIN TelescopeConfigObsConfig USING (Pointing_Id)
     JOIN ObsConfig ON (PlannedObsConfig_Id=ObsConfig_Id)
     JOIN RssPatternDetail USING (RssPattern_Id)
-    JOIN Rss using (Rss_Id)
+    JOIN Rss USING (Rss_Id)
     JOIN RssConfig USING (RssConfig_Id)
     JOIN RssMask RM USING (RssMask_Id)
+    JOIN RssMaskType USING (RssMaskType_Id)
 WHERE CONCAT(S.Year, '-', S.Semester) >= :semester
     AND (BlockStatus = "Active" OR BlockStatus = "On Hold")
     AND NVisits >= NDone
 """
         if mask_type:
-            stmt += " AND "
+            stmt += " AND RssMaskType = :mask_type"
         needed_masks = [
             m["barcode"]
             for m in self.connection.execute(
                 text(stmt),
-                {"semester": semester_of_datetime(datetime.now().astimezone())},
+                {
+                    "semester": semester_of_datetime(datetime.now().astimezone()),
+                    "mask_type": mask_type
+                },
             )
         ]
 
         obsolete_masks = []
-        for m in self.get_mask_in_magazine():
+        for m in self.get_mask_in_magazine(mask_type):
             if m not in needed_masks:
                 obsolete_masks.append(m)
         return obsolete_masks
