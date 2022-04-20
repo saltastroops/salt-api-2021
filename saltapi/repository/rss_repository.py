@@ -442,9 +442,13 @@ FROM RssCurrentMasks AS RCM
             liaison_astronomers[row["proposal_code_id"]] = row["surname"]
         return liaison_astronomers
 
-    def _get_barcodes_for_encoded_content(self, encoded_contents: Set[str]):
+    def _get_barcodes_for_encoded_contents(self, encoded_contents: Set[str]):
         """
-        Get barcodes with the same encoded content.
+        Get the barcodes for a set of encoded mask contents.
+
+        A dictionary of encoded contents and corresponding lists of barcodes is
+        returned. If a list of barcodes has more than one item, this means that some
+        masks have the same layout (slits, reference stars) but different barcodes.
         """
         stmt = text(
             """
@@ -554,7 +558,7 @@ ORDER BY P.Semester_Id, Proposal_Code, Proposal_Id DESC
         if not proposal_code_ids:
             return []
         liaison_astronomers = self._get_liaison_astronomers(proposal_code_ids)
-        barcodes = self._get_barcodes_for_encoded_content(set(encoded_contents))
+        barcodes = self._get_barcodes_for_encoded_contents(set(encoded_contents))
         remaining_nights = self._get_blocks_remaining_nights(set(block_ids))
         for m in mos_blocks:
             proposal_code_id = m["proposal_code_id"]
