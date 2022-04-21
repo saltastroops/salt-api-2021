@@ -39,7 +39,7 @@ class User(ProposalUser):
 
     username: str = Field(..., title="Username", description="Username.")
     roles: List[UserRole] = Field(..., title="User roles", description="User roles.")
-    institutions: List[PartnerInstitutes] = Field(
+    affiliations: List[PartnerInstitutes] = Field(
         ..., title="Affiliation", description="Affiliation of the user"
     )
 

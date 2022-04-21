@@ -2,6 +2,8 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import List, NamedTuple, Optional
 
+from pydantic import EmailStr
+
 
 class Role(str, Enum):
     SALT_ASTRONOMER = "SALT Astronomer"
@@ -15,7 +17,7 @@ class Role(str, Enum):
 class ContactDetails:
     given_name: str
     family_name: str
-    email: str
+    emails: List[EmailStr]
 
 
 @dataclass()
@@ -33,20 +35,19 @@ class Institute:
 
 
 @dataclass()
-class PartnerInstitutes:
-    partners: str
-    institutes: Institute
+class PartnerInstitutes(Institute):
+    partner_code: str
 
 
 @dataclass()
 class User:
     id: int
     username: str
-    email: str
+    emails: List[str]
     given_name: str
     family_name: str
     password_hash: str
-    institutions: List[PartnerInstitutes]
+    affiliations: List[PartnerInstitutes]
     roles: List[Role]
 
 

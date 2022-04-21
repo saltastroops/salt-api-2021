@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import Any, Dict, List
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Path
 from starlette import status
@@ -75,7 +75,7 @@ def create_user(
             _NewUserDetails(
                 username=user.username,
                 password=user.password,
-                email=user.email,
+                emails=user.emails,
                 given_name=user.given_name,
                 family_name=user.family_name,
                 institute_id=user.institute_id,
@@ -89,7 +89,7 @@ def create_user(
 @router.get("/", summary="Get users information", response_model=List[UserListItem])
 def get_users(
     user: _User = Depends(get_current_user),
-) -> list[dict[str, Any]]:
+) -> List[Dict[str, Any]]:
     with UnitOfWork() as unit_of_work:
         user_service = services.user_service(unit_of_work.connection)
         return user_service.get_users()
@@ -121,8 +121,6 @@ def get_user(
 ) -> _User:
     with UnitOfWork() as unit_of_work:
         permission_service = services.permission_service(unit_of_work.connection)
-        permission_service.check_permission_to_view_user(user, username)
-
         user_service = services.user_service(unit_of_work.connection)
         return user_service.get_user(username)
 

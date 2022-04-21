@@ -29,21 +29,22 @@ class UserRepository:
         stmt = text(
             """
 SELECT PU.PiptUser_Id           AS id,
-       Email                    AS email,
        Surname                  AS family_name,
        FirstName                AS given_name,
        Password                 AS password_hash,
        Username                 AS username,
-       GROUP_CONCAT(DISTINCT P.Partner_Name ORDER BY P.Partner_Name SEPARATOR :separator) AS partners,
-       GROUP_CONCAT(DISTINCT `IN`.InstituteName_Name ORDER BY P.Partner_Name SEPARATOR :separator) AS institutes,
-       GROUP_CONCAT(DISTINCT I2.Institute_Id ORDER BY P.Partner_Name SEPARATOR :separator) AS institutes_ids,
-       GROUP_CONCAT(DISTINCT I2.Department ORDER BY P.Partner_Name SEPARATOR :separator) AS departments
+       GROUP_CONCAT(DISTINCT Email ORDER BY Email SEPARATOR :separator) AS emails,
+       GROUP_CONCAT(DISTINCT P.Partner_Code ORDER BY Email SEPARATOR :separator) AS partner_codes,
+       GROUP_CONCAT(DISTINCT I.InstituteName_Name ORDER BY Email SEPARATOR :separator) AS institutes,
+       GROUP_CONCAT(DISTINCT I2.Institute_Id ORDER BY Email SEPARATOR :separator) AS institute_ids,
+       GROUP_CONCAT(DISTINCT I2.Department ORDER BY Email SEPARATOR :separator) AS departments
 FROM PiptUser AS PU
-         JOIN Investigator AS I ON (PU.PiptUser_Id = I.PiptUser_Id)
-         JOIN Institute I2 ON I.Institute_Id = I2.Institute_Id
+         JOIN Investigator AS I1 ON (PU.PiptUser_Id = I1.PiptUser_Id)
+         JOIN Institute I2 ON I1.Institute_Id = I2.Institute_Id
          JOIN Partner P ON I2.Partner_Id = P.Partner_Id
-         JOIN InstituteName `IN` ON I2.InstituteName_Id = `IN`.InstituteName_Id
+         JOIN InstituteName I ON I2.InstituteName_Id = I.InstituteName_Id
 WHERE PU.Username = :username
+GROUP BY id, username
         """
         )
         result = self.connection.execute(
@@ -55,18 +56,16 @@ WHERE PU.Username = :username
             "username": row.username,
             "family_name": row.family_name,
             "given_name": row.given_name,
-            "email": row.email,
+            "emails": row.emails.split(separator),
             "password_hash": row.password_hash,
-            "institutions": [
+            "affiliations": [
                 {
-                    "partners": row.partners.split(separator)[i],
-                    "institutes": {
-                        "institute_id": row.institutes_ids.split(separator)[i],
-                        "name": row.institutes.split(separator)[i],
-                        "department": row.departments.split(separator)[i],
-                    },
+                    "institute_id": row.institute_ids.split(separator)[i],
+                    "name": row.institutes.split(separator)[i],
+                    "department": row.departments.split(separator)[i],
+                    "partner_code": row.partner_codes.split(separator)[i],
                 }
-                for i in range(len(row.partners.split(separator)))
+                for i in range(len(row.institute_ids.split(separator)))
             ],
         }
         if not user:
@@ -83,21 +82,22 @@ WHERE PU.Username = :username
         stmt = text(
             """
 SELECT PU.PiptUser_Id           AS id,
-       Email                    AS email,
        Surname                  AS family_name,
        FirstName                AS given_name,
        Password                 AS password_hash,
        Username                 AS username,
-       GROUP_CONCAT(DISTINCT P.Partner_Name ORDER BY P.Partner_Name SEPARATOR :separator) AS partners,
-       GROUP_CONCAT(DISTINCT `IN`.InstituteName_Name ORDER BY P.Partner_Name SEPARATOR :separator) AS institutes,
-       GROUP_CONCAT(DISTINCT I2.Institute_Id ORDER BY P.Partner_Name SEPARATOR :separator) AS institutes_ids,
-       GROUP_CONCAT(DISTINCT I2.Department ORDER BY P.Partner_Name SEPARATOR :separator) AS departments
+       GROUP_CONCAT(DISTINCT Email ORDER BY Email SEPARATOR :separator) AS emails,
+       GROUP_CONCAT(DISTINCT P.Partner_Code ORDER BY Email SEPARATOR :separator) AS partner_codes,
+       GROUP_CONCAT(DISTINCT I.InstituteName_Name ORDER BY Email SEPARATOR :separator) AS institutes,
+       GROUP_CONCAT(DISTINCT I2.Institute_Id ORDER BY Email SEPARATOR :separator) AS institute_ids,
+       GROUP_CONCAT(DISTINCT I2.Department ORDER BY Email SEPARATOR :separator) AS departments
 FROM PiptUser AS PU
-         JOIN Investigator AS I ON (PU.Investigator_Id = I.Investigator_Id)
-         JOIN Institute I2 ON I.Institute_Id = I2.Institute_Id
+         JOIN Investigator AS I1 ON (PU.PiptUser_Id = I1.PiptUser_Id)
+         JOIN Institute I2 ON I1.Institute_Id = I2.Institute_Id
          JOIN Partner P ON I2.Partner_Id = P.Partner_Id
-         JOIN InstituteName `IN` ON I2.InstituteName_Id = `IN`.InstituteName_Id
+         JOIN InstituteName I ON I2.InstituteName_Id = I.InstituteName_Id
 WHERE PU.PiptUser_Id = :pipt_user_id
+GROUP BY id, username
         """
         )
         result = self.connection.execute(
@@ -109,18 +109,16 @@ WHERE PU.PiptUser_Id = :pipt_user_id
             "username": row.username,
             "family_name": row.family_name,
             "given_name": row.given_name,
-            "email": row.email,
+            "emails": row.emails.split(separator),
             "password_hash": row.password_hash,
-            "institutions": [
+            "affiliations": [
                 {
-                    "partners": row.partners.split(separator)[i],
-                    "institutes": {
-                        "institute_id": row.institutes_ids.split(separator)[i],
-                        "name": row.institutes.split(separator)[i],
-                        "department": row.departments.split(separator)[i],
-                    },
+                    "institute_id": row.institute_ids.split(separator)[i],
+                    "name": row.institutes.split(separator)[i],
+                    "department": row.departments.split(separator)[i],
+                    "partner_code": row.partner_codes.split(separator)[i],
                 }
-                for i in range(len(row.partners.split(separator)))
+                for i in range(len(row.institute_ids.split(separator)))
             ],
         }
         if not user:
@@ -138,20 +136,21 @@ WHERE PU.PiptUser_Id = :pipt_user_id
             """
 SELECT PU.PiptUser_Id           AS id,
        Email                    AS email,
-       Surname                  AS family_name,
        FirstName                AS given_name,
        Password                 AS password_hash,
        Username                 AS username,
-       GROUP_CONCAT(DISTINCT P.Partner_Name ORDER BY P.Partner_Name SEPARATOR :separator) AS partners,
-       GROUP_CONCAT(DISTINCT `IN`.InstituteName_Name ORDER BY P.Partner_Name SEPARATOR :separator) AS institutes,
-       GROUP_CONCAT(DISTINCT I2.Institute_Id ORDER BY P.Partner_Name SEPARATOR :separator) AS institutes_ids,
-       GROUP_CONCAT(DISTINCT I2.Department ORDER BY P.Partner_Name SEPARATOR :separator) AS departments
+       GROUP_CONCAT(DISTINCT Email ORDER BY Email SEPARATOR :separator) AS emails,
+       GROUP_CONCAT(DISTINCT P.Partner_Code ORDER BY Email SEPARATOR :separator) AS partner_codes,
+       GROUP_CONCAT(DISTINCT I.InstituteName_Name ORDER BY Email SEPARATOR :separator) AS institutes,
+       GROUP_CONCAT(DISTINCT I2.Institute_Id ORDER BY Email SEPARATOR :separator) AS institute_ids,
+       GROUP_CONCAT(DISTINCT I2.Department ORDER BY Email SEPARATOR :separator) AS departments
 FROM PiptUser AS PU
-         JOIN Investigator AS I ON (PU.Investigator_Id = I.Investigator_Id)
-         JOIN Institute I2 ON I.Institute_Id = I2.Institute_Id
+         JOIN Investigator AS I1 ON (PU.PiptUser_Id = I1.PiptUser_Id)
+         JOIN Institute I2 ON I1.Institute_Id = I2.Institute_Id
          JOIN Partner P ON I2.Partner_Id = P.Partner_Id
-         JOIN InstituteName `IN` ON I2.InstituteName_Id = `IN`.InstituteName_Id
+         JOIN InstituteName I ON I2.InstituteName_Id = I.InstituteName_Id
 WHERE I.Email = :email
+GROUP BY id, username
         """
         )
         result = self.connection.execute(stmt, {"email": email, "separator": separator})
@@ -161,18 +160,16 @@ WHERE I.Email = :email
             "username": row.username,
             "family_name": row.family_name,
             "given_name": row.given_name,
-            "email": row.email,
+            "emails": row.emails.split(separator),
             "password_hash": row.password_hash,
-            "institutions": [
+            "affiliations": [
                 {
-                    "partners": row.partners.split(separator)[i],
-                    "institutes": {
-                        "institute_id": row.institutes_ids.split(separator)[i],
-                        "name": row.institutes.split(separator)[i],
-                        "department": row.departments.split(separator)[i],
-                    },
+                    "institute_id": row.institute_ids.split(separator)[i],
+                    "name": row.institutes.split(separator)[i],
+                    "department": row.departments.split(separator)[i],
+                    "partner_code": row.partner_codes.split(separator)[i],
                 }
-                for i in range(len(row.partners.split(separator)))
+                for i in range(len(row.institute_ids.split(separator)))
             ],
         }
         if not user:
@@ -239,7 +236,7 @@ VALUES (:institute_id, :given_name, :family_name, :email)
                 "institute_id": new_user_details.institute_id,
                 "given_name": new_user_details.given_name,
                 "family_name": new_user_details.family_name,
-                "email": new_user_details.email,
+                "email": new_user_details.emails,
             },
         )
 

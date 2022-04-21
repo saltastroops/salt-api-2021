@@ -7,7 +7,7 @@ from freezegun import freeze_time
 from saltapi.exceptions import NotFoundError
 from saltapi.repository.user_repository import UserRepository
 from saltapi.service.authentication_service import AuthenticationService
-from saltapi.service.user import Institute, PartnerInstitutes, User
+from saltapi.service.user import PartnerInstitutes, User
 from saltapi.settings import Settings
 
 TEST_DATA_PATH = "service/authentication_service.yaml"
@@ -19,12 +19,14 @@ USER = User(
     family_name="Doe",
     given_name="John",
     id=1,
-    email="jdoe@email.com",
+    emails=["jdoe@email.com"],
     password_hash="PasswordHash",
-    institutions=[
+    affiliations=[
         PartnerInstitutes(
-            partners="aff",
-            institutes=Institute(institute_id=1, name="Ins", department="Dept"),
+            institute_id=1,
+            name="Ins",
+            department="Dept",
+            partner_code="Partner"
         )
     ],
     roles=[],
@@ -39,14 +41,14 @@ class FakeUserRepository:
                 username="jdoe",
                 given_name="John",
                 family_name="Doe",
-                email="johndoe@email.com",
+                emails=["johndoe@email.com"],
                 password_hash="hashedpassword",
-                institutions=[
+                affiliations=[
                     PartnerInstitutes(
-                        partners="part",
-                        institutes=Institute(
-                            institute_id=1332, name="Other", department="Other"
-                        ),
+                        institute_id=1332,
+                        name="Other",
+                        department="Other",
+                        partner_code="Part"
                     )
                 ],
                 roles=[],
@@ -62,14 +64,14 @@ class FakeUserRepository:
                 username="jdoe",
                 given_name="John",
                 family_name="Doe",
-                email="johndoe@email.com",
+                emails=["johndoe@email.com"],
                 password_hash="hashedpassword",
-                institutions=[
+                affiliations=[
                     PartnerInstitutes(
-                        partners="part",
-                        institutes=Institute(
-                            institute_id=1332, name="Other", department="Other"
-                        ),
+                        institute_id=1332,
+                        name="Other",
+                        department="Other",
+                        partner_code="Code"
                     )
                 ],
                 roles=[],
@@ -109,7 +111,7 @@ def test_authenticate_user_returns_correct_user() -> None:
     assert user.id == 1
     assert user.username == "jdoe"
     assert user.given_name == "John"
-    assert user.email == "johndoe@email.com"
+    assert user.emails == ["johndoe@email.com"]
 
 
 @pytest.mark.parametrize(

@@ -3,7 +3,7 @@ from email.mime.multipart import MIMEMultipart
 from typing import Any
 
 from saltapi.service.mail_service import MailService
-from saltapi.service.user import Institute, PartnerInstitutes, User
+from saltapi.service.user import PartnerInstitutes, User
 from saltapi.settings import Settings
 
 settings = Settings()
@@ -25,12 +25,14 @@ user = User(
     username="valid",
     given_name="valid",
     family_name="valid",
-    email="valid@mail.com",
+    emails=["valid@mail.com"],
     password_hash="hashed_password",
-    institutions=[
+    affiliations=[
         PartnerInstitutes(
-            partners="aff",
-            institutes=Institute(institute_id=1, name="Ins", department="Dept"),
+            institute_id=1,
+            name="Ins",
+            department="Dept",
+            partner_code="POL"
         )
     ],
     roles=[],
