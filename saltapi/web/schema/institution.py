@@ -24,7 +24,7 @@ class Partner(str, Enum):
     DUR = "Durham University"
 
 
-class Institute(BaseModel):
+class PartnerInstitutes(BaseModel):
     """Institute details"""
 
     institute_id: int = Field(
@@ -36,22 +36,4 @@ class Institute(BaseModel):
     department: Optional[str] = Field(
         None, title="Department", description="Department"
     )
-
-
-class PartnerInstitutes(Institute):
-    """User institute affiliation."""
-
-    partner_code: str = Field(
-        ..., title="Partner institution code", description="Partner institution code"
-    )
-
-
-class Affiliation(BaseModel):
-    """List of institutes affiliations."""
-
-    partner: Partner = Field(
-        ..., title="Partner institution", description="Partner institution"
-    )
-    institutes: List[Institute] = Field(
-        ..., title="Institutes", description="Institutes"
-    )
+    partner_code: str = Field(..., title="Partner code", description="Partner code")

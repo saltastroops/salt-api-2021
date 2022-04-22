@@ -19,14 +19,12 @@ USER = User(
     family_name="Doe",
     given_name="John",
     id=1,
-    emails=["jdoe@email.com"],
+    email="jdoe@email.com",
+    alternative_emails=[""],
     password_hash="PasswordHash",
     affiliations=[
         PartnerInstitutes(
-            institute_id=1,
-            name="Ins",
-            department="Dept",
-            partner_code="Partner"
+            institute_id=1, name="Ins", department="Dept", partner_code="Partner"
         )
     ],
     roles=[],
@@ -41,14 +39,15 @@ class FakeUserRepository:
                 username="jdoe",
                 given_name="John",
                 family_name="Doe",
-                emails=["johndoe@email.com"],
+                email="johndoe@email.com",
                 password_hash="hashedpassword",
+                alternative_emails=["alt@gmail.com"],
                 affiliations=[
                     PartnerInstitutes(
                         institute_id=1332,
                         name="Other",
                         department="Other",
-                        partner_code="Part"
+                        partner_code="Part",
                     )
                 ],
                 roles=[],
@@ -64,14 +63,15 @@ class FakeUserRepository:
                 username="jdoe",
                 given_name="John",
                 family_name="Doe",
-                emails=["johndoe@email.com"],
+                email="johndoe@email.com",
                 password_hash="hashedpassword",
+                alternative_emails=[""],
                 affiliations=[
                     PartnerInstitutes(
                         institute_id=1332,
                         name="Other",
                         department="Other",
-                        partner_code="Code"
+                        partner_code="Code",
                     )
                 ],
                 roles=[],
@@ -111,7 +111,7 @@ def test_authenticate_user_returns_correct_user() -> None:
     assert user.id == 1
     assert user.username == "jdoe"
     assert user.given_name == "John"
-    assert user.emails == ["johndoe@email.com"]
+    assert user.email == "johndoe@email.com"
 
 
 @pytest.mark.parametrize(

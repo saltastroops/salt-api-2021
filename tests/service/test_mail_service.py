@@ -25,14 +25,12 @@ user = User(
     username="valid",
     given_name="valid",
     family_name="valid",
-    emails=["valid@mail.com"],
+    email="valid@mail.com",
     password_hash="hashed_password",
+    alternative_emails=["anothervalid@gmail.com"],
     affiliations=[
         PartnerInstitutes(
-            institute_id=1,
-            name="Ins",
-            department="Dept",
-            partner_code="POL"
+            institute_id=1, name="Ins", department="Dept", partner_code="POL"
         )
     ],
     roles=[],

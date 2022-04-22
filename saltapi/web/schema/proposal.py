@@ -40,9 +40,7 @@ class ContactDetails(BaseModel):
     family_name: str = Field(
         ..., title="Family name", description='Family ("last") name'
     )
-    emails: List[EmailStr] = Field(
-        ..., title="Email address", description="Email address"
-    )
+    email: EmailStr = Field(..., title="Email address", description="Email address")
 
     class Config:
         orm_mode = True

@@ -117,14 +117,12 @@ USER = User(
     username="someone",
     given_name="Some",
     family_name="One",
-    emails=["someone@example.com"],
+    email="someone@example.com",
+    alternative_emails=["ex@gmail.com"],
     password_hash="1234",
     affiliations=[
         PartnerInstitutes(
-            institute_id=1,
-            name="Ins",
-            department="Dept",
-            partner_code="RSA"
+            institute_id=1, name="Ins", department="Dept", partner_code="RSA"
         )
     ],
     roles=[],

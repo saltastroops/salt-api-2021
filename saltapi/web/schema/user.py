@@ -37,6 +37,11 @@ class UserListItem(BaseModel):
 class User(ProposalUser):
     """List of affiliations of the users."""
 
+    alternative_emails: Optional[List[str]] = Field(
+        None,
+        title="Alternative email addresses",
+        description="Alternative email addresses",
+    )
     username: str = Field(..., title="Username", description="Username.")
     roles: List[UserRole] = Field(..., title="User roles", description="User roles.")
     affiliations: List[PartnerInstitutes] = Field(

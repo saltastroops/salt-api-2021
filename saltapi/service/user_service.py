@@ -56,12 +56,12 @@ SALT Team
 </html>
         """
         message = mail_service.generate_email(
-            to=f"{user.given_name} {user.family_name} <{user.emails[0]}>",
+            to=f"{user.given_name} {user.family_name} <{user.email}>",
             html_body=html_body,
             plain_body=plain_body,
             subject="SALT Web Manager password reset",
         )
-        mail_service.send_email(to=[user.emails[0]], message=message)
+        mail_service.send_email(to=[user.email], message=message)
 
     @staticmethod
     def password_reset_url(token: str) -> str:

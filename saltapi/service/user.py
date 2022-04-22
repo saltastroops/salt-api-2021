@@ -17,7 +17,7 @@ class Role(str, Enum):
 class ContactDetails:
     given_name: str
     family_name: str
-    emails: List[EmailStr]
+    email: EmailStr
 
 
 @dataclass()
@@ -28,14 +28,10 @@ class UserListItem:
 
 
 @dataclass()
-class Institute:
+class PartnerInstitutes:
     institute_id: int
     name: str
     department: Optional[str]
-
-
-@dataclass()
-class PartnerInstitutes(Institute):
     partner_code: str
 
 
@@ -43,7 +39,8 @@ class PartnerInstitutes(Institute):
 class User:
     id: int
     username: str
-    emails: List[str]
+    email: str
+    alternative_emails: Optional[List[str]]
     given_name: str
     family_name: str
     password_hash: str

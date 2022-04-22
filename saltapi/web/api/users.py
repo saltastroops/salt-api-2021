@@ -75,7 +75,7 @@ def create_user(
             _NewUserDetails(
                 username=user.username,
                 password=user.password,
-                emails=user.emails,
+                email=user.email,
                 given_name=user.given_name,
                 family_name=user.family_name,
                 institute_id=user.institute_id,
@@ -121,6 +121,7 @@ def get_user(
 ) -> _User:
     with UnitOfWork() as unit_of_work:
         permission_service = services.permission_service(unit_of_work.connection)
+        permission_service.check_permission_to_update_user(user, username)
         user_service = services.user_service(unit_of_work.connection)
         return user_service.get_user(username)
 

@@ -29,45 +29,66 @@ class UserRepository:
         stmt = text(
             """
 SELECT PU.PiptUser_Id           AS id,
-       Surname                  AS family_name,
-       FirstName                AS given_name,
-       Password                 AS password_hash,
-       Username                 AS username,
-       GROUP_CONCAT(DISTINCT Email ORDER BY Email SEPARATOR :separator) AS emails,
-       GROUP_CONCAT(DISTINCT P.Partner_Code ORDER BY Email SEPARATOR :separator) AS partner_codes,
-       GROUP_CONCAT(DISTINCT I.InstituteName_Name ORDER BY Email SEPARATOR :separator) AS institutes,
-       GROUP_CONCAT(DISTINCT I2.Institute_Id ORDER BY Email SEPARATOR :separator) AS institute_ids,
-       GROUP_CONCAT(DISTINCT I2.Department ORDER BY Email SEPARATOR :separator) AS departments
+       I1.Email                 AS email,
+       I0.Email                 AS alternative_emails,
+       I0.Surname               AS family_name,
+       I0.FirstName             AS given_name,
+       PU.Password              AS password_hash,
+       PU.Username              AS username,
+       P.Partner_Code           AS partner_code,
+       I.InstituteName_Name     AS institute_name,
+       I2.Institute_Id          AS institute_id,
+       I2.Department            AS department
 FROM PiptUser AS PU
-         JOIN Investigator AS I1 ON (PU.PiptUser_Id = I1.PiptUser_Id)
-         JOIN Institute I2 ON I1.Institute_Id = I2.Institute_Id
+         JOIN Investigator AS I0 ON (PU.PiptUser_Id = I0.PiptUser_Id)
+         JOIN Investigator I1 ON PU.Investigator_Id = I1.Investigator_Id
+         JOIN Institute I2 ON I0.Institute_Id = I2.Institute_Id
          JOIN Partner P ON I2.Partner_Id = P.Partner_Id
          JOIN InstituteName I ON I2.InstituteName_Id = I.InstituteName_Id
-WHERE PU.Username = :username
-GROUP BY id, username
+AND PU.Username = :username
         """
         )
         result = self.connection.execute(
             stmt, {"separator": separator, "username": username}
         )
-        row = result.one()
-        user = {
-            "id": row.id,
-            "username": row.username,
-            "family_name": row.family_name,
-            "given_name": row.given_name,
-            "emails": row.emails.split(separator),
-            "password_hash": row.password_hash,
-            "affiliations": [
-                {
-                    "institute_id": row.institute_ids.split(separator)[i],
-                    "name": row.institutes.split(separator)[i],
-                    "department": row.departments.split(separator)[i],
-                    "partner_code": row.partner_codes.split(separator)[i],
+        user = {}
+        for i, row in enumerate(result):
+            if i == 0:
+                user = {
+                    "id": row.id,
+                    "username": row.username,
+                    "family_name": row.family_name,
+                    "given_name": row.given_name,
+                    "email": row.email,
+                    "alternative_emails": [
+                        row.alternative_emails
+                        if row.alternative_emails != row.email
+                        else ""
+                    ],
+                    "password_hash": row.password_hash,
+                    "affiliations": [
+                        {
+                            "institute_id": row.institute_id,
+                            "name": row.institute_name,
+                            "department": row.department,
+                            "partner_code": row.partner_code,
+                        }
+                    ],
                 }
-                for i in range(len(row.institute_ids.split(separator)))
-            ],
-        }
+            else:
+                user["alternative_emails"].append(
+                    row.alternative_emails
+                    if row.alternative_emails != row.email
+                    else ""
+                )
+                user["affiliations"].append(
+                    {
+                        "institution_id": row.institute_id,
+                        "name": row.institute_name,
+                        "department": row.department,
+                        "partner_code": row.partner_code,
+                    }
+                )
         if not user:
             raise NotFoundError("Unknown username")
         return User(**user, roles=self.get_user_roles(username))
@@ -82,47 +103,67 @@ GROUP BY id, username
         stmt = text(
             """
 SELECT PU.PiptUser_Id           AS id,
-       Surname                  AS family_name,
-       FirstName                AS given_name,
-       Password                 AS password_hash,
+       I1.Email                 AS email,
+       I0.Email                 AS alternative_emails,
+       I0.Surname               AS family_name,
+       I0.FirstName             AS given_name,
+       PU.Password              AS password_hash,
        Username                 AS username,
-       GROUP_CONCAT(DISTINCT Email ORDER BY Email SEPARATOR :separator) AS emails,
-       GROUP_CONCAT(DISTINCT P.Partner_Code ORDER BY Email SEPARATOR :separator) AS partner_codes,
-       GROUP_CONCAT(DISTINCT I.InstituteName_Name ORDER BY Email SEPARATOR :separator) AS institutes,
-       GROUP_CONCAT(DISTINCT I2.Institute_Id ORDER BY Email SEPARATOR :separator) AS institute_ids,
-       GROUP_CONCAT(DISTINCT I2.Department ORDER BY Email SEPARATOR :separator) AS departments
+       P.Partner_Code           AS partner_code,
+       I.InstituteName_Name     AS institute_name,
+       I2.Institute_Id          AS institute_id,
+       I2.Department            AS department
 FROM PiptUser AS PU
-         JOIN Investigator AS I1 ON (PU.PiptUser_Id = I1.PiptUser_Id)
-         JOIN Institute I2 ON I1.Institute_Id = I2.Institute_Id
+         JOIN Investigator AS I0 ON (PU.PiptUser_Id = I0.PiptUser_Id)
+         JOIN Investigator I1 ON (PU.Investigator_Id = I1.Investigator_Id)
+         JOIN Institute I2 ON I0.Institute_Id = I2.Institute_Id
          JOIN Partner P ON I2.Partner_Id = P.Partner_Id
          JOIN InstituteName I ON I2.InstituteName_Id = I.InstituteName_Id
 WHERE PU.PiptUser_Id = :pipt_user_id
-GROUP BY id, username
         """
         )
+
         result = self.connection.execute(
             stmt, {"pipt_user_id": user_id, "separator": separator}
         )
-        row = result.fetchone()
-        user = {
-            "id": row.id,
-            "username": row.username,
-            "family_name": row.family_name,
-            "given_name": row.given_name,
-            "emails": row.emails.split(separator),
-            "password_hash": row.password_hash,
-            "affiliations": [
-                {
-                    "institute_id": row.institute_ids.split(separator)[i],
-                    "name": row.institutes.split(separator)[i],
-                    "department": row.departments.split(separator)[i],
-                    "partner_code": row.partner_codes.split(separator)[i],
+        user = {}
+        for i, row in enumerate(result):
+            if i == 0:
+                user = {
+                    "id": row.id,
+                    "username": row.username,
+                    "family_name": row.family_name,
+                    "given_name": row.given_name,
+                    "email": row.email,
+                    "alternative_emails": [
+                        row.alternative_emails if row.alternative_emails else ""
+                    ],
+                    "password_hash": row.password_hash,
+                    "affiliations": [
+                        {
+                            "institution_id": row.institute_id,
+                            "name": row.institute_name,
+                            "department": row.department,
+                            "partner_code": row.partner_code,
+                        }
+                    ],
                 }
-                for i in range(len(row.institute_ids.split(separator)))
-            ],
-        }
+            else:
+                user["alternative_emails"].append(
+                    row.alternative_emails
+                    if row.alternative_emails != row.email
+                    else ""
+                )
+                user["affiliations"].append(
+                    {
+                        "institution_id": row.institute_id,
+                        "name": row.institute_name,
+                        "department": row.department,
+                        "partner_code": row.partner_code,
+                    }
+                )
         if not user:
-            raise NotFoundError("Unknown user id")
+            raise NotFoundError("Unknown username")
         return User(**user, roles=self.get_user_roles(user["username"]))
 
     def get_by_email(self, email: str) -> User:
@@ -135,43 +176,64 @@ GROUP BY id, username
         stmt = text(
             """
 SELECT PU.PiptUser_Id           AS id,
-       Email                    AS email,
-       FirstName                AS given_name,
-       Password                 AS password_hash,
+       I1.Email                 AS email,
+       I0.Email                 AS alternative_emails,
+       I0.Surname               AS family_name,
+       I0.FirstName             AS given_name,
+       PU.Password              AS password_hash,
        Username                 AS username,
-       GROUP_CONCAT(DISTINCT Email ORDER BY Email SEPARATOR :separator) AS emails,
-       GROUP_CONCAT(DISTINCT P.Partner_Code ORDER BY Email SEPARATOR :separator) AS partner_codes,
-       GROUP_CONCAT(DISTINCT I.InstituteName_Name ORDER BY Email SEPARATOR :separator) AS institutes,
-       GROUP_CONCAT(DISTINCT I2.Institute_Id ORDER BY Email SEPARATOR :separator) AS institute_ids,
-       GROUP_CONCAT(DISTINCT I2.Department ORDER BY Email SEPARATOR :separator) AS departments
+       P.Partner_Code           AS partner_code,
+       I.InstituteName_Name     AS institute_name,
+       I2.Institute_Id          AS institute_id,
+       I2.Department            AS department
 FROM PiptUser AS PU
-         JOIN Investigator AS I1 ON (PU.PiptUser_Id = I1.PiptUser_Id)
-         JOIN Institute I2 ON I1.Institute_Id = I2.Institute_Id
+         JOIN Investigator AS I0 ON (PU.PiptUser_Id = I0.PiptUser_Id)
+         JOIN Investigator I1 ON (PU.Investigator_Id = I1.Investigator_Id)
+         JOIN Institute I2 ON I0.Institute_Id = I2.Institute_Id
          JOIN Partner P ON I2.Partner_Id = P.Partner_Id
          JOIN InstituteName I ON I2.InstituteName_Id = I.InstituteName_Id
-WHERE I.Email = :email
-GROUP BY id, username
+WHERE I1.Email = :email
         """
         )
         result = self.connection.execute(stmt, {"email": email, "separator": separator})
-        row = result.one_or_none()
-        user = {
-            "id": row.id,
-            "username": row.username,
-            "family_name": row.family_name,
-            "given_name": row.given_name,
-            "emails": row.emails.split(separator),
-            "password_hash": row.password_hash,
-            "affiliations": [
-                {
-                    "institute_id": row.institute_ids.split(separator)[i],
-                    "name": row.institutes.split(separator)[i],
-                    "department": row.departments.split(separator)[i],
-                    "partner_code": row.partner_codes.split(separator)[i],
+        user = {}
+        for i, row in enumerate(result):
+            if i == 0:
+                user = {
+                    "id": row.id,
+                    "username": row.username,
+                    "family_name": row.family_name,
+                    "given_name": row.given_name,
+                    "email": row.email,
+                    "alternative_emails": [
+                        row.alternative_emails
+                        if row.alternative_emails != row.email
+                        else ""
+                    ],
+                    "password_hash": row.password_hash,
+                    "affiliations": [
+                        {
+                            "institution_id": row.institute_id,
+                            "name": row.institute_name,
+                            "department": row.department,
+                            "partner_code": row.partner_code,
+                        }
+                    ],
                 }
-                for i in range(len(row.institute_ids.split(separator)))
-            ],
-        }
+            else:
+                user["alternative_emails"].append(
+                    row.alternative_emails
+                    if row.alternative_emails != row.email
+                    else ""
+                )
+                user["affiliations"].append(
+                    {
+                        "institution_id": row.institute_id,
+                        "name": row.institute_name,
+                        "department": row.department,
+                        "partner_code": row.partner_code,
+                    }
+                )
         if not user:
             raise NotFoundError("Unknown email address")
         return User(**user, roles=self.get_user_roles(user["username"]))
@@ -236,7 +298,7 @@ VALUES (:institute_id, :given_name, :family_name, :email)
                 "institute_id": new_user_details.institute_id,
                 "given_name": new_user_details.given_name,
                 "family_name": new_user_details.family_name,
-                "email": new_user_details.emails,
+                "email": new_user_details.email,
             },
         )
 
