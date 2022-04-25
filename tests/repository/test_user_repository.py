@@ -20,7 +20,7 @@ def test_get_user_returns_correct_user(
 ) -> None:
     expected_user = testdata(TEST_DATA_PATH)["get_user"]
     user_repository = UserRepository(dbconnection)
-    user = user_repository.get(expected_user["username"])
+    user = user_repository.get_by_username(expected_user["username"])
 
     assert user.id == expected_user["id"]
     assert user.username == expected_user["username"]
@@ -32,7 +32,7 @@ def test_get_user_returns_correct_user(
 def test_get_user_raises_error_for_non_existing_user(dbconnection: Connection) -> None:
     user_repository = UserRepository(dbconnection)
     with pytest.raises(NotFoundError):
-        user_repository.get("idontexist")
+        user_repository.get_by_username("idontexist")
 
 
 @nodatabase
@@ -41,7 +41,7 @@ def test_get_user_by_id_returns_correct_user(
 ) -> None:
     expected_user = testdata(TEST_DATA_PATH)["get_user_by_id"]
     user_repository = UserRepository(dbconnection)
-    user = user_repository.get_by_id(expected_user["id"])
+    user = user_repository.get(expected_user["id"])
 
     assert user.id == expected_user["id"]
     assert user.username == expected_user["username"]
@@ -80,7 +80,8 @@ def test_create_user_raisers_error_if_username_exists_already(
     username = "hettlage"
     new_user_details = NewUserDetails(
         username=username,
-        email=EmailStr(f"{username}@example.com"),
+        primary_email=EmailStr(f"{username}@example.com"),
+        email=[],
         given_name=_random_string(),
         family_name=_random_string(),
         password="very_secret",
@@ -99,7 +100,8 @@ def test_create_user_creates_a_new_user(dbconnection: Connection) -> None:
     new_user_details = NewUserDetails(
         username=username,
         password=_random_string(),
-        email=EmailStr(f"{username}@example.com"),
+        primary_email=EmailStr(f"{username}@example.com"),
+        email=[""],
         given_name=_random_string(),
         family_name=_random_string(),
         institute_id=5,
@@ -108,7 +110,7 @@ def test_create_user_creates_a_new_user(dbconnection: Connection) -> None:
     user_repository = UserRepository(dbconnection)
     user_repository.create(new_user_details)
 
-    created_user = user_repository.get(username)
+    created_user = user_repository.get_by_username(username)
     assert created_user.username == username
     assert created_user.password_hash is not None
     assert created_user.email == new_user_details.email
@@ -123,7 +125,7 @@ def test_get_user_by_email_raises_error_for_non_existing_user(
 ) -> None:
     user_repository = UserRepository(dbconnection)
     with pytest.raises(NotFoundError):
-        user_repository.get("invalid@email.com")
+        user_repository.get_by_username("invalid@email.com")
 
 
 @nodatabase
@@ -137,9 +139,9 @@ def test_patch_raises_error_for_non_existing_user(dbconnection: Connection) -> N
 def test_patch_uses_existing_values_by_default(dbconnection: Connection) -> None:
     user_repository = UserRepository(dbconnection)
     username = "hettlage"
-    old_user_details = user_repository.get(username)
+    old_user_details = user_repository.get_by_username(username)
     user_repository.update(username, UserUpdate(username=None, password=None))
-    new_user_details = user_repository.get(username)
+    new_user_details = user_repository.get_by_username(username)
 
     assert old_user_details == new_user_details
 
@@ -147,7 +149,7 @@ def test_patch_uses_existing_values_by_default(dbconnection: Connection) -> None
 def test_patch_replaces_existing_values(dbconnection: Connection) -> None:
     user_repository = UserRepository(dbconnection)
     username = "hettlage"
-    old_user_details = user_repository.get(username)
+    old_user_details = user_repository.get_by_username(username)
 
     new_username = "hettlage2"
     new_password = "a_new_shiny_password"
@@ -158,7 +160,7 @@ def test_patch_replaces_existing_values(dbconnection: Connection) -> None:
     user_repository.update(
         username, UserUpdate(username=new_username, password=new_password)
     )
-    new_user_details = user_repository.get(new_username)
+    new_user_details = user_repository.get_by_username(new_username)
 
     assert new_user_details.username == new_username
     assert user_repository.verify_password(new_password, new_user_details.password_hash)
@@ -173,12 +175,12 @@ def test_patch_is_idempotent(dbconnection: Connection) -> None:
     user_repository.update(
         username, UserUpdate(username=new_username, password=new_password)
     )
-    new_user_details_1 = user_repository.get(new_username)
+    new_user_details_1 = user_repository.get_by_username(new_username)
 
     user_repository.update(
         new_username, UserUpdate(username=new_username, password=new_password)
     )
-    new_user_details_2 = user_repository.get(new_username)
+    new_user_details_2 = user_repository.get_by_username(new_username)
 
     assert new_user_details_1 == new_user_details_2
 
@@ -527,7 +529,7 @@ def test_find_by_username_and_password_raises_error_for_wrong_password(
     username = data["username"]
 
     # Make sure the user exists
-    assert user_repository.get(username)
+    assert user_repository.get_by_username(username)
 
     with pytest.raises(NotFoundError):
         user_repository.find_user_with_username_and_password(username, "wrongpassword")

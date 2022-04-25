@@ -6,7 +6,7 @@ from saltapi.repository.unit_of_work import UnitOfWork
 from saltapi.service.authentication_service import get_current_user
 from saltapi.service.user import User as _User
 from saltapi.web import services
-from saltapi.web.schema.institution import PartnerInstitutes
+from saltapi.web.schema.common import Affiliation
 
 router = APIRouter(prefix="/institutions", tags=["Institutions"])
 
@@ -14,7 +14,7 @@ router = APIRouter(prefix="/institutions", tags=["Institutions"])
 @router.get(
     "/",
     summary="Get a list of institutes",
-    response_model=List[PartnerInstitutes],
+    response_model=List[Affiliation],
 )
 def get_institutions(
     user: _User = Depends(get_current_user),

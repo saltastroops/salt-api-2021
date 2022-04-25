@@ -6,6 +6,7 @@ from pydantic import BaseModel, EmailStr, Field
 
 from saltapi.web.schema.block import BlockSummary
 from saltapi.web.schema.common import (
+    Affiliation,
     BlockVisit,
     PartnerCode,
     PartnerName,
@@ -14,40 +15,11 @@ from saltapi.web.schema.common import (
     Semester,
 )
 from saltapi.web.schema.target import Phase1Target
+from saltapi.web.schema.user import Usernames
 
 
-class Affiliation(BaseModel):
-    """An institute affiliation."""
-
-    partner_name: PartnerName = Field(
-        ...,
-        title="SALT partner name",
-        description="Name of the SALT Partner",
-    )
-    partner_code: PartnerCode = Field(
-        ...,
-        title="SALT partner code",
-        description="Code of the SALT Partner",
-    )
-    institute: str = Field(..., title="Institute", description="Institute")
-    department: Optional[str] = Field(
-        None, title="Department", description="Department of the institute"
-    )
-
-
-class ContactDetails(BaseModel):
-    given_name: str = Field(..., title="Given name", description='Given ("first") name')
-    family_name: str = Field(
-        ..., title="Family name", description='Family ("last") name'
-    )
+class ProposalUser(Usernames):
     email: EmailStr = Field(..., title="Email address", description="Email address")
-
-    class Config:
-        orm_mode = True
-
-
-class ProposalUser(ContactDetails):
-    id: int = Field(..., title="User id", description="User id.")
 
 
 class ProposalStatusValue(str, Enum):
@@ -138,7 +110,7 @@ class GeneralProposalInfo(BaseModel):
         title="Data release date",
         description="Date when the proposal data is scheduled to become public",
     )
-    liaison_salt_astronomer: Optional[ProposalUser] = Field(
+    liaison_salt_astronomer: Optional[Usernames] = Field(
         ...,
         title="Liaison astronomer",
         description="SALT Astronomer who is the liaison astronomer for the proposal",
@@ -446,7 +418,7 @@ class ProposalListItem(BaseModel):
     principal_contact: ProposalUser = Field(
         ..., title="Principal Contact", description="Principal Contact"
     )
-    liaison_astronomer: Optional[ProposalUser] = Field(
+    liaison_astronomer: Optional[Usernames] = Field(
         ..., title="Liaison Astronomer", description="Liaison Astronomer"
     )
 

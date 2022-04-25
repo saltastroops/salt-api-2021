@@ -19,13 +19,50 @@ class UserRepository:
     def __init__(self, connection: Connection) -> None:
         self.connection = connection
 
-    def get(self, username: str) -> User:
+    def _get(self, rows: Any) -> User:
+        user = {}
+        for i, row in enumerate(rows):
+            if i == 0:
+                user = {
+                    "id": row.id,
+                    "username": row.username,
+                    "family_name": row.family_name,
+                    "given_name": row.given_name,
+                    "primary_email": row.email,
+                    "email": [row.alternative_emails]
+                    if row.alternative_emails != row.email
+                    else [],
+                    "password_hash": row.password_hash,
+                    "affiliations": [
+                        {
+                            "institution_id": row.institution_id,
+                            "institution": row.institution_name,
+                            "department": row.department,
+                            "partner_code": row.partner_code,
+                        }
+                    ],
+                }
+            else:
+                if row.alternative_emails != row.email:
+                    user["email"].append(row.alternative_emails)
+                user["affiliations"].append(
+                    {
+                        "institution_id": row.institution_id,
+                        "institution": row.institution_name,
+                        "department": row.department,
+                        "partner_code": row.partner_code,
+                    }
+                )
+        if not user:
+            raise NotFoundError("Unknown username")
+        return User(**user, roles=self.get_user_roles(user["username"]))
+
+    def get_by_username(self, username: str) -> User:
         """
         Returns the user with a given username.
 
         If the username does not exist, a NotFoundError is raised.
         """
-        separator = "::::"
         stmt = text(
             """
 SELECT PU.PiptUser_Id           AS id,
@@ -36,11 +73,11 @@ SELECT PU.PiptUser_Id           AS id,
        PU.Password              AS password_hash,
        PU.Username              AS username,
        P.Partner_Code           AS partner_code,
-       I.InstituteName_Name     AS institute_name,
-       I2.Institute_Id          AS institute_id,
+       I.InstituteName_Name     AS institution_name,
+       I2.Institute_Id          AS institution_id,
        I2.Department            AS department
 FROM PiptUser AS PU
-         JOIN Investigator AS I0 ON (PU.PiptUser_Id = I0.PiptUser_Id)
+         JOIN Investigator AS I0 ON PU.PiptUser_Id = I0.PiptUser_Id
          JOIN Investigator I1 ON PU.Investigator_Id = I1.Investigator_Id
          JOIN Institute I2 ON I0.Institute_Id = I2.Institute_Id
          JOIN Partner P ON I2.Partner_Id = P.Partner_Id
@@ -48,58 +85,16 @@ FROM PiptUser AS PU
 AND PU.Username = :username
         """
         )
-        result = self.connection.execute(
-            stmt, {"separator": separator, "username": username}
-        )
-        user = {}
-        for i, row in enumerate(result):
-            if i == 0:
-                user = {
-                    "id": row.id,
-                    "username": row.username,
-                    "family_name": row.family_name,
-                    "given_name": row.given_name,
-                    "email": row.email,
-                    "alternative_emails": [
-                        row.alternative_emails
-                        if row.alternative_emails != row.email
-                        else ""
-                    ],
-                    "password_hash": row.password_hash,
-                    "affiliations": [
-                        {
-                            "institute_id": row.institute_id,
-                            "name": row.institute_name,
-                            "department": row.department,
-                            "partner_code": row.partner_code,
-                        }
-                    ],
-                }
-            else:
-                user["alternative_emails"].append(
-                    row.alternative_emails
-                    if row.alternative_emails != row.email
-                    else ""
-                )
-                user["affiliations"].append(
-                    {
-                        "institution_id": row.institute_id,
-                        "name": row.institute_name,
-                        "department": row.department,
-                        "partner_code": row.partner_code,
-                    }
-                )
-        if not user:
-            raise NotFoundError("Unknown username")
-        return User(**user, roles=self.get_user_roles(username))
+        result = self.connection.execute(stmt, {"username": username})
+        user = self._get(result)
+        return user
 
-    def get_by_id(self, user_id: int) -> User:
+    def get(self, user_id: int) -> User:
         """
         Returns the user with a given user id.
 
         If there is no such user, a NotFoundError is raised.
         """
-        separator = "::::"
         stmt = text(
             """
 SELECT PU.PiptUser_Id           AS id,
@@ -110,11 +105,11 @@ SELECT PU.PiptUser_Id           AS id,
        PU.Password              AS password_hash,
        Username                 AS username,
        P.Partner_Code           AS partner_code,
-       I.InstituteName_Name     AS institute_name,
-       I2.Institute_Id          AS institute_id,
+       I.InstituteName_Name     AS institution_name,
+       I2.Institute_Id          AS institution_id,
        I2.Department            AS department
 FROM PiptUser AS PU
-         JOIN Investigator AS I0 ON (PU.PiptUser_Id = I0.PiptUser_Id)
+         JOIN Investigator AS I0 ON PU.PiptUser_Id = I0.PiptUser_Id
          JOIN Investigator I1 ON (PU.Investigator_Id = I1.Investigator_Id)
          JOIN Institute I2 ON I0.Institute_Id = I2.Institute_Id
          JOIN Partner P ON I2.Partner_Id = P.Partner_Id
@@ -123,48 +118,9 @@ WHERE PU.PiptUser_Id = :pipt_user_id
         """
         )
 
-        result = self.connection.execute(
-            stmt, {"pipt_user_id": user_id, "separator": separator}
-        )
-        user = {}
-        for i, row in enumerate(result):
-            if i == 0:
-                user = {
-                    "id": row.id,
-                    "username": row.username,
-                    "family_name": row.family_name,
-                    "given_name": row.given_name,
-                    "email": row.email,
-                    "alternative_emails": [
-                        row.alternative_emails if row.alternative_emails else ""
-                    ],
-                    "password_hash": row.password_hash,
-                    "affiliations": [
-                        {
-                            "institution_id": row.institute_id,
-                            "name": row.institute_name,
-                            "department": row.department,
-                            "partner_code": row.partner_code,
-                        }
-                    ],
-                }
-            else:
-                user["alternative_emails"].append(
-                    row.alternative_emails
-                    if row.alternative_emails != row.email
-                    else ""
-                )
-                user["affiliations"].append(
-                    {
-                        "institution_id": row.institute_id,
-                        "name": row.institute_name,
-                        "department": row.department,
-                        "partner_code": row.partner_code,
-                    }
-                )
-        if not user:
-            raise NotFoundError("Unknown username")
-        return User(**user, roles=self.get_user_roles(user["username"]))
+        result = self.connection.execute(stmt, {"pipt_user_id": user_id})
+        user = self._get(result)
+        return user
 
     def get_by_email(self, email: str) -> User:
         """
@@ -172,7 +128,6 @@ WHERE PU.PiptUser_Id = :pipt_user_id
 
         If there is no such user, a NotFoundError is raised.
         """
-        separator = "::::"
         stmt = text(
             """
 SELECT PU.PiptUser_Id           AS id,
@@ -183,11 +138,11 @@ SELECT PU.PiptUser_Id           AS id,
        PU.Password              AS password_hash,
        Username                 AS username,
        P.Partner_Code           AS partner_code,
-       I.InstituteName_Name     AS institute_name,
-       I2.Institute_Id          AS institute_id,
+       I.InstituteName_Name     AS institution_name,
+       I2.Institute_Id          AS institution_id,
        I2.Department            AS department
 FROM PiptUser AS PU
-         JOIN Investigator AS I0 ON (PU.PiptUser_Id = I0.PiptUser_Id)
+         JOIN Investigator AS I0 ON PU.PiptUser_Id = I0.PiptUser_Id
          JOIN Investigator I1 ON (PU.Investigator_Id = I1.Investigator_Id)
          JOIN Institute I2 ON I0.Institute_Id = I2.Institute_Id
          JOIN Partner P ON I2.Partner_Id = P.Partner_Id
@@ -195,48 +150,9 @@ FROM PiptUser AS PU
 WHERE I1.Email = :email
         """
         )
-        result = self.connection.execute(stmt, {"email": email, "separator": separator})
-        user = {}
-        for i, row in enumerate(result):
-            if i == 0:
-                user = {
-                    "id": row.id,
-                    "username": row.username,
-                    "family_name": row.family_name,
-                    "given_name": row.given_name,
-                    "email": row.email,
-                    "alternative_emails": [
-                        row.alternative_emails
-                        if row.alternative_emails != row.email
-                        else ""
-                    ],
-                    "password_hash": row.password_hash,
-                    "affiliations": [
-                        {
-                            "institution_id": row.institute_id,
-                            "name": row.institute_name,
-                            "department": row.department,
-                            "partner_code": row.partner_code,
-                        }
-                    ],
-                }
-            else:
-                user["alternative_emails"].append(
-                    row.alternative_emails
-                    if row.alternative_emails != row.email
-                    else ""
-                )
-                user["affiliations"].append(
-                    {
-                        "institution_id": row.institute_id,
-                        "name": row.institute_name,
-                        "department": row.department,
-                        "partner_code": row.partner_code,
-                    }
-                )
-        if not user:
-            raise NotFoundError("Unknown email address")
-        return User(**user, roles=self.get_user_roles(user["username"]))
+        result = self.connection.execute(stmt, {"email": email})
+        user = self._get(result)
+        return user
 
     def get_users(self) -> List[Dict[str, Any]]:
         """
@@ -347,7 +263,7 @@ WHERE Investigator_Id = :investigator_id
     def _does_username_exist(self, username: str) -> bool:
         """Check whether a username exists already."""
         try:
-            self.get(username)
+            self.get_by_username(username)
         except NotFoundError:
             return False
 
@@ -368,7 +284,7 @@ WHERE Investigator_Id = :investigator_id
         If the given user update has a non-None value for a property, that value should
         replace the existing value; otherwise the existing value is kept.
         """
-        user = self.get(username)
+        user = self.get_by_username(username)
         return UserUpdate(
             username=user_update.username if user_update.username else user.username,
             password=user_update.password,
@@ -689,7 +605,7 @@ WHERE Username = :username
         If the combination of username and password is valid, then the corresponding
         user is returned. Otherwise a NotFoundError is raised.
         """
-        user = self.get(username)
+        user = self.get_by_username(username)
         if not user:
             raise NotFoundError()
         if not self.verify_password(password, user.password_hash):

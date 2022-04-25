@@ -43,7 +43,7 @@ def send_password_reset_email(
         user_service = services.user_service(unit_of_work.connection)
         try:
             try:
-                user = user_service.get_user(username_email)
+                user = user_service.get_user_by_username(username_email)
             except NotFoundError:
                 user = user_service.get_user_by_email(username_email)
 
@@ -75,7 +75,8 @@ def create_user(
             _NewUserDetails(
                 username=user.username,
                 password=user.password,
-                email=user.email,
+                primary_email=user.primary_email,
+                email=[],
                 given_name=user.given_name,
                 family_name=user.family_name,
                 institute_id=user.institute_id,
@@ -83,7 +84,7 @@ def create_user(
         )
         unit_of_work.commit()
 
-        return user_service.get_user(user.username)
+        return user_service.get_user_by_username(user.username)
 
 
 @router.get("/", summary="Get users information", response_model=List[UserListItem])
@@ -96,56 +97,41 @@ def get_users(
 
 
 @router.get("/{user_id}", summary="Get user details", response_model=User)
-def get_user_by_id(
+def get_user(
     user_id: int = Path(
         ...,
-        alias="user_id",
         title="User id",
         description="User id of the user making the request.",
     ),
     user: _User = Depends(get_current_user),
 ) -> _User:
     with UnitOfWork() as unit_of_work:
-        user_service = services.user_service(unit_of_work.connection)
-        return user_service.get_user_by_id(user_id)
-
-
-@router.get("/{username}", summary="Get user details", response_model=User)
-def get_user(
-    username: str = Path(
-        ...,
-        title="Username",
-        description="Username of the user whose details are updated.",
-    ),
-    user: _User = Depends(get_current_user),
-) -> _User:
-    with UnitOfWork() as unit_of_work:
         permission_service = services.permission_service(unit_of_work.connection)
-        permission_service.check_permission_to_update_user(user, username)
+        permission_service.check_permission_to_update_user(user, user_id)
         user_service = services.user_service(unit_of_work.connection)
-        return user_service.get_user(username)
+        return user_service.get_user(user_id)
 
 
-@router.patch("/{username}", summary="Update user details", response_model=User)
+@router.patch("/{user_id}", summary="Update user details", response_model=User)
 def update_user(
-    username: str = Path(
+    user_id: int = Path(
         ...,
-        title="Username",
-        description="Username of the user whose details are updated.",
+        title="User id",
+        description="User id of the user making the request.",
     ),
     user_update: UserUpdate = Body(..., title="User Details", description="??"),
     user: _User = Depends(get_current_user),
 ) -> _User:
     with UnitOfWork() as unit_of_work:
         permission_service = services.permission_service(unit_of_work.connection)
-        permission_service.check_permission_to_update_user(user, username)
+        permission_service.check_permission_to_update_user(user, user_id)
 
         _user_update = _UserUpdate(
             username=user_update.username, password=user_update.password
         )
         user_service = services.user_service(unit_of_work.connection)
-        user_service.update_user(username, _user_update)
+        user_service.update_user(user.username, _user_update)
         unit_of_work.commit()
 
-        new_username = user_update.username if user_update.username else username
-        return user_service.get_user(new_username)
+        new_username = user_update.username if user_update.username else user.username
+        return user_service.get_user_by_username(new_username)

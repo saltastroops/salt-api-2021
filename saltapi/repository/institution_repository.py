@@ -4,13 +4,6 @@ from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
 
-def get_department(departments_list: list[str], index: int) -> str:
-    try:
-        return departments_list[index]
-    except IndexError:
-        return ""
-
-
 class InstitutionRepository:
     def __init__(self, connection: Connection) -> None:
         self.connection = connection
@@ -19,23 +12,22 @@ class InstitutionRepository:
         """
         Returns a list of institutions
         """
-        separator = "::::"
         stmt = text(
             """
 SELECT P.Partner_Code   AS partner_code,
        I2.Department    AS department,
        I2.Institute_Id  AS institution_id,
-       I.InstituteName_Name AS name
+       I.InstituteName_Name AS institution
 FROM Partner P
          JOIN Institute I2 ON P.Partner_Id = I2.Partner_Id
          JOIN InstituteName I ON I2.InstituteName_Id = I.InstituteName_Id
             """
         )
-        result = self.connection.execute(stmt, {"separator": separator})
+        result = self.connection.execute(stmt)
         institutions = [
             {
                 "institution_id": row.institution_id,
-                "name": row.name,
+                "institution": row.institute,
                 "department": row.department,
                 "partner_code": row.partner_code,
             }

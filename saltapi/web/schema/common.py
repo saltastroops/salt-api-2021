@@ -289,3 +289,22 @@ class TimeInterval(BaseModel):
 
 class Message(BaseModel):
     message: str = Field(..., title="Message", description="Message")
+
+
+class Affiliation(BaseModel):
+    """An institute affiliation."""
+
+    institution_id: int = Field(
+        ...,
+        title="Institute id",
+        description="Unique identifier of the institute.",
+    )
+    partner_code: PartnerCode = Field(
+        ...,
+        title="SALT partner code",
+        description="Code of the SALT Partner",
+    )
+    institution: str = Field(..., title="Institute", description="Institute")
+    department: Optional[str] = Field(
+        None, title="Department", description="Department of the institute"
+    )

@@ -1,10 +1,9 @@
 from enum import Enum
 from typing import List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, EmailStr, Field
 
-from saltapi.web.schema.institution import PartnerInstitutes
-from saltapi.web.schema.proposal import ContactDetails, ProposalUser
+from saltapi.web.schema.common import Affiliation
 
 
 class UserRole(str, Enum):
@@ -34,24 +33,41 @@ class UserListItem(BaseModel):
     )
 
 
-class User(ProposalUser):
+class Usernames(BaseModel):
+    given_name: str = Field(..., title="Given name", description='Given ("first") name')
+    family_name: str = Field(
+        ..., title="Family name", description='Family ("last") name'
+    )
+
+    class Config:
+        orm_mode = True
+
+
+class User(Usernames):
     """List of affiliations of the users."""
 
-    alternative_emails: Optional[List[str]] = Field(
-        None,
+    id: int = Field(..., title="User id", description="User id.")
+    primary_email: EmailStr = Field(
+        ..., title="Email address", description="Email address"
+    )
+    email: List[str] = Field(
+        ...,
         title="Alternative email addresses",
         description="Alternative email addresses",
     )
     username: str = Field(..., title="Username", description="Username.")
     roles: List[UserRole] = Field(..., title="User roles", description="User roles.")
-    affiliations: List[PartnerInstitutes] = Field(
+    affiliations: List[Affiliation] = Field(
         ..., title="Affiliation", description="Affiliation of the user"
     )
 
 
-class NewUserDetails(ContactDetails):
+class NewUserDetails(Usernames):
     """Details for creating a user."""
 
+    primary_email: EmailStr = Field(
+        ..., title="Email address", description="Email address"
+    )
     username: str = Field(..., title="Username", description="Username.")
     password: str = Field(..., title="Password", description="Password.")
     institute_id: int = Field(

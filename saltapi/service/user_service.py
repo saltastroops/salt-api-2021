@@ -61,7 +61,7 @@ SALT Team
             plain_body=plain_body,
             subject="SALT Web Manager password reset",
         )
-        mail_service.send_email(to=[user.email], message=message)
+        mail_service.send_email(to=[user.primary_email], message=message)
 
     @staticmethod
     def password_reset_url(token: str) -> str:
@@ -72,7 +72,7 @@ SALT Team
 
     def _does_user_exist(self, username: str) -> bool:
         try:
-            self.get_user(username)
+            self.get_user_by_username(username)
         except NotFoundError:
             return False
 
@@ -83,8 +83,8 @@ SALT Team
             raise ValidationError(f"The username {user.username} exists already.")
         self.repository.create(user)
 
-    def get_user(self, username: str) -> User:
-        user = self.repository.get(username)
+    def get_user(self, user_id: int) -> User:
+        user = self.repository.get(user_id)
         user.password_hash = "***"  # Just in case the password hash ends up somewhere
         return user
 
@@ -97,8 +97,8 @@ SALT Team
         user.password_hash = "***"  # Just in case the password hash ends up somewhere
         return user
 
-    def get_user_by_id(self, user_id: int) -> User:
-        user = self.repository.get_by_id(user_id)
+    def get_user_by_username(self, username: str) -> User:
+        user = self.repository.get_by_username(username)
         user.password_hash = "***"  # Just in case the password hash ends up somewhere
         return user
 

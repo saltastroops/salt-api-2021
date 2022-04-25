@@ -2,8 +2,10 @@ import re
 from email.mime.multipart import MIMEMultipart
 from typing import Any
 
+from pydantic import EmailStr
+
 from saltapi.service.mail_service import MailService
-from saltapi.service.user import PartnerInstitutes, User
+from saltapi.service.user import Affiliation, User
 from saltapi.settings import Settings
 
 settings = Settings()
@@ -25,12 +27,12 @@ user = User(
     username="valid",
     given_name="valid",
     family_name="valid",
-    email="valid@mail.com",
+    primary_email=EmailStr("valid@mail.com"),
     password_hash="hashed_password",
-    alternative_emails=["anothervalid@gmail.com"],
+    email=["anothervalid@gmail.com"],
     affiliations=[
-        PartnerInstitutes(
-            institute_id=1, name="Ins", department="Dept", partner_code="POL"
+        Affiliation(
+            institution_id=1, institution="Ins", department="Dept", partner_code="POL"
         )
     ],
     roles=[],
