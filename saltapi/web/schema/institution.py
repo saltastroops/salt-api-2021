@@ -6,7 +6,7 @@ from saltapi.web.schema.common import PartnerCode
 
 
 class Institution(BaseModel):
-    """An institution affiliation."""
+    """An institution."""
 
     institution_id: int = Field(
         ...,

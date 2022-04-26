@@ -82,9 +82,9 @@ FROM PiptUser AS PU
 
         If the username does not exist, a NotFoundError is raised.
         """
-        query = self._get_user_query + """WHERE PU.Username = '%s'""" % username
+        query = self._get_user_query + """WHERE PU.Username = :username"""
         stmt = text(query)
-        result = self.connection.execute(stmt)
+        result = self.connection.execute(stmt, {"username": username})
         user = self._get(result)
         return user
 
@@ -94,9 +94,9 @@ FROM PiptUser AS PU
 
         If there is no such user, a NotFoundError is raised.
         """
-        query = self._get_user_query + """\nWHERE PU.PiptUser_Id = %s""" % user_id
+        query = self._get_user_query + """\nWHERE PU.PiptUser_Id = :user_id"""
         stmt = text(query)
-        result = self.connection.execute(stmt)
+        result = self.connection.execute(stmt, {"user_id": user_id})
         user = self._get(result)
         return user
 
@@ -106,9 +106,9 @@ FROM PiptUser AS PU
 
         If there is no such user, a NotFoundError is raised.
         """
-        query = self._get_user_query + """\nWHERE I1.Email = '%s'""" % email
+        query = self._get_user_query + """\nWHERE I1.Email = :email"""
         stmt = text(query)
-        result = self.connection.execute(stmt)
+        result = self.connection.execute(stmt, {"email": email})
         user = self._get(result)
         return user
 
