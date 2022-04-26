@@ -103,9 +103,9 @@ def update_mos_mask_metadata(
     response_model=List[str],
 )
 def get_obsolete_rss_masks_in_magazine(
-        mask_type: Optional[str] = Query(
-            None, title="Mask type", description="The mask type."
-        ),
+    mask_type: Optional[str] = Query(
+        None, title="Mask type", description="The mask type."
+    ),
 ) -> List[str]:
     """
     Returns the list of obsolete RSS masks.

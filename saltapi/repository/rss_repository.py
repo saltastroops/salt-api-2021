@@ -1,6 +1,5 @@
 from collections import defaultdict
-from copy import copy
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Any, Dict, List, Optional, Set
 
 from sqlalchemy import text
@@ -442,7 +441,9 @@ FROM RssCurrentMasks AS RCM
             liaison_astronomers[row["proposal_code_id"]] = row["surname"]
         return liaison_astronomers
 
-    def _get_barcodes_for_encoded_contents(self, encoded_contents: Set[str]):
+    def _get_barcodes_for_encoded_contents(
+        self, encoded_contents: Set[str]
+    ) -> Dict[str, List[str]]:
         """
         Get the barcodes for a set of encoded mask contents.
 
@@ -461,7 +462,9 @@ WHERE EncodedContent IN :encoded_contents
             """
         )
         ec = defaultdict(list)
-        for row in self.connection.execute(stmt, {"encoded_contents": tuple(encoded_contents)}):
+        for row in self.connection.execute(
+            stmt, {"encoded_contents": tuple(encoded_contents)}
+        ):
             ec[row.encoded_content].append(row.barcode)
         return ec
 
@@ -490,7 +493,6 @@ GROUP BY B.Block_Id
         ):
             remaining_nights[n.block_id] = n.nights
         return remaining_nights
-
 
     def get_mos_masks_metadata(
         self, from_semester: str, to_semester: str
@@ -567,10 +569,14 @@ ORDER BY P.Semester_Id, Proposal_Code, Proposal_Id DESC
                 if proposal_code_id in liaison_astronomers
                 else None
             )
-            m["other_barcodes"] = \
-                [b for b in barcodes[m["encoded_content"]] if b != m["barcode"]]
-            m["remaining_nights"] = remaining_nights[m["block_id"]] \
-                if m["block_id"] in remaining_nights else 0
+            m["other_barcodes"] = [
+                b for b in barcodes[m["encoded_content"]] if b != m["barcode"]
+            ]
+            m["remaining_nights"] = (
+                remaining_nights[m["block_id"]]
+                if m["block_id"] in remaining_nights
+                else 0
+            )
             m["liaison_astronomer"] = liaison_astronomer
         return mos_blocks
 
@@ -606,7 +612,7 @@ WHERE RssMask_Id = ( SELECT RssMask_Id FROM RssMask WHERE Barcode = :barcode )
 
         return self.get_mos_mask_metadata(mos_mask_metadata["barcode"])
 
-    def get_obsolete_rss_masks_in_magazine(self, mask_type: str) -> List[str]:
+    def get_obsolete_rss_masks_in_magazine(self, mask_type: Optional[str]) -> List[str]:
         """
         The list of obsolete RSS masks, optionally filtered by a mask type.
         """
@@ -637,7 +643,7 @@ WHERE CONCAT(S.Year, '-', S.Semester) >= :semester
                 text(stmt),
                 {
                     "semester": semester_of_datetime(datetime.now().astimezone()),
-                    "mask_type": mask_type
+                    "mask_type": mask_type,
                 },
             )
         ]

@@ -15,6 +15,7 @@ from saltapi.web.api.block_visits import router as block_visits_router
 from saltapi.web.api.blocks import router as blocks_router
 from saltapi.web.api.instruments import router as instruments_router
 from saltapi.web.api.proposals import router as proposals_router
+from saltapi.web.api.submissions import router as submissions_router
 from saltapi.web.api.user import router as user_router
 from saltapi.web.api.users import router as users_router
 
@@ -59,3 +60,4 @@ app.include_router(block_visits_router)
 app.include_router(user_router)
 app.include_router(users_router)
 app.include_router(instruments_router)
+app.include_router(submissions_router)

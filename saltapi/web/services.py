@@ -11,6 +11,7 @@ from saltapi.service.instrument_service import InstrumentService
 from saltapi.service.mail_service import MailService
 from saltapi.service.permission_service import PermissionService
 from saltapi.service.proposal_service import ProposalService
+from saltapi.service.submission_service import SubmissionService
 from saltapi.service.user_service import UserService
 
 
@@ -63,3 +64,8 @@ def instrument_service(connection: Connection) -> InstrumentService:
     """Return an instrument service instance."""
     instrument_repository = InstrumentRepository(connection)
     return InstrumentService(instrument_repository)
+
+
+def submission_service() -> SubmissionService:
+    """Return a submission service instance."""
+    return SubmissionService()
