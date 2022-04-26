@@ -119,7 +119,7 @@ USER = User(
     given_name="Some",
     family_name="One",
     email=EmailStr("someone@example.com"),
-    alternative_email=["ex@gmail.com"],
+    alternative_emails=[EmailStr("ex@gmail.com")],
     password_hash="1234",
     affiliations=[
         Institution(

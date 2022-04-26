@@ -48,7 +48,7 @@ class User(FullName):
 
     id: int = Field(..., title="User id", description="User id.")
     email: EmailStr = Field(..., title="Email address", description="Email address")
-    alternative_email: List[str] = Field(
+    alternative_emails: List[EmailStr] = Field(
         ...,
         title="Alternative email addresses",
         description="Alternative email addresses",

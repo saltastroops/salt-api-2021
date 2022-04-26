@@ -29,7 +29,7 @@ user = User(
     family_name="valid",
     email=EmailStr("valid@mail.com"),
     password_hash="hashed_password",
-    alternative_email=["anothervalid@gmail.com"],
+    alternative_emails=[EmailStr("anothervalid@gmail.com")],
     affiliations=[
         Institution(
             institution_id=1, institution="Ins", department="Dept", partner_code="POL"

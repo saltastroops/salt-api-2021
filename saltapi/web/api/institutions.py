@@ -13,7 +13,7 @@ router = APIRouter(prefix="/institutions", tags=["Institutions"])
 
 @router.get(
     "/",
-    summary="Get a list of institutes",
+    summary="Get a list of institutions",
     response_model=List[Institution],
 )
 def get_institutions(

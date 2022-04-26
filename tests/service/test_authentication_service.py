@@ -21,7 +21,7 @@ USER = User(
     given_name="John",
     id=1,
     email=EmailStr("jdoe@email.com"),
-    alternative_email=[""],
+    alternative_emails=[EmailStr("")],
     password_hash="PasswordHash",
     affiliations=[
         Institution(
@@ -45,7 +45,7 @@ class FakeUserRepository:
                 family_name="Doe",
                 email=EmailStr("johndoe@email.com"),
                 password_hash="hashedpassword",
-                alternative_email=["alt@gmail.com"],
+                alternative_emails=[EmailStr("alt@gmail.com")],
                 affiliations=[
                     Institution(
                         institution_id=1332,
@@ -69,7 +69,7 @@ class FakeUserRepository:
                 family_name="Doe",
                 email=EmailStr("johndoe@email.com"),
                 password_hash="hashedpassword",
-                alternative_email=[""],
+                alternative_emails=[EmailStr("")],
                 affiliations=[
                     Institution(
                         institution_id=1332,

@@ -18,7 +18,7 @@ class ContactDetails:
     given_name: str
     family_name: str
     email: EmailStr
-    alternative_email: List[str]
+    alternative_emails: List[EmailStr]
 
 
 @dataclass()
@@ -42,7 +42,7 @@ class User:
     given_name: str
     family_name: str
     email: EmailStr
-    alternative_email: List[str]
+    alternative_emails: List[EmailStr]
     username: str
     password_hash: str
     affiliations: List[Institution]
@@ -54,7 +54,7 @@ class NewUserDetails:
     given_name: str
     family_name: str
     email: EmailStr
-    alternative_email: List[str]
+    alternative_emails: List[EmailStr]
     username: str
     password: str
     institution_id: int

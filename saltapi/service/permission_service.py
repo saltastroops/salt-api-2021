@@ -257,7 +257,6 @@ class PermissionService:
         Administrators may update any users. Other users may only update their own user
         details.
         """
-
         if self.user_repository.is_administrator(user.username):
             may_update = True
         else:

@@ -18,6 +18,25 @@ pwd_context = CryptContext(
 class UserRepository:
     def __init__(self, connection: Connection) -> None:
         self.connection = connection
+        self._get_user_query = """
+SELECT PU.PiptUser_Id           AS id,
+       I1.Email                 AS email,
+       I0.Email                 AS alternative_email,
+       I0.Surname               AS family_name,
+       I0.FirstName             AS given_name,
+       PU.Password              AS password_hash,
+       PU.Username              AS username,
+       P.Partner_Code           AS partner_code,
+       I.InstituteName_Name     AS institution_name,
+       I2.Institute_Id          AS institution_id,
+       I2.Department            AS department
+FROM PiptUser AS PU
+         JOIN Investigator AS I0 ON PU.PiptUser_Id = I0.PiptUser_Id
+         JOIN Investigator I1 ON PU.Investigator_Id = I1.Investigator_Id
+         JOIN Institute I2 ON I0.Institute_Id = I2.Institute_Id
+         JOIN Partner P ON I2.Partner_Id = P.Partner_Id
+         JOIN InstituteName I ON I2.InstituteName_Id = I.InstituteName_Id
+"""
 
     def _get(self, rows: Any) -> User:
         user = {}
@@ -29,7 +48,7 @@ class UserRepository:
                     "family_name": row.family_name,
                     "given_name": row.given_name,
                     "email": row.email,
-                    "alternative_email": [row.alternative_email]
+                    "alternative_emails": [row.alternative_email]
                     if row.alternative_email != row.email
                     else [],
                     "password_hash": row.password_hash,
@@ -43,8 +62,8 @@ class UserRepository:
                     ],
                 }
             else:
-                if row.alternative_emails != row.email:
-                    user["alternative_email"].append(row.alternative_email)
+                if row.alternative_email != row.email:
+                    user["alternative_emails"].append(row.alternative_email)
                 user["affiliations"].append(
                     {
                         "institution_id": row.institution_id,
@@ -63,29 +82,9 @@ class UserRepository:
 
         If the username does not exist, a NotFoundError is raised.
         """
-        stmt = text(
-            """
-SELECT PU.PiptUser_Id           AS id,
-       I1.Email                 AS email,
-       I0.Email                 AS alternative_email,
-       I0.Surname               AS family_name,
-       I0.FirstName             AS given_name,
-       PU.Password              AS password_hash,
-       PU.Username              AS username,
-       P.Partner_Code           AS partner_code,
-       I.InstituteName_Name     AS institution_name,
-       I2.Institute_Id          AS institution_id,
-       I2.Department            AS department
-FROM PiptUser AS PU
-         JOIN Investigator AS I0 ON PU.PiptUser_Id = I0.PiptUser_Id
-         JOIN Investigator I1 ON PU.Investigator_Id = I1.Investigator_Id
-         JOIN Institute I2 ON I0.Institute_Id = I2.Institute_Id
-         JOIN Partner P ON I2.Partner_Id = P.Partner_Id
-         JOIN InstituteName I ON I2.InstituteName_Id = I.InstituteName_Id
-WHERE PU.Username = :username
-        """
-        )
-        result = self.connection.execute(stmt, {"username": username})
+        query = self._get_user_query + """WHERE PU.Username = '%s'""" % username
+        stmt = text(query)
+        result = self.connection.execute(stmt)
         user = self._get(result)
         return user
 
@@ -95,30 +94,9 @@ WHERE PU.Username = :username
 
         If there is no such user, a NotFoundError is raised.
         """
-        stmt = text(
-            """
-SELECT PU.PiptUser_Id           AS id,
-       I1.Email                 AS email,
-       I0.Email                 AS alternative_email,
-       I0.Surname               AS family_name,
-       I0.FirstName             AS given_name,
-       PU.Password              AS password_hash,
-       Username                 AS username,
-       P.Partner_Code           AS partner_code,
-       I.InstituteName_Name     AS institution_name,
-       I2.Institute_Id          AS institution_id,
-       I2.Department            AS department
-FROM PiptUser AS PU
-         JOIN Investigator AS I0 ON PU.PiptUser_Id = I0.PiptUser_Id
-         JOIN Investigator I1 ON (PU.Investigator_Id = I1.Investigator_Id)
-         JOIN Institute I2 ON I0.Institute_Id = I2.Institute_Id
-         JOIN Partner P ON I2.Partner_Id = P.Partner_Id
-         JOIN InstituteName I ON I2.InstituteName_Id = I.InstituteName_Id
-WHERE PU.PiptUser_Id = :pipt_user_id
-        """
-        )
-
-        result = self.connection.execute(stmt, {"pipt_user_id": user_id})
+        query = self._get_user_query + """\nWHERE PU.PiptUser_Id = %s""" % user_id
+        stmt = text(query)
+        result = self.connection.execute(stmt)
         user = self._get(result)
         return user
 
@@ -128,29 +106,9 @@ WHERE PU.PiptUser_Id = :pipt_user_id
 
         If there is no such user, a NotFoundError is raised.
         """
-        stmt = text(
-            """
-SELECT PU.PiptUser_Id           AS id,
-       I1.Email                 AS email,
-       I0.Email                 AS alternative_email,
-       I0.Surname               AS family_name,
-       I0.FirstName             AS given_name,
-       PU.Password              AS password_hash,
-       Username                 AS username,
-       P.Partner_Code           AS partner_code,
-       I.InstituteName_Name     AS institution_name,
-       I2.Institute_Id          AS institution_id,
-       I2.Department            AS department
-FROM PiptUser AS PU
-         JOIN Investigator AS I0 ON PU.PiptUser_Id = I0.PiptUser_Id
-         JOIN Investigator I1 ON (PU.Investigator_Id = I1.Investigator_Id)
-         JOIN Institute I2 ON I0.Institute_Id = I2.Institute_Id
-         JOIN Partner P ON I2.Partner_Id = P.Partner_Id
-         JOIN InstituteName I ON I2.InstituteName_Id = I.InstituteName_Id
-WHERE I1.Email = :email
-        """
-        )
-        result = self.connection.execute(stmt, {"email": email})
+        query = self._get_user_query + """\nWHERE I1.Email = '%s'""" % email
+        stmt = text(query)
+        result = self.connection.execute(stmt)
         user = self._get(result)
         return user
 

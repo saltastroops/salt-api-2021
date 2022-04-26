@@ -81,7 +81,7 @@ def test_create_user_raisers_error_if_username_exists_already(
     new_user_details = NewUserDetails(
         username=username,
         email=EmailStr(f"{username}@example.com"),
-        alternative_email=[],
+        alternative_emails=[],
         given_name=_random_string(),
         family_name=_random_string(),
         password="very_secret",
@@ -101,7 +101,7 @@ def test_create_user_creates_a_new_user(dbconnection: Connection) -> None:
         username=username,
         password=_random_string(),
         email=EmailStr(f"{username}@example.com"),
-        alternative_email=[""],
+        alternative_emails=[],
         given_name=_random_string(),
         family_name=_random_string(),
         institution_id=5,

@@ -76,7 +76,7 @@ def create_user(
                 username=user.username,
                 password=user.password,
                 email=user.email,
-                alternative_email=[],
+                alternative_emails=[],
                 given_name=user.given_name,
                 family_name=user.family_name,
                 institution_id=user.institution_id,
