@@ -8,7 +8,7 @@ from pydantic import EmailStr
 from saltapi.exceptions import NotFoundError
 from saltapi.repository.user_repository import UserRepository
 from saltapi.service.authentication_service import AuthenticationService
-from saltapi.service.user import Affiliation, User
+from saltapi.service.user import Institution, User
 from saltapi.settings import Settings
 
 TEST_DATA_PATH = "service/authentication_service.yaml"
@@ -20,12 +20,15 @@ USER = User(
     family_name="Doe",
     given_name="John",
     id=1,
-    primary_email=EmailStr("jdoe@email.com"),
-    email=[""],
+    email=EmailStr("jdoe@email.com"),
+    alternative_email=[""],
     password_hash="PasswordHash",
     affiliations=[
-        Affiliation(
-            institution_id=1, institution="Ins", department="Dept", partner_code="Partner"
+        Institution(
+            institution_id=1,
+            institution="Ins",
+            department="Dept",
+            partner_code="Partner",
         )
     ],
     roles=[],
@@ -40,11 +43,11 @@ class FakeUserRepository:
                 username="jdoe",
                 given_name="John",
                 family_name="Doe",
-                primary_email=EmailStr("johndoe@email.com"),
+                email=EmailStr("johndoe@email.com"),
                 password_hash="hashedpassword",
-                email=["alt@gmail.com"],
+                alternative_email=["alt@gmail.com"],
                 affiliations=[
-                    Affiliation(
+                    Institution(
                         institution_id=1332,
                         institution="Other",
                         department="Other",
@@ -64,11 +67,11 @@ class FakeUserRepository:
                 username="jdoe",
                 given_name="John",
                 family_name="Doe",
-                primary_email=EmailStr("johndoe@email.com"),
+                email=EmailStr("johndoe@email.com"),
                 password_hash="hashedpassword",
-                email=[""],
+                alternative_email=[""],
                 affiliations=[
-                    Affiliation(
+                    Institution(
                         institution_id=1332,
                         institution="Other",
                         department="Other",
@@ -112,7 +115,7 @@ def test_authenticate_user_returns_correct_user() -> None:
     assert user.id == 1
     assert user.username == "jdoe"
     assert user.given_name == "John"
-    assert user.primary_email == "johndoe@email.com"
+    assert user.email == "johndoe@email.com"
 
 
 @pytest.mark.parametrize(

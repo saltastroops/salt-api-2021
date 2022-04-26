@@ -5,7 +5,7 @@ from typing import Any
 from pydantic import EmailStr
 
 from saltapi.service.mail_service import MailService
-from saltapi.service.user import Affiliation, User
+from saltapi.service.user import Institution, User
 from saltapi.settings import Settings
 
 settings = Settings()
@@ -27,11 +27,11 @@ user = User(
     username="valid",
     given_name="valid",
     family_name="valid",
-    primary_email=EmailStr("valid@mail.com"),
+    email=EmailStr("valid@mail.com"),
     password_hash="hashed_password",
-    email=["anothervalid@gmail.com"],
+    alternative_email=["anothervalid@gmail.com"],
     affiliations=[
-        Affiliation(
+        Institution(
             institution_id=1, institution="Ins", department="Dept", partner_code="POL"
         )
     ],

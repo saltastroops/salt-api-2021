@@ -17,8 +17,8 @@ class Role(str, Enum):
 class ContactDetails:
     given_name: str
     family_name: str
-    primary_email: EmailStr
-    email: List[str]
+    email: EmailStr
+    alternative_email: List[str]
 
 
 @dataclass()
@@ -29,7 +29,7 @@ class UserListItem:
 
 
 @dataclass()
-class Affiliation:
+class Institution:
     institution_id: int
     institution: str
     department: Optional[str]
@@ -41,11 +41,11 @@ class User:
     id: int
     given_name: str
     family_name: str
-    primary_email: EmailStr
-    email: List[str]
+    email: EmailStr
+    alternative_email: List[str]
     username: str
     password_hash: str
-    affiliations: List[Affiliation]
+    affiliations: List[Institution]
     roles: List[Role]
 
 
@@ -53,11 +53,11 @@ class User:
 class NewUserDetails:
     given_name: str
     family_name: str
-    primary_email: EmailStr
-    email: List[str]
+    email: EmailStr
+    alternative_email: List[str]
     username: str
     password: str
-    institute_id: int
+    institution_id: int
 
 
 class UserUpdate(NamedTuple):

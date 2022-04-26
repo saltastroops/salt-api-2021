@@ -75,11 +75,11 @@ def create_user(
             _NewUserDetails(
                 username=user.username,
                 password=user.password,
-                primary_email=user.primary_email,
-                email=[],
+                email=user.email,
+                alternative_email=[],
                 given_name=user.given_name,
                 family_name=user.family_name,
-                institute_id=user.institute_id,
+                institution_id=user.institution_id,
             )
         )
         unit_of_work.commit()
@@ -130,8 +130,7 @@ def update_user(
             username=user_update.username, password=user_update.password
         )
         user_service = services.user_service(unit_of_work.connection)
-        user_service.update_user(user.username, _user_update)
+        user_service.update_user(user_id, _user_update)
         unit_of_work.commit()
 
-        new_username = user_update.username if user_update.username else user.username
-        return user_service.get_user_by_username(new_username)
+        return user_service.get_user(user_id)

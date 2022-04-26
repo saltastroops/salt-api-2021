@@ -9,7 +9,7 @@ from saltapi.repository.proposal_repository import ProposalRepository
 from saltapi.repository.user_repository import UserRepository
 from saltapi.service.permission_service import PermissionService
 from saltapi.service.proposal import ProposalCode
-from saltapi.service.user import Affiliation, User
+from saltapi.service.user import Institution, User
 
 
 class FakeUserRepository:
@@ -118,11 +118,11 @@ USER = User(
     username="someone",
     given_name="Some",
     family_name="One",
-    primary_email=EmailStr("someone@example.com"),
-    email=["ex@gmail.com"],
+    email=EmailStr("someone@example.com"),
+    alternative_email=["ex@gmail.com"],
     password_hash="1234",
     affiliations=[
-        Affiliation(
+        Institution(
             institution_id=1, institution="Ins", department="Dept", partner_code="RSA"
         )
     ],

@@ -6,7 +6,6 @@ from pydantic import BaseModel, EmailStr, Field
 
 from saltapi.web.schema.block import BlockSummary
 from saltapi.web.schema.common import (
-    Affiliation,
     BlockVisit,
     PartnerCode,
     PartnerName,
@@ -14,11 +13,12 @@ from saltapi.web.schema.common import (
     ProposalCode,
     Semester,
 )
+from saltapi.web.schema.institution import Institution
 from saltapi.web.schema.target import Phase1Target
-from saltapi.web.schema.user import Usernames
+from saltapi.web.schema.user import FullName
 
 
-class ProposalUser(Usernames):
+class ProposalUser(FullName):
     email: EmailStr = Field(..., title="Email address", description="Email address")
 
 
@@ -110,7 +110,7 @@ class GeneralProposalInfo(BaseModel):
         title="Data release date",
         description="Date when the proposal data is scheduled to become public",
     )
-    liaison_salt_astronomer: Optional[Usernames] = Field(
+    liaison_salt_astronomer: Optional[FullName] = Field(
         ...,
         title="Liaison astronomer",
         description="SALT Astronomer who is the liaison astronomer for the proposal",
@@ -135,7 +135,7 @@ class GeneralProposalInfo(BaseModel):
 class Investigator(ProposalUser):
     """An investigator on a proposal."""
 
-    affiliation: Affiliation = Field(
+    affiliation: Institution = Field(
         ..., title="Affiliation", description="Affiliation of the investigator"
     )
     is_pc: bool = Field(
@@ -418,7 +418,7 @@ class ProposalListItem(BaseModel):
     principal_contact: ProposalUser = Field(
         ..., title="Principal Contact", description="Principal Contact"
     )
-    liaison_astronomer: Optional[Usernames] = Field(
+    liaison_astronomer: Optional[FullName] = Field(
         ..., title="Liaison Astronomer", description="Liaison Astronomer"
     )
 

@@ -513,8 +513,8 @@ SELECT I.FirstName             AS given_name,
        I.Surname               AS family_name,
        I.Email                 AS email,
        P.Partner_Code          AS partner_code,
-       `IN`.InstituteName_Name AS institute,
-       I2.Institute_Id         AS institute_id,
+       `IN`.InstituteName_Name AS institution,
+       I2.Institute_Id         AS institution_id,
        I2.Department           AS department,
        PI.InvestigatorOkay     AS approved,
        PI.ApprovalCode         AS approval_code
@@ -542,14 +542,14 @@ ORDER BY I.Surname, I.FirstName
             partner_code = investigator["partner_code"]
             investigator["affiliation"] = {
                 "partner_code": partner_code,
-                "institute_id": investigator["institute_id"],
-                "institute": investigator["institute"],
+                "institution_id": investigator["institution_id"],
+                "institution": investigator["institution"],
                 "department": investigator["department"],
             }
             del investigator["partner_code"]
-            del investigator["institute"]
+            del investigator["institution"]
             del investigator["department"]
-            del investigator["institute_id"]
+            del investigator["institution_id"]
 
             if investigator["approved"] == 1:
                 investigator["has_approved_proposal"] = True

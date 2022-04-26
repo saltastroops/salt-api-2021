@@ -28,9 +28,9 @@ class UserRepository:
                     "username": row.username,
                     "family_name": row.family_name,
                     "given_name": row.given_name,
-                    "primary_email": row.email,
-                    "email": [row.alternative_emails]
-                    if row.alternative_emails != row.email
+                    "email": row.email,
+                    "alternative_email": [row.alternative_email]
+                    if row.alternative_email != row.email
                     else [],
                     "password_hash": row.password_hash,
                     "affiliations": [
@@ -44,7 +44,7 @@ class UserRepository:
                 }
             else:
                 if row.alternative_emails != row.email:
-                    user["email"].append(row.alternative_emails)
+                    user["alternative_email"].append(row.alternative_email)
                 user["affiliations"].append(
                     {
                         "institution_id": row.institution_id,
@@ -67,7 +67,7 @@ class UserRepository:
             """
 SELECT PU.PiptUser_Id           AS id,
        I1.Email                 AS email,
-       I0.Email                 AS alternative_emails,
+       I0.Email                 AS alternative_email,
        I0.Surname               AS family_name,
        I0.FirstName             AS given_name,
        PU.Password              AS password_hash,
@@ -82,7 +82,7 @@ FROM PiptUser AS PU
          JOIN Institute I2 ON I0.Institute_Id = I2.Institute_Id
          JOIN Partner P ON I2.Partner_Id = P.Partner_Id
          JOIN InstituteName I ON I2.InstituteName_Id = I.InstituteName_Id
-AND PU.Username = :username
+WHERE PU.Username = :username
         """
         )
         result = self.connection.execute(stmt, {"username": username})
@@ -99,7 +99,7 @@ AND PU.Username = :username
             """
 SELECT PU.PiptUser_Id           AS id,
        I1.Email                 AS email,
-       I0.Email                 AS alternative_emails,
+       I0.Email                 AS alternative_email,
        I0.Surname               AS family_name,
        I0.FirstName             AS given_name,
        PU.Password              AS password_hash,
@@ -132,7 +132,7 @@ WHERE PU.PiptUser_Id = :pipt_user_id
             """
 SELECT PU.PiptUser_Id           AS id,
        I1.Email                 AS email,
-       I0.Email                 AS alternative_emails,
+       I0.Email                 AS alternative_email,
        I0.Surname               AS family_name,
        I0.FirstName             AS given_name,
        PU.Password              AS password_hash,
@@ -205,13 +205,13 @@ ORDER BY I.Surname, I.FirstName
         stmt = text(
             """
 INSERT INTO Investigator (Institute_Id, FirstName, Surname, Email)
-VALUES (:institute_id, :given_name, :family_name, :email)
+VALUES (:institution_id, :given_name, :family_name, :email)
         """
         )
         result = self.connection.execute(
             stmt,
             {
-                "institute_id": new_user_details.institute_id,
+                "institution_id": new_user_details.institution_id,
                 "given_name": new_user_details.given_name,
                 "family_name": new_user_details.family_name,
                 "email": new_user_details.email,
@@ -269,32 +269,33 @@ WHERE Investigator_Id = :investigator_id
 
         return True
 
-    def update(self, username: str, user_update: UserUpdate) -> None:
+    def update(self, user_id: int, user_update: UserUpdate) -> None:
         """Updates a user's details."""
         if user_update.password:
-            self._update_password(username, user_update.password)
-        new_user_details = self._new_user_details(username, user_update)
+            self._update_password(user_id, user_update.password)
+        new_user_details = self._new_user_details(user_id, user_update)
         new_username = cast(str, new_user_details.username)
-        self._update_username(old_username=username, new_username=new_username)
+        self._update_username(user_id=user_id, new_username=new_username)
 
-    def _new_user_details(self, username: str, user_update: UserUpdate) -> UserUpdate:
+    def _new_user_details(self, user_id: int, user_update: UserUpdate) -> UserUpdate:
         """
         Returns the new user details of a user.
 
         If the given user update has a non-None value for a property, that value should
         replace the existing value; otherwise the existing value is kept.
         """
-        user = self.get_by_username(username)
+        user = self.get(user_id)
         return UserUpdate(
             username=user_update.username if user_update.username else user.username,
             password=user_update.password,
         )
 
-    def _update_username(self, old_username: str, new_username: str) -> None:
+    def _update_username(self, user_id: int, new_username: str) -> None:
         """
         Updates the username of a user.
         """
-        if new_username == old_username:
+        user = self.get(user_id)
+        if new_username == user.username:
             return
 
         # Check that the new username isn't in use already
@@ -305,11 +306,11 @@ WHERE Investigator_Id = :investigator_id
             """
 UPDATE PiptUser
 SET Username = :new_username
-WHERE Username = :old_username
+WHERE PiptUser_Id = :user_id
         """
         )
         self.connection.execute(
-            stmt, {"new_username": new_username, "old_username": old_username}
+            stmt, {"new_username": new_username, "user_id": user_id}
         )
 
     def is_investigator(self, username: str, proposal_code: str) -> bool:
@@ -570,7 +571,7 @@ ON DUPLICATE KEY UPDATE Password = :password
             stmt, {"username": username, "password": new_password_hash}
         )
 
-    def _update_password(self, username: str, password: str) -> None:
+    def _update_password(self, user_id: int, password: str) -> None:
         # TODO: Uncomment once the Password table exists.
         # self._update_password_hash(username, password)
         password_hash = self.get_password_hash(password)
@@ -578,10 +579,10 @@ ON DUPLICATE KEY UPDATE Password = :password
             """
 UPDATE PiptUser
 SET Password = :password
-WHERE Username = :username
+WHERE PiptUser_Id = :user_id
         """
         )
-        self.connection.execute(stmt, {"username": username, "password": password_hash})
+        self.connection.execute(stmt, {"user_id": user_id, "password": password_hash})
 
     @staticmethod
     def get_new_password_hash(password: str) -> str:

@@ -1,39 +1,25 @@
 from enum import Enum
-from typing import List, Optional
+from typing import Optional
 
 from pydantic import BaseModel, Field
 
-
-class Partner(str, Enum):
-    """SALT partner institutions"""
-
-    GU = "Georg-August-Universität Göttingen"
-    UW = "University of Wisconsin-Madison"
-    RSA = "South Africa"
-    OTH = "Other"
-    UNC = "University of North Carolina - Chapel Hill"
-    UKSC = "UK SALT Consortium"
-    DC = "Dartmouth College"
-    RU = "Rutgers University"
-    POL = "Poland"
-    CMU = "Carnegie Mellon University"
-    UC = "University of Canterbury"
-    HET = "Hobby Eberly Telescope Board"
-    AMNH = "American Museum of Natural History"
-    IUCAA = "Inter-University Centre for Astronomy & Astrophysics"
-    DUR = "Durham University"
+from saltapi.web.schema.common import PartnerCode
 
 
-class PartnerInstitutes(BaseModel):
-    """Institute details"""
+class Institution(BaseModel):
+    """An institute affiliation."""
 
-    institute_id: int = Field(
+    institution_id: int = Field(
         ...,
         title="Institute id",
         description="Unique identifier of the institute.",
     )
-    name: str = Field(..., title="Institute name", description="Institute name")
-    department: Optional[str] = Field(
-        None, title="Department", description="Department"
+    partner_code: PartnerCode = Field(
+        ...,
+        title="SALT partner code",
+        description="Code of the SALT Partner",
     )
-    partner_code: str = Field(..., title="Partner code", description="Partner code")
+    institution: str = Field(..., title="Institute", description="Institute")
+    department: Optional[str] = Field(
+        None, title="Department", description="Department of the institute"
+    )

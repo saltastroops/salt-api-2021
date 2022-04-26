@@ -27,7 +27,7 @@ FROM Partner P
         institutions = [
             {
                 "institution_id": row.institution_id,
-                "institution": row.institute,
+                "institution": row.institution,
                 "department": row.department,
                 "partner_code": row.partner_code,
             }

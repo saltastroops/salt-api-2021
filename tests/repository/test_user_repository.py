@@ -80,12 +80,12 @@ def test_create_user_raisers_error_if_username_exists_already(
     username = "hettlage"
     new_user_details = NewUserDetails(
         username=username,
-        primary_email=EmailStr(f"{username}@example.com"),
-        email=[],
+        email=EmailStr(f"{username}@example.com"),
+        alternative_email=[],
         given_name=_random_string(),
         family_name=_random_string(),
         password="very_secret",
-        institute_id=5,
+        institution_id=5,
     )
     user_repository = UserRepository(dbconnection)
     with pytest.raises(ValueError) as excinfo:
@@ -100,11 +100,11 @@ def test_create_user_creates_a_new_user(dbconnection: Connection) -> None:
     new_user_details = NewUserDetails(
         username=username,
         password=_random_string(),
-        primary_email=EmailStr(f"{username}@example.com"),
-        email=[""],
+        email=EmailStr(f"{username}@example.com"),
+        alternative_email=[""],
         given_name=_random_string(),
         family_name=_random_string(),
-        institute_id=5,
+        institution_id=5,
     )
 
     user_repository = UserRepository(dbconnection)
@@ -132,24 +132,24 @@ def test_get_user_by_email_raises_error_for_non_existing_user(
 def test_patch_raises_error_for_non_existing_user(dbconnection: Connection) -> None:
     user_repository = UserRepository(dbconnection)
     with pytest.raises(NotFoundError):
-        user_repository.update("idontexist", UserUpdate(username=None, password=None))
+        user_repository.update(0, UserUpdate(username=None, password=None))
 
 
 @nodatabase
 def test_patch_uses_existing_values_by_default(dbconnection: Connection) -> None:
     user_repository = UserRepository(dbconnection)
-    username = "hettlage"
-    old_user_details = user_repository.get_by_username(username)
-    user_repository.update(username, UserUpdate(username=None, password=None))
-    new_user_details = user_repository.get_by_username(username)
+    user_id = 1602
+    old_user_details = user_repository.get(user_id)
+    user_repository.update(user_id, UserUpdate(username=None, password=None))
+    new_user_details = user_repository.get(user_id)
 
     assert old_user_details == new_user_details
 
 
 def test_patch_replaces_existing_values(dbconnection: Connection) -> None:
     user_repository = UserRepository(dbconnection)
-    username = "hettlage"
-    old_user_details = user_repository.get_by_username(username)
+    user_id = 1602
+    old_user_details = user_repository.get(user_id)
 
     new_username = "hettlage2"
     new_password = "a_new_shiny_password"
@@ -158,9 +158,9 @@ def test_patch_replaces_existing_values(dbconnection: Connection) -> None:
     )
 
     user_repository.update(
-        username, UserUpdate(username=new_username, password=new_password)
+        user_id, UserUpdate(username=new_username, password=new_password)
     )
-    new_user_details = user_repository.get_by_username(new_username)
+    new_user_details = user_repository.get(user_id)
 
     assert new_user_details.username == new_username
     assert user_repository.verify_password(new_password, new_user_details.password_hash)
@@ -168,17 +168,17 @@ def test_patch_replaces_existing_values(dbconnection: Connection) -> None:
 
 def test_patch_is_idempotent(dbconnection: Connection) -> None:
     user_repository = UserRepository(dbconnection)
-    username = "hettlage"
+    user_id = 1602
     new_username = "hettlage2"
     new_password = "a_new_shiny_password"
 
     user_repository.update(
-        username, UserUpdate(username=new_username, password=new_password)
+        user_id, UserUpdate(username=new_username, password=new_password)
     )
     new_user_details_1 = user_repository.get_by_username(new_username)
 
     user_repository.update(
-        new_username, UserUpdate(username=new_username, password=new_password)
+        user_id, UserUpdate(username=new_username, password=new_password)
     )
     new_user_details_2 = user_repository.get_by_username(new_username)
 
@@ -187,12 +187,12 @@ def test_patch_is_idempotent(dbconnection: Connection) -> None:
 
 def test_patch_cannot_use_existing_username(dbconnection: Connection) -> None:
     user_repository = UserRepository(dbconnection)
-    username = "hettlage"
+    user_id = 1602
     existing_username = "nhlavutelo"
 
     with pytest.raises(ValueError):
         user_repository.update(
-            username, UserUpdate(username=existing_username, password=None)
+            user_id, UserUpdate(username=existing_username, password=None)
         )
 
 

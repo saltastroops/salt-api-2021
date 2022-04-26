@@ -3,7 +3,7 @@ from typing import List, Optional
 
 from pydantic import BaseModel, EmailStr, Field
 
-from saltapi.web.schema.common import Affiliation
+from saltapi.web.schema.institution import Institution
 
 
 class UserRole(str, Enum):
@@ -33,7 +33,7 @@ class UserListItem(BaseModel):
     )
 
 
-class Usernames(BaseModel):
+class FullName(BaseModel):
     given_name: str = Field(..., title="Given name", description='Given ("first") name')
     family_name: str = Field(
         ..., title="Family name", description='Family ("last") name'
@@ -43,37 +43,33 @@ class Usernames(BaseModel):
         orm_mode = True
 
 
-class User(Usernames):
-    """List of affiliations of the users."""
+class User(FullName):
+    """User details."""
 
     id: int = Field(..., title="User id", description="User id.")
-    primary_email: EmailStr = Field(
-        ..., title="Email address", description="Email address"
-    )
-    email: List[str] = Field(
+    email: EmailStr = Field(..., title="Email address", description="Email address")
+    alternative_email: List[str] = Field(
         ...,
         title="Alternative email addresses",
         description="Alternative email addresses",
     )
     username: str = Field(..., title="Username", description="Username.")
     roles: List[UserRole] = Field(..., title="User roles", description="User roles.")
-    affiliations: List[Affiliation] = Field(
+    affiliations: List[Institution] = Field(
         ..., title="Affiliation", description="Affiliation of the user"
     )
 
 
-class NewUserDetails(Usernames):
+class NewUserDetails(FullName):
     """Details for creating a user."""
 
-    primary_email: EmailStr = Field(
-        ..., title="Email address", description="Email address"
-    )
+    email: EmailStr = Field(..., title="Email address", description="Email address")
     username: str = Field(..., title="Username", description="Username.")
     password: str = Field(..., title="Password", description="Password.")
-    institute_id: int = Field(
+    institution_id: int = Field(
         ...,
-        title="Institute id",
-        description="Unique identifier of the institute to which the user is affiliated.",
+        title="Institution id",
+        description="Unique identifier of the institution to which the user is affiliated.",
     )
 
 
