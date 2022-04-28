@@ -1,11 +1,12 @@
 from typing import Optional
 
-from fastapi import APIRouter, File, UploadFile, Query, Depends
+from fastapi import APIRouter, Depends, File, Query, UploadFile
 
+from saltapi.repository.submission_repository import SubmissionRepository
 from saltapi.repository.unit_of_work import UnitOfWork
 from saltapi.service.authentication_service import get_current_user
+from saltapi.service.user import User
 from saltapi.web import services
-from saltapi.web.schema.user import User
 
 router = APIRouter(prefix="/submissions", tags=["Submissions"])
 
@@ -33,5 +34,6 @@ def create_submission(
     proposal must be the same as that passed as a query parameter.
     """
     with UnitOfWork() as unit_of_work:
-        submission_service = services.submission_service()
-        submission_service.submit_proposal(proposal, proposal_code)
+        submission_repository = SubmissionRepository(unit_of_work.connection)
+        submission_service = services.submission_service(submission_repository)
+        submission_service.submit_proposal(user, proposal, proposal_code)

@@ -123,7 +123,7 @@ SELECT DISTINCT PU.PiptUser_Id          AS id,
                 I.Surname               AS family_name
 FROM PiptUser PU
          JOIN Investigator I ON I.Investigator_Id = PU.Investigator_Id
-WHERE I.FirstName != 'Guest' 
+WHERE I.FirstName != 'Guest'
 ORDER BY I.Surname, I.FirstName
         """
         )

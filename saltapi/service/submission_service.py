@@ -1,19 +1,26 @@
 import re
 import zipfile
-from typing import Optional, cast, Any
-from fastapi import UploadFile
+from typing import Any, Optional, cast
+
 from defusedxml.ElementTree import fromstring
+from fastapi import UploadFile
 
 from saltapi.exceptions import ValidationError
+from saltapi.repository.submission_repository import SubmissionRepository
+from saltapi.service.user import User
 
 
 class SubmissionService:
+    def __init__(self, submission_repository: SubmissionRepository):
+        self.submission_repository = submission_repository
+
     def submit_proposal(
-        self, proposal: UploadFile, proposal_code: Optional[str]
+        self, user: User, proposal: UploadFile, proposal_code: Optional[str]
     ) -> None:
         if not zipfile.is_zipfile(proposal.file):
             raise ValidationError("The submitted file must be a zipfile.")
 
+        # Get and check the proposal code for consistency
         xml = self._extract_xml(proposal)
         if proposal_code:
             xml_proposal_code = self._extract_proposal_code(xml)
@@ -24,6 +31,9 @@ class SubmissionService:
                     f"given in the proposal file "
                     f"({xml_proposal_code})."
                 )
+
+        # Record the submission in the database
+        self.submission_repository.create_submission(user, proposal_code)
 
     def _extract_xml(self, proposal: UploadFile) -> str:
         proposal.file.seek(0)

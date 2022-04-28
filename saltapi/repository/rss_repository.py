@@ -6,7 +6,7 @@ from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
 from saltapi.service.instrument import RSS
-from saltapi.util import semester_of_datetime, semester_end
+from saltapi.util import semester_end, semester_of_datetime
 
 
 class RssRepository:
