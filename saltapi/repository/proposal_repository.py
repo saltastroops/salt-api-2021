@@ -144,13 +144,11 @@ LIMIT :limit;
                 "status": {"value": row.status, "reason": row.reason},
                 "proposal_type": self._map_proposal_type(row.proposal_type),
                 "principal_investigator": {
-                    "id": row.pi_user_id,
                     "given_name": row.pi_given_name,
                     "family_name": row.pi_family_name,
                     "email": row.pi_email,
                 },
                 "principal_contact": {
-                    "id": row.pc_user_id,
                     "given_name": row.pc_given_name,
                     "family_name": row.pc_family_name,
                     "email": row.pc_email,
@@ -168,10 +166,8 @@ LIMIT :limit;
             return None
 
         astronomer = {
-            "id": row.la_user_id,
             "given_name": row.la_given_name,
             "family_name": row.la_family_name,
-            "email": "salthelp@salt.ac.za",
         }
 
         return astronomer
@@ -493,10 +489,8 @@ WHERE PC.Proposal_Code = :proposal_code
 
         if row.astronomer_email:
             info["liaison_salt_astronomer"] = {
-                "id": row.astronomer_user_id,
                 "given_name": row.astronomer_given_name,
                 "family_name": row.astronomer_family_name,
-                "email": row.astronomer_email,
             }
         else:
             info["liaison_salt_astronomer"] = None
@@ -515,12 +509,12 @@ WHERE PC.Proposal_Code = :proposal_code
         """
         stmt = text(
             """
-SELECT PU.PiptUser_Id          AS id,
-       I.FirstName             AS given_name,
+SELECT I.FirstName             AS given_name,
        I.Surname               AS family_name,
        I.Email                 AS email,
        P.Partner_Code          AS partner_code,
-       `IN`.InstituteName_Name AS institute,
+       `IN`.InstituteName_Name AS institution,
+       I2.Institute_Id         AS institution_id,
        I2.Department           AS department,
        PI.InvestigatorOkay     AS approved,
        PI.ApprovalCode         AS approval_code
@@ -548,13 +542,14 @@ ORDER BY I.Surname, I.FirstName
             partner_code = investigator["partner_code"]
             investigator["affiliation"] = {
                 "partner_code": partner_code,
-                "partner_name": partner_name(partner_code),
-                "institute": investigator["institute"],
+                "institution_id": investigator["institution_id"],
+                "institution": investigator["institution"],
                 "department": investigator["department"],
             }
             del investigator["partner_code"]
-            del investigator["institute"]
+            del investigator["institution"]
             del investigator["department"]
+            del investigator["institution_id"]
 
             if investigator["approved"] == 1:
                 investigator["has_approved_proposal"] = True

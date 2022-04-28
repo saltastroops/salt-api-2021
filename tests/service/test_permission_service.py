@@ -1,6 +1,7 @@
 from typing import Any, Iterable, List, Tuple, cast
 
 import pytest
+from pydantic import EmailStr
 
 from saltapi.exceptions import AuthorizationError
 from saltapi.repository.block_repository import BlockRepository
@@ -8,7 +9,7 @@ from saltapi.repository.proposal_repository import ProposalRepository
 from saltapi.repository.user_repository import UserRepository
 from saltapi.service.permission_service import PermissionService
 from saltapi.service.proposal import ProposalCode
-from saltapi.service.user import User
+from saltapi.service.user import Institution, User
 
 
 class FakeUserRepository:
@@ -117,8 +118,14 @@ USER = User(
     username="someone",
     given_name="Some",
     family_name="One",
-    email="someone@example.com",
+    email=EmailStr("someone@example.com"),
+    alternative_emails=[EmailStr("ex@gmail.com")],
     password_hash="1234",
+    affiliations=[
+        Institution(
+            institution_id=1, institution="Ins", department="Dept", partner_code="RSA"
+        )
+    ],
     roles=[],
 )
 

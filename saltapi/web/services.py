@@ -1,12 +1,14 @@
 from sqlalchemy.engine import Connection
 
 from saltapi.repository.block_repository import BlockRepository
+from saltapi.repository.institution_repository import InstitutionRepository
 from saltapi.repository.instrument_repository import InstrumentRepository
 from saltapi.repository.proposal_repository import ProposalRepository
 from saltapi.repository.target_repository import TargetRepository
 from saltapi.repository.user_repository import UserRepository
 from saltapi.service.authentication_service import AuthenticationService
 from saltapi.service.block_service import BlockService
+from saltapi.service.institution_service import InstitutionService
 from saltapi.service.instrument_service import InstrumentService
 from saltapi.service.mail_service import MailService
 from saltapi.service.permission_service import PermissionService
@@ -63,3 +65,9 @@ def instrument_service(connection: Connection) -> InstrumentService:
     """Return an instrument service instance."""
     instrument_repository = InstrumentRepository(connection)
     return InstrumentService(instrument_repository)
+
+
+def institution_service(connection: Connection) -> InstitutionService:
+    """Return an institution service instance."""
+    institution_repository = InstitutionRepository(connection)
+    return InstitutionService(institution_repository)
