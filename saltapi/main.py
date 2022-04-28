@@ -13,6 +13,7 @@ from saltapi.settings import Settings
 from saltapi.web.api.authentication import router as authentication_router
 from saltapi.web.api.block_visits import router as block_visits_router
 from saltapi.web.api.blocks import router as blocks_router
+from saltapi.web.api.institutions import router as institution_router
 from saltapi.web.api.instruments import router as instruments_router
 from saltapi.web.api.proposals import router as proposals_router
 from saltapi.web.api.submissions import router as submissions_router
@@ -60,4 +61,5 @@ app.include_router(block_visits_router)
 app.include_router(user_router)
 app.include_router(users_router)
 app.include_router(instruments_router)
+app.include_router(institution_router)
 app.include_router(submissions_router)

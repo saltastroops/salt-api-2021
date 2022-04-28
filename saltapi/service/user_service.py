@@ -1,5 +1,5 @@
 from datetime import timedelta
-from typing import List
+from typing import Any, Dict, List
 
 from saltapi.exceptions import NotFoundError, ValidationError
 from saltapi.repository.user_repository import UserRepository
@@ -72,7 +72,7 @@ SALT Team
 
     def _does_user_exist(self, username: str) -> bool:
         try:
-            self.get_user(username)
+            self.get_user_by_username(username)
         except NotFoundError:
             return False
 
@@ -83,17 +83,26 @@ SALT Team
             raise ValidationError(f"The username {user.username} exists already.")
         self.repository.create(user)
 
-    def get_user(self, username: str) -> User:
-        user = self.repository.get(username)
-        user.password_hash = "***"  # Just in case the password hash ends uop somewhere
+    def get_user(self, user_id: int) -> User:
+        user = self.repository.get(user_id)
+        user.password_hash = "***"  # Just in case the password hash ends up somewhere
         return user
+
+    def get_users(self) -> List[Dict[str, Any]]:
+        users_details = self.repository.get_users()
+        return users_details
 
     def get_user_by_email(self, email: str) -> User:
         user = self.repository.get_by_email(email)
-        user.password_hash = "***"  # Just in case the password hash ends uop somewhere
+        user.password_hash = "***"  # Just in case the password hash ends up somewhere
         return user
 
-    def update_user(self, username: str, user: UserUpdate) -> None:
+    def get_user_by_username(self, username: str) -> User:
+        user = self.repository.get_by_username(username)
+        user.password_hash = "***"  # Just in case the password hash ends up somewhere
+        return user
+
+    def update_user(self, user_id: int, user: UserUpdate) -> None:
         if user.username and self._does_user_exist(user.username):
             raise ValidationError(f"The username {user.username} exists already.")
-        self.repository.update(username, user)
+        self.repository.update(user_id, user)

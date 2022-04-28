@@ -70,7 +70,7 @@ class AuthenticationService:
         if not payload:
             raise JWTError("Token failed to decode.")
         try:
-            user = self.user_repository.get_by_id(payload["sub"])
+            user = self.user_repository.get(payload["sub"])
         except NotFoundError:
             raise ValueError("Token not valid.")
         return user

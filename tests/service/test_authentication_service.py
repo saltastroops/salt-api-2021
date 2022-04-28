@@ -3,11 +3,12 @@ from typing import Optional, cast
 
 import pytest
 from freezegun import freeze_time
+from pydantic import EmailStr
 
 from saltapi.exceptions import NotFoundError
 from saltapi.repository.user_repository import UserRepository
 from saltapi.service.authentication_service import AuthenticationService
-from saltapi.service.user import User
+from saltapi.service.user import Institution, User
 from saltapi.settings import Settings
 
 TEST_DATA_PATH = "service/authentication_service.yaml"
@@ -19,8 +20,17 @@ USER = User(
     family_name="Doe",
     given_name="John",
     id=1,
-    email="jdoe@email.com",
+    email=EmailStr("jdoe@email.com"),
+    alternative_emails=[EmailStr("")],
     password_hash="PasswordHash",
+    affiliations=[
+        Institution(
+            institution_id=1,
+            institution="Ins",
+            department="Dept",
+            partner_code="Partner",
+        )
+    ],
     roles=[],
 )
 
@@ -33,8 +43,17 @@ class FakeUserRepository:
                 username="jdoe",
                 given_name="John",
                 family_name="Doe",
-                email="johndoe@email.com",
+                email=EmailStr("johndoe@email.com"),
                 password_hash="hashedpassword",
+                alternative_emails=[EmailStr("alt@gmail.com")],
+                affiliations=[
+                    Institution(
+                        institution_id=1332,
+                        institution="Other",
+                        department="Other",
+                        partner_code="Part",
+                    )
+                ],
                 roles=[],
             )
         return None
@@ -48,8 +67,17 @@ class FakeUserRepository:
                 username="jdoe",
                 given_name="John",
                 family_name="Doe",
-                email="johndoe@email.com",
+                email=EmailStr("johndoe@email.com"),
                 password_hash="hashedpassword",
+                alternative_emails=[EmailStr("")],
+                affiliations=[
+                    Institution(
+                        institution_id=1332,
+                        institution="Other",
+                        department="Other",
+                        partner_code="Code",
+                    )
+                ],
                 roles=[],
             )
 
