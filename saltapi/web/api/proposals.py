@@ -1,4 +1,5 @@
 from datetime import date
+from pprint import pprint
 from typing import List, Optional
 
 from fastapi import (
@@ -15,7 +16,9 @@ from fastapi import (
     status,
 )
 from fastapi.responses import FileResponse
+from pydantic import Field
 
+from saltapi.repository.proposal_repository import ProposalRepository
 from saltapi.repository.unit_of_work import UnitOfWork
 from saltapi.service.authentication_service import get_current_user
 from saltapi.service.proposal import Proposal as _Proposal
@@ -29,12 +32,13 @@ from saltapi.web.schema.proposal import (
     DataReleaseDate,
     DataReleaseDateUpdate,
     ObservationComment,
-    ProgressReport,
+    RequestChangeReasons,
     Proposal,
     ProposalContentType,
     ProposalListItem,
     ProposalStatusContent,
     SubmissionAcknowledgment,
+    ProgressReportData
 )
 
 router = APIRouter(prefix="/proposals", tags=["Proposals"])
@@ -379,9 +383,9 @@ def post_observation_comment(
 
 
 @router.get(
-    "{proposal_code}/progress-reports/{semester}",
+    "/{proposal_code}/progress-report/{semester}",
     summary="Get a progress report",
-    response_model=ProgressReport,
+    response_model=Optional[RequestChangeReasons],
     responses={200: {"content": {"application/pdf": {}}}},
 )
 def get_progress_report(
@@ -391,7 +395,8 @@ def get_progress_report(
         description="Proposal code of the proposal whose progress report is requested.",
     ),
     semester: Semester = Path(..., title="Semester", description="Semester"),
-) -> Response:
+    user: User = Depends(get_current_user)
+) -> RequestChangeReasons:
     """
     Returns the progress report for a proposal and semester. The semester is the
     semester for which the progress is reported. For example, if the semester is
@@ -414,13 +419,22 @@ def get_progress_report(
     case of the pdf file the response contains an `Content-Disposition` HTTP header
     with a filename of the form "ProgressReport_{proposal_code}_{semester}.pdf".
     """
-    raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED)
+    with UnitOfWork() as unit_of_work:
+        permission_service = services.permission_service(unit_of_work.connection)
+        permission_service.check_permission_to_view_proposal(user, proposal_code)
+
+        proposal_service = services.proposal_service(unit_of_work.connection)
+        progress_report = proposal_service.get_progress_report(proposal_code, semester)
+
+        return RequestChangeReasons(
+            **progress_report
+        )
 
 
 @router.put(
     "/{proposal_code}/progress-reports/{semester}",
     summary="Create or update a progress report",
-    response_model=ProgressReport,
+    response_model=RequestChangeReasons,
 )
 def put_progress_report(
     proposal_code: ProposalCode = Path(
@@ -429,7 +443,14 @@ def put_progress_report(
         description="Proposal code of the proposal whose progress report is created or updated.",
     ),
     semester: Semester = Path(..., title="Semester", description="Semester"),
-) -> ProgressReport:
+    progress_report: ProgressReportData = Body(
+        ...,
+        title="Progress report",
+        description="Progress report for a proposal."
+    ),
+    file: Optional[UploadFile] = File(...),
+    user: User = Depends(get_current_user),
+) -> RequestChangeReasons:
     """
     Creates or updates the progress report for a proposal and semester. The semester
     is the semester for which the progress is reported. For example, if the semester
@@ -439,6 +460,19 @@ def put_progress_report(
     The optional pdf file is intended for additional details regarding the progress with
     the proposal.
     """
+
+    # TODO Ask about what to do with the requested times for partners?
+    # * how to add the requested times correctly to the database.
+    with UnitOfWork() as unit_of_work:
+        permission_service = services.permission_service(unit_of_work.connection)
+        permission_service.check_permission_to_view_proposal(user, proposal_code)
+
+        proposal_service = services.proposal_service(unit_of_work.connection)
+
+
+
+    # TODO Save the pdfs. Both the supplementary PDF and the newly created file.
+    # * Where to save the created files.
     raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED)
 
 
