@@ -71,7 +71,7 @@ class SubmissionService:
         self.submission_repository.create_log_entry(
             submission_identifier=submission_identifier,
             message_type=SubmissionMessageType.INFO,
-            message="Calling the submission script",
+            message="Calling the submission script.",
         )
         t = threading.Thread(
             target=SubmissionService._perform_submission,
@@ -199,7 +199,6 @@ class SubmissionService:
         """
         command = re.sub(r"\s+", " ", command)
         command = command.replace("\n", "").strip()
-        print(command)
         return command
 
     @staticmethod
