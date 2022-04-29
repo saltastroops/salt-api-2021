@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 import pytz
@@ -6,14 +7,24 @@ from sqlalchemy import text
 from sqlalchemy.engine import Connection
 from sqlalchemy.exc import NoResultFound
 
-from saltapi.exceptions import NotFoundError, ValidationError
-from saltapi.service.submission import SubmissionMessageType
+from saltapi.exceptions import NotFoundError
+from saltapi.service.submission import SubmissionMessageType, SubmissionStatus
 from saltapi.service.user import User
 
 
 class SubmissionRepository:
     def __init__(self, connection: Connection):
-        self.connection = connection
+        """
+        Create a submission repository instance.
+
+        WARNING: AUTOCOMMIT is enabled on the database connection.
+
+        Parameters
+        ----------
+        connection: Connection
+            Database connection. WARNING: AUTOCOMMIT will be enabled on this connection.
+        """
+        self.connection = connection.execution_options(isolation_level="AUTOCOMMIT")
 
     def get(self, identifier: str) -> Dict[str, Any]:
         """
@@ -45,10 +56,11 @@ WHERE S.Identifier = :identifier
         result = self.connection.execute(stmt, {"identifier": identifier})
         try:
             row = result.one()
+            normalized_status = row.status[:1].upper() + row.status[1:].lower()
             return {
                 "proposal_code": row.proposal_code,
                 "submitter_id": row.submitter_id,
-                "status": row.status[:1].upper() + row.status[1:].lower(),
+                "status": SubmissionStatus(normalized_status),
                 "started_at": pytz.utc.localize(row.started_at),
                 "finished_at": pytz.utc.localize(row.finished_at)
                 if row.finished_at
@@ -57,7 +69,7 @@ WHERE S.Identifier = :identifier
         except NoResultFound:
             raise NotFoundError()
 
-    def create_submission(self, user: User, proposal_code: Optional[str]) -> str:
+    def create(self, user: User, proposal_code: Optional[str]) -> str:
         """
         Create a new submission in the database.
 
@@ -67,7 +79,9 @@ WHERE S.Identifier = :identifier
             The identifier for the created submission.
         """
         identifier = str(uuid.uuid4())
-        proposal_code_id = self._proposal_code_id(proposal_code) if proposal_code else None
+        proposal_code_id = (
+            self._proposal_code_id(proposal_code) if proposal_code else None
+        )
         stmt = text(
             """
 INSERT INTO Submission (Identifier, Submitter_Id, ProposalCode_Id, SubmissionStatus_Id,
@@ -78,7 +92,7 @@ INSERT INTO Submission (Identifier, Submitter_Id, ProposalCode_Id, SubmissionSta
         :proposal_code_id,
         (SELECT SubmissionStatus_Id FROM SubmissionStatus
          WHERE SubmissionStatus='In Progress'),
-        NOW()
+        :started_at
     )
             """
         )
@@ -88,26 +102,87 @@ INSERT INTO Submission (Identifier, Submitter_Id, ProposalCode_Id, SubmissionSta
                 "identifier": identifier,
                 "user_id": user.id,
                 "proposal_code_id": proposal_code_id,
+                # We use a naive datetime for the start time, as the time should be
+                # stored as UTC, but the database might use another timezone.
+                "started_at": datetime.utcnow(),
             },
         )
 
         return identifier
 
-    def  _proposal_code_id(self, proposal_code: str) -> str:
-        stmt = text("""
+    def finish(self, identifier: str, status: SubmissionStatus) -> None:
+        """
+        Set the final status of a submission and the finishing time.
+
+        Parameters
+        ----------
+        identifier: str
+            The submission identifier.
+        status: SubmissionStatus
+            The final submission status.
+        """
+
+        # We use a naive datetime for the finish time as the time should be stored as
+        # UTC, but the database might use another timezone.
+        now = datetime.utcnow()
+
+        status_value = (
+            status.value if status != SubmissionStatus.IN_PROGRESS else "In progress"
+        )
+
+        # Make sure the submission exists
+        submission_id = self._submission_id(identifier)
+
+        stmt = text(
+            """
+UPDATE Submission
+SET SubmissionStatus_Id=(SELECT SubmissionStatus_Id
+                         FROM SubmissionStatus
+                         WHERE SubmissionStatus = :status),
+    FinishedAt         = :finished_at
+WHERE Submission_Id = :submission_id
+        """
+        )
+        self.connection.execute(
+            stmt,
+            {
+                "submission_id": submission_id,
+                "status": status_value,
+                "finished_at": now,
+            },
+        )
+
+    def _submission_id(self, identifier: str) -> str:
+        stmt = text(
+            """
+SELECT Submission_Id AS submission_id FROM Submission S WHERE S.Identifier = :identifier
+        """
+        )
+        result = self.connection.execute(stmt, {"identifier": identifier})
+        try:
+            return str(result.scalar_one())
+        except NoResultFound:
+            raise NotFoundError(
+                f"The submission identifier {identifier} does not exist."
+            )
+
+    def _proposal_code_id(self, proposal_code: str) -> str:
+        stmt = text(
+            """
 SELECT ProposalCode_Id
 FROM ProposalCode
 WHERE Proposal_Code = :proposal_code
-        """)
+        """
+        )
         result = self.connection.execute(stmt, {"proposal_code": proposal_code})
         try:
             proposal_code_id = result.scalar_one()
             return str(proposal_code_id)
         except NoResultFound:
-            raise ValidationError(f"The proposal code {proposal_code} does not exist.")
+            raise NotFoundError(f"The proposal code {proposal_code} does not exist.")
 
     def get_log_entries(
-            self, identifier: str, from_entry_number: int = 1
+        self, identifier: str, from_entry_number: int = 1
     ) -> List[Dict[str, Any]]:
         """
         Get the log entries for a submission.
@@ -154,7 +229,12 @@ ORDER BY entry_number;
             for row in result
         ]
 
-    def create_log_entry(self, submission_identifier: str,  message_type: SubmissionMessageType, message: str) -> None:
+    def create_log_entry(
+        self,
+        submission_identifier: str,
+        message_type: SubmissionMessageType,
+        message: str,
+    ) -> None:
         """
         Create a log entry.
 
@@ -168,15 +248,17 @@ ORDER BY entry_number;
             The log message text.
         """
 
-        stmt = text("""
+        submission_id = self._submission_id(submission_identifier)
+
+        stmt = text(
+            """
 INSERT INTO SubmissionLogEntry
 (Submission_Id, SubmissionLogEntryNumber, SubmissionMessageType_Id, Message)
-VALUES ((SELECT S.Submission_Id FROM Submission AS S WHERE S.Identifier = :identifier),
+VALUES (:submission_id,
         (
             SELECT COUNT(*) + 1
             FROM SubmissionLogEntry SLE
-                     JOIN Submission S2 ON SLE.Submission_Id = S2.Submission_Id
-            WHERE S2.Identifier = :identifier
+            WHERE SLE.Submission_Id = :submission_id
         ),
         (
             SELECT SMT.SubmissionMessageType_Id
@@ -184,6 +266,13 @@ VALUES ((SELECT S.Submission_Id FROM Submission AS S WHERE S.Identifier = :ident
             WHERE SMT.SubmissionMessageType = :message_type
         ),
         :message)
-        """)
-        self.connection.execute(stmt, {"identifier": submission_identifier, "message_type": message_type.value, "message": message})
-
+        """
+        )
+        self.connection.execute(
+            stmt,
+            {
+                "submission_id": submission_id,
+                "message_type": message_type.value,
+                "message": message,
+            },
+        )

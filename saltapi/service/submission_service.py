@@ -11,10 +11,10 @@ from defusedxml.ElementTree import fromstring
 from fastapi import UploadFile
 
 from saltapi.exceptions import ValidationError
+from saltapi.repository.database import engine
 from saltapi.repository.submission_repository import SubmissionRepository
-from saltapi.service.submission import SubmissionMessageType
+from saltapi.service.submission import SubmissionMessageType, SubmissionStatus
 from saltapi.service.user import User
-
 from saltapi.settings import Settings
 
 settings = Settings()
@@ -60,7 +60,9 @@ class SubmissionService:
                 )
 
         # Record the submission in the database
-        submission_identifier = self.submission_repository.create_submission(submitter, proposal_code)
+        submission_identifier = self.submission_repository.create(
+            submitter, proposal_code
+        )
 
         # Save the submitted file content
         saved_file = await self._save_submitted_content(proposal, submission_identifier)
@@ -69,10 +71,10 @@ class SubmissionService:
         self.submission_repository.create_log_entry(
             submission_identifier=submission_identifier,
             message_type=SubmissionMessageType.INFO,
-            message="Calling the submission script"
+            message="Calling the submission script",
         )
         t = threading.Thread(
-            target=SubmissionService._submit_file,
+            target=SubmissionService._perform_submission,
             args=[saved_file, proposal_code, submission_identifier, submitter],
         )
         t.start()
@@ -102,13 +104,57 @@ class SubmissionService:
             return None
 
     @staticmethod
-    def _submit_file(
-            saved_file: pathlib.Path,
-            proposal_code: Optional[str],
-            submission_identifier: str,
-            submitter: User,
-    ) -> None:
+    def _perform_submission(
+        saved_file: pathlib.Path,
+        proposal_code: Optional[str],
+        submission_identifier: str,
+        submitter: User,
+    ) -> int:
         """Execute the submission."""
+        return_code = SubmissionService._call_submission_tool(
+            saved_file=saved_file,
+            proposal_code=proposal_code,
+            submission_identifier=submission_identifier,
+            submitter=submitter,
+        )
+
+        # As this command is running in a separate thread, it needs its own database
+        # connection.
+        connection = engine.connect()
+        submission_repository = SubmissionRepository(connection)
+        submission = submission_repository.get(submission_identifier)
+
+        # Make sure the submission is marked as finished in the database
+        if submission["finished_at"] is None:
+            if return_code:
+                submission_repository.create_log_entry(
+                    submission_identifier=submission_identifier,
+                    message_type=SubmissionMessageType.ERROR,
+                    message="The submission request has failed.",
+                )
+                submission_repository.finish(
+                    submission_identifier, SubmissionStatus.FAILED
+                )
+            else:
+                submission_repository.create_log_entry(
+                    submission_identifier=submission_identifier,
+                    message_type=SubmissionMessageType.ERROR,
+                    message="It is unclear whether the submission request bas been "
+                    "successful.",
+                )
+                submission_repository.finish(
+                    submission_identifier, SubmissionStatus.FAILED
+                )
+
+        return return_code
+
+    @staticmethod
+    def _call_submission_tool(
+        saved_file: pathlib.Path,
+        proposal_code: Optional[str],
+        submission_identifier: str,
+        submitter: User,
+    ) -> int:
         command_string = SubmissionService._submission_command(
             saved_file=saved_file,
             submission_identifier=submission_identifier,
@@ -119,23 +165,25 @@ class SubmissionService:
         if proposal_code:
             command.insert(-1, "-proposalCode")
             command.insert(-1, proposal_code)
-        subprocess.run(command)
+        completed_process = subprocess.run(command)
+        return completed_process.returncode
 
     @staticmethod
     def _submission_command(
-            saved_file: pathlib.Path,
-            submitter: User,
-            proposal_code: Optional[str],
-            submission_identifier: str,
+        saved_file: pathlib.Path,
+        submitter: User,
+        proposal_code: Optional[str],
+        submission_identifier: str,
     ) -> str:
         """Generate the command for submitting the proposal."""
         log_name = SubmissionService._mapping_log_name(proposal_code)
+        sentry_dsn = f"-sentryDSN {settings.sentry_dsn}" if settings.sentry_dsn else ""
         command = f"""
         {settings.java_command} -Xms85m -Xmx1024m
              -jar {settings.mapping_tool_jar}
              -submissionIdentifier {submission_identifier}
              -access {settings.mapping_tool_database_access_config}
-             -log {settings.mapping_tool_database_access_config}/{log_name}
+             -log {settings.mapping_tool_log_dir}/{log_name}
              -user {submitter.username}
              -convert {settings.image_conversion_command}
              -save {settings.mapping_tool_proposals_dir}
@@ -146,16 +194,17 @@ class SubmissionService:
              -ephemerisUrl {settings.ephemeris_url}
              -findingChartGenerationScript {settings.finder_chart_tool}
              -python {settings.python_interpreter}
-             -sentryDSN {settings.sentry_dsn if settings.sentry_dsn else "no-sentry"}
+             {sentry_dsn}
              {settings.mapping_tool_api_key}
         """
         command = re.sub(r"\s+", " ", command)
         command = command.replace("\n", "").strip()
+        print(command)
         return command
 
     @staticmethod
     async def _save_submitted_content(
-            content: UploadFile, submission_identifier: str
+        content: UploadFile, submission_identifier: str
     ) -> pathlib.Path:
         """
         Save the submitted proposal.
@@ -163,7 +212,9 @@ class SubmissionService:
         The path of the generated file is returned.
         """
         await content.seek(0)
-        saved_filepath = pathlib.Path(tempfile.gettempdir()) / f"{submission_identifier}.zip"
+        saved_filepath = (
+            pathlib.Path(tempfile.gettempdir()) / f"{submission_identifier}.zip"
+        )
         saved_filepath.write_bytes(cast(bytes, await content.read()))
 
         return saved_filepath
@@ -172,4 +223,4 @@ class SubmissionService:
     def _mapping_log_name(proposal_code: Optional[str]) -> str:
         """Generate the name for the log file."""
         name = f"{proposal_code}-" if proposal_code else ""
-        return name + datetime.now().isoformat()
+        return name + datetime.now().isoformat() + ".log"

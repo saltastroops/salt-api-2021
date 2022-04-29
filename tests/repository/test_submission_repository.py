@@ -6,9 +6,9 @@ import pytz
 from sqlalchemy.engine import Connection
 
 # TODO: Add more tests
-from saltapi.exceptions import NotFoundError, ValidationError
+from saltapi.exceptions import NotFoundError
 from saltapi.repository.submission_repository import SubmissionRepository
-from saltapi.service.submission import SubmissionMessageType
+from saltapi.service.submission import SubmissionMessageType, SubmissionStatus
 from saltapi.service.user import User
 
 
@@ -32,7 +32,7 @@ def test_get_submission(dbconnection: Connection) -> None:
     submission = submission_repository.get("a63e548d-ffa5-4213-ad8a-b44b1ec8a01c")
     assert submission["proposal_code"] is None
     assert submission["submitter_id"] == 1243
-    assert submission["status"] == "In progress"
+    assert submission["status"] == SubmissionStatus.IN_PROGRESS
     assert submission["started_at"] == datetime(
         2022, 4, 25, 10, 7, 37, 0, tzinfo=pytz.utc
     )
@@ -74,15 +74,21 @@ def test_get_log_entries_for_non_existing_identifier(dbconnection: Connection) -
     assert len(log_entries) == 0
 
 
-def test_get_log_entries_from_entry_number(dbconnection:Connection) -> None:
+def test_get_log_entries_from_entry_number(dbconnection: Connection) -> None:
     """Test that the returned log entries can be limited."""
     submission_repository = SubmissionRepository(dbconnection)
     user = _dummy_user()
-    identifier = submission_repository.create_submission(user=user, proposal_code=None)
+    identifier = submission_repository.create(user=user, proposal_code=None)
 
-    submission_repository.create_log_entry(identifier, SubmissionMessageType.INFO, "Message 1")
-    submission_repository.create_log_entry(identifier, SubmissionMessageType.ERROR, "Message 2")
-    submission_repository.create_log_entry(identifier, SubmissionMessageType.WARNING, "Message 3")
+    submission_repository.create_log_entry(
+        identifier, SubmissionMessageType.INFO, "Message 1"
+    )
+    submission_repository.create_log_entry(
+        identifier, SubmissionMessageType.ERROR, "Message 2"
+    )
+    submission_repository.create_log_entry(
+        identifier, SubmissionMessageType.WARNING, "Message 3"
+    )
 
     log_entries = submission_repository.get_log_entries(identifier, from_entry_number=2)
 
@@ -91,24 +97,32 @@ def test_get_log_entries_from_entry_number(dbconnection:Connection) -> None:
     assert log_entries[1]["entry_number"] == 3
 
 
-
 @pytest.mark.parametrize("proposal_code", [None, "2021-2-SCI-004"])
-def test_create_submission(proposal_code: Optional[str], dbconnection: Connection) -> None:
+def test_create_submission(
+    proposal_code: Optional[str], dbconnection: Connection
+) -> None:
     """Test that a submission is created."""
+    now = pytz.utc.localize(datetime.utcnow())
+
     submission_repository = SubmissionRepository(dbconnection)
     user = _dummy_user()
-    identifier = submission_repository.create_submission(user=user, proposal_code=proposal_code)
+    identifier = submission_repository.create(user=user, proposal_code=proposal_code)
     submission = submission_repository.get(identifier)
     assert submission["submitter_id"] == user.id
     assert submission["proposal_code"] == proposal_code
+    assert submission["status"] == SubmissionStatus.IN_PROGRESS
+    assert abs((submission["started_at"] - now).total_seconds()) < 5
+    assert submission["finished_at"] is None
 
 
-def test_create_submission_fails_for_unknown_proposal_code(dbconnection: Connection):
+def test_create_submission_fails_for_unknown_proposal_code(
+    dbconnection: Connection,
+) -> None:
     """Test that a submission cannot be created for a non-existing proposal code."""
     submission_repository = SubmissionRepository(dbconnection)
     user = _dummy_user()
-    with pytest.raises(ValidationError) as excinfo:
-        submission_repository.create_submission(user=user, proposal_code="idontexist")
+    with pytest.raises(NotFoundError) as excinfo:
+        submission_repository.create(user=user, proposal_code="idontexist")
     assert "idontexist" in str(excinfo.value)
 
 
@@ -116,10 +130,14 @@ def test_create_log_entry(dbconnection: Connection) -> None:
     """Test creating a log entry."""
     submission_repository = SubmissionRepository(dbconnection)
     user = _dummy_user()
-    identifier = submission_repository.create_submission(user=user, proposal_code=None)
+    identifier = submission_repository.create(user=user, proposal_code=None)
 
-    submission_repository.create_log_entry(identifier, SubmissionMessageType.INFO, "Checking exposure times.")
-    submission_repository.create_log_entry(identifier, SubmissionMessageType.ERROR, "An exposure time cannot be negative.")
+    submission_repository.create_log_entry(
+        identifier, SubmissionMessageType.INFO, "Checking exposure times."
+    )
+    submission_repository.create_log_entry(
+        identifier, SubmissionMessageType.ERROR, "An exposure time cannot be negative."
+    )
 
     log_entries = submission_repository.get_log_entries(identifier)
 
@@ -132,3 +150,49 @@ def test_create_log_entry(dbconnection: Connection) -> None:
     assert log_entries[1]["entry_number"] == 2
     assert log_entries[1]["message_type"] == "Error"
     assert log_entries[1]["message"] == "An exposure time cannot be negative."
+
+
+def test_create_log_entry_fails_for_non_existing_submission_identifier(
+    dbconnection: Connection,
+) -> None:
+    """Test no log entry can be created for a non-existing submission identifier."""
+    submission_repository = SubmissionRepository(dbconnection)
+    with pytest.raises(NotFoundError) as excinfo:
+        submission_repository.create_log_entry(
+            "idontexist", SubmissionMessageType.INFO, "Checking exposure times."
+        )
+
+    assert "idontexist" in str(excinfo.value)
+
+
+@pytest.mark.parametrize(
+    "status",
+    [
+        SubmissionStatus.FAILED,
+        SubmissionStatus.IN_PROGRESS,
+        SubmissionStatus.SUCCESSFUL,
+    ],
+)
+def test_finish_submission(status: SubmissionStatus, dbconnection: Connection) -> None:
+    """Test finishing a submission."""
+    submission_repository = SubmissionRepository(dbconnection)
+    user = _dummy_user()
+    identifier = submission_repository.create(user=user, proposal_code=None)
+
+    submission_repository.finish(identifier, status)
+
+    submission = submission_repository.get(identifier)
+
+    now = pytz.utc.localize(datetime.utcnow())
+    assert submission["status"] == status
+    assert abs((submission["finished_at"] - now).total_seconds()) < 5
+
+
+def test_finish_submission_fails_for_non_existing_submission_identifier(
+    dbconnection: Connection,
+) -> None:
+    """Test finishing a submission fails for a non-existing submission identifier."""
+    submission_repository = SubmissionRepository(dbconnection)
+    with pytest.raises(NotFoundError) as excinfo:
+        submission_repository.finish("idontexist", SubmissionStatus.SUCCESSFUL)
+    assert "dontexist" in str(excinfo.value)

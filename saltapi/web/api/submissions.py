@@ -1,17 +1,24 @@
-from typing import Optional, Dict
+from typing import Dict, Optional
 
 from fastapi import APIRouter, Depends, File, Query, UploadFile
+from starlette import status
 
+from saltapi.repository.database import engine
 from saltapi.repository.submission_repository import SubmissionRepository
-from saltapi.repository.unit_of_work import UnitOfWork
 from saltapi.service.authentication_service import get_current_user
 from saltapi.service.user import User
 from saltapi.web import services
+from saltapi.web.schema.submissions import SubmissionIdentifier
 
 router = APIRouter(prefix="/submissions", tags=["Submissions"])
 
 
-@router.post("/", summary="Submit a proposal")
+@router.post(
+    "/",
+    summary="Submit a proposal",
+    status_code=status.HTTP_202_ACCEPTED,
+    response_model=SubmissionIdentifier,
+)
 async def create_submission(
     proposal: UploadFile = File(
         ..., title="Proposal", description="Zip file containing the proposal"
@@ -33,8 +40,10 @@ async def create_submission(
     proposal code is supplied as a query parameter, the proposal code defined in the
     proposal must be the same as that passed as a query parameter.
     """
-    with UnitOfWork() as unit_of_work:
-        submission_repository = SubmissionRepository(unit_of_work.connection)
-        submission_service = services.submission_service(submission_repository)
-        submission_identifier = await submission_service.submit_proposal(user, proposal, proposal_code)
-        return {"submission_identifier": submission_identifier}
+    # Submissions don't use database transactions. As such no unit of work is used.
+    submission_repository = SubmissionRepository(engine.connect())
+    submission_service = services.submission_service(submission_repository)
+    submission_identifier = await submission_service.submit_proposal(
+        user, proposal, proposal_code
+    )
+    return {"submission_identifier": submission_identifier}
