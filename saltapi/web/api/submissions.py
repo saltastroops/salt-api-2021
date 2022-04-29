@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Dict
 
 from fastapi import APIRouter, Depends, File, Query, UploadFile
 
@@ -12,7 +12,7 @@ router = APIRouter(prefix="/submissions", tags=["Submissions"])
 
 
 @router.post("/", summary="Submit a proposal")
-def create_submission(
+async def create_submission(
     proposal: UploadFile = File(
         ..., title="Proposal", description="Zip file containing the proposal"
     ),
@@ -20,7 +20,7 @@ def create_submission(
         None, alias="proposal-code", title="Proposal code", description="Proposal code"
     ),
     user: User = Depends(get_current_user),
-) -> None:
+) -> Dict[str, str]:
     """
     Submit a proposal.
 
@@ -36,4 +36,5 @@ def create_submission(
     with UnitOfWork() as unit_of_work:
         submission_repository = SubmissionRepository(unit_of_work.connection)
         submission_service = services.submission_service(submission_repository)
-        submission_service.submit_proposal(user, proposal, proposal_code)
+        submission_identifier = await submission_service.submit_proposal(user, proposal, proposal_code)
+        return {"submission_identifier": submission_identifier}
