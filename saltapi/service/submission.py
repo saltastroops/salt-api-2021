@@ -1,3 +1,4 @@
+import dataclasses
 from enum import Enum
 
 
@@ -15,3 +16,12 @@ class SubmissionStatus(Enum):
     FAILED = "Failed"
     IN_PROGRESS = "In progress"
     SUCCESSFUL = "Successful"
+
+
+@dataclasses.dataclass
+class SubmissionLogEntry:
+    """Submission log entry."""
+
+    entry_number: int
+    message_type: SubmissionMessageType
+    message: str

@@ -222,12 +222,36 @@ ORDER BY entry_number;
         return [
             {
                 "entry_number": row.entry_number,
-                "message_type": row.message_type,
+                "message_type": SubmissionMessageType(row.message_type),
                 "message": row.message,
                 "logged_at": pytz.utc.localize(row.logged_at),
             }
             for row in result
         ]
+
+    def get_progress(
+        self, identifier: str, from_entry_number: int = 1
+    ) -> Dict[str, Any]:
+        """
+        Return the status and log entries for a submission.
+
+        You can limit the returned log entries to those with an entry number greater
+        than or equal to a given value with the `from_entry_number` argument.
+
+        Parameters
+        ----------
+        from_entry_number: int
+            Entry number from which onwards to return the log entries.
+
+        Returns
+        -------
+        dict
+            A dictionary of the status and list of log entries.
+        """
+        return {
+            "status": self.get(identifier)["status"],
+            "log_entries": self.get_log_entries(identifier, from_entry_number),
+        }
 
     def create_log_entry(
         self,
@@ -250,10 +274,11 @@ ORDER BY entry_number;
 
         submission_id = self._submission_id(submission_identifier)
 
+        now = pytz.utc.localize(datetime.utcnow())
         stmt = text(
             """
 INSERT INTO SubmissionLogEntry
-(Submission_Id, SubmissionLogEntryNumber, SubmissionMessageType_Id, Message)
+(Submission_Id, SubmissionLogEntryNumber, SubmissionMessageType_Id, Message, LoggedAt)
 VALUES (:submission_id,
         (
             SELECT COUNT(*) + 1
@@ -265,7 +290,8 @@ VALUES (:submission_id,
             FROM SubmissionMessageType AS SMT
             WHERE SMT.SubmissionMessageType = :message_type
         ),
-        :message)
+        :message,
+        :now)
         """
         )
         self.connection.execute(
@@ -274,5 +300,6 @@ VALUES (:submission_id,
                 "submission_id": submission_id,
                 "message_type": message_type.value,
                 "message": message,
+                "now": now,
             },
         )

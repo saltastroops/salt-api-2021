@@ -1,16 +1,33 @@
-from typing import Dict, Optional
+import asyncio
+from typing import Any, Dict, Optional
 
-from fastapi import APIRouter, Depends, File, Query, UploadFile
+from fastapi import (
+    APIRouter,
+    Depends,
+    File,
+    Path,
+    Query,
+    UploadFile,
+    WebSocket,
+)
 from starlette import status
 
+from saltapi.exceptions import NotFoundError
 from saltapi.repository.database import engine
 from saltapi.repository.submission_repository import SubmissionRepository
-from saltapi.service.authentication_service import get_current_user
+from saltapi.repository.unit_of_work import UnitOfWork
+from saltapi.service.authentication_service import (
+    find_user_from_token,
+    get_current_user,
+)
+from saltapi.service.submission import SubmissionStatus
 from saltapi.service.user import User
 from saltapi.web import services
 from saltapi.web.schema.submissions import SubmissionIdentifier
 
 router = APIRouter(prefix="/submissions", tags=["Submissions"])
+
+TIME_BETWEEN_DB_QUERIES = 5
 
 
 @router.post(
@@ -47,3 +64,116 @@ async def create_submission(
         user, proposal, proposal_code
     )
     return {"submission_identifier": submission_identifier}
+
+
+@router.websocket("/{identifier}/progress/ws")
+async def submission_progress(
+    websocket: WebSocket,
+    identifier: str = Path(
+        ...,
+        title="Submission identifier",
+        description="Unique identifier for the submission whose log is requested.",
+    ),
+    from_entry_number: int = Query(
+        1,
+        alias="from-entry-number",
+        title="Minimum entry number",
+        description="Minimum entry number from which onwards log entries are considered",
+    ),
+) -> None:
+    """
+    Request to receive the existing and all future log entries and status changes.
+
+    After connecting to this endpoint you must send a message with a valid JWT token
+    authenticating you. This is a token returned by the `/token` endpoint, as you would
+    use in the `Authorization` header for other (HTTP) endpoints. If the token sent is
+    invalid, the connection is closed with the closing code 1011.
+
+    You must have created a submission in order to view its log or status. If another
+    user has created it, the connection is closed with the closing code 1011.
+
+    If the specified submission identifier does not exist, the connection is closed with
+    the closing code 1011.
+
+    Yoy may optionally specify a minimum entry number from which onwards to return log
+    entries. Use the `from-entry-number` query parameter for this. For example, if you
+    are only interested in status changes, you could choose a `from-entry-number` like
+    100000.
+
+    When you connect to this endpoint (and have sent a valid token), the current status
+    and the existing log entries are sent. The endpoint checks the database every few
+    seconds for new log entries or status changes. If any change is found, the current
+    status (whether changed or not) and any new log entries are sent.
+    """
+    await websocket.accept()
+
+    # Authenticate the user
+    token = await websocket.receive_text()
+    try:
+        user: Optional[User] = find_user_from_token(token)
+    except Exception:
+        user = None
+    if user is None:
+        await websocket.send_text(
+            "You are not authenticated. The first message sent "
+            "to this endpoint must be a valid JWT token, which "
+            "you should have obtained from the /token endpoint."
+        )
+        await websocket.close(1011)
+        return
+
+    with UnitOfWork() as unit_of_work:
+        submission_repository = SubmissionRepository(unit_of_work.connection)
+        previous_status: Optional[SubmissionStatus] = None
+
+        # Check that the authenticated user made the submission (and, implicitly, that
+        # the identifier exists).
+        try:
+            submission = submission_repository.get(identifier)
+        except NotFoundError:
+            await websocket.send_text(f"Unknown submission identifier: {identifier}")
+            await websocket.close(1011)
+            return
+        if submission["submitter_id"] != user.id:
+            await websocket.send_text(
+                "You cannot access the submission log as someone else made the "
+                "submission."
+            )
+            await websocket.close(1011)
+            return
+
+        while True:
+            # Get the submission status and log entries
+            submission_progress = submission_repository.get_progress(
+                identifier=identifier,
+                from_entry_number=from_entry_number,
+            )
+
+            # Send a message if (and only if) there has been a change
+            if (
+                submission_progress["status"] != previous_status
+                or len(submission_progress["log_entries"]) > 0
+            ):
+                await websocket.send_json(submission_progress)
+
+            previous_status = submission_progress["status"]
+
+            if submission_progress["status"] != SubmissionStatus.IN_PROGRESS.value:
+                await websocket.close()
+                return
+
+            await asyncio.sleep(TIME_BETWEEN_DB_QUERIES)
+
+
+def _submission_details(
+    identifier: str, from_entry_number: int, submission_repository: SubmissionRepository
+) -> Dict[str, Any]:
+    submission = submission_repository.get(identifier)
+    log_entries = submission_repository.get_log_entries(identifier, from_entry_number)
+    for log_entry in log_entries:
+        log_entry["message_type"] = log_entry["message_type"].value
+    return {
+        "submitter_id": submission["submitter_id"],
+        "status": submission["status"].value,
+        "log_entries": log_entries,
+    }

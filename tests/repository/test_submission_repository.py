@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List, Any
 
 import pytest
 import pytz
@@ -59,7 +59,7 @@ def test_get_log_entries_for_existing_identifier(dbconnection: Connection) -> No
 
     assert len(log_entries) == 1
     assert log_entries[0]["entry_number"] == 1
-    assert log_entries[0]["message_type"] == "Info"
+    assert log_entries[0]["message_type"] == SubmissionMessageType.INFO
     assert log_entries[0]["message"] == "Starting submission."
     assert log_entries[0]["logged_at"] == datetime(
         2022, 4, 25, 12, 7, 38, 0, tzinfo=pytz.utc
@@ -95,6 +95,48 @@ def test_get_log_entries_from_entry_number(dbconnection: Connection) -> None:
     assert len(log_entries) == 2
     assert log_entries[0]["entry_number"] == 2
     assert log_entries[1]["entry_number"] == 3
+
+
+@pytest.mark.parametrize("from_entry_number", [1, 2, 3])
+def test_get_progress(from_entry_number: int, dbconnection: Connection) -> None:
+    """Test that the correct progress details are returned."""
+    submission_repository = SubmissionRepository(dbconnection)
+    user = _dummy_user()
+    identifier = submission_repository.create(user=user, proposal_code=None)
+
+    all_log_entries: List[Any] = [
+        {
+            "entry_number": 1,
+            "message_type": SubmissionMessageType.INFO,
+            "message": "Message 1",
+        },
+        {
+            "entry_number": 2,
+            "message_type": SubmissionMessageType.ERROR,
+            "message": "Message 2",
+        },
+        {
+            "entry_number": 3,
+            "message_type": SubmissionMessageType.WARNING,
+            "message": "Message 3",
+        },
+    ]
+    for log_entry in all_log_entries:
+        submission_repository.create_log_entry(
+            identifier, log_entry["message_type"], log_entry["message"]
+        )
+
+    submission_repository.finish(identifier, SubmissionStatus.SUCCESSFUL)
+    progress = submission_repository.get_progress(identifier, from_entry_number)
+
+    # Check the dates and remove them to facilitate comparison
+    now = pytz.utc.localize(datetime.utcnow())
+    for log_entry in progress["log_entries"]:
+        assert abs((log_entry["logged_at"] - now).total_seconds()) < 5
+        del log_entry["logged_at"]
+
+    assert progress["status"] == SubmissionStatus.SUCCESSFUL
+    assert progress["log_entries"] == all_log_entries[from_entry_number - 1 :]  # noqa
 
 
 @pytest.mark.parametrize("proposal_code", [None, "2021-2-SCI-004"])
@@ -144,11 +186,11 @@ def test_create_log_entry(dbconnection: Connection) -> None:
     assert len(log_entries) == 2
 
     assert log_entries[0]["entry_number"] == 1
-    assert log_entries[0]["message_type"] == "Info"
+    assert log_entries[0]["message_type"] == SubmissionMessageType.INFO
     assert log_entries[0]["message"] == "Checking exposure times."
 
     assert log_entries[1]["entry_number"] == 2
-    assert log_entries[1]["message_type"] == "Error"
+    assert log_entries[1]["message_type"] == SubmissionMessageType.ERROR
     assert log_entries[1]["message"] == "An exposure time cannot be negative."
 
 
