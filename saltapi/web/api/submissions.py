@@ -42,7 +42,7 @@ async def create_submission(
         ..., title="Proposal", description="Zip file containing the proposal"
     ),
     proposal_code: Optional[str] = Form(
-        None, alias="proposal-code", title="Proposal code", description="Proposal code"
+        None, title="Proposal code", description="Proposal code"
     ),
     user: User = Depends(get_current_user),
 ) -> Dict[str, str]:

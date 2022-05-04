@@ -81,7 +81,7 @@ def test_proposal_code_must_be_consistent(client: TestClient, tmp_path: Path) ->
             f.write(content)
     files = {"proposal": open(proposal, "rb")}
     response = client.post(
-        "/submissions/", data={"proposal-code": "2022-1-SCI-243"}, files=files
+        "/submissions/", data={"proposal_code": "2022-1-SCI-243"}, files=files
     )
     assert response.status_code == status.HTTP_400_BAD_REQUEST
     message = response.json()["message"]
