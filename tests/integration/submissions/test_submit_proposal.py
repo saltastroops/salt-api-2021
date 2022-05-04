@@ -26,7 +26,7 @@ def test_submission_requires_authentication(client: TestClient, tmp_path: Path) 
             f.write(content)
     files = {"proposal": open(proposal, "rb")}
     response = client.post(
-        "/submissions/", params={"proposal-code": "2022-1-SCI-243"}, files=files
+        "/submissions/", data={"proposal-code": "2022-1-SCI-243"}, files=files
     )
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
@@ -67,7 +67,7 @@ def test_submission_file_must_contain_xml(client: TestClient, tmp_path: Path) ->
 
 
 def test_proposal_code_must_be_consistent(client: TestClient, tmp_path: Path) -> None:
-    """Test that proposal codes in a query parameter and in the XML must be the same."""
+    """Test that proposal codes in form data and in the XML must be the same."""
     username = find_username("administrator")
     authenticate(username, client)
     proposal = tmp_path / "proposal.zip"
@@ -81,7 +81,7 @@ def test_proposal_code_must_be_consistent(client: TestClient, tmp_path: Path) ->
             f.write(content)
     files = {"proposal": open(proposal, "rb")}
     response = client.post(
-        "/submissions/", params={"proposal-code": "2022-1-SCI-243"}, files=files
+        "/submissions/", data={"proposal-code": "2022-1-SCI-243"}, files=files
     )
     assert response.status_code == status.HTTP_400_BAD_REQUEST
     message = response.json()["message"]

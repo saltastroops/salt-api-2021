@@ -5,6 +5,7 @@ from fastapi import (
     APIRouter,
     Depends,
     File,
+    Form,
     Path,
     Query,
     UploadFile,
@@ -40,7 +41,7 @@ async def create_submission(
     proposal: UploadFile = File(
         ..., title="Proposal", description="Zip file containing the proposal"
     ),
-    proposal_code: Optional[str] = Query(
+    proposal_code: Optional[str] = Form(
         None, alias="proposal-code", title="Proposal code", description="Proposal code"
     ),
     user: User = Depends(get_current_user),
