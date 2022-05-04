@@ -102,9 +102,58 @@ async def submission_progress(
 
     When you connect to this endpoint (and have sent a valid token), the current status
     and the existing log entries are sent. The endpoint checks the database every few
-    seconds for new log entries or status changes. If any change is found, the current
-    status (whether changed or not) and any new log entries are sent.
+    seconds for new log entries or status changes, and it returns a JSON object with
+    the current status (irrespective of whether it has changed or not) and the list of
+    new log entries (or an empty list if there are no new entries). Here are two
+    examples with two and no new log entries, respectively:
+
+    .. code-block:: json
+       {
+           "status": "In progress",
+           "log_entries: [
+               {
+                   "entry_number": 14,
+                   "logged_at": "2022-05-03T08:16:56Z",
+                   "message_type": "Info",
+                   "message": "Mapping block NGC 6000..."
+               },
+               {
+                   "entry_number": 15,
+                   "logged_at": "2022-05-03T08:17:01Z",
+                   "message_type": "Info",
+                   "message": "Mapping block NGC 6001..."
+               },
+           ]
+       }
+
+    .. code-block:: json
+       {
+           "status": "In progress",
+            "log_entries": []
+       }
+
+    If the submission is successful, a JSON object is sent which in addition includes
+    the proposal code:
+
+    .. code-block:: json
+       {
+           "status": "Successful",
+           "log_entries": [
+               {
+                   "entry_number": 20,
+                   "logged_at": "2022-05-03T08:17:34Z",
+                   "message_type": "Info",
+                   "message": "The submission was successful."
+               }
+           ],
+           "proposal_code": "2022-1-SCI-042"
+       }
+
+    The entry_number of a log entry is a running number for a submission. In other
+    words, the n-th log entry created for a submission has the entry number n.
     """
+    include_from_entry_number = from_entry_number
+
     await websocket.accept()
 
     # Authenticate the user
@@ -124,7 +173,6 @@ async def submission_progress(
 
     with UnitOfWork() as unit_of_work:
         submission_repository = SubmissionRepository(unit_of_work.connection)
-        previous_status: Optional[SubmissionStatus] = None
 
         # Check that the authenticated user made the submission (and, implicitly, that
         # the identifier exists).
@@ -146,17 +194,20 @@ async def submission_progress(
             # Get the submission status and log entries
             submission_progress = submission_repository.get_progress(
                 identifier=identifier,
-                from_entry_number=from_entry_number,
+                from_entry_number=include_from_entry_number,
             )
+            del submission_progress["submitter_id"]
 
-            # Send a message if (and only if) there has been a change
-            if (
-                submission_progress["status"] != previous_status
-                or len(submission_progress["log_entries"]) > 0
-            ):
-                await websocket.send_json(submission_progress)
+            # Next time we shouldn't include any log entries we got now.
+            if len(submission_progress["log_entries"]) > 0:
+                include_from_entry_number = 1 + max(
+                    log_entry["entry_number"]
+                    for log_entry in submission_progress["log_entries"]
+                )
 
-            previous_status = submission_progress["status"]
+            # Send a message with the current status, new log entries and (in case of a
+            # successful submission) proposal code.
+            await websocket.send_json(submission_progress)
 
             if submission_progress["status"] != SubmissionStatus.IN_PROGRESS.value:
                 await websocket.close()

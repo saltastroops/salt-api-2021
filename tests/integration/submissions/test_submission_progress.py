@@ -37,13 +37,12 @@ class MockSubmissionRepository:
 
 
 def _full_details_sequence(
-    details_sequence: List[
-        Tuple[SubmissionStatus, List[Tuple[int, SubmissionMessageType]]]
-    ]
+    details_sequence: List[Any],
+    include_submitter_id: bool,
 ) -> List[Dict[str, Any]]:
-    return [
-        {
-            "submitter_id": 1,
+    sequence = []
+    for d in details_sequence:
+        full_details = {
             "status": d[0].value,
             "log_entries": [
                 {
@@ -54,8 +53,13 @@ def _full_details_sequence(
                 for dd in d[1]
             ],
         }
-        for d in details_sequence
-    ]
+        if include_submitter_id:
+            full_details["submitter_id"] = 1
+        if len(d) > 2:
+            full_details["proposal_code"] = d[2]
+        sequence.append(full_details)
+
+    return sequence
 
 
 def _dummy_user(id: int, username: str) -> User:
@@ -178,7 +182,7 @@ def test_status_and_log_entry_changes_are_returned(
     client: TestClient,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Test that the correction submission status and log entry changes are returned."""
+    """Test that the correct submission status and log entries are returned."""
     submission_repository = SubmissionRepository(dbconnection)
     proposal_code = "2022-1-SCI-006"
     submission_identifier = submission_repository.create(
@@ -191,7 +195,8 @@ def test_status_and_log_entry_changes_are_returned(
         _mock_find_user_from_token(1, "someone"),
     )
 
-    full_details_sequence = _full_details_sequence(details_sequence)
+    full_details_sequence = _full_details_sequence(details_sequence, True)
+    expected_details_sequence = _full_details_sequence(details_sequence, False)
     monkeypatch.setattr(
         saltapi.web.api.submissions,
         "SubmissionRepository",
@@ -199,20 +204,52 @@ def test_status_and_log_entry_changes_are_returned(
     )
     monkeypatch.setattr(saltapi.web.api.submissions, "TIME_BETWEEN_DB_QUERIES", 0)
 
-    # ignore time steps for which nothing has changed
-    received_details_sequence = [full_details_sequence[0]]
-    for index, d in enumerate(full_details_sequence[1:], 1):
-        if (
-            d["status"] != full_details_sequence[index - 1]["status"]
-            or len(d["log_entries"]) > 0
-        ):
-            received_details_sequence.append(d)
+    with client.websocket_connect(
+        f"/submissions/{submission_identifier}/progress/ws"
+    ) as websocket:
+        websocket.send_text("secret")
+        for details in expected_details_sequence:
+            message = websocket.receive_json()
+            assert message == details
+
+
+def test_proposal_code_is_included_if_sent(
+    dbconnection: Connection, client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    details_sequence = [
+        (SubmissionStatus.IN_PROGRESS, [(1, SubmissionMessageType.INFO)]),
+        (
+            SubmissionStatus.SUCCESSFUL,
+            [(2, SubmissionMessageType.INFO)],
+            "2022-1-SCI-014",
+        ),
+    ]
+    submission_repository = SubmissionRepository(dbconnection)
+    proposal_code = "2022-1-SCI-006"
+    submission_identifier = submission_repository.create(
+        _dummy_user(1, "someone"), proposal_code
+    )
+
+    monkeypatch.setattr(
+        saltapi.web.api.submissions,
+        "find_user_from_token",
+        _mock_find_user_from_token(1, "someone"),
+    )
+
+    full_details_sequence = _full_details_sequence(details_sequence, True)
+    expected_details_sequence = _full_details_sequence(details_sequence, False)
+    monkeypatch.setattr(
+        saltapi.web.api.submissions,
+        "SubmissionRepository",
+        MockSubmissionRepository(1, full_details_sequence),
+    )
+    monkeypatch.setattr(saltapi.web.api.submissions, "TIME_BETWEEN_DB_QUERIES", 0)
 
     with client.websocket_connect(
         f"/submissions/{submission_identifier}/progress/ws"
     ) as websocket:
         websocket.send_text("secret")
-        for details in received_details_sequence:
+        for details in expected_details_sequence:
             message = websocket.receive_json()
             assert message == details
 
@@ -224,6 +261,7 @@ def test_status_and_log_entry_changes_are_returned(
             1,
             [
                 (SubmissionStatus.IN_PROGRESS, [(1, SubmissionMessageType.INFO)]),
+                (SubmissionStatus.IN_PROGRESS, []),
                 (
                     SubmissionStatus.IN_PROGRESS,
                     [
@@ -231,6 +269,7 @@ def test_status_and_log_entry_changes_are_returned(
                         (3, SubmissionMessageType.INFO),
                     ],
                 ),
+                (SubmissionStatus.IN_PROGRESS, []),
                 (SubmissionStatus.FAILED, [(4, SubmissionMessageType.INFO)]),
             ],
         ),
@@ -238,6 +277,7 @@ def test_status_and_log_entry_changes_are_returned(
             2,
             [
                 (SubmissionStatus.IN_PROGRESS, []),
+                (SubmissionStatus.IN_PROGRESS, []),
                 (
                     SubmissionStatus.IN_PROGRESS,
                     [
@@ -245,6 +285,7 @@ def test_status_and_log_entry_changes_are_returned(
                         (3, SubmissionMessageType.INFO),
                     ],
                 ),
+                (SubmissionStatus.IN_PROGRESS, []),
                 (SubmissionStatus.FAILED, [(4, SubmissionMessageType.INFO)]),
             ],
         ),
@@ -252,11 +293,22 @@ def test_status_and_log_entry_changes_are_returned(
             3,
             [
                 (SubmissionStatus.IN_PROGRESS, []),
+                (SubmissionStatus.IN_PROGRESS, []),
                 (SubmissionStatus.IN_PROGRESS, [(3, SubmissionMessageType.INFO)]),
+                (SubmissionStatus.IN_PROGRESS, []),
                 (SubmissionStatus.FAILED, [(4, SubmissionMessageType.INFO)]),
             ],
         ),
-        (1000, [(SubmissionStatus.IN_PROGRESS, []), (SubmissionStatus.FAILED, [])]),
+        (
+            1000,
+            [
+                (SubmissionStatus.IN_PROGRESS, []),
+                (SubmissionStatus.IN_PROGRESS, []),
+                (SubmissionStatus.IN_PROGRESS, []),
+                (SubmissionStatus.IN_PROGRESS, []),
+                (SubmissionStatus.FAILED, []),
+            ],
+        ),
     ],
 )
 def test_submission_log_entries_can_be_skipped(
@@ -291,8 +343,8 @@ def test_submission_log_entries_can_be_skipped(
         _mock_find_user_from_token(1, "someone"),
     )
 
-    full_details_sequence = _full_details_sequence(details_sequence)
-    received_full_details_sequence = _full_details_sequence(received_details_sequence)
+    full_details_sequence = _full_details_sequence(details_sequence, True)
+    expected_details_sequence = _full_details_sequence(received_details_sequence, False)
     monkeypatch.setattr(
         saltapi.web.api.submissions,
         "SubmissionRepository",
@@ -305,6 +357,6 @@ def test_submission_log_entries_can_be_skipped(
         f"?from-entry-number={from_entry_number}",
     ) as websocket:
         websocket.send_text("secret")
-        for details in received_full_details_sequence:
+        for details in expected_details_sequence:
             message = websocket.receive_json()
             assert message == details
