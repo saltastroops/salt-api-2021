@@ -1,6 +1,6 @@
 import pathlib
 import re
-import subprocess
+import subprocess  # nosec
 import tempfile
 import threading
 import zipfile
@@ -165,7 +165,7 @@ class SubmissionService:
         if proposal_code:
             command.insert(-1, "-proposalCode")
             command.insert(-1, proposal_code)
-        completed_process = subprocess.run(command)
+        completed_process = subprocess.run(command)  # nosec
         return completed_process.returncode
 
     @staticmethod
