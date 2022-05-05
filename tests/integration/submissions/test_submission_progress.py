@@ -94,10 +94,10 @@ def _serialize_logged_at(submission_progress: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def test_submission_log_requires_authentication(
-    dbconnection: Connection, client: TestClient
+    db_connection: Connection, client: TestClient
 ) -> None:
     """Test that you have to be authenticated to view a submission log."""
-    submission_repository = SubmissionRepository(dbconnection)
+    submission_repository = SubmissionRepository(db_connection)
     username = find_username("administrator")
     submission_identifier = submission_repository.create(
         _dummy_user(42, username), "2021-2-SCI-003"
@@ -112,7 +112,7 @@ def test_submission_log_requires_authentication(
 
 
 def test_submission_log_requires_existing_identifier(
-    dbconnection: Connection, client: TestClient, monkeypatch: pytest.MonkeyPatch
+    db_connection: Connection, client: TestClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Test that the submission identifier must exist."""
     submission_identifier = "idontexist"
@@ -132,10 +132,10 @@ def test_submission_log_requires_existing_identifier(
 
 
 def test_submission_log_can_only_be_accessed_by_submitter(
-    dbconnection: Connection, client: TestClient, monkeypatch: pytest.MonkeyPatch
+    db_connection: Connection, client: TestClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Test that only the user who made a submission can view its log."""
-    submission_repository = SubmissionRepository(dbconnection)
+    submission_repository = SubmissionRepository(db_connection)
     proposal_code = "2022-1-SCI-006"
     submission_identifier = submission_repository.create(
         _dummy_user(1, "someone"), proposal_code
@@ -186,12 +186,12 @@ def test_status_and_log_entry_changes_are_returned(
     details_sequence: List[
         Tuple[SubmissionStatus, List[Tuple[int, SubmissionMessageType]]]
     ],
-    dbconnection: Connection,
+    db_connection: Connection,
     client: TestClient,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Test that the correct submission status and log entries are returned."""
-    submission_repository = SubmissionRepository(dbconnection)
+    submission_repository = SubmissionRepository(db_connection)
     proposal_code = "2022-1-SCI-006"
     submission_identifier = submission_repository.create(
         _dummy_user(1, "someone"), proposal_code
@@ -222,7 +222,7 @@ def test_status_and_log_entry_changes_are_returned(
 
 
 def test_proposal_code_is_included_if_sent(
-    dbconnection: Connection, client: TestClient, monkeypatch: pytest.MonkeyPatch
+    db_connection: Connection, client: TestClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     details_sequence = [
         (SubmissionStatus.IN_PROGRESS, [(1, SubmissionMessageType.INFO)]),
@@ -232,7 +232,7 @@ def test_proposal_code_is_included_if_sent(
             "2022-1-SCI-014",
         ),
     ]
-    submission_repository = SubmissionRepository(dbconnection)
+    submission_repository = SubmissionRepository(db_connection)
     proposal_code = "2022-1-SCI-006"
     submission_identifier = submission_repository.create(
         _dummy_user(1, "someone"), proposal_code
@@ -321,14 +321,14 @@ def test_proposal_code_is_included_if_sent(
 )
 def test_submission_log_entries_can_be_skipped(
     from_entry_number: int,
-    dbconnection: Connection,
+    db_connection: Connection,
     received_details_sequence: List[
         Tuple[SubmissionStatus, List[Tuple[int, SubmissionMessageType]]]
     ],
     client: TestClient,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    submission_repository = SubmissionRepository(dbconnection)
+    submission_repository = SubmissionRepository(db_connection)
     proposal_code = "2022-1-SCI-006"
     submission_identifier = submission_repository.create(
         _dummy_user(1, "someone"), proposal_code

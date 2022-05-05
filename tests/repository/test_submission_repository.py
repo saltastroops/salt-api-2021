@@ -26,9 +26,9 @@ def _dummy_user() -> User:
     )
 
 
-def test_get_submission(dbconnection: Connection) -> None:
+def test_get_submission(db_connection: Connection) -> None:
     """Test that submission details are returned."""
-    submission_repository = SubmissionRepository(dbconnection)
+    submission_repository = SubmissionRepository(db_connection)
     submission = submission_repository.get("a63e548d-ffa5-4213-ad8a-b44b1ec8a01c")
     assert submission["proposal_code"] is None
     assert submission["submitter_id"] == 1243
@@ -42,17 +42,17 @@ def test_get_submission(dbconnection: Connection) -> None:
 
 
 def test_get_submission_fails_for_non_existing_identifier(
-    dbconnection: Connection,
+    db_connection: Connection,
 ) -> None:
     """Test that an error is raised for a non-existing identifier."""
-    submission_repository = SubmissionRepository(dbconnection)
+    submission_repository = SubmissionRepository(db_connection)
     with pytest.raises(NotFoundError):
         submission_repository.get("idontexist")
 
 
-def test_get_log_entries_for_existing_identifier(dbconnection: Connection) -> None:
+def test_get_log_entries_for_existing_identifier(db_connection: Connection) -> None:
     """Test that log entries are returned."""
-    submission_repository = SubmissionRepository(dbconnection)
+    submission_repository = SubmissionRepository(db_connection)
     log_entries = submission_repository.get_log_entries(
         "a63e548d-ffa5-4213-ad8a-b44b1ec8a01c"
     )
@@ -66,17 +66,17 @@ def test_get_log_entries_for_existing_identifier(dbconnection: Connection) -> No
     )
 
 
-def test_get_log_entries_for_non_existing_identifier(dbconnection: Connection) -> None:
+def test_get_log_entries_for_non_existing_identifier(db_connection: Connection) -> None:
     """Test that an empty list is returned for a non-existing identifier."""
-    submission_repository = SubmissionRepository(dbconnection)
+    submission_repository = SubmissionRepository(db_connection)
     log_entries = submission_repository.get_log_entries("idontexist")
 
     assert len(log_entries) == 0
 
 
-def test_get_log_entries_from_entry_number(dbconnection: Connection) -> None:
+def test_get_log_entries_from_entry_number(db_connection: Connection) -> None:
     """Test that the returned log entries can be limited."""
-    submission_repository = SubmissionRepository(dbconnection)
+    submission_repository = SubmissionRepository(db_connection)
     user = _dummy_user()
     identifier = submission_repository.create(user=user, proposal_code=None)
 
@@ -98,9 +98,9 @@ def test_get_log_entries_from_entry_number(dbconnection: Connection) -> None:
 
 
 @pytest.mark.parametrize("from_entry_number", [1, 2, 3])
-def test_get_progress(from_entry_number: int, dbconnection: Connection) -> None:
+def test_get_progress(from_entry_number: int, db_connection: Connection) -> None:
     """Test that the correct progress details are returned."""
-    submission_repository = SubmissionRepository(dbconnection)
+    submission_repository = SubmissionRepository(db_connection)
     user = _dummy_user()
     identifier = submission_repository.create(user=user, proposal_code=None)
 
@@ -141,12 +141,12 @@ def test_get_progress(from_entry_number: int, dbconnection: Connection) -> None:
 
 @pytest.mark.parametrize("proposal_code", [None, "2021-2-SCI-004"])
 def test_create_submission(
-    proposal_code: Optional[str], dbconnection: Connection
+    proposal_code: Optional[str], db_connection: Connection
 ) -> None:
     """Test that a submission is created."""
     now = pytz.utc.localize(datetime.utcnow())
 
-    submission_repository = SubmissionRepository(dbconnection)
+    submission_repository = SubmissionRepository(db_connection)
     user = _dummy_user()
     identifier = submission_repository.create(user=user, proposal_code=proposal_code)
     submission = submission_repository.get(identifier)
@@ -158,19 +158,19 @@ def test_create_submission(
 
 
 def test_create_submission_fails_for_unknown_proposal_code(
-    dbconnection: Connection,
+    db_connection: Connection,
 ) -> None:
     """Test that a submission cannot be created for a non-existing proposal code."""
-    submission_repository = SubmissionRepository(dbconnection)
+    submission_repository = SubmissionRepository(db_connection)
     user = _dummy_user()
     with pytest.raises(NotFoundError) as excinfo:
         submission_repository.create(user=user, proposal_code="idontexist")
     assert "idontexist" in str(excinfo.value)
 
 
-def test_create_log_entry(dbconnection: Connection) -> None:
+def test_create_log_entry(db_connection: Connection) -> None:
     """Test creating a log entry."""
-    submission_repository = SubmissionRepository(dbconnection)
+    submission_repository = SubmissionRepository(db_connection)
     user = _dummy_user()
     identifier = submission_repository.create(user=user, proposal_code=None)
 
@@ -195,10 +195,10 @@ def test_create_log_entry(dbconnection: Connection) -> None:
 
 
 def test_create_log_entry_fails_for_non_existing_submission_identifier(
-    dbconnection: Connection,
+    db_connection: Connection,
 ) -> None:
     """Test no log entry can be created for a non-existing submission identifier."""
-    submission_repository = SubmissionRepository(dbconnection)
+    submission_repository = SubmissionRepository(db_connection)
     with pytest.raises(NotFoundError) as excinfo:
         submission_repository.create_log_entry(
             "idontexist", SubmissionMessageType.INFO, "Checking exposure times."
@@ -215,9 +215,9 @@ def test_create_log_entry_fails_for_non_existing_submission_identifier(
         SubmissionStatus.SUCCESSFUL,
     ],
 )
-def test_finish_submission(status: SubmissionStatus, dbconnection: Connection) -> None:
+def test_finish_submission(status: SubmissionStatus, db_connection: Connection) -> None:
     """Test finishing a submission."""
-    submission_repository = SubmissionRepository(dbconnection)
+    submission_repository = SubmissionRepository(db_connection)
     user = _dummy_user()
     identifier = submission_repository.create(user=user, proposal_code=None)
 
@@ -231,10 +231,10 @@ def test_finish_submission(status: SubmissionStatus, dbconnection: Connection) -
 
 
 def test_finish_submission_fails_for_non_existing_submission_identifier(
-    dbconnection: Connection,
+    db_connection: Connection,
 ) -> None:
     """Test finishing a submission fails for a non-existing submission identifier."""
-    submission_repository = SubmissionRepository(dbconnection)
+    submission_repository = SubmissionRepository(db_connection)
     with pytest.raises(NotFoundError) as excinfo:
         submission_repository.finish("idontexist", SubmissionStatus.SUCCESSFUL)
     assert "dontexist" in str(excinfo.value)

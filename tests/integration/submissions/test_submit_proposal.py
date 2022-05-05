@@ -92,7 +92,7 @@ def test_proposal_code_must_be_consistent(client: TestClient, tmp_path: Path) ->
 def test_submission(
     successful: bool,
     client: TestClient,
-    dbconnection: Connection,
+    db_connection: Connection,
     tmp_path: Path,
     monkeypatch: MonkeyPatch,
 ) -> None:
@@ -141,7 +141,7 @@ def test_submission(
     # to happen. We check several times, with increasing wait times between the tries.
     wait_times = [0, 0.01, 0.05, 0.1, 0.5, 1, 3]
     passed = False
-    submission_repository = SubmissionRepository(dbconnection)
+    submission_repository = SubmissionRepository(db_connection)
     for t in wait_times:
         time.sleep(t)
         submission = submission_repository.get(identifier)

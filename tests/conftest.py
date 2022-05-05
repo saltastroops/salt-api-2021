@@ -64,7 +64,7 @@ ACCESS_TOKEN_LIFETIME_HOURS = 7 * 24
 
 
 @pytest.fixture(scope="function")
-def dbconnection() -> Generator[Connection, None, None]:
+def db_connection() -> Generator[Connection, None, None]:
     if not engine:
         raise ValueError(
             "No SQLAlchemy engine set. Have you defined the SDB_DSN environment "
