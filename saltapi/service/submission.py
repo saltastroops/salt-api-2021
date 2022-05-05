@@ -2,7 +2,7 @@ import dataclasses
 from enum import Enum
 
 
-class SubmissionMessageType(Enum):
+class SubmissionMessageType(str, Enum):
     """Submission message types."""
 
     ERROR = "Error"
@@ -10,7 +10,7 @@ class SubmissionMessageType(Enum):
     WARNING = "Warning"
 
 
-class SubmissionStatus(Enum):
+class SubmissionStatus(str, Enum):
     """Submission status values."""
 
     FAILED = "Failed"

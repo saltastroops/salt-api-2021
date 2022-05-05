@@ -114,13 +114,13 @@ async def submission_progress(
            "log_entries: [
                {
                    "entry_number": 14,
-                   "logged_at": "2022-05-03T08:16:56Z",
+                   "logged_at": "2022-05-03T08:16:56+00:00",
                    "message_type": "Info",
                    "message": "Mapping block NGC 6000..."
                },
                {
                    "entry_number": 15,
-                   "logged_at": "2022-05-03T08:17:01Z",
+                   "logged_at": "2022-05-03T08:17:01+00:00",
                    "message_type": "Info",
                    "message": "Mapping block NGC 6001..."
                },
@@ -142,7 +142,7 @@ async def submission_progress(
            "log_entries": [
                {
                    "entry_number": 20,
-                   "logged_at": "2022-05-03T08:17:34Z",
+                   "logged_at": "2022-05-03T08:17:34+00:00",
                    "message_type": "Info",
                    "message": "The submission was successful."
                }
@@ -204,6 +204,10 @@ async def submission_progress(
                     log_entry["entry_number"]
                     for log_entry in submission_progress["log_entries"]
                 )
+
+            # Datetimes cannot be serialized, so we convert them to ISO 8601 strings.
+            for log_entry in submission_progress["log_entries"]:
+                log_entry["logged_at"] = log_entry["logged_at"].isoformat()
 
             # Send a message with the current status, new log entries and (in case of a
             # successful submission) proposal code.

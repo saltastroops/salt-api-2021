@@ -1,6 +1,9 @@
+import copy
+from datetime import datetime
 from typing import Any, Callable, Dict, List, Tuple
 
 import pytest
+import pytz
 from fastapi.testclient import TestClient
 from sqlalchemy.engine import Connection
 
@@ -48,6 +51,7 @@ def _full_details_sequence(
                     "entry_number": dd[0],
                     "message_type": dd[1].value,
                     "message": f"Message {dd[0]}",
+                    "logged_at": pytz.utc.localize(datetime(2022, 5, 6, 0, 9, 13, 0)),
                 }
                 for dd in d[1]
             ],
@@ -80,6 +84,13 @@ def _mock_find_user_from_token(id: int, username: str) -> Callable[[str], User]:
         return _dummy_user(id, username)
 
     return f
+
+
+def _serialize_logged_at(submission_progress: Dict[str, Any]) -> Dict[str, Any]:
+    sp = copy.deepcopy(submission_progress)
+    for log_entry in sp["log_entries"]:
+        log_entry["logged_at"] = log_entry["logged_at"].isoformat()
+    return sp
 
 
 def test_submission_log_requires_authentication(
@@ -207,7 +218,7 @@ def test_status_and_log_entry_changes_are_returned(
         websocket.send_text("secret")
         for details in expected_details_sequence:
             message = websocket.receive_json()
-            assert message == details
+            assert message == _serialize_logged_at(details)
 
 
 def test_proposal_code_is_included_if_sent(
@@ -248,7 +259,7 @@ def test_proposal_code_is_included_if_sent(
         websocket.send_text("secret")
         for details in expected_details_sequence:
             message = websocket.receive_json()
-            assert message == details
+            assert message == _serialize_logged_at(details)
 
 
 @pytest.mark.parametrize(
@@ -356,4 +367,4 @@ def test_submission_log_entries_can_be_skipped(
         websocket.send_text("secret")
         for details in expected_details_sequence:
             message = websocket.receive_json()
-            assert message == details
+            assert message == _serialize_logged_at(details)
