@@ -1,4 +1,5 @@
 import asyncio
+from datetime import datetime, timedelta
 from typing import Any, Dict, Optional
 
 from fastapi import (
@@ -29,6 +30,8 @@ from saltapi.web.schema.submissions import SubmissionIdentifier
 router = APIRouter(prefix="/submissions", tags=["Submissions"])
 
 TIME_BETWEEN_DB_QUERIES = 5
+
+SUBMISSION_PROGRESS_TIMEOUT = timedelta(hours=5)
 
 
 @router.post(
@@ -175,6 +178,8 @@ async def submission_progress(
     with UnitOfWork() as unit_of_work:
         submission_repository = SubmissionRepository(unit_of_work.connection)
 
+        start = datetime.now()
+
         # Check that the authenticated user made the submission (and, implicitly, that
         # the identifier exists).
         try:
@@ -192,6 +197,15 @@ async def submission_progress(
             return
 
         while True:
+            # Terminate the process if it has been running for too long
+            now = datetime.now()
+            if start - now > SUBMISSION_PROGRESS_TIMEOUT:
+                await websocket.send_text(
+                    "The submission has been in progress for too " "long."
+                )
+                await websocket.close(1011)
+                return
+
             # Get the submission status and log entries
             submission_progress = submission_repository.get_progress(
                 identifier=identifier,

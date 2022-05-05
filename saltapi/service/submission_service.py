@@ -177,12 +177,14 @@ class SubmissionService:
     ) -> str:
         """Generate the command for submitting the proposal."""
         # Ensure the proposal code and username are safe.
-        if not re.match(r"^[\w-]+$", proposal_code):
-            raise ValueError("The proposal code must only contain word characters and "
-                             "dashes.")
+        if proposal_code and not re.match(r"^[\w-]+$", proposal_code):
+            raise ValueError(
+                "The proposal code must only contain word characters and " "dashes."
+            )
         if not re.match(r"^[\w-]+$", submitter.username):
-            raise ValueError("The username must only contain word characters and "
-                             "dashes.")
+            raise ValueError(
+                "The username must only contain word characters and " "dashes."
+            )
 
         log_name = SubmissionService._mapping_log_name(proposal_code)
         sentry_dsn = f"-sentryDSN {settings.sentry_dsn}" if settings.sentry_dsn else ""
