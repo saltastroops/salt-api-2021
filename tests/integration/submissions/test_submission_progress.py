@@ -38,7 +38,6 @@ class MockSubmissionRepository:
 
 def _full_details_sequence(
     details_sequence: List[Any],
-    include_submitter_id: bool,
 ) -> List[Dict[str, Any]]:
     sequence = []
     for d in details_sequence:
@@ -53,8 +52,6 @@ def _full_details_sequence(
                 for dd in d[1]
             ],
         }
-        if include_submitter_id:
-            full_details["submitter_id"] = 1
         if len(d) > 2:
             full_details["proposal_code"] = d[2]
         sequence.append(full_details)
@@ -195,8 +192,8 @@ def test_status_and_log_entry_changes_are_returned(
         _mock_find_user_from_token(1, "someone"),
     )
 
-    full_details_sequence = _full_details_sequence(details_sequence, True)
-    expected_details_sequence = _full_details_sequence(details_sequence, False)
+    full_details_sequence = _full_details_sequence(details_sequence)
+    expected_details_sequence = _full_details_sequence(details_sequence)
     monkeypatch.setattr(
         saltapi.web.api.submissions,
         "SubmissionRepository",
@@ -236,8 +233,8 @@ def test_proposal_code_is_included_if_sent(
         _mock_find_user_from_token(1, "someone"),
     )
 
-    full_details_sequence = _full_details_sequence(details_sequence, True)
-    expected_details_sequence = _full_details_sequence(details_sequence, False)
+    full_details_sequence = _full_details_sequence(details_sequence)
+    expected_details_sequence = _full_details_sequence(details_sequence)
     monkeypatch.setattr(
         saltapi.web.api.submissions,
         "SubmissionRepository",
@@ -343,8 +340,8 @@ def test_submission_log_entries_can_be_skipped(
         _mock_find_user_from_token(1, "someone"),
     )
 
-    full_details_sequence = _full_details_sequence(details_sequence, True)
-    expected_details_sequence = _full_details_sequence(received_details_sequence, False)
+    full_details_sequence = _full_details_sequence(details_sequence)
+    expected_details_sequence = _full_details_sequence(received_details_sequence)
     monkeypatch.setattr(
         saltapi.web.api.submissions,
         "SubmissionRepository",

@@ -197,7 +197,6 @@ async def submission_progress(
                 identifier=identifier,
                 from_entry_number=include_from_entry_number,
             )
-            del submission_progress["submitter_id"]
 
             # Next time we shouldn't include any log entries we got now.
             if len(submission_progress["log_entries"]) > 0:
