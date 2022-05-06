@@ -429,13 +429,14 @@ class MosBlock(BaseModel):
         ..., title="Liaison astronomer", description="The liaison astronomer"
     )
     other_barcodes: List[str] = Field(
-        ..., title="Other barcodes",
-        description="The masks which are identical to this one"
+        ...,
+        title="Other barcodes",
+        description="The masks which are identical to this one",
     )
     remaining_nights: int = Field(
         ...,
         title="Remaining nights",
-        description="The number of nights in which the block is still visible"
+        description="The number of nights in which the block is still visible",
     )
 
 

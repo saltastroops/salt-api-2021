@@ -509,7 +509,8 @@ WHERE PC.Proposal_Code = :proposal_code
         """
         stmt = text(
             """
-SELECT I.FirstName             AS given_name,
+SELECT PU.PiptUser_Id          AS id,
+       I.FirstName             AS given_name,
        I.Surname               AS family_name,
        I.Email                 AS email,
        P.Partner_Code          AS partner_code,
