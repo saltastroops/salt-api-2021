@@ -224,7 +224,7 @@ class SubmissionService:
         saved_filepath = (
             pathlib.Path(tempfile.gettempdir()) / f"{submission_identifier}.zip"
         )
-        saved_filepath.write_bytes(cast(bytes, await content.read()))
+        saved_filepath.write_bytes(await content.read())
 
         return saved_filepath
 
