@@ -167,12 +167,12 @@ async def submission_progress(
     except Exception:
         user = None
     if user is None:
-        await websocket.send_text(
-            "You are not authenticated. The first message sent "
-            "to this endpoint must be a valid JWT token, which "
-            "you should have obtained from the /token endpoint."
+        reason = (
+            "You are not authenticated. The first message sent to this endpoint "
+            "must be a valid JWT token, which you should have obtained from the "
+            "/token endpoint."
         )
-        await websocket.close(1011)
+        await websocket.close(1011, reason)
         return
 
     with UnitOfWork() as unit_of_work:
@@ -185,25 +185,21 @@ async def submission_progress(
         try:
             submission = submission_repository.get(identifier)
         except NotFoundError:
-            await websocket.send_text(f"Unknown submission identifier: {identifier}")
-            await websocket.close(1011)
+            reason = f"Unknown submission identifier: {identifier}"
+            await websocket.close(1011, reason)
             return
         if submission["submitter_id"] != user.id:
-            await websocket.send_text(
-                "You cannot access the submission log as someone else made the "
-                "submission."
-            )
-            await websocket.close(1011)
+            reason = "You cannot access the submission log as someone else made the "
+            "submission."
+            await websocket.close(1011, reason)
             return
 
         while True:
             # Terminate the process if it has been running for too long
             now = datetime.now()
             if start - now > SUBMISSION_PROGRESS_TIMEOUT:
-                await websocket.send_text(
-                    "The submission has been in progress for too " "long."
-                )
-                await websocket.close(1011)
+                reason = "The submission has been in progress for too long."
+                await websocket.close(1011, reason)
                 return
 
             # Get the submission status and log entries
