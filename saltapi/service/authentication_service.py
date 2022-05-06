@@ -77,15 +77,19 @@ class AuthenticationService:
 
 
 def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
-    with UnitOfWork() as unit_of_work:
-        try:
-            user_repository = UserRepository(unit_of_work.connection)
-            authentication_repository = AuthenticationService(user_repository)
+    try:
+        return find_user_from_token(token)
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate token.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
-            return authentication_repository.validate_auth_token(token)
-        except Exception:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Could not validate token.",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
+
+def find_user_from_token(token: str) -> User:
+    with UnitOfWork() as unit_of_work:
+        user_repository = UserRepository(unit_of_work.connection)
+        authentication_repository = AuthenticationService(user_repository)
+
+        return authentication_repository.validate_auth_token(token)

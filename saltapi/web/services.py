@@ -4,6 +4,7 @@ from saltapi.repository.block_repository import BlockRepository
 from saltapi.repository.institution_repository import InstitutionRepository
 from saltapi.repository.instrument_repository import InstrumentRepository
 from saltapi.repository.proposal_repository import ProposalRepository
+from saltapi.repository.submission_repository import SubmissionRepository
 from saltapi.repository.target_repository import TargetRepository
 from saltapi.repository.user_repository import UserRepository
 from saltapi.service.authentication_service import AuthenticationService
@@ -13,6 +14,7 @@ from saltapi.service.instrument_service import InstrumentService
 from saltapi.service.mail_service import MailService
 from saltapi.service.permission_service import PermissionService
 from saltapi.service.proposal_service import ProposalService
+from saltapi.service.submission_service import SubmissionService
 from saltapi.service.user_service import UserService
 
 
@@ -71,3 +73,10 @@ def institution_service(connection: Connection) -> InstitutionService:
     """Return an institution service instance."""
     institution_repository = InstitutionRepository(connection)
     return InstitutionService(institution_repository)
+
+
+def submission_service(
+    submission_repository: SubmissionRepository,
+) -> SubmissionService:
+    """Return a submission service instance."""
+    return SubmissionService(submission_repository)

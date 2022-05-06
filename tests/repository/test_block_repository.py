@@ -44,11 +44,11 @@ def create_block_repository(connection: Connection) -> BlockRepository:
 
 @nodatabase
 def test_get_block_returns_block_content(
-    dbconnection: Connection, testdata: Callable[[str], Any]
+    db_connection: Connection, testdata: Callable[[str], Any]
 ) -> None:
     data = testdata(TEST_DATA)["general_block_details"]
     block_id = data["id"]
-    block_repository = create_block_repository(dbconnection)
+    block_repository = create_block_repository(db_connection)
     block = block_repository.get(block_id)
 
     for key in data:
@@ -58,14 +58,14 @@ def test_get_block_returns_block_content(
 
 @nodatabase
 def test_get_raises_error_for_too_complicated_blocks(
-    dbconnection: Connection, testdata: Callable[[str], Any]
+    db_connection: Connection, testdata: Callable[[str], Any]
 ) -> None:
     # Blocks with multiple observations or with subblocks or subsubblocks should cause
     # an error
 
     data = testdata(TEST_DATA)["too_complicated_blocks"]
     block_ids = data["block_ids"]
-    block_repository = create_block_repository(dbconnection)
+    block_repository = create_block_repository(db_connection)
     for block_id in block_ids:
         with pytest.raises(ValueError) as excinfo:
             block_repository.get(block_id)
@@ -74,12 +74,12 @@ def test_get_raises_error_for_too_complicated_blocks(
 
 @nodatabase
 def test_get_returns_block_visits(
-    dbconnection: Connection, testdata: Callable[[str], Any]
+    db_connection: Connection, testdata: Callable[[str], Any]
 ) -> None:
     data = testdata(TEST_DATA)["block_visits"]
     block_id = data["block_id"]
     expected_observations = data["visits"]
-    block_repository = create_block_repository(dbconnection)
+    block_repository = create_block_repository(db_connection)
     block = block_repository.get(block_id)
     observations = block["block_visits"]
 
@@ -90,11 +90,11 @@ def test_get_returns_block_visits(
 
 @nodatabase
 def test_get_returns_observing_windows(
-    dbconnection: Connection, testdata: Callable[[str], Any]
+    db_connection: Connection, testdata: Callable[[str], Any]
 ) -> None:
     data = testdata(TEST_DATA)["observing_windows"]
     block_id = data["block_id"]
-    block_repository = create_block_repository(dbconnection)
+    block_repository = create_block_repository(db_connection)
     block = block_repository.get(block_id)
     observing_windows = block["observing_windows"]
 
@@ -107,11 +107,11 @@ def test_get_returns_observing_windows(
 
 
 @nodatabase
-def test_target(dbconnection: Connection, testdata: Callable[[str], Any]) -> None:
+def test_target(db_connection: Connection, testdata: Callable[[str], Any]) -> None:
     data = testdata(TEST_DATA)["target"]
     block_id = data["block_id"]
     expected_target_id = data["target_id"]
-    block_repository = create_block_repository(dbconnection)
+    block_repository = create_block_repository(db_connection)
     block = block_repository.get(block_id)
     target = block["observations"][0]["target"]
 
@@ -120,13 +120,13 @@ def test_target(dbconnection: Connection, testdata: Callable[[str], Any]) -> Non
 
 @nodatabase
 def test_finder_charts(
-    dbconnection: Connection, testdata: Callable[[str], Any]
+    db_connection: Connection, testdata: Callable[[str], Any]
 ) -> None:
     data = testdata(TEST_DATA)["finder_charts"]
     for d in data:
         block_id = d["block_id"]
         expected_finder_charts = d["finder_charts"]
-        block_repository = create_block_repository(dbconnection)
+        block_repository = create_block_repository(db_connection)
         block = block_repository.get(block_id)
         finder_charts = block["observations"][0]["finder_charts"]
 
@@ -135,12 +135,12 @@ def test_finder_charts(
 
 @nodatabase
 def test_finder_charts_with_validity(
-    dbconnection: Connection, testdata: Callable[[str], Any]
+    db_connection: Connection, testdata: Callable[[str], Any]
 ) -> None:
     data = testdata(TEST_DATA)["finder_charts_with_validity"]
     block_id = data["block_id"]
     expected_last_finder_chart = data["last_finder_chart"]
-    block_repository = create_block_repository(dbconnection)
+    block_repository = create_block_repository(db_connection)
     block = block_repository.get(block_id)
     finder_charts = block["observations"][0]["finder_charts"]
 
@@ -149,12 +149,12 @@ def test_finder_charts_with_validity(
 
 @nodatabase
 def test_time_restrictions(
-    dbconnection: Connection, testdata: Callable[[str], Any]
+    db_connection: Connection, testdata: Callable[[str], Any]
 ) -> None:
     data = testdata(TEST_DATA)["time_restrictions"]
     block_id = data["block_id"]
     expected_restrictions = data["restrictions"]
-    block_repository = create_block_repository(dbconnection)
+    block_repository = create_block_repository(db_connection)
     block = block_repository.get(block_id)
     restrictions = block["observations"][0]["time_restrictions"]
 
@@ -165,11 +165,11 @@ def test_time_restrictions(
 
 @nodatabase
 def test_no_time_restrictions(
-    dbconnection: Connection, testdata: Callable[[str], Any]
+    db_connection: Connection, testdata: Callable[[str], Any]
 ) -> None:
     data = testdata(TEST_DATA)["no_time_restrictions"]
     block_id = data["block_id"]
-    block_repository = create_block_repository(dbconnection)
+    block_repository = create_block_repository(db_connection)
     block = block_repository.get(block_id)
     restrictions = block["observations"][0]["time_restrictions"]
 
@@ -178,12 +178,12 @@ def test_no_time_restrictions(
 
 @nodatabase
 def test_phase_constraints(
-    dbconnection: Connection, testdata: Callable[[str], Any]
+    db_connection: Connection, testdata: Callable[[str], Any]
 ) -> None:
     data = testdata(TEST_DATA)["phase_constraints"]
     block_id = data["block_id"]
     expected_constraints = data["constraints"]
-    block_repository = create_block_repository(dbconnection)
+    block_repository = create_block_repository(db_connection)
     block = block_repository.get(block_id)
     constraints = block["observations"][0]["phase_constraints"]
 
@@ -192,11 +192,11 @@ def test_phase_constraints(
 
 @nodatabase
 def test_no_phase_constraints(
-    dbconnection: Connection, testdata: Callable[[str], Any]
+    db_connection: Connection, testdata: Callable[[str], Any]
 ) -> None:
     data = testdata(TEST_DATA)["no_phase_constraints"]
     block_id = data["block_id"]
-    block_repository = create_block_repository(dbconnection)
+    block_repository = create_block_repository(db_connection)
     block = block_repository.get(block_id)
     constraints = block["observations"][0]["phase_constraints"]
 
@@ -205,13 +205,13 @@ def test_no_phase_constraints(
 
 @nodatabase
 def test_telescope_configuration(
-    dbconnection: Connection, testdata: Callable[[str], Any]
+    db_connection: Connection, testdata: Callable[[str], Any]
 ) -> None:
     data = testdata(TEST_DATA)["telescope_configurations"]
     for d in data:
         block_id = d["block_id"]
         expected_telescope_config = d["telescope_config"]
-        block_repository = create_block_repository(dbconnection)
+        block_repository = create_block_repository(db_connection)
         block = block_repository.get(block_id)
         telescope_config = block["observations"][0]["telescope_configurations"][0]
 
@@ -222,12 +222,12 @@ def test_telescope_configuration(
 
 @nodatabase
 def test_dither_pattern(
-    dbconnection: Connection, testdata: Callable[[str], Any]
+    db_connection: Connection, testdata: Callable[[str], Any]
 ) -> None:
     data = testdata(TEST_DATA)["dither_pattern"]
     block_id = data["block_id"]
     expected_telescope_configs = data["telescope_configs"]
-    block_repository = create_block_repository(dbconnection)
+    block_repository = create_block_repository(db_connection)
     block = block_repository.get(block_id)
     telescope_configs = block["observations"][0]["telescope_configurations"]
 
@@ -240,12 +240,12 @@ def test_dither_pattern(
 
 
 @nodatabase
-def test_guide_star(dbconnection: Connection, testdata: Callable[[str], Any]) -> None:
+def test_guide_star(db_connection: Connection, testdata: Callable[[str], Any]) -> None:
     data = testdata(TEST_DATA)["guide_star"]
     for d in data:
         block_id = d["block_id"]
         expected_guide_star = d["star"]
-        block_repository = create_block_repository(dbconnection)
+        block_repository = create_block_repository(db_connection)
         block = block_repository.get(block_id)
         guide_star = block["observations"][0]["telescope_configurations"][0][
             "guide_star"
@@ -263,31 +263,31 @@ def test_guide_star(dbconnection: Connection, testdata: Callable[[str], Any]) ->
 
 @nodatabase
 def test_no_guide_star(
-    dbconnection: Connection, testdata: Callable[[str], Any]
+    db_connection: Connection, testdata: Callable[[str], Any]
 ) -> None:
     data = testdata(TEST_DATA)["no_guide_star"]
     block_id = data["block_id"]
-    block_repository = create_block_repository(dbconnection)
+    block_repository = create_block_repository(db_connection)
     block = block_repository.get(block_id)
     guide_star = block["observations"][0]["telescope_configurations"][0]["guide_star"]
     assert guide_star is None
 
 
 @nodatabase
-def test_get_raises_error_for_non_existing_block(dbconnection: Connection) -> None:
-    block_repository = create_block_repository(dbconnection)
+def test_get_raises_error_for_non_existing_block(db_connection: Connection) -> None:
+    block_repository = create_block_repository(db_connection)
     with pytest.raises(NoResultFound):
         block_repository.get(1234567)
 
 
 @nodatabase
 def test_payload_configurations(
-    dbconnection: Connection, testdata: Callable[[str], Any]
+    db_connection: Connection, testdata: Callable[[str], Any]
 ) -> None:
     data = testdata(TEST_DATA)["payload_configurations"]
     block_id = data["block_id"]
     expected_configs = data["configurations"]
-    block_repository = create_block_repository(dbconnection)
+    block_repository = create_block_repository(db_connection)
     block = block_repository.get(block_id)
     configs = block["observations"][0]["telescope_configurations"][0][
         "payload_configurations"
@@ -312,13 +312,13 @@ def test_payload_configurations(
 
 @nodatabase
 def test_get_block_instruments(
-    dbconnection: Connection, testdata: Callable[[str], Any]
+    db_connection: Connection, testdata: Callable[[str], Any]
 ) -> None:
     data = testdata(TEST_DATA)["block_instruments"]
     for d in data:
         block_id = d["block_id"]
         expected_observations = d["observations"]
-        block_repository = create_block_repository(dbconnection)
+        block_repository = create_block_repository(db_connection)
         block = block_repository.get(block_id)
         observations = block["observations"]
 
@@ -350,13 +350,13 @@ def test_get_block_instruments(
 
 @nodatabase
 def test_get_block_status(
-    dbconnection: Connection, testdata: Callable[[str], Any]
+    db_connection: Connection, testdata: Callable[[str], Any]
 ) -> None:
     data = testdata(TEST_DATA)["block_status"]
     for d in data:
         block_id = d["block_id"]
         expected_status = d["status"]
-        block_repository = create_block_repository(dbconnection)
+        block_repository = create_block_repository(db_connection)
         status = block_repository.get_block_status(block_id)
 
         assert expected_status == status
@@ -364,17 +364,17 @@ def test_get_block_status(
 
 @nodatabase
 def test_get_block_status_raises_error_for_wrong_block_id(
-    dbconnection: Connection,
+    db_connection: Connection,
 ) -> None:
-    block_repository = create_block_repository(dbconnection)
+    block_repository = create_block_repository(db_connection)
     with pytest.raises(NoResultFound):
         block_repository.get_block_status(0)
 
 
 @nodatabase
-def test_update_block_status(dbconnection: Connection) -> None:
+def test_update_block_status(db_connection: Connection) -> None:
     # Set the status to "On Hold" and the reason to "not needed"
-    block_repository = create_block_repository(dbconnection)
+    block_repository = create_block_repository(db_connection)
     block_id = 2339
     block_repository.update_block_status(block_id, "On hold", "not needed")
     block_status = block_repository.get_block_status(block_id)
@@ -390,18 +390,18 @@ def test_update_block_status(dbconnection: Connection) -> None:
 
 @nodatabase
 def test_update_block_status_raises_error_for_wrong_block_id(
-    dbconnection: Connection,
+    db_connection: Connection,
 ) -> None:
-    block_repository = create_block_repository(dbconnection)
+    block_repository = create_block_repository(db_connection)
     with pytest.raises(NotFoundError):
         block_repository.update_block_status(0, "Active", "")
 
 
 @nodatabase
 def test_update_block_status_raises_error_for_wrong_status(
-    dbconnection: Connection,
+    db_connection: Connection,
 ) -> None:
-    block_repository = create_block_repository(dbconnection)
+    block_repository = create_block_repository(db_connection)
     with pytest.raises(ValueError) as excinfo:
         block_repository.update_block_status(1, "Wrong block status", "")
 
@@ -410,12 +410,12 @@ def test_update_block_status_raises_error_for_wrong_status(
 
 @nodatabase
 def test_get_block_visit(
-    dbconnection: Connection, testdata: Callable[[str], Any]
+    db_connection: Connection, testdata: Callable[[str], Any]
 ) -> None:
     data = testdata(TEST_DATA)["block_visit"]
     for d in data:
         block_visit_id = d["id"]
-        block_repository = create_block_repository(dbconnection)
+        block_repository = create_block_repository(db_connection)
         block_visit = block_repository.get_block_visit(block_visit_id)
         assert block_visit_id == block_visit["id"]
         assert d["status"] == block_visit["status"]
@@ -423,13 +423,13 @@ def test_get_block_visit(
 
 @nodatabase
 def test_get_block_visit_status(
-    dbconnection: Connection, testdata: Callable[[str], Any]
+    db_connection: Connection, testdata: Callable[[str], Any]
 ) -> None:
     data = testdata(TEST_DATA)["block_visit_status"]
     for d in data:
         block_visit_id = d["id"]
         expected_status = d["status"]
-        block_repository = create_block_repository(dbconnection)
+        block_repository = create_block_repository(db_connection)
         status = block_repository.get_block_visit_status(block_visit_id)
 
         assert expected_status == status
@@ -437,26 +437,26 @@ def test_get_block_visit_status(
 
 @nodatabase
 def test_get_block_visit_status_raises_error_for_wrong_block_id(
-    dbconnection: Connection,
+    db_connection: Connection,
 ) -> None:
-    block_repository = create_block_repository(dbconnection)
+    block_repository = create_block_repository(db_connection)
     with pytest.raises(NotFoundError):
         block_repository.get_block_visit_status(0)
 
 
 @nodatabase
 def test_get_block_visit_status_raises_error_for_deleted_status(
-    dbconnection: Connection,
+    db_connection: Connection,
 ) -> None:
-    block_repository = create_block_repository(dbconnection)
+    block_repository = create_block_repository(db_connection)
     with pytest.raises(NotFoundError):
         block_repository.get_block_visit_status(829)
 
 
 @nodatabase
-def test_update_block_visit_status(dbconnection: Connection) -> None:
+def test_update_block_visit_status(db_connection: Connection) -> None:
     # Set the status to "Accepted"
-    block_repository = create_block_repository(dbconnection)
+    block_repository = create_block_repository(db_connection)
     block_visit_id = 2300  # The status for this block visit is "In queue"
     block_repository.update_block_visit_status(block_visit_id, "Accepted")
     assert block_repository.get_block_visit_status(block_visit_id) == "Accepted"
@@ -467,9 +467,9 @@ def test_update_block_visit_status(dbconnection: Connection) -> None:
 
 
 @nodatabase
-def test_update_block_visit_status_can_be_repeated(dbconnection: Connection) -> None:
+def test_update_block_visit_status_can_be_repeated(db_connection: Connection) -> None:
     # Set the status to "Accepted"
-    block_repository = create_block_repository(dbconnection)
+    block_repository = create_block_repository(db_connection)
     block_visit_id = 2300  # The status for this block visit is "In queue"
     block_repository.update_block_visit_status(block_visit_id, "Accepted")
     assert block_repository.get_block_visit_status(block_visit_id) == "Accepted"
@@ -481,27 +481,27 @@ def test_update_block_visit_status_can_be_repeated(dbconnection: Connection) -> 
 
 @nodatabase
 def test_update_block_visit_status_raises_error_for_wrong_block_id(
-    dbconnection: Connection,
+    db_connection: Connection,
 ) -> None:
-    block_repository = create_block_repository(dbconnection)
+    block_repository = create_block_repository(db_connection)
     with pytest.raises(NotFoundError):
         block_repository.update_block_visit_status(0, "Accepted")
 
 
 @nodatabase
 def test_update_block_visit_status_raises_error_for_deleted_block_status(
-    dbconnection: Connection,
+    db_connection: Connection,
 ) -> None:
-    block_repository = create_block_repository(dbconnection)
+    block_repository = create_block_repository(db_connection)
     with pytest.raises(NotFoundError):
         block_repository.update_block_visit_status(1234567890, "Deleted")
 
 
 @nodatabase
 def test_update_block_visit_status_raises_error_for_wrong_status(
-    dbconnection: Connection,
+    db_connection: Connection,
 ) -> None:
-    block_repository = create_block_repository(dbconnection)
+    block_repository = create_block_repository(db_connection)
     with pytest.raises(ValueError) as excinfo:
         block_repository.update_block_visit_status(1, "Wrong block visit status")
     assert "block visit status" in str(excinfo.value)

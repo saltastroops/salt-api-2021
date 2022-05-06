@@ -1,7 +1,7 @@
 import os
 from typing import Optional
 
-from pydantic import BaseSettings, DirectoryPath
+from pydantic import BaseSettings, DirectoryPath, FilePath, HttpUrl
 
 
 class Settings(BaseSettings):
@@ -37,6 +37,42 @@ class Settings(BaseSettings):
 
     # SMTP server for sending emails
     smtp_server: str
+
+    # Jar file with the mapping tool for mapping proposals to the database
+    mapping_tool_jar: FilePath
+
+    # Database access configuration file for the mapping tool
+    mapping_tool_database_access_config: FilePath
+
+    # Directory for the mapping tool logs
+    mapping_tool_log_dir: DirectoryPath
+
+    # Directory where the mapping tool should store proposal content
+    mapping_tool_proposals_dir: DirectoryPath
+
+    # API key for the mapping tool
+    mapping_tool_api_key: str
+
+    # Directory for storing PIPT related files
+    pipt_dir: DirectoryPath
+
+    # URL for accessing Web Manager services
+    web_manager_url: HttpUrl
+
+    # URL for requesting ephemerides
+    ephemeris_url: HttpUrl
+
+    # Java command
+    java_command: str
+
+    # Python interpreter
+    python_interpreter: str
+
+    # Finder chart tool
+    finder_chart_tool: str
+
+    # Command for converting images
+    image_conversion_command: str
 
     class Config:
         env_file = os.getenv("DOTENV_FILE", ".env")

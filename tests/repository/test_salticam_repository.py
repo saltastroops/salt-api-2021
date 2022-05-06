@@ -9,12 +9,12 @@ TEST_DATA = "repository/salticam_repository.yaml"
 
 
 def test_top_level_values(
-    dbconnection: Connection, testdata: Callable[[str], Any]
+    db_connection: Connection, testdata: Callable[[str], Any]
 ) -> None:
     data = testdata(TEST_DATA)["top_level_values"]
     expected_salticam = data["salticam"]
     salticam_id = data["salticam_id"]
-    salticam_repository = SalticamRepository(dbconnection)
+    salticam_repository = SalticamRepository(db_connection)
     salticam = salticam_repository.get(salticam_id)
 
     assert salticam["id"] == salticam_id
@@ -26,12 +26,12 @@ def test_top_level_values(
     assert salticam["overhead_time"] == expected_salticam["overhead_time"]
 
 
-def test_detector(dbconnection: Connection, testdata: Callable[[str], Any]) -> None:
+def test_detector(db_connection: Connection, testdata: Callable[[str], Any]) -> None:
     data = testdata(TEST_DATA)["detector"]
     for d in data:
         salticam_id = d["salticam_id"]
         expected_detector = d["detector"]
-        salticam_repository = SalticamRepository(dbconnection)
+        salticam_repository = SalticamRepository(db_connection)
         salticam = salticam_repository.get(salticam_id)
         detector = salticam["detector"]
 
@@ -57,11 +57,11 @@ def test_detector(dbconnection: Connection, testdata: Callable[[str], Any]) -> N
         assert detector == expected_detector
 
 
-def test_procedure(dbconnection: Connection, testdata: Callable[[str], Any]) -> None:
+def test_procedure(db_connection: Connection, testdata: Callable[[str], Any]) -> None:
     data = testdata(TEST_DATA)["procedure"]
     salticam_id = data["salticam_id"]
     expected_procedure = data["procedure"]
-    salticam_repository = SalticamRepository(dbconnection)
+    salticam_repository = SalticamRepository(db_connection)
     salticam = salticam_repository.get(salticam_id)
     procedure = salticam["procedure"]
 
