@@ -443,7 +443,7 @@ FROM RssCurrentMasks AS RCM
 
     def _get_barcodes_for_encoded_contents(
         self, encoded_contents: Set[str]
-    ) -> Dict[Any, List[str]]:
+    ) -> Dict[str, List[str]]:
         """
         Get the barcodes for a set of encoded mask contents.
 
