@@ -221,6 +221,8 @@ async def submission_progress(
 
             # Send a message with the current status, new log entries and (in case of a
             # successful submission) proposal code.
+            if submission_progress["status"] != SubmissionStatus.SUCCESSFUL.value:
+                del submission_progress["proposal_code"]
             await websocket.send_json(submission_progress)
 
             if submission_progress["status"] != SubmissionStatus.IN_PROGRESS.value:
