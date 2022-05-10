@@ -2,7 +2,7 @@ from typing import Optional
 
 from pydantic import BaseModel, Field
 
-from saltapi.web.schema.common import PartnerCode
+from saltapi.web.schema.common import PartnerCode, PartnerName
 
 
 class Institution(BaseModel):
@@ -14,6 +14,11 @@ class Institution(BaseModel):
         description="Unique identifier of the institution.",
     )
     partner_code: PartnerCode = Field(
+        ...,
+        title="SALT partner code",
+        description="Code of the SALT Partner",
+    )
+    partner_name: PartnerName = Field(
         ...,
         title="SALT partner code",
         description="Code of the SALT Partner",
