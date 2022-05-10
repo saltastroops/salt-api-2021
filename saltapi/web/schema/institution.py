@@ -18,7 +18,7 @@ class Institution(BaseModel):
         title="SALT partner code",
         description="Code of the SALT Partner",
     )
-    institution: str = Field(..., title="Institution", description="Institution")
+    name: str = Field(..., title="Institution", description="Institution")
     department: Optional[str] = Field(
         None, title="Department", description="Department of the institution"
     )

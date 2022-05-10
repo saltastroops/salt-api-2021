@@ -55,7 +55,7 @@ FROM PiptUser AS PU
                     "affiliations": [
                         {
                             "institution_id": row.institution_id,
-                            "institution": row.institution_name,
+                            "name": row.institution_name,
                             "department": row.department,
                             "partner_code": row.partner_code,
                         }
@@ -67,7 +67,7 @@ FROM PiptUser AS PU
                 user["affiliations"].append(
                     {
                         "institution_id": row.institution_id,
-                        "institution": row.institution_name,
+                        "name": row.institution_name,
                         "department": row.department,
                         "partner_code": row.partner_code,
                     }

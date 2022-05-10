@@ -544,11 +544,11 @@ ORDER BY I.Surname, I.FirstName
             investigator["affiliation"] = {
                 "partner_code": partner_code,
                 "institution_id": investigator["institution_id"],
-                "institution": investigator["institution"],
+                "name": investigator["institution"],
                 "department": investigator["department"],
             }
             del investigator["partner_code"]
-            del investigator["institution"]
+            del investigator["name"]
             del investigator["department"]
             del investigator["institution_id"]
 
