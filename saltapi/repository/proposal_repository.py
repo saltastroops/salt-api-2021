@@ -546,12 +546,12 @@ ORDER BY I.Surname, I.FirstName
                 "partner_code": partner_code,
                 "partner_name": investigator["partner_name"],
                 "institution_id": investigator["institution_id"],
-                "institution": investigator["institution"],
+                "name": investigator["institution"],
                 "department": investigator["department"],
             }
             del investigator["partner_code"]
             del investigator["partner_name"]
-            del investigator["institution"]
+            del investigator["name"]
             del investigator["department"]
             del investigator["institution_id"]
 

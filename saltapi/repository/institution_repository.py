@@ -19,7 +19,7 @@ SELECT
     P.Partner_Name   AS partner_name,
     I2.Department    AS department,
     I2.Institute_Id  AS institution_id,
-    I.InstituteName_Name AS institution
+    I.InstituteName_Name AS name
 FROM Partner P
     JOIN Institute I2 ON P.Partner_Id = I2.Partner_Id
     JOIN InstituteName I ON I2.InstituteName_Id = I.InstituteName_Id
@@ -29,7 +29,7 @@ FROM Partner P
         institutions = [
             {
                 "institution_id": row.institution_id,
-                "institution": row.institution,
+                "name": row.name,
                 "department": row.department,
                 "partner_code": row.partner_code,
                 "partner_name": row.partner_name,
