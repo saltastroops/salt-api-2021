@@ -20,8 +20,8 @@ class Institution(BaseModel):
     )
     partner_name: PartnerName = Field(
         ...,
-        title="SALT partner code",
-        description="Code of the SALT Partner",
+        title="SALT partner name",
+        description="Name of the SALT Partner",
     )
     institution: str = Field(..., title="Institution", description="Institution")
     department: Optional[str] = Field(

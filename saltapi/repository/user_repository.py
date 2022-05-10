@@ -27,6 +27,7 @@ SELECT PU.PiptUser_Id           AS id,
        PU.Password              AS password_hash,
        PU.Username              AS username,
        P.Partner_Code           AS partner_code,
+       P.Partner_Name           AS partner_name,
        I.InstituteName_Name     AS institution_name,
        I2.Institute_Id          AS institution_id,
        I2.Department            AS department
@@ -58,6 +59,7 @@ FROM PiptUser AS PU
                             "institution": row.institution_name,
                             "department": row.department,
                             "partner_code": row.partner_code,
+                            "partner_name": row.partner_name,
                         }
                     ],
                 }
@@ -70,6 +72,7 @@ FROM PiptUser AS PU
                         "institution": row.institution_name,
                         "department": row.department,
                         "partner_code": row.partner_code,
+                        "partner_name": row.partner_name,
                     }
                 )
         if not user:
