@@ -1276,13 +1276,18 @@ WHERE PS.Status = :status
         """
         stmt = text(
             """
-        SELECT PSA.PiPcMayActivate
+SELECT PSA.PiPcMayActivate
 FROM ProposalSelfActivation PSA
          JOIN ProposalCode PC ON PSA.ProposalCode_Id = PC.ProposalCode_Id
 WHERE PC.Proposal_Code = :proposal_code;
         """
         )
         result = self.connection.execute(stmt, {"proposal_code": proposal_code})
-        one_or_none = result.scalar_one_or_none()
+        try:
+            one = result.scalar_one_or_none()
+        except NoResultFound:
+            raise NotFoundError()
+
+        return bool(cast(int, one) > 0)
 
         return bool(one_or_none and cast(int, one_or_none) > 0)
