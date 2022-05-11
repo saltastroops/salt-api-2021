@@ -112,7 +112,9 @@ def get_proposal_zip(
 
         proposal_service = services.proposal_service(unit_of_work.connection)
         path = proposal_service.get_proposal_zip(proposal_code)
-        return FileResponse(path)
+        return FileResponse(
+            path, media_type="application/zip", filename=f"{proposal_code}.zip"
+        )
 
 
 @router.get(

@@ -285,3 +285,8 @@ def test_should_return_proposal_file(
 
     assert response.status_code == status.HTTP_200_OK
     assert response.content == proposal_content
+    assert response.headers["Content-Type"] == "application/zip"
+    assert (
+        response.headers["Content-Disposition"]
+        == f'attachment; filename="{proposal_code}.zip"'
+    )
