@@ -1290,4 +1290,29 @@ WHERE PC.Proposal_Code = :proposal_code;
 
         return bool(cast(int, one) > 0)
 
-        return bool(one_or_none and cast(int, one_or_none) > 0)
+    def get_current_version(self, proposal_code: str) -> int:
+        """
+        Return the current version (number) of sa proposal.
+
+        Parameters
+        ----------
+        proposal_code: str
+            The proposal code.
+
+        Returns
+        -------
+        int
+            The proposal version.
+        """
+        stmt = text("""
+SELECT MAX(Submission) AS version
+FROM Proposal P
+JOIN ProposalCode PC ON P.ProposalCode_Id = PC.ProposalCode_Id
+WHERE PC.Proposal_Code = :proposal_code
+        """)
+        result = self.connection.execute(stmt, {"proposal_code": proposal_code})
+        version = result.scalar_one()
+        if version is None:
+            raise NotFoundError()
+
+        return cast(int, version)

@@ -522,3 +522,15 @@ def test_get_returns_additional_instrument_details(
                     expected_instrument["gratings"]
                 )
                 assert set(instrument["filters"]) == set(expected_instrument["filters"])
+
+
+@pytest.mark.parametrize("proposal_code,version", [("2022-1-SCI-024", 1), ("2021-2-SCI-004", 2), ("2019-2-SCI-027", 19)])
+def test_get_current_version_returns_correct_version(proposal_code: str, version: int, db_connection: Connection) -> None:
+    proposal_repository = ProposalRepository(db_connection)
+    assert proposal_repository.get_current_version(proposal_code) == version
+
+
+def test_get_current_version_raises_not_found_error(db_connection: Connection) -> None:
+    proposal_repository = ProposalRepository(db_connection)
+    with pytest.raises(NotFoundError):
+        proposal_repository.get_current_version("idontexist")
