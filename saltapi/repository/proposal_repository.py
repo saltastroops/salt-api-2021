@@ -549,7 +549,11 @@ ORDER BY I.Surname, I.FirstName
                 "name": investigator["institution_name"],
                 "department": investigator["department"],
             }
-            del investigator["affiliation"]
+            del investigator["partner_code"]
+            del investigator["partner_name"]
+            del investigator["institution_id"]
+            del investigator["institution_name"]
+            del investigator["department"]
 
             if investigator["approved"] == 1:
                 investigator["has_approved_proposal"] = True
