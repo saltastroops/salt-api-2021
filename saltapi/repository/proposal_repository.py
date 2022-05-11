@@ -515,7 +515,7 @@ SELECT PU.PiptUser_Id          AS id,
        I.Email                 AS email,
        P.Partner_Code          AS partner_code,
        P.Partner_Name          AS partner_name,
-       `IN`.InstituteName_Name AS institution,
+       `IN`.InstituteName_Name AS institution_name,
        I2.Institute_Id         AS institution_id,
        I2.Department           AS department,
        PI.InvestigatorOkay     AS approved,
@@ -546,14 +546,14 @@ ORDER BY I.Surname, I.FirstName
                 "partner_code": partner_code,
                 "partner_name": investigator["partner_name"],
                 "institution_id": investigator["institution_id"],
-                "institution": investigator["institution"],
+                "name": investigator["institution_name"],
                 "department": investigator["department"],
             }
             del investigator["partner_code"]
             del investigator["partner_name"]
-            del investigator["institution"]
-            del investigator["department"]
             del investigator["institution_id"]
+            del investigator["institution_name"]
+            del investigator["department"]
 
             if investigator["approved"] == 1:
                 investigator["has_approved_proposal"] = True
