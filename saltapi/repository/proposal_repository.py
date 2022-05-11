@@ -1286,7 +1286,7 @@ WHERE PC.Proposal_Code = :proposal_code;
         try:
             one = result.scalar_one_or_none()
         except NoResultFound:
-            raise NotFoundError()
+            raise NotFoundError(f"No such proposal code: {proposal_code}")
 
         return bool(cast(int, one) > 0)
 
@@ -1313,6 +1313,6 @@ WHERE PC.Proposal_Code = :proposal_code
         result = self.connection.execute(stmt, {"proposal_code": proposal_code})
         version = result.scalar_one()
         if version is None:
-            raise NotFoundError()
+            raise NotFoundError(f"No such proposal code: {proposal_code}")
 
         return cast(int, version)
