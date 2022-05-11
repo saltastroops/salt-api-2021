@@ -15,9 +15,7 @@ from saltapi.repository.database import engine
 from saltapi.repository.submission_repository import SubmissionRepository
 from saltapi.service.submission import SubmissionMessageType, SubmissionStatus
 from saltapi.service.user import User
-from saltapi.settings import Settings
-
-settings = Settings()
+from saltapi.settings import get_settings
 
 
 class SubmissionService:
@@ -186,6 +184,7 @@ class SubmissionService:
                 "The username must only contain word characters and " "dashes."
             )
 
+        settings = get_settings()
         log_name = SubmissionService._mapping_log_name(proposal_code)
         sentry_dsn = f"-sentryDSN {settings.sentry_dsn}" if settings.sentry_dsn else ""
         command = f"""

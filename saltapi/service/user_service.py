@@ -6,7 +6,7 @@ from saltapi.repository.user_repository import UserRepository
 from saltapi.service.authentication_service import AuthenticationService
 from saltapi.service.mail_service import MailService
 from saltapi.service.user import NewUserDetails, Role, User, UserUpdate
-from saltapi.settings import Settings
+from saltapi.settings import get_settings
 
 
 class UserService:
@@ -65,7 +65,7 @@ SALT Team
 
     @staticmethod
     def password_reset_url(token: str) -> str:
-        return Settings().frontend_uri + "/change-password/" + token
+        return get_settings().frontend_uri + "/change-password/" + token
 
     def get_user_roles(self, username: str) -> List[Role]:
         return self.repository.get_user_roles(username)
