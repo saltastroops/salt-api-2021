@@ -1304,12 +1304,14 @@ WHERE PC.Proposal_Code = :proposal_code;
         int
             The proposal version.
         """
-        stmt = text("""
+        stmt = text(
+            """
 SELECT MAX(Submission) AS version
 FROM Proposal P
 JOIN ProposalCode PC ON P.ProposalCode_Id = PC.ProposalCode_Id
 WHERE PC.Proposal_Code = :proposal_code
-        """)
+        """
+        )
         result = self.connection.execute(stmt, {"proposal_code": proposal_code})
         version = result.scalar_one()
         if version is None:

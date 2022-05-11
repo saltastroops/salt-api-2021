@@ -6,7 +6,6 @@ from fastapi import (
     Body,
     Depends,
     File,
-    Header,
     HTTPException,
     Path,
     Query,
@@ -31,7 +30,6 @@ from saltapi.web.schema.proposal import (
     ObservationComment,
     ProgressReport,
     Proposal,
-    ProposalContentType,
     ProposalListItem,
     ProposalStatusContent,
     SubmissionAcknowledgment,
@@ -91,10 +89,36 @@ def get_proposals(
 
 
 @router.get(
+    "/{proposal_code}.zip",
+    summary="Get a proposal zip file",
+    responses={200: {"content": {"application/zip": {}}}},
+)
+def get_proposal_zip(
+    proposal_code: ProposalCode = Path(
+        ProposalCode,
+        title="Proposal code",
+        description="Proposal code of the returned proposal.",
+    ),
+    user: User = Depends(get_current_user),
+) -> FileResponse:
+    """
+    Returns the proposal zip file.
+
+    You can import the file into SALT's Principal Investigator Proposal Tool.
+    """
+    with UnitOfWork() as unit_of_work:
+        permission_service = services.permission_service(unit_of_work.connection)
+        permission_service.check_permission_to_view_proposal(user, proposal_code)
+
+        proposal_service = services.proposal_service(unit_of_work.connection)
+        path = proposal_service.get_proposal_zip(proposal_code)
+        return FileResponse(path)
+
+
+@router.get(
     "/{proposal_code}",
     summary="Get a proposal",
     response_model=Proposal,
-    responses={200: {"content": {"application/pdf": {}, "application/zip": {}}}},
 )
 def get_proposal(
     proposal_code: ProposalCode = Path(
@@ -102,41 +126,15 @@ def get_proposal(
         title="Proposal code",
         description="Proposal code of the returned proposal.",
     ),
-    accept: str = Header(
-        ProposalContentType.JSON,
-        title="Accepted content type",
-        description="Content type that should be returned.",
-    ),
     user: User = Depends(get_current_user),
 ) -> _Proposal:
     """
-    Returns the proposal with a given proposal code. The proposal can be requested in
-    either of three formats:
+    Returns a JSON representation of the proposal with a given proposal code.
 
-    1. As a JSON string.
-    2. As a zip file, which can be imported into the PIPT. This the default.
-    3. As a PDF file. This is only available for Phase 1 proposals.
-
-    You can choose the format by supplying its content type in the `Accept` HTTP header:
-
-    Returned object | `Accept` HTTP header value
-    --- | ---
-    JSON string | application/json
-    zip file | application/zip
-    pdf file | application/pdf
-
-    A zip file is returned if no `Accept` header is included in the request. In the
-    case of the zip and the pdf file the response contains an `Content-Disposition`
-    HTTP header with an appropriate filename (with the proposal code and the correct
-    file extension).
-
-    An error with status code 406 (Not Acceptable) is returned if an unsupported value
-    is given in the `Accept` header.
-
-    The different formats do not contain the same information. Most importantly, while
-    JSON string includes a list of block ids and names, it does not include any further
-    block details. You can use the endpoint `/blocks/{id}` to get a JSON representation
-    of a specific block.
+    The JSON representation does not contain the full proposal information. Most
+    importantly, while it includes a list of block ids and names, it does not include
+    any further block details. You can use the endpoint `/blocks/{id}` to get a JSON
+    representation of a specific block.
     """
 
     with UnitOfWork() as unit_of_work:
