@@ -9,7 +9,7 @@ from saltapi.exceptions import (
     ValidationError,
 )
 from saltapi.logging_config import setup_logging
-from saltapi.settings import Settings
+from saltapi.settings import get_settings
 from saltapi.web.api.authentication import router as authentication_router
 from saltapi.web.api.block_visits import router as block_visits_router
 from saltapi.web.api.blocks import router as blocks_router
@@ -23,7 +23,7 @@ from saltapi.web.api.users import router as users_router
 app = FastAPI()
 
 
-settings = Settings()
+settings = get_settings()
 origins = [settings.frontend_uri]
 
 setup_logging(app)

@@ -1276,13 +1276,45 @@ WHERE PS.Status = :status
         """
         stmt = text(
             """
-        SELECT PSA.PiPcMayActivate
+SELECT PSA.PiPcMayActivate
 FROM ProposalSelfActivation PSA
          JOIN ProposalCode PC ON PSA.ProposalCode_Id = PC.ProposalCode_Id
 WHERE PC.Proposal_Code = :proposal_code;
         """
         )
         result = self.connection.execute(stmt, {"proposal_code": proposal_code})
-        one_or_none = result.scalar_one_or_none()
+        try:
+            one = result.scalar_one_or_none()
+        except NoResultFound:
+            raise NotFoundError(f"No such proposal code: {proposal_code}")
 
-        return bool(one_or_none and cast(int, one_or_none) > 0)
+        return bool(cast(int, one) > 0)
+
+    def get_current_version(self, proposal_code: str) -> int:
+        """
+        Return the current version (number) of sa proposal.
+
+        Parameters
+        ----------
+        proposal_code: str
+            The proposal code.
+
+        Returns
+        -------
+        int
+            The proposal version.
+        """
+        stmt = text(
+            """
+SELECT MAX(Submission) AS version
+FROM Proposal P
+JOIN ProposalCode PC ON P.ProposalCode_Id = PC.ProposalCode_Id
+WHERE PC.Proposal_Code = :proposal_code
+        """
+        )
+        result = self.connection.execute(stmt, {"proposal_code": proposal_code})
+        version = result.scalar_one()
+        if version is None:
+            raise NotFoundError(f"No such proposal code: {proposal_code}")
+
+        return cast(int, version)

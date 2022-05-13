@@ -8,7 +8,7 @@ from loguru import logger
 from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 from sentry_sdk.integrations.logging import BreadcrumbHandler, EventHandler
 
-from saltapi.settings import Settings
+from saltapi.settings import get_settings
 
 
 class InterceptHandler(logging.Handler):
@@ -37,7 +37,7 @@ class InterceptHandler(logging.Handler):
 
 
 def setup_logging(app: FastAPI) -> None:
-    sentry_dsn = Settings().sentry_dsn
+    sentry_dsn = get_settings().sentry_dsn
     if sentry_dsn:
         logger.add(
             BreadcrumbHandler(level=logging.DEBUG),

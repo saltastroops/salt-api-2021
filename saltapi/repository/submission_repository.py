@@ -252,7 +252,7 @@ ORDER BY entry_number;
         return {
             "status": progress["status"],
             "log_entries": self.get_log_entries(identifier, from_entry_number),
-            "proposal_code": progress["proposal_code"]
+            "proposal_code": progress["proposal_code"],
         }
 
     def create_log_entry(

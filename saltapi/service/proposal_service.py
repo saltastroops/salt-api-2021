@@ -1,8 +1,11 @@
+import pathlib
 from typing import Dict, List
 
+from saltapi.exceptions import NotFoundError
 from saltapi.repository.proposal_repository import ProposalRepository
 from saltapi.service.proposal import Proposal, ProposalListItem
 from saltapi.service.user import User
+from saltapi.settings import get_settings
 from saltapi.util import semester_start
 
 
@@ -33,7 +36,41 @@ class ProposalService:
 
         return self.repository.list(username, from_semester, to_semester, limit)
 
+    def get_proposal_zip(self, proposal_code: str) -> pathlib.Path:
+        """
+        Return the file path of proposal zip file.
+
+        Parameters
+        ----------
+        proposal_code: str
+            Proposal code.
+
+        Returns
+        -------
+        `~pathlib.Path`
+            The file path of the proposal zip file.
+        """
+        proposals_dir = pathlib.Path(get_settings().proposals_dir)
+        version = self.repository.get_current_version(proposal_code)
+        path = proposals_dir / proposal_code / str(version) / f"{proposal_code}.zip"
+        if not path.exists():
+            raise NotFoundError("Proposal file not found")
+        return path
+
     def get_proposal(self, proposal_code: str) -> Proposal:
+        """
+        Return the JSON representation of a proposal.
+
+        Parameters
+        ----------
+        proposal_code: str
+            Proposal code.
+
+        Returns
+        -------
+        Proposal
+            The JSON representation of the proposal.
+        """
         return self.repository.get(proposal_code)
 
     def get_observation_comments(self, proposal_code: str) -> List[Dict[str, str]]:

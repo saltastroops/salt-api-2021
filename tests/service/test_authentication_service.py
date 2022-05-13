@@ -9,10 +9,10 @@ from saltapi.exceptions import NotFoundError
 from saltapi.repository.user_repository import UserRepository
 from saltapi.service.authentication_service import AuthenticationService
 from saltapi.service.user import Institution, User
-from saltapi.settings import Settings
+from saltapi.settings import get_settings
 
 TEST_DATA_PATH = "service/authentication_service.yaml"
-SECRET_KEY = Settings().secret_key
+SECRET_KEY = get_settings().secret_key
 FAKE_SECRET_KEY = "Fake Key"
 ALGORITHM = "HS256"
 USER = User(
