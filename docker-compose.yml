@@ -5,15 +5,40 @@
 version: "3"
 
 services:
-  webmanager:
+  saltapi:
     build:
       context: .
     env_file:
       - .env
     environment:
       - PROPOSALS_DIR=/proposals
+      - SECRET_KEY
+      - SDB_DSN
+      - FRONTEND_URI
+      - FROM_EMAIL
+      - SMTP_SERVER
+      - MAPPING_TOOL_DIR=/mapping-tool
+      - MAPPING_TOOL_LOG_DIR=/mapping-logs
+      - MAPPING_TOOL_PIPT_DIR=/tmp/.PIPT
+      - MAPPING_TOOL_SDB_USERNAME
+      - MAPPING_TOOL_SDB_PASSWORD
+      - MAPPING_TOOL_SDB_SERVER
+      - MAPPING_TOOL_SSDA_USERNAME
+      - MAPPING_TOOL_SSDA_PASSWORD
+      - MAPPING_TOOL_SSDA_SERVER
+      - MAPPING_TOOL_MAILCHIMP_API_KEY
+      - MAPPING_TOOL_MAILCHIMP_LIST_ID
+      - MAPPING_TOOL_API_KEY
+      - MAPPING_TOOL_WEB_MANAGER_URL
+      - MAPPING_TOOL_EPHEMERIS_URL
+      - MAPPING_TOOL_JAVA_COMMAND=java
+      - MAPPING_TOOL_PYTHON_INTERPRETER=python
+      - MAPPING_TOOL_FINDER_CHART_TOOL
+      - MAPPING_TOOL_IMAGE_CONVERSION_COMMAND=/usr/bin/convert
     ports:
-      - 8001:80
+      - ${PORT}:80
     restart: always
     volumes:
       - ${PROPOSALS_DIR}:/proposals
+      - ${MAPPING_TOOL_LOG_DIR}:/mapping-logs
+      - ${MAPPING_TOOL_DIR}:/mapping-tool

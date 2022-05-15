@@ -14,7 +14,7 @@ class InstitutionRepository:
         """
         stmt = text(
             """
-SELECT 
+SELECT
     P.Partner_Code   AS partner_code,
     P.Partner_Name   AS partner_name,
     I2.Department    AS department,

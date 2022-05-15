@@ -1,3 +1,4 @@
+import os
 import pathlib
 import re
 import subprocess  # nosec
@@ -155,6 +156,7 @@ class SubmissionService:
         submission_identifier: str,
         submitter: User,
     ) -> int:
+        # Create the command
         command_string = SubmissionService._submission_command(
             saved_file=saved_file,
             submission_identifier=submission_identifier,
@@ -165,7 +167,24 @@ class SubmissionService:
         if proposal_code:
             command.insert(-1, "-proposalCode")
             command.insert(-1, proposal_code)
-        completed_process = subprocess.run(command)  # nosec
+
+        # Collect the required environment variables
+        env = {
+            "MAPPING_TOOL_SDB_USERNAME": settings.mapping_tool_sdb_username,
+            "MAPPING_TOOL_SDB_PASSWORD": settings.mapping_tool_sdb_password,
+            "MAPPING_TOOL_SDB_URL": settings.mapping_tool_sdb_url,
+            "MAPPING_TOOL_SSDA_USERNAME": settings.mapping_tool_ssda_username,
+            "MAPPING_TOOL_SSDA_PASSWORD": settings.mapping_tool_ssda_password,
+            "MAPPING_TOOL_SSDA_URL": settings.mapping_tool_ssda_url,
+            "MAPPING_TOOL_SMTP_SERVER": settings.smtp_server,
+            "MAPPING_TOOL_FROM_EMAIL": settings.from_email,
+            "MAPPING_TOOL_MAILCHIMP_API_KEY": settings.mapping_tool_mailchimp_api_key,
+            "MAPPING_TOOL_MAILCHIMP_LIST_ID": settings.mapping_tool_mailchimp_list_id,
+        }
+        env.update(os.environ)
+
+        # Launch the mapping tool
+        completed_process = subprocess.run(command, env=env)  # nosec
         return completed_process.returncode
 
     @staticmethod
@@ -189,21 +208,20 @@ class SubmissionService:
         log_name = SubmissionService._mapping_log_name(proposal_code)
         sentry_dsn = f"-sentryDSN {settings.sentry_dsn}" if settings.sentry_dsn else ""
         command = f"""
-        {settings.java_command} -Xms85m -Xmx1024m
-             -jar {settings.mapping_tool_jar}
+        {settings.mapping_tool_java_command} -Xms85m -Xmx1024m
+             -jar {settings.mapping_tool_dir}/MappingService.jar
              -submissionIdentifier {submission_identifier}
-             -access {settings.mapping_tool_database_access_config}
              -log {settings.mapping_tool_log_dir}/{log_name}
              -user {submitter.username}
-             -convert {settings.image_conversion_command}
-             -save {settings.mapping_tool_proposals_dir}
+             -convert {settings.mapping_tool_image_conversion_command}
+             -save {settings.proposals_dir}
              -file {saved_file.absolute()}
              {('-proposalCode ' + proposal_code) if proposal_code else ""}
-             -piptDir {settings.pipt_dir}
-             -server {settings.web_manager_url}
-             -ephemerisUrl {settings.ephemeris_url}
-             -findingChartGenerationScript {settings.finder_chart_tool}
-             -python {settings.python_interpreter}
+             -piptDir {settings.mapping_tool_pipt_dir}
+             -server {settings.mapping_tool_web_manager_url}
+             -ephemerisUrl {settings.mapping_tool_ephemeris_url}
+             -findingChartGenerationScript {settings.mapping_tool_finder_chart_tool}
+             -python {settings.mapping_tool_python_interpreter}
              {sentry_dsn}
              {settings.mapping_tool_api_key}
         """
