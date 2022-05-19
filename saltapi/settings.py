@@ -2,7 +2,7 @@ import os
 from functools import lru_cache
 from typing import Optional
 
-from pydantic import AnyUrl, BaseSettings, DirectoryPath, HttpUrl
+from pydantic import BaseSettings, DirectoryPath, HttpUrl
 
 
 class Settings(BaseSettings):
@@ -53,7 +53,7 @@ class Settings(BaseSettings):
     mapping_tool_sdb_password: str
 
     # SDB URL (such as mysql://your.host:3306/your_database)
-    mapping_tool_sdb_url: AnyUrl
+    mapping_tool_sdb_url: str
 
     # SSDA username for the mapping tool
     mapping_tool_ssda_username: str
@@ -62,7 +62,7 @@ class Settings(BaseSettings):
     mapping_tool_ssda_password: str
 
     # SSDA URL (such as postgresql://your.host:5432/your_database)
-    mapping_tool_ssda_url: AnyUrl
+    mapping_tool_ssda_url: str
 
     # Mailchimp API key for the mapping tool
     mapping_tool_mailchimp_api_key: str
