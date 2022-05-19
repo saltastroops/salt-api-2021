@@ -167,6 +167,7 @@ class SubmissionService:
             command.insert(-1, proposal_code)
 
         # Collect the required environment variables
+        settings = get_settings()
         env = {
             "MAPPING_TOOL_SDB_USERNAME": settings.mapping_tool_sdb_username,
             "MAPPING_TOOL_SDB_PASSWORD": settings.mapping_tool_sdb_password,
