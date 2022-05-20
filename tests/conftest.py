@@ -2,9 +2,9 @@ import os
 import uuid
 
 import dotenv
-
 # Make sure that the test database etc. are used.
 # IMPORTANT: These lines must be executed before any server-related package is imported.
+import numpy as np
 
 os.environ["DOTENV_FILE"] = ".env.test"
 dotenv.load_dotenv(os.environ["DOTENV_FILE"])
@@ -141,6 +141,33 @@ def find_username(
         return cast(str, users[normalized_user_type])
 
     raise ValueError(f"Unknown user type: {user_type}")
+
+
+@pytest.fixture()
+def check_user(data_regression) -> Generator[Callable[[User], None], None, None]:
+    """
+    Return a function for checking user details.
+    In case you need to update the saved files, run ``pytest`` with the
+    ``--force-regen`` flag.
+    Parameters
+    ----------
+    data_regression: data regression fixture
+        The data regression fixture from the pytest-regressions plugin.
+    Returns
+    -------
+    function
+        The function for checking a finder chart.
+    """
+
+    def _check_user(user_details: User) -> None:
+        np.random.seed(0)
+        try:
+            data_regression.check(
+                data_dict=user_details, basename="{}".format(user_details.id)
+            )
+        finally:
+            np.random.seed()
+    yield _check_user
 
 
 def authenticate(username: str, client: TestClient) -> None:
