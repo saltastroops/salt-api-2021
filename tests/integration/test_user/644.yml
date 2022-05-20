@@ -1,0 +1,14 @@
+affiliations:
+- department: ' '
+  institution_id: 5
+  name: South African Astronomical Observatory
+  partner_code: RSA
+  partner_name: South Africa
+alternative_emails: []
+email: ejk@saao.ac.za
+family_name: Kotze
+given_name: Enrico
+id: 644
+roles:
+- SALT Astronomer
+username: ejk

@@ -1,0 +1,14 @@
+affiliations:
+- department: ' '
+  institution_id: 5
+  name: South African Astronomical Observatory
+  partner_code: RSA
+  partner_name: South Africa
+alternative_emails: []
+email: nerasmus@saao.ac.za
+family_name: Erasmus
+given_name: Nicolas
+id: 1218
+roles:
+- TAC Member
+username: nerasmus

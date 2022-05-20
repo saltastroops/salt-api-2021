@@ -1,0 +1,14 @@
+affiliations:
+- department: ' '
+  institution_id: 5
+  name: South African Astronomical Observatory
+  partner_code: RSA
+  partner_name: South Africa
+alternative_emails: []
+email: lisa@saao.ac.za
+family_name: Crause
+given_name: Lisa
+id: 6
+roles:
+- Board Member
+username: lcrause
