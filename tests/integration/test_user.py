@@ -4,7 +4,7 @@ import pytest
 from fastapi.testclient import TestClient
 from starlette import status
 
-from saltapi.service.user import User
+from saltapi.web.schema.user import User
 from tests.conftest import authenticate, misauthenticate
 
 USER_URL = "/user"

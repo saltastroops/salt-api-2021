@@ -25,6 +25,7 @@ from saltapi.main import app
 from saltapi.repository.user_repository import UserRepository
 from saltapi.service.user import User
 from saltapi.service.user_service import UserService
+from saltapi.web.schema.user import User as _User
 
 engine: Optional[Engine] = None
 sdb_dsn = os.environ.get("SDB_DSN")
@@ -144,7 +145,7 @@ def find_username(
 
 
 @pytest.fixture()
-def check_user(data_regression) -> Generator[Callable[[User], None], None, None]:
+def check_user(data_regression) -> Generator[Callable[[_User], None], None, None]:
     """
     Return a function for checking user details.
     In case you need to update the saved files, run ``pytest`` with the
@@ -159,14 +160,15 @@ def check_user(data_regression) -> Generator[Callable[[User], None], None, None]
         The function for checking a finder chart.
     """
 
-    def _check_user(user_details: User) -> None:
+    def _check_user(user_details: _User) -> None:
         np.random.seed(0)
         try:
             data_regression.check(
-                data_dict=user_details, basename="{}".format(user_details.id)
+                data_dict=user_details, basename="{}".format(dict(user_details)["id"])
             )
         finally:
             np.random.seed()
+
     yield _check_user
 
 
