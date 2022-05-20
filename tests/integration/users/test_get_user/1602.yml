@@ -1,0 +1,14 @@
+affiliations:
+- department: ' '
+  institution_id: 5
+  name: South African Astronomical Observatory
+  partner_code: RSA
+  partner_name: South Africa
+alternative_emails: []
+email: cmofokeng@saao.ac.za
+family_name: Mofokeng
+given_name: Chaka
+id: 1602
+roles:
+- Administrator
+username: cmofokeng
