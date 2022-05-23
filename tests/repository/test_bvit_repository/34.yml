@@ -1,0 +1,6 @@
+filter: H-alpha
+id: 34
+iris_size: 25.0
+mode: Imaging
+neutral_density: '2.0'
+shutter_open_time: 10.0
