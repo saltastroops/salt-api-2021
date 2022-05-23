@@ -32,13 +32,12 @@ def test_should_return_404_when_requesting_block_visit_for_non_existing_block_vi
 @pytest.mark.parametrize(
     "username",
     [
-        find_username("Investigator", proposal_code="2019-2-SCI-006"),
-        find_username("Principal Contact", proposal_code="2019-2-SCI-006"),
-        find_username("Principal Investigator", proposal_code="2019-2-SCI-006"),
-        find_username("Administrator"),
-        find_username("SALT Astronomer"),
-        find_username("TAC Member", partner_code="RSA"),
-        find_username("TAC Chair", partner_code="RSA"),
+        "rajeev",  # Investigator
+        "karandis",  # Principal Contact
+        "brent",  # Principal Investigator
+        "cmofokeng",  # Administrator
+        "Nella",  # SALT Astronomer
+        "nerasmus",  # TAC Member
     ],
 )
 def test_should_return_block_visit_when_requesting_block_visit_for_permitted_users(
@@ -60,12 +59,12 @@ def test_should_return_block_visit_when_requesting_block_visit_for_permitted_use
 @pytest.mark.parametrize(
     "username",
     [
-        find_username("Investigator", proposal_code="2020-2-DDT-005"),
-        find_username("Principal Contact", proposal_code="2020-2-DDT-005"),
-        find_username("Principal Investigator", proposal_code="2020-2-DDT-005"),
-        find_username("TAC Member", partner_code="RU"),
-        find_username("TAC Chair", partner_code="RU"),
-        find_username("Board Member"),
+        "Srianand",  # Investigator
+        "gitika",  # Principal Contact
+        "ngupta",  # Principal Investigator
+        "jph",  # TAC Member,
+        "jph",  # TAC Chair,
+        "mshara",  # Board Member
     ],
 )
 def test_should_return_403_when_requesting_block_visit_for_non_permitted_users(
