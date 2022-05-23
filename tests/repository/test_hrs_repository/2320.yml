@@ -1,0 +1,33 @@
+blue_detector:
+  iterations: 1
+  post_shuffled_rows: 0
+  pre_binned_columns: 1
+  pre_binned_rows: 1
+  pre_shuffled_rows: 0
+  readout_amplifiers: 1
+  readout_speed: Slow
+configuration:
+  exposure_type: Science
+  fiber_separation: 60.0
+  iodine_cell_position: Out
+  is_th_ar_lamp_on: false
+  mode: Low Resolution
+  nod_and_shuffle: null
+  target_location: The star fiber is placed on the optical axis
+id: 2320
+observation_time: 1190.0
+overhead_time: 0.0
+procedure:
+  blue_exposure_times:
+  - 1190.0
+  cycles: 1
+  red_exposure_times:
+  - 1190.0
+red_detector:
+  iterations: 1
+  post_shuffled_rows: 0
+  pre_binned_columns: 1
+  pre_binned_rows: 1
+  pre_shuffled_rows: 0
+  readout_amplifiers: 1
+  readout_speed: Slow
