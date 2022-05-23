@@ -9,9 +9,8 @@ import numpy as np
 os.environ["DOTENV_FILE"] = ".env.test"
 dotenv.load_dotenv(os.environ["DOTENV_FILE"])
 
-
 from pathlib import Path
-from typing import Any, Callable, Generator, Optional, cast
+from typing import Any, Callable, Generator, List, Optional, cast
 
 import pytest
 import yaml
@@ -52,9 +51,7 @@ app.dependency_overrides[
     saltapi.web.api.authentication.get_user_authentication_function
 ] = get_user_authentication_function
 
-
 TEST_DATA = "users.yaml"
-
 
 # Replace the user authentication with one which assumes that every user has the
 # password "secret".
@@ -193,7 +190,7 @@ def _random_string() -> str:
     return str(uuid.uuid4())[:8]
 
 
-def create_user(client: TestClient) -> str:
+def create_user(client: TestClient) -> List[Any]:
     username = _random_string()
     new_user_details = dict(
         username=username,
@@ -201,7 +198,7 @@ def create_user(client: TestClient) -> str:
         given_name=_random_string(),
         family_name=_random_string(),
         password="very_secret",
-        institute_id=5,
+        institution_id=5,
     )
     response = client.post("/users/", json=new_user_details)
-    return cast(str, response.json()["username"])
+    return [cast(int, response.json()["id"]), cast(str, response.json()["username"])]
