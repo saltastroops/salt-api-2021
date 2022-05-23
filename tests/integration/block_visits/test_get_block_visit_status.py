@@ -2,7 +2,7 @@ import pytest
 from fastapi.testclient import TestClient
 from starlette import status
 
-from tests.conftest import authenticate, find_username, not_authenticated
+from tests.conftest import authenticate, not_authenticated
 
 BLOCK_VISIT_URL = "/block-visits"
 
@@ -23,8 +23,8 @@ def test_should_return_404_when_requesting_status_of_non_existing_block_visit(
     client: TestClient,
 ) -> None:
     block_visit_id = -1
-    user = find_username("Administrator")
-    authenticate(user, client)
+    username = "nhlavutelo"
+    authenticate(username, client)
     response = client.get(
         BLOCK_VISIT_URL + "/" + str(block_visit_id) + "/status",
         params={"block_visit_id": block_visit_id},
@@ -60,10 +60,10 @@ def test_should_return_block_visit_status_for_permitted_users(
 @pytest.mark.parametrize(
     "username",
     [
-        find_username("Investigator", proposal_code="2019-2-SCI-006"),
-        find_username("Principal Contact", proposal_code="2019-2-SCI-006"),
-        find_username("Principal Investigator", proposal_code="2019-2-SCI-006"),
-        find_username("Board Member"),
+        "rajeev",  # Investigator
+        "karandis",  # Principal Contact
+        "brent",  # Principal Investigator
+        "mshara",  # Board Member
     ],
 )
 def test_should_return_403_for_get_block_visit_status_for_non_permitted_users(

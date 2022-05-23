@@ -2,7 +2,7 @@ import pytest
 from fastapi.testclient import TestClient
 from starlette import status
 
-from tests.conftest import authenticate, find_username, not_authenticated
+from tests.conftest import authenticate, not_authenticated
 
 BLOCK_VISIT_URL = "/block-visits"
 
@@ -23,8 +23,8 @@ def test_should_return_404_when_requesting_block_visit_for_non_existing_block_vi
     client: TestClient,
 ) -> None:
     block_visit_id = -1
-    user = find_username("Administrator")
-    authenticate(user, client)
+    username = "cmofokeng"  # Administrator
+    authenticate(username, client)
     response = client.get(BLOCK_VISIT_URL + "/" + str(block_visit_id))
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
