@@ -1,0 +1,29 @@
+arc_bible_entries: []
+configuration:
+  fabry_perot: null
+  filter: pc04600
+  mask: null
+  mode: Imaging
+  polarimetry: null
+  spectroscopy: null
+detector:
+  detector_calculation: MOS Acquisition
+  detector_window: null
+  exposure_time: 3.0
+  exposure_type: Science
+  gain: Faint
+  iterations: 2
+  mode: Normal
+  post_shuffled_rows: 0
+  pre_binned_columns: 2
+  pre_binned_rows: 2
+  pre_shuffled_rows: 0
+  readout_speed: Slow
+id: 13543
+observation_time: 41.496
+overhead_time: 35.496
+procedure:
+  cycles: 1
+  etalon_wavelengths: null
+  polarimetry_pattern: null
+  procedure_type: MOS Peakup

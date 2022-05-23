@@ -1,0 +1,33 @@
+arc_bible_entries: []
+configuration:
+  fabry_perot:
+    mode: Tunable Filter
+  filter: pi07005
+  mask:
+    barcode: P000000N00
+    description: open, 8 arcmin diameter circular mask
+    mask_type: Imaging
+  mode: Fabry Perot
+  polarimetry: null
+  spectroscopy: null
+detector:
+  detector_calculation: FP Ring Radius
+  detector_window: null
+  exposure_time: 5.0
+  exposure_type: Arc
+  gain: Faint
+  iterations: 1
+  mode: Normal
+  post_shuffled_rows: 0
+  pre_binned_columns: 2
+  pre_binned_rows: 2
+  pre_shuffled_rows: 0
+  readout_speed: Slow
+id: 20934
+observation_time: 22.748
+overhead_time: 17.748
+procedure:
+  cycles: 1
+  etalon_wavelengths: null
+  polarimetry_pattern: null
+  procedure_type: FP Cal

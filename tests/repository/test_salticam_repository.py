@@ -21,7 +21,11 @@ def test_top_level_values(
 
 
 @pytest.mark.parametrize("salticam_id", [1043, 590, 887])
-def test_detector(salticam_id: int, db_connection: Connection, check_instrument: Callable[[Dict[str, Any]], None]) -> None:
+def test_detector(
+    salticam_id: int,
+    db_connection: Connection,
+    check_instrument: Callable[[Dict[str, Any]], None],
+) -> None:
     salticam_repository = SalticamRepository(db_connection)
     salticam = salticam_repository.get(salticam_id)
 
@@ -40,7 +44,9 @@ def test_detector(salticam_id: int, db_connection: Connection, check_instrument:
     check_instrument(salticam)
 
 
-def test_procedure(db_connection: Connection, check_instrument: Callable[[Dict[str, Any]], None]) -> None:
+def test_procedure(
+    db_connection: Connection, check_instrument: Callable[[Dict[str, Any]], None]
+) -> None:
     salticam_id = 1215
     salticam_repository = SalticamRepository(db_connection)
     salticam = salticam_repository.get(salticam_id)

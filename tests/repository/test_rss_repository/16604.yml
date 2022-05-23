@@ -1,0 +1,37 @@
+arc_bible_entries: []
+configuration:
+  fabry_perot: null
+  filter: pc03850
+  mask:
+    barcode: P001794N10
+    comment: ''
+    cut_by: jpk
+    cut_date: 2015-11-18
+    description: null
+    equinox: 2000.0
+    mask_type: MOS
+  mode: Imaging
+  polarimetry: null
+  spectroscopy: null
+detector:
+  detector_calculation: MOS Mask Calibration
+  detector_window:
+    height: 1
+  exposure_time: 3.0
+  exposure_type: Science
+  gain: Faint
+  iterations: 1
+  mode: Normal
+  post_shuffled_rows: 0
+  pre_binned_columns: 2
+  pre_binned_rows: 2
+  pre_shuffled_rows: 0
+  readout_speed: Fast
+id: 16604
+observation_time: 3.021
+overhead_time: 0.021
+procedure:
+  cycles: 1
+  etalon_wavelengths: null
+  polarimetry_pattern: null
+  procedure_type: MOS Calibration

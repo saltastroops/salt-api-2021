@@ -1,0 +1,43 @@
+arc_bible_entries: []
+configuration:
+  fabry_perot: null
+  filter: pi05060
+  mask:
+    barcode: P000000P00
+    description: open, 4 arcmin diameter circular mask
+    mask_type: Imaging
+  mode: Polarimetric imaging
+  polarimetry:
+    beam_splitter_orientation: Normal
+  spectroscopy: null
+detector:
+  detector_calculation: None
+  detector_window: null
+  exposure_time: 36.0
+  exposure_type: Science
+  gain: Faint
+  iterations: 1
+  mode: Normal
+  post_shuffled_rows: 0
+  pre_binned_columns: 4
+  pre_binned_rows: 4
+  pre_shuffled_rows: 0
+  readout_speed: Slow
+id: 23573
+observation_time: 520.536
+overhead_time: 88.536
+procedure:
+  cycles: 3
+  etalon_wavelengths: null
+  polarimetry_pattern:
+    name: Linear
+    wave_plate_angles:
+    - half_wave: 0.0
+      quarter_wave: null
+    - half_wave: 45.0
+      quarter_wave: null
+    - half_wave: 22.5
+      quarter_wave: null
+    - half_wave: 67.5
+      quarter_wave: null
+  procedure_type: Polarimetry

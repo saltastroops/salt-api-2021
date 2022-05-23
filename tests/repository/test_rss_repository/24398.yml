@@ -1,0 +1,36 @@
+arc_bible_entries: []
+configuration:
+  fabry_perot: null
+  filter: pc04600
+  mask:
+    barcode: P002776N08
+    comment: ''
+    cut_by: nico
+    cut_date: 2021-08-04
+    description: null
+    equinox: 2000.0
+    mask_type: MOS
+  mode: Imaging
+  polarimetry: null
+  spectroscopy: null
+detector:
+  detector_calculation: MOS Mask Calibration
+  detector_window: null
+  exposure_time: 3.0
+  exposure_type: Science
+  gain: Faint
+  iterations: 1
+  mode: Normal
+  post_shuffled_rows: 0
+  pre_binned_columns: 2
+  pre_binned_rows: 2
+  pre_shuffled_rows: 0
+  readout_speed: Slow
+id: 24398
+observation_time: 20.748
+overhead_time: 17.748
+procedure:
+  cycles: 1
+  etalon_wavelengths: null
+  polarimetry_pattern: null
+  procedure_type: MOS Calibration

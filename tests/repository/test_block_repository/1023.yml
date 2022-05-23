@@ -1,0 +1,86 @@
+accepted_observations: 0
+block_visits: []
+comment: '
+
+  '
+id: 1023
+name: 1E 0035.4-7230
+observation_probabilities:
+  average_ranking: null
+  competition: null
+  moon: null
+  observability: null
+  seeing: null
+  total: null
+observation_time: 28664
+observations:
+- finder_charts:
+  - comment: null
+    id: 1124
+    valid_from: null
+    valid_until: null
+  - comment: null
+    id: 1125
+    valid_from: null
+    valid_until: null
+  observation_time: 28664
+  overhead_time: 912
+  phase_constraints: null
+  target: Target with id 49
+  telescope_configurations:
+  - dither_pattern: null
+    guide_star: null
+    iterations: 1
+    payload_configurations:
+    - calibration_filter: None
+      guide_method: None
+      instruments:
+        bvit: null
+        hrs: null
+        rss: null
+        salticam:
+        - Salticam with id 423
+      lamp: null
+      payload_configuration_type: Acquisition
+      use_calibration_screen: false
+    position_angle: null
+    use_parallactic_angle: 0
+  - dither_pattern: null
+    guide_star: null
+    iterations: 15000
+    payload_configurations:
+    - calibration_filter: None
+      guide_method: None
+      instruments:
+        bvit: null
+        hrs: null
+        rss: null
+        salticam:
+        - Salticam with id 425
+        - Salticam with id 426
+        - Salticam with id 427
+      lamp: null
+      payload_configuration_type: Science
+      use_calibration_screen: false
+    position_angle: 135.0
+    use_parallactic_angle: 0
+  time_restrictions: null
+observing_conditions:
+  maximum_lunar_phase: 15.0
+  maximum_seeing: 2.5
+  minimum_lunar_distance: 0.0
+  minimum_seeing: 0.6
+  transparency: Clear
+observing_windows: []
+overhead_time: 912
+priority: 0
+proposal_code: 2007-1-RSA-003
+ranking: null
+rejected_observations: 1
+requested_observations: 1
+semester: 2007-1
+status:
+  reason: null
+  value: Expired
+submission_date: 2008-08-12 00:00:00+00:00
+wait_period: 0.0

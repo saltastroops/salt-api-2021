@@ -1,0 +1,44 @@
+arc_bible_entries:
+- is_preferred_lamp: true
+  lamp: Ar
+  original_exposure_time: 10.0
+  preferred_exposure_time: 2.0
+- is_preferred_lamp: false
+  lamp: Xe
+  original_exposure_time: 2.0
+  preferred_exposure_time: 2.0
+configuration:
+  fabry_perot: null
+  filter: pc04600
+  mask:
+    barcode: PL0400N001
+    description: single, 8 arcmin long, 4.0 arcsec wide slit
+    mask_type: Longslit
+  mode: Spectroscopy
+  polarimetry: null
+  spectroscopy:
+    camera_angle: 10.75
+    camera_station: 13
+    grating: pg0300
+    grating_angle: 5.375
+detector:
+  detector_calculation: None
+  detector_window: null
+  exposure_time: 10.0
+  exposure_type: Science
+  gain: Faint
+  iterations: 3
+  mode: Normal
+  post_shuffled_rows: 0
+  pre_binned_columns: 1
+  pre_binned_rows: 4
+  pre_shuffled_rows: 0
+  readout_speed: Fast
+id: 24190
+observation_time: 596.35
+overhead_time: 506.35
+procedure:
+  cycles: 1
+  etalon_wavelengths: null
+  polarimetry_pattern: null
+  procedure_type: Normal

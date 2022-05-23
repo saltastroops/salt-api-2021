@@ -1,0 +1,56 @@
+arc_bible_entries:
+- is_preferred_lamp: true
+  lamp: Ar
+  original_exposure_time: 10.0
+  preferred_exposure_time: 2.0
+- is_preferred_lamp: false
+  lamp: Xe
+  original_exposure_time: 2.0
+  preferred_exposure_time: 2.0
+configuration:
+  fabry_perot: null
+  filter: pc04600
+  mask:
+    barcode: PL0300P001
+    description: single, 4 arcmin long, 3 arcsec wide slit made up by taping top/bottom
+      of PL0300N001
+    mask_type: Longslit
+  mode: Spectropolarimetry
+  polarimetry:
+    beam_splitter_orientation: Normal
+  spectroscopy:
+    camera_angle: 10.75
+    camera_station: 13
+    grating: pg0300
+    grating_angle: 5.375
+detector:
+  detector_calculation: None
+  detector_window: null
+  exposure_time: 859.0
+  exposure_type: Science
+  gain: Faint
+  iterations: 1
+  mode: Normal
+  post_shuffled_rows: 0
+  pre_binned_columns: 2
+  pre_binned_rows: 4
+  pre_shuffled_rows: 0
+  readout_speed: Slow
+id: 24181
+observation_time: 3607.905
+overhead_time: 171.905
+procedure:
+  cycles: 1
+  etalon_wavelengths: null
+  polarimetry_pattern:
+    name: Linear
+    wave_plate_angles:
+    - half_wave: 0.0
+      quarter_wave: null
+    - half_wave: 45.0
+      quarter_wave: null
+    - half_wave: 22.5
+      quarter_wave: null
+    - half_wave: 67.5
+      quarter_wave: null
+  procedure_type: Polarimetry

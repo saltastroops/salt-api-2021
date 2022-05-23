@@ -1,0 +1,48 @@
+arc_bible_entries:
+- is_preferred_lamp: true
+  lamp: Ar
+  original_exposure_time: 10.0
+  preferred_exposure_time: 2.0
+- is_preferred_lamp: false
+  lamp: Xe
+  original_exposure_time: 60.0
+  preferred_exposure_time: 4.076086956521739
+configuration:
+  fabry_perot: null
+  filter: pc03400
+  mask:
+    barcode: P002769N01
+    comment: Received at SALT
+    cut_by: wade
+    cut_date: 2021-05-17
+    description: null
+    equinox: 2000.0
+    mask_type: MOS
+  mode: MOS
+  polarimetry: null
+  spectroscopy:
+    camera_angle: 29.5
+    camera_station: 38
+    grating: pg0900
+    grating_angle: 14.75
+detector:
+  detector_calculation: None
+  detector_window: null
+  exposure_time: 2300.0
+  exposure_type: Science
+  gain: Faint
+  iterations: 1
+  mode: Normal
+  post_shuffled_rows: 0
+  pre_binned_columns: 2
+  pre_binned_rows: 2
+  pre_shuffled_rows: 0
+  readout_speed: Slow
+id: 24087
+observation_time: 2935.496
+overhead_time: 635.496
+procedure:
+  cycles: 1
+  etalon_wavelengths: null
+  polarimetry_pattern: null
+  procedure_type: Normal

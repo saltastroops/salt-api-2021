@@ -1,0 +1,34 @@
+arc_bible_entries: []
+configuration:
+  fabry_perot: null
+  filter: pc03850
+  mask: null
+  mode: Polarimetric imaging
+  polarimetry:
+    beam_splitter_orientation: Normal
+  spectroscopy: null
+detector:
+  detector_calculation: MOS Acquisition
+  detector_window: null
+  exposure_time: 3.0
+  exposure_type: Science
+  gain: Bright
+  iterations: 2
+  mode: Normal
+  post_shuffled_rows: 0
+  pre_binned_columns: 4
+  pre_binned_rows: 2
+  pre_shuffled_rows: 0
+  readout_speed: Fast
+id: 23225
+observation_time: 20.404
+overhead_time: 14.404
+procedure:
+  cycles: 1
+  etalon_wavelengths: null
+  polarimetry_pattern:
+    name: Calibration HWP
+    wave_plate_angles:
+    - half_wave: 0.0
+      quarter_wave: null
+  procedure_type: MOS Peakup

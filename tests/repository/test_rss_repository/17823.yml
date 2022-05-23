@@ -1,0 +1,39 @@
+arc_bible_entries: []
+configuration:
+  fabry_perot:
+    mode: Low Resolution
+  filter: pi06645
+  mask:
+    barcode: P000000N00
+    description: open, 8 arcmin diameter circular mask
+    mask_type: Imaging
+  mode: Fabry Perot
+  polarimetry: null
+  spectroscopy: null
+detector:
+  detector_calculation: None
+  detector_window: null
+  exposure_time: 100.0
+  exposure_type: Science
+  gain: Faint
+  iterations: 1
+  mode: Normal
+  post_shuffled_rows: 0
+  pre_binned_columns: 4
+  pre_binned_rows: 4
+  pre_shuffled_rows: 0
+  readout_speed: Slow
+id: 17823
+observation_time: 669.268
+overhead_time: 69.268
+procedure:
+  cycles: 1
+  etalon_wavelengths:
+  - 6577.05
+  - 6600.6
+  - 6605.0
+  - 6609.4
+  - 6613.8
+  - 6643.25
+  polarimetry_pattern: null
+  procedure_type: Fabry Perot

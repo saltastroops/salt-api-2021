@@ -1,0 +1,48 @@
+arc_bible_entries:
+- is_preferred_lamp: true
+  lamp: ThAr
+  original_exposure_time: 15.0
+  preferred_exposure_time: 2.0
+- is_preferred_lamp: false
+  lamp: Xe
+  original_exposure_time: 2.0
+  preferred_exposure_time: 2.0
+configuration:
+  fabry_perot: null
+  filter: pc04600
+  mask:
+    barcode: P002805N06
+    comment: Received at SALT by Thabelo
+    cut_by: Malcolm
+    cut_date: 2021-09-07
+    description: null
+    equinox: 2000.0
+    mask_type: MOS
+  mode: MOS
+  polarimetry: null
+  spectroscopy:
+    camera_angle: 35.5
+    camera_station: 46
+    grating: pg0900
+    grating_angle: 17.75
+detector:
+  detector_calculation: None
+  detector_window: null
+  exposure_time: 800.0
+  exposure_type: Science
+  gain: Faint
+  iterations: 1
+  mode: Normal
+  post_shuffled_rows: 0
+  pre_binned_columns: 2
+  pre_binned_rows: 2
+  pre_shuffled_rows: 0
+  readout_speed: Slow
+id: 24293
+observation_time: 1135.496
+overhead_time: 335.496
+procedure:
+  cycles: 1
+  etalon_wavelengths: null
+  polarimetry_pattern: null
+  procedure_type: Normal

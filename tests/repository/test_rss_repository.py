@@ -1,4 +1,4 @@
-from typing import Any, Callable
+from typing import Any, Callable, Dict
 
 import pytest
 from sqlalchemy.engine import Connection
@@ -6,141 +6,126 @@ from sqlalchemy.engine import Connection
 from saltapi.repository.rss_repository import RssRepository
 from tests.markers import nodatabase
 
-TEST_DATA = "repository/rss_repository.yaml"
-
 
 @nodatabase
 def test_top_level_values(
-    db_connection: Connection, testdata: Callable[[str], Any]
+    db_connection: Connection, check_instrument: Callable[[Dict[str, Any]], None]
 ) -> None:
-    data = testdata(TEST_DATA)["top_level_values"]
-    rss_id = data["rss_id"]
-    expected_rss = data["rss"]
+    rss_id = 24293
     rss_repository = RssRepository(db_connection)
     rss = rss_repository.get(rss_id)
 
-    assert rss["id"] == rss_id
-    assert float(rss["observation_time"]) == expected_rss["observation_time"]
-    assert float(rss["overhead_time"]) == expected_rss["overhead_time"]
+    assert "id" in rss
+    assert "observation_time" in rss
+    check_instrument(rss)
 
 
-@pytest.mark.parametrize(
-    "name",
-    [
-        "imaging",
-        "polarimetric_imaging",
-        "spectroscopy",
-        "spectropolarimetry",
-        "mos",
-        "mos_polarimetry",
-        "fabry_perot",
-    ],
-)
 @nodatabase
+@pytest.mark.parametrize("rss_id", [20792, 23573, 23472, 20708, 24087, 23231, 17823])
 def test_configuration(
-    name: str, db_connection: Connection, testdata: Callable[[str], Any]
+    rss_id: int,
+    db_connection: Connection,
+    check_instrument: Callable[[Dict[str, Any]], None],
 ) -> None:
-    data = testdata(TEST_DATA)[f"{name}_configuration"]
-    rss_id = data["rss_id"]
-    expected_config = data["configuration"]
     rss_repository = RssRepository(db_connection)
     rss = rss_repository.get(rss_id)
-    config = rss["configuration"]
 
-    assert config == expected_config
+    assert "configuration" in rss
+    check_instrument(rss)
 
 
 @nodatabase
-def test_no_mask(db_connection: Connection, testdata: Callable[[str], Any]) -> None:
-    data = testdata(TEST_DATA)["no_mask"]
-    rss_id = data["rss_id"]
+def test_no_mask(
+    db_connection: Connection, check_instrument: Callable[[Dict[str, Any]], None]
+) -> None:
+    rss_id = 13543
     rss_repository = RssRepository(db_connection)
     rss = rss_repository.get(rss_id)
-    mask = rss["configuration"]["mask"]
 
-    assert mask is None
-
-
-@nodatabase
-def test_detector(db_connection: Connection, testdata: Callable[[str], Any]) -> None:
-    data = testdata(TEST_DATA)["detector"]
-    for d in data:
-        rss_id = d["rss_id"]
-        expected_detector = d["detector"]
-        rss_repository = RssRepository(db_connection)
-        rss = rss_repository.get(rss_id)
-        detector = rss["detector"]
-
-        assert detector == expected_detector
+    assert "configuration" in rss
+    assert "mask" in rss["configuration"]
+    assert rss["configuration"]["mask"] is None
+    check_instrument(rss)
 
 
 @nodatabase
+@pytest.mark.parametrize("rss_id", [24190, 20934, 16604])
+def test_detector(
+    rss_id: int,
+    db_connection: Connection,
+    check_instrument: Callable[[Dict[str, Any]], None],
+) -> None:
+    rss_repository = RssRepository(db_connection)
+    rss = rss_repository.get(rss_id)
+    assert "detector" in rss
+
+    detector = rss["detector"]
+    assert "mode" in detector
+    assert "gain" in detector
+    assert "iterations" in detector
+    assert "detector_window" in detector
+    check_instrument(rss)
+
+
+@nodatabase
+@pytest.mark.parametrize("rss_id", [20936, 23225, 24398, 24223])
 def test_detector_calculation(
-    db_connection: Connection, testdata: Callable[[str], Any]
+    rss_id: int,
+    db_connection: Connection,
+    check_instrument: Callable[[Dict[str, Any]], None],
 ) -> None:
-    data = testdata(TEST_DATA)["detector_calculations"]
-    for d in data:
-        rss_id = d["rss_id"]
-        expected_calculation = d["calculation"]
-        rss_repository = RssRepository(db_connection)
-        rss = rss_repository.get(rss_id)
-        calculation = rss["detector"]["detector_calculation"]
+    rss_repository = RssRepository(db_connection)
+    rss = rss_repository.get(rss_id)
 
-        assert calculation == expected_calculation
+    assert "detector" in rss
+    assert "detector_calculation" in rss["detector"]
+    check_instrument(rss)
 
 
 @nodatabase
+@pytest.mark.parametrize("rss_id", [20937, 20934, 20936, 24398, 23225, 24424, 24181])
 def test_procedure_types(
-    db_connection: Connection, testdata: Callable[[str], Any]
+    rss_id: int,
+    db_connection: Connection,
+    check_instrument: Callable[[Dict[str, Any]], None],
 ) -> None:
-    data = testdata(TEST_DATA)["procedure_types"]
-    for d in data:
-        rss_id = d["rss_id"]
-        expected_procedure_type = d["procedure_type"]
-        rss_repository = RssRepository(db_connection)
-        rss = rss_repository.get(rss_id)
-        procedure_type = rss["procedure"]["procedure_type"]
+    rss_repository = RssRepository(db_connection)
+    rss = rss_repository.get(rss_id)
 
-        assert procedure_type == expected_procedure_type
+    assert "procedure" in rss
+    assert "procedure_type" in rss["procedure"]
+    check_instrument(rss)
 
 
 @nodatabase
+@pytest.mark.parametrize("rss_id", [17823, 24176])
 def test_procedure_etalon_pattern(
-    db_connection: Connection, testdata: Callable[[str], Any]
+    rss_id: int,
+    db_connection: Connection,
+    check_instrument: Callable[[Dict[str, Any]], None],
 ) -> None:
-    data = testdata(TEST_DATA)["procedure"]
-    for d in data:
-        rss_id = d["rss_id"]
-        expected_procedure = d["procedure"]
-        rss_repository = RssRepository(db_connection)
-        rss = rss_repository.get(rss_id)
-        procedure = rss["procedure"]
+    rss_repository = RssRepository(db_connection)
+    rss = rss_repository.get(rss_id)
+    procedure = rss["procedure"]
 
-        if procedure["etalon_wavelengths"]:
-            procedure["etalon_wavelengths"] = [
-                float(w) for w in procedure["etalon_wavelengths"]
-            ]
-
-        assert procedure == expected_procedure
+    assert "etalon_wavelengths" in procedure
+    check_instrument(rss)
 
 
 @nodatabase
 def test_arc_bible_entries(
-    db_connection: Connection, testdata: Callable[[str], Any]
+    db_connection: Connection, check_instrument: Callable[[Dict[str, Any]], None]
 ) -> None:
     # TODO: Add more test cases
-    data = testdata(TEST_DATA)["arc_bible_entries"]
-    rss_id = data["rss_id"]
-    expected_arc_bible_entries = data["arc_bible_entries"]
+    rss_id = 18294
     rss_repository = RssRepository(db_connection)
     rss = rss_repository.get(rss_id)
+    print(rss)
+    assert "arc_bible_entries" in rss
     arc_bible_entries = rss["arc_bible_entries"]
 
-    assert len(arc_bible_entries) == len(expected_arc_bible_entries)
     for i in range(len(arc_bible_entries)):
         entry = arc_bible_entries[i]
-        entry["original_exposure_time"] = float(entry["original_exposure_time"])
-        entry["preferred_exposure_time"] = float(entry["preferred_exposure_time"])
-        expected_entry = expected_arc_bible_entries[i]
-
-        assert entry == expected_entry
+        assert "original_exposure_time" in entry
+        assert "preferred_exposure_time" in entry
+    check_instrument(rss)

@@ -1,0 +1,45 @@
+arc_bible_entries: []
+configuration:
+  fabry_perot: null
+  filter: pc03850
+  mask:
+    barcode: P002428P08
+    comment: Received at SALT
+    cut_by: wade
+    cut_date: 2021-01-13
+    description: null
+    equinox: 2000.0
+    mask_type: MOS
+  mode: MOS polarimetry
+  polarimetry:
+    beam_splitter_orientation: Normal
+  spectroscopy:
+    camera_angle: 0.0
+    camera_station: 0
+    grating: Open
+    grating_angle: 0.0
+detector:
+  detector_calculation: None
+  detector_window: null
+  exposure_time: 3.75
+  exposure_type: Arc
+  gain: Bright
+  iterations: 1
+  mode: Normal
+  post_shuffled_rows: 0
+  pre_binned_columns: 4
+  pre_binned_rows: 2
+  pre_shuffled_rows: 0
+  readout_speed: Fast
+id: 23231
+observation_time: 10.952
+overhead_time: 7.202
+procedure:
+  cycles: 1
+  etalon_wavelengths: null
+  polarimetry_pattern:
+    name: Calibration HWP
+    wave_plate_angles:
+    - half_wave: 0.0
+      quarter_wave: null
+  procedure_type: Polarimetry
