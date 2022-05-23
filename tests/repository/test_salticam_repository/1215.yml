@@ -1,0 +1,32 @@
+detector:
+  detector_windows: null
+  exposure_type: Science
+  gain: Faint
+  iterations: 1
+  mode: Normal
+  pre_binned_columns: 2
+  pre_binned_rows: 2
+  readout_speed: Slow
+id: 1215
+minimum_signal_to_noise: 0
+observation_time: 751.08
+overhead_time: 271.08
+procedure:
+  cycles: 1
+  exposures:
+  - exposure_time: 60.0
+    filter:
+      description: SDSS g'
+      name: SDSSg-S1
+  - exposure_time: 60.0
+    filter:
+      description: SDSS r'
+      name: SDSSr-S1
+  - exposure_time: 60.0
+    filter:
+      description: SDSS i'
+      name: SDSSi-S1
+  - exposure_time: 60.0
+    filter:
+      description: SDSS z'
+      name: SDSSz-S1

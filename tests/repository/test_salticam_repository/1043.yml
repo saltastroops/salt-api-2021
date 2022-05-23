@@ -1,0 +1,20 @@
+detector:
+  detector_windows: null
+  exposure_type: Science
+  gain: Bright
+  iterations: 1
+  mode: Normal
+  pre_binned_columns: 2
+  pre_binned_rows: 4
+  readout_speed: Fast
+id: 1043
+minimum_signal_to_noise: 0
+observation_time: 14.678
+overhead_time: 13.678
+procedure:
+  cycles: 1
+  exposures:
+  - exposure_time: 1.0
+    filter:
+      description: Johnson V
+      name: V-S1

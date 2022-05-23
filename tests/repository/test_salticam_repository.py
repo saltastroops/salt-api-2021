@@ -1,68 +1,48 @@
-from typing import Any, Callable
+from typing import Any, Callable, Dict
 
 import pytest
 from sqlalchemy.engine import Connection
 
 from saltapi.repository.salticam_repository import SalticamRepository
 
-TEST_DATA = "repository/salticam_repository.yaml"
-
 
 def test_top_level_values(
-    db_connection: Connection, testdata: Callable[[str], Any]
+    db_connection: Connection, check_instrument: Callable[[Dict[str, Any]], None]
 ) -> None:
-    data = testdata(TEST_DATA)["top_level_values"]
-    expected_salticam = data["salticam"]
-    salticam_id = data["salticam_id"]
+    salticam_id = 393
     salticam_repository = SalticamRepository(db_connection)
     salticam = salticam_repository.get(salticam_id)
 
-    assert salticam["id"] == salticam_id
-    assert (
-        salticam["minimum_signal_to_noise"]
-        == expected_salticam["minimum_signal_to_noise"]
-    )
-    assert salticam["observation_time"] == expected_salticam["observation_time"]
-    assert salticam["overhead_time"] == expected_salticam["overhead_time"]
+    assert "id" in salticam
+    assert "minimum_signal_to_noise" in salticam
+    assert "observation_time" in salticam
+    assert "overhead_time" in salticam
+    check_instrument(salticam)
 
 
-def test_detector(db_connection: Connection, testdata: Callable[[str], Any]) -> None:
-    data = testdata(TEST_DATA)["detector"]
-    for d in data:
-        salticam_id = d["salticam_id"]
-        expected_detector = d["detector"]
-        salticam_repository = SalticamRepository(db_connection)
-        salticam = salticam_repository.get(salticam_id)
-        detector = salticam["detector"]
-
-        # detector windows must be compared separately
-        expected_windows = expected_detector["detector_windows"]
-        windows = detector["detector_windows"]
-        if windows is not None:
-            assert len(windows) == len(expected_windows)
-            for i in range(len(windows)):
-                assert pytest.approx(
-                    float(windows[i]["center_right_ascension"])
-                ) == pytest.approx(expected_windows[i]["center_right_ascension"])
-                assert pytest.approx(
-                    float(windows[i]["center_declination"])
-                ) == pytest.approx(expected_windows[i]["center_declination"])
-                assert windows[i]["height"] == expected_windows[i]["height"]
-                assert windows[i]["width"] == expected_windows[i]["width"]
-        else:
-            assert expected_windows is None
-        del expected_detector["detector_windows"]
-        del detector["detector_windows"]
-
-        assert detector == expected_detector
-
-
-def test_procedure(db_connection: Connection, testdata: Callable[[str], Any]) -> None:
-    data = testdata(TEST_DATA)["procedure"]
-    salticam_id = data["salticam_id"]
-    expected_procedure = data["procedure"]
+@pytest.mark.parametrize("salticam_id", [1043, 590, 887])
+def test_detector(salticam_id: int, db_connection: Connection, check_instrument: Callable[[Dict[str, Any]], None]) -> None:
     salticam_repository = SalticamRepository(db_connection)
     salticam = salticam_repository.get(salticam_id)
-    procedure = salticam["procedure"]
 
-    assert procedure == expected_procedure
+    assert "detector" in salticam
+    detector = salticam["detector"]
+
+    assert "detector_windows" in detector
+    windows = detector["detector_windows"]
+
+    if windows is not None:
+        for window in windows:
+            assert "center_right_ascension" in window
+            assert "center_declination" in window
+            assert "height" in window
+            assert "width" in window
+    check_instrument(salticam)
+
+
+def test_procedure(db_connection: Connection, check_instrument: Callable[[Dict[str, Any]], None]) -> None:
+    salticam_id = 1215
+    salticam_repository = SalticamRepository(db_connection)
+    salticam = salticam_repository.get(salticam_id)
+    assert "procedure" in salticam
+    check_instrument(salticam)

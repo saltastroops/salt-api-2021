@@ -1,0 +1,36 @@
+detector:
+  detector_windows:
+  - center_declination: -13.442222222222222
+    center_right_ascension: 11.600833333333334
+    height: 450
+    width: 450
+  - center_declination: -13.408888888888889
+    center_right_ascension: 11.625
+    height: 450
+    width: 450
+  - center_declination: -13.475555555555555
+    center_right_ascension: 11.583333333333334
+    height: 450
+    width: 450
+  exposure_type: Science
+  gain: Faint
+  iterations: 1
+  mode: Normal
+  pre_binned_columns: 2
+  pre_binned_rows: 2
+  readout_speed: Slow
+id: 590
+minimum_signal_to_noise: 0
+observation_time: 746.4
+overhead_time: 66.4
+procedure:
+  cycles: 1
+  exposures:
+  - exposure_time: 500.0
+    filter:
+      description: Johnson B
+      name: B-S1
+  - exposure_time: 180.0
+    filter:
+      description: Cousins R
+      name: R-S1

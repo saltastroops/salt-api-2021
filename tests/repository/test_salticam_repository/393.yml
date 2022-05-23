@@ -1,0 +1,40 @@
+detector:
+  detector_windows: null
+  exposure_type: Science
+  gain: Faint
+  iterations: 1
+  mode: Normal
+  pre_binned_columns: 2
+  pre_binned_rows: 2
+  readout_speed: Slow
+id: 393
+minimum_signal_to_noise: 2
+observation_time: 699.2
+overhead_time: 199.2
+procedure:
+  cycles: 5
+  exposures:
+  - exposure_time: 30.0
+    filter:
+      description: Johnson B
+      name: B-S1
+  - exposure_time: 30.0
+    filter:
+      description: Johnson V
+      name: V-S1
+  - exposure_time: 20.0
+    filter:
+      description: Cousins R
+      name: R-S1
+  - exposure_time: 20.0
+    filter:
+      description: Cousins I
+      name: I-S1
+  - exposure_time: 200.0
+    filter:
+      description: 380nm 40nm FWHM
+      name: 380-40
+  - exposure_time: 200.0
+    filter:
+      description: 340nm 35nm FWHM
+      name: 340-35

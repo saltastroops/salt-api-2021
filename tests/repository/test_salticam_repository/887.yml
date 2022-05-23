@@ -1,0 +1,24 @@
+detector:
+  detector_windows:
+  - center_declination: -17.579444444444444
+    center_right_ascension: 19.32611111111111
+    height: 240
+    width: 480
+  exposure_type: Science
+  gain: Faint
+  iterations: 680
+  mode: Frame Transfer
+  pre_binned_columns: 4
+  pre_binned_rows: 4
+  readout_speed: Slow
+id: 887
+minimum_signal_to_noise: 0
+observation_time: 1360.0
+overhead_time: 0.0
+procedure:
+  cycles: 1
+  exposures:
+  - exposure_time: 2.0
+    filter:
+      description: Fused silica clear
+      name: CLR-S1
