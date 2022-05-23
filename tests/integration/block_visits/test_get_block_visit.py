@@ -62,8 +62,8 @@ def test_should_return_block_visit_when_requesting_block_visit_for_permitted_use
         "Srianand",  # Investigator
         "gitika",  # Principal Contact
         "ngupta",  # Principal Investigator
-        "jph",  # TAC Member,
-        "jph",  # TAC Chair,
+        "jph",  # TAC Member
+        "jph",  # TAC Chair
         "mshara",  # Board Member
     ],
 )

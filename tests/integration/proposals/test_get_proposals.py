@@ -26,7 +26,7 @@ def test_should_return_401_when_requesting_proposals_for_unauthenticated_user(
 def test_should_return_400_if_start_semester_later_than_end_semester(
     from_semester: str, to_semester: str, client: TestClient
 ) -> None:
-    username = find_username("Administrator")
+    username = "nhlavutelo"  # Administrator
     authenticate(username, client)
     response = client.get(
         PROPOSALS_URL + "/",
@@ -51,7 +51,7 @@ def test_should_return_400_if_start_semester_later_than_end_semester(
 def test_should_return_422_for_invalid_semesters(
     from_semester: str, to_semester: str, client: TestClient
 ) -> None:
-    username = find_username("Administrator")
+    username = "nhlavutelo"  # Administrator
     authenticate(username, client)
     response = client.get(
         PROPOSALS_URL + "/",
@@ -67,14 +67,14 @@ def test_should_return_422_for_invalid_semesters(
     "username,from_semester,to_semester,proposal_count,proposal_codes",
     [
         [
-            find_username("TAC Chair", partner_code="RSA"),
+            "mbackes",  # RSA TAC Chair
             "2020-1",
             "2020-1",
-            32,
+            1,
             "many",
         ],
         [
-            find_username("TAC Chair", partner_code="RU"),
+            "jph",  # RU TAC Chair
             "2021-1",
             "2021-1",
             7,
@@ -82,7 +82,7 @@ def test_should_return_422_for_invalid_semesters(
             "2021-1-SCI-015, 2021-1-SCI-028, 2021-1-SCI-031",
         ],
         [
-            find_username("TAC Member", partner_code="UW"),
+            "heinzs",  # UW TAC Member
             "2021-1",
             "2021-1",
             8,
@@ -90,30 +90,30 @@ def test_should_return_422_for_invalid_semesters(
             "2020-2-MLT-009, 2021-1-SCI-016, 2021-1-SCI-023, 2021-1-SCI-025",
         ],
         [
-            find_username("Principal Investigator", proposal_code="2014-2-SCI-078"),
+            "husser",  # Principal Investigator of proposal 2014-2-SCI-078
             "2020-2",
             "2020-2",
             0,
             "",
         ],
         [
-            find_username("Principal Investigator", proposal_code="2018-2-LSP-001"),
+            "dibnob",  # Principal Investigator of proposal 2018-2-LSP-001
             "2017-2",
             "2021-1",
             35,
             "many",
         ],
-        [find_username("SALT Astronomer"), "2020-2", "2020-2", 81, "many"],
-        [find_username("Administrator"), "2018-2", "2018-2", 79, "many"],
+        ["Nella", "2020-2", "2020-2", 81, "many"],
+        ["nhlavutelo", "2018-2", "2018-2", 79, "many"],
         [
-            find_username("Principal Investigator", proposal_code="2014-2-SCI-078"),
+            "husser",  # Principal Investigator of proposal 2014-2-SCI-078
             "2018-2",
             "2019-1",
             7,
             "many",
         ],
         [
-            find_username("Principal Contact", proposal_code="2021-1-SCI-014"),
+            "laurentm",  # Principal Contact proposal 2021-1-SCI-014
             "2018-2",
             "2019-1",
             0,
@@ -163,7 +163,7 @@ def test_should_return_correct_list_of_proposals_for_authenticated_user(
 def test_should_return_proposals_only_up_to_limit(
     limit: int, client: TestClient
 ) -> None:
-    username = find_username("Administrator")
+    username = "nhlavutelo"  # Administrator
     authenticate(username, client)
     response = client.get(
         PROPOSALS_URL + "/",
@@ -174,7 +174,7 @@ def test_should_return_proposals_only_up_to_limit(
 
 
 def test_should_return_422_for_invalid_limit(client: TestClient) -> None:
-    username = find_username("Administrator")
+    username = "nhlavutelo"  # Administrator
     authenticate(username, client)
     response = client.get(
         PROPOSALS_URL + "/",
@@ -186,7 +186,7 @@ def test_should_return_422_for_invalid_limit(client: TestClient) -> None:
 def test_should_return_1000_proposals_as_the_default_limit(
     client: TestClient,
 ) -> None:
-    username = find_username("Administrator")
+    username = "nhlavutelo"  # Administrator
     authenticate(username, client)
     response = client.get(PROPOSALS_URL + "/")
     assert response.status_code == status.HTTP_200_OK

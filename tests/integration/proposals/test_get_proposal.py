@@ -45,13 +45,12 @@ def test_should_return_404_when_requesting_non_existing_proposal(
 @pytest.mark.parametrize(
     "username",
     [
-        find_username("Investigator", proposal_code="2018-2-LSP-001"),
-        find_username("Principal Contact", proposal_code="2018-2-LSP-001"),
-        find_username("Principal Investigator", proposal_code="2018-2-LSP-001"),
-        find_username("Administrator"),
-        find_username("SALT Astronomer"),
-        find_username("TAC Member", partner_code="RSA"),
-        find_username("TAC Chair", partner_code="RSA"),
+        "ilkiewicz",  # Investigator
+        "transients",  # Principal Contact
+        "dibnob",  # Principal Investigator
+        "nhlavutelo",  # Administrator
+        "Nella",  # SALT Astronomer
+        "nerasmus",  # TAC Member
     ],
 )
 def test_should_return_proposal_when_requesting_science_proposal_for_permitted_users(
@@ -71,12 +70,12 @@ def test_should_return_proposal_when_requesting_science_proposal_for_permitted_u
 @pytest.mark.parametrize(
     "username",
     [
-        find_username("Investigator", proposal_code="2018-2-LSP-001"),
-        find_username("Principal Contact", proposal_code="2018-2-LSP-001"),
-        find_username("Principal Investigator", proposal_code="2018-2-LSP-001"),
-        find_username("TAC Member", partner_code="UW"),
-        find_username("TAC Chair", partner_code="UW"),
-        find_username("Board Member"),
+        "ilkiewicz",  # Investigator
+        "transients",  # Principal Contact
+        "dibnob",  # Principal Investigator
+        "jph",  # TAC Member,
+        "tremonti",  # TAC Chair,
+        "heinzs",  # Board Member
     ],
 )
 def test_should_return_403_when_requesting_science_proposal_for_non_permitted_users(
@@ -92,11 +91,11 @@ def test_should_return_403_when_requesting_science_proposal_for_non_permitted_us
 @pytest.mark.parametrize(
     "username",
     [
-        find_username("Investigator", proposal_code="2020-2-DDT-005"),
-        find_username("Principal Contact", proposal_code="2020-2-DDT-005"),
-        find_username("Principal Investigator", proposal_code="2020-2-DDT-005"),
-        find_username("Administrator"),
-        find_username("SALT Astronomer"),
+        "Srianand",  # Investigator
+        "gitika",  # Principal Contact
+        "ngupta",  # Principal Investigator
+        "nhlavutelo",  # Administrator
+        "Nella",  # SALT Astronomer
     ],
 )
 def test_should_return_proposal_when_requesting_ddt_proposal_for_permitted_users(
@@ -113,14 +112,14 @@ def test_should_return_proposal_when_requesting_ddt_proposal_for_permitted_users
 @pytest.mark.parametrize(
     "username",
     [
-        find_username("Investigator", proposal_code="2020-2-SCI-018"),
-        find_username("Principal Contact", proposal_code="2020-2-SCI-018"),
-        find_username("Principal Investigator", proposal_code="2020-2-SCI-018"),
-        find_username("TAC Member", partner_code="RSA"),
-        find_username("TAC Chair", partner_code="RSA"),
-        find_username("TAC Member", partner_code="POL"),
-        find_username("TAC Chair", partner_code="POL"),
-        find_username("Board Member"),
+        "ajorisse",  # Investigator
+        "Drisya",  # Principal Contact
+        "rajeev",  # Principal Investigator
+        "nerasmus",  # RSA TAC Member
+        "mbackes",  # RSA TAC Chair
+        "marek",  # POL TAC Member
+        "tkastr",  # POL TAC Chair
+        "heinzs",  # Board Member
     ],
 )
 def test_should_return_403_when_requesting_ddt_proposal_for_non_permitted_user(
@@ -136,11 +135,11 @@ def test_should_return_403_when_requesting_ddt_proposal_for_non_permitted_user(
 @pytest.mark.parametrize(
     "username",
     [
-        find_username("Investigator", proposal_code="2016-1-COM-001"),
-        find_username("Principal Contact", proposal_code="2016-1-COM-001"),
-        find_username("Principal Investigator", proposal_code="2016-1-COM-001"),
-        find_username("Administrator"),
-        find_username("SALT Astronomer"),
+        "eric",  # Investigator
+        "eric",  # Principal Contact
+        "eric",  # Principal Investigator
+        "hettlage",  # Administrator
+        "Nella",  # SALT Astronomer
     ],
 )
 def test_should_return_proposal_when_requesting_com_proposal_for_permitted_user(
@@ -157,14 +156,14 @@ def test_should_return_proposal_when_requesting_com_proposal_for_permitted_user(
 @pytest.mark.parametrize(
     "username",
     [
-        find_username("Investigator", proposal_code="2018-2-LSP-001"),
-        find_username("Principal Contact", proposal_code="2018-2-LSP-001"),
-        find_username("Principal Investigator", proposal_code="2018-2-LSP-001"),
-        find_username("TAC Member", partner_code="RSA"),
-        find_username("TAC Chair", partner_code="RSA"),
-        find_username("TAC Member", partner_code="POL"),
-        find_username("TAC Chair", partner_code="POL"),
-        find_username("Board Member"),
+        "ilkiewicz",  # Investigator
+        "transients",  # Principal Contact
+        "dibnob",  # Principal Investigator
+        "nerasmus",  # RSA TAC Member
+        "mbackes",  # RSA TAC Chair
+        "marek",  # POL TAC Member
+        "tkastr",  # POL TAC Chair
+        "heinzs",  # Board Member
     ],
 )
 def test_should_return_403_when_requesting_com_proposal_for_non_permitted_user(
@@ -180,11 +179,11 @@ def test_should_return_403_when_requesting_com_proposal_for_non_permitted_user(
 @pytest.mark.parametrize(
     "username",
     [
-        find_username("Investigator", proposal_code="2016-1-SVP-001"),
-        find_username("Principal Contact", proposal_code="2016-1-SVP-001"),
-        find_username("Principal Investigator", proposal_code="2016-1-SVP-001"),
-        find_username("Administrator"),
-        find_username("SALT Astronomer"),
+        "spotter",  # Investigator
+        "khn",  # Principal Contact
+        "crawford",  # Principal Investigator
+        "hettlage",  # Administrator
+        "Nella",  # SALT Astronomer
     ],
 )
 def test_should_return_proposal_when_requesting_sv_proposal_for_permitted_users(
@@ -201,14 +200,14 @@ def test_should_return_proposal_when_requesting_sv_proposal_for_permitted_users(
 @pytest.mark.parametrize(
     "username",
     [
-        find_username("Investigator", proposal_code="2018-2-LSP-001"),
-        find_username("Principal Contact", proposal_code="2018-2-LSP-001"),
-        find_username("Principal Investigator", proposal_code="2018-2-LSP-001"),
-        find_username("TAC Member", partner_code="RSA"),
-        find_username("TAC Chair", partner_code="RSA"),
-        find_username("TAC Member", partner_code="POL"),
-        find_username("TAC Chair", partner_code="POL"),
-        find_username("Board Member"),
+        "ilkiewicz",  # Investigator
+        "transients",  # Principal Contact
+        "dibnob",  # Principal Investigator
+        "nerasmus",  # RSA TAC Member
+        "mbackes",  # RSA TAC Chair
+        "marek",  # POL TAC Member
+        "tkastr",  # POL TAC Chair
+        "heinzs",  # Board Member
     ],
 )
 def test_should_return_403_when_requesting_sv_proposal_for_non_permitted_user(
