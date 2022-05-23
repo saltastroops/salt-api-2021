@@ -2,7 +2,6 @@ import os
 import uuid
 
 import dotenv
-
 # Make sure that the test database etc. are used.
 # IMPORTANT: These lines must be executed before any server-related package is imported.
 import numpy as np

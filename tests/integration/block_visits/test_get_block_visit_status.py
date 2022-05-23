@@ -35,13 +35,12 @@ def test_should_return_404_when_requesting_status_of_non_existing_block_visit(
 @pytest.mark.parametrize(
     "username",
     [
-        find_username("Investigator", proposal_code="2019-2-SCI-006"),
-        find_username("Principal Contact", proposal_code="2019-2-SCI-006"),
-        find_username("Principal Investigator", proposal_code="2019-2-SCI-006"),
-        find_username("Administrator"),
-        find_username("SALT Astronomer"),
-        find_username("TAC Member", partner_code="RSA"),
-        find_username("TAC Chair", partner_code="RSA"),
+        "rajeev",  # Investigator
+        "karandis",  # Principal Contact
+        "brent",  # Principal Investigator
+        "cmofokeng",  # Administrator
+        "Nella",  # SALT Astronomer
+        "nerasmus",  # TAC Member
     ],
 )
 def test_should_return_block_visit_status_for_permitted_users(
