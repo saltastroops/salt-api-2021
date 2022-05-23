@@ -2,7 +2,7 @@ import pytest
 from fastapi.testclient import TestClient
 from starlette import status
 
-from tests.conftest import authenticate, find_username, not_authenticated
+from tests.conftest import authenticate, not_authenticated
 
 PROPOSALS_URL = "/proposals"
 
