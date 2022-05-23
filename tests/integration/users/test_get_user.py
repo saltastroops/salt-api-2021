@@ -5,12 +5,7 @@ from fastapi.testclient import TestClient
 from starlette import status
 
 from saltapi.web.schema.user import User
-from tests.conftest import (
-    authenticate,
-    find_username,
-    misauthenticate,
-    not_authenticated,
-)
+from tests.conftest import authenticate, misauthenticate, not_authenticated
 
 TEST_DATA = "integration/users/get_user.yaml"
 
@@ -40,7 +35,7 @@ def test_get_user_should_return_401_for_user_with_invalid_auth_token(
 
 
 def test_get_user_should_return_404_for_non_existing_user(client: TestClient) -> None:
-    authenticate(find_username("Administrator"), client)
+    authenticate("cmofokeng", client)  # Administrator
 
     response = client.get(_url(0))
     assert response.status_code == status.HTTP_404_NOT_FOUND
@@ -49,9 +44,9 @@ def test_get_user_should_return_404_for_non_existing_user(client: TestClient) ->
 @pytest.mark.parametrize(
     "username",
     [
-        find_username("Board Member"),
-        find_username("TAC Chair", partner_code="RSA"),
-        find_username("SALT Astronomer"),
+        "mshara",  # Board member
+        "mbackes",  # TAC chair
+        "Nella",  # SALT astronomer
     ],
 )
 def test_get_user_should_return_403_if_non_admin_tries_to_get_other_user(
@@ -64,11 +59,16 @@ def test_get_user_should_return_403_if_non_admin_tries_to_get_other_user(
     assert response.status_code == status.HTTP_403_FORBIDDEN
 
 
-def test_get_user_should_not_return_a_password(client: TestClient) -> None:
-    username = find_username("Principal Investigator", proposal_code="2020-2-DDT-005")
+@pytest.mark.parametrize(
+    "username, user_id",
+    [("ngupta", 763), ("cmofokeng", 1602), ("lcrause", 6)],
+)
+def test_get_user_should_not_return_a_password(
+    username: str, user_id: int, client: TestClient
+) -> None:
     authenticate(username, client)
 
-    response = client.get(_url(763))
+    response = client.get(_url(user_id))
     assert response.status_code == status.HTTP_200_OK
     for key in response.json().keys():
         assert "password" not in key.lower()
@@ -92,13 +92,11 @@ def test_get_user_should_return_correct_user_details(
 def test_get_user_should_allow_admin_to_get_other_user(
     client: TestClient, check_user: Callable[[User], None]
 ) -> None:
-    username = "cmofokeng"
+    username = "cmofokeng"  # Administrator
     authenticate(username, client)
 
-    other_username = find_username(
-        "Principal Investigator", proposal_code="2020-2-DDT-005"
-    )
+    other_user_id = 6
 
-    response = client.get(_url(6))
+    response = client.get(_url(other_user_id))
     user_details = response.json()
     check_user(user_details)
