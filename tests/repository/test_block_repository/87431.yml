@@ -1,0 +1,151 @@
+accepted_observations: 1
+block_visits:
+- id: 28582
+  night: 2021-01-28
+  rejection_reason: null
+  status: Accepted
+comment: To detect active centaurs, requires a 2x2 dither pattern for a total of five
+  images to be taken with the SDSS r' filter.  Images require spatial resolution and
+  should be binned 4x4 as well as have good focus.  If the target is suspect of being
+  on top of a star in the field according to the finder chart, please avoid observing
+  and try during another observing window. Each target has multiple observing windows
+  throughout the semester and will be updated accordingly. Additionally, we request
+  twilight-time (UNC) calibrations for this program.
+id: 87431
+name: 2013 XZ8
+observation_probabilities:
+  average_ranking: null
+  competition: null
+  moon: null
+  observability: null
+  seeing: null
+  total: null
+observation_time: 794
+observations:
+- finder_charts:
+  - comment: 26 April 2021 16:58:11 UT to 26 April 2021 18:08:11 UT (fully annotated)
+    id: 163884
+    valid_from: 2021-04-26 16:58:11+00:00
+    valid_until: 2021-04-26 18:08:11+00:00
+  - comment: 26 April 2021 16:58:11 UT to 26 April 2021 18:08:11 UT
+    id: 163885
+    valid_from: 2021-04-26 16:58:11+00:00
+    valid_until: 2021-04-26 18:08:11+00:00
+  - comment: 26 April 2021 22:43:11 UT to 26 April 2021 23:48:11 UT (fully annotated)
+    id: 163886
+    valid_from: 2021-04-26 22:43:11+00:00
+    valid_until: 2021-04-26 23:48:11+00:00
+  - comment: 26 April 2021 22:43:11 UT to 26 April 2021 23:48:11 UT
+    id: 163887
+    valid_from: 2021-04-26 22:43:11+00:00
+    valid_until: 2021-04-26 23:48:11+00:00
+  - comment: 27 April 2021 16:57:11 UT to 27 April 2021 18:02:11 UT (fully annotated)
+    id: 163888
+    valid_from: 2021-04-27 16:57:11+00:00
+    valid_until: 2021-04-27 18:02:11+00:00
+  - comment: 27 April 2021 16:57:11 UT to 27 April 2021 18:02:11 UT
+    id: 163889
+    valid_from: 2021-04-27 16:57:11+00:00
+    valid_until: 2021-04-27 18:02:11+00:00
+  - comment: 27 April 2021 22:37:11 UT to 27 April 2021 23:42:11 UT (fully annotated)
+    id: 163890
+    valid_from: 2021-04-27 22:37:11+00:00
+    valid_until: 2021-04-27 23:42:11+00:00
+  - comment: 27 April 2021 22:37:11 UT to 27 April 2021 23:42:11 UT
+    id: 163891
+    valid_from: 2021-04-27 22:37:11+00:00
+    valid_until: 2021-04-27 23:42:11+00:00
+  - comment: 28 April 2021 16:51:11 UT to 28 April 2021 18:01:11 UT (fully annotated)
+    id: 163892
+    valid_from: 2021-04-28 16:51:11+00:00
+    valid_until: 2021-04-28 18:01:11+00:00
+  - comment: 28 April 2021 16:51:11 UT to 28 April 2021 18:01:11 UT
+    id: 163893
+    valid_from: 2021-04-28 16:51:11+00:00
+    valid_until: 2021-04-28 18:01:11+00:00
+  - comment: 28 April 2021 22:31:11 UT to 28 April 2021 23:41:11 UT (fully annotated)
+    id: 163894
+    valid_from: 2021-04-28 22:31:11+00:00
+    valid_until: 2021-04-28 23:41:11+00:00
+  - comment: 28 April 2021 22:31:11 UT to 28 April 2021 23:41:11 UT
+    id: 163895
+    valid_from: 2021-04-28 22:31:11+00:00
+    valid_until: 2021-04-28 23:41:11+00:00
+  observation_time: 794
+  overhead_time: 774
+  phase_constraints: null
+  target: Target with id 34927
+  telescope_configurations:
+  - dither_pattern: null
+    guide_star: null
+    iterations: 1
+    payload_configurations:
+    - calibration_filter: None
+      guide_method: None
+      instruments:
+        bvit: null
+        hrs: null
+        rss: null
+        salticam:
+        - Salticam with id 1198
+      lamp: null
+      payload_configuration_type: Acquisition
+      use_calibration_screen: false
+    position_angle: null
+    use_parallactic_angle: 0
+  - dither_pattern:
+      description: 2 h.t. x 2 v.t., 5.0 arcsec, 5 dithers
+      horizontal_tiles: 2
+      offset_size: 5.0
+      steps: 5
+      vertical_tiles: 2
+    guide_star: null
+    iterations: 1
+    payload_configurations:
+    - calibration_filter: None
+      guide_method: None
+      instruments:
+        bvit: null
+        hrs: null
+        rss: null
+        salticam:
+        - Salticam with id 1199
+      lamp: null
+      payload_configuration_type: Science
+      use_calibration_screen: false
+    position_angle: null
+    use_parallactic_angle: 0
+  time_restrictions:
+  - end: 2021-04-29 11:09:27+00:00
+    start: 2021-04-26 11:09:27+00:00
+observing_conditions:
+  maximum_lunar_phase: 100.0
+  maximum_seeing: 2.0
+  minimum_lunar_distance: 30.0
+  minimum_seeing: 0.1
+  transparency: Thin cloud
+observing_windows:
+- end: 2021-04-26 18:05:06+00:00
+  start: 2021-04-26 17:10:41+00:00
+- end: 2021-04-26 23:46:08+00:00
+  start: 2021-04-26 22:43:48+00:00
+- end: 2021-04-27 18:01:03+00:00
+  start: 2021-04-27 17:09:46+00:00
+- end: 2021-04-27 23:41:53+00:00
+  start: 2021-04-27 22:39:38+00:00
+- end: 2021-04-28 17:57:00+00:00
+  start: 2021-04-28 17:08:53+00:00
+- end: 2021-04-28 23:37:39+00:00
+  start: 2021-04-28 22:35:28+00:00
+overhead_time: 774
+priority: 3
+proposal_code: 2020-2-SCI-043
+ranking: High
+rejected_observations: 0
+requested_observations: 1
+semester: 2020-2
+status:
+  reason: null
+  value: Completed
+submission_date: 2020-12-17 10:10:27+00:00
+wait_period: 0.0

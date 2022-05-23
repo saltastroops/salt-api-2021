@@ -1,0 +1,88 @@
+accepted_observations: 4
+block_visits:
+- id: 21112
+  night: 2018-11-18
+  rejection_reason: null
+  status: Accepted
+- id: 21140
+  night: 2018-11-21
+  rejection_reason: null
+  status: Accepted
+- id: 21170
+  night: 2018-11-24
+  rejection_reason: null
+  status: Accepted
+- id: 21250
+  night: 2018-12-02
+  rejection_reason: null
+  status: Accepted
+comment: Monitoring of X-ray pulsar at high spectral resolution
+id: 76620
+name: SXP91.1_HRS
+observation_probabilities:
+  average_ranking: null
+  competition: null
+  moon: null
+  observability: null
+  seeing: null
+  total: null
+observation_time: 2375
+observations:
+- finder_charts:
+  - comment: null
+    id: 120219
+    valid_from: null
+    valid_until: null
+  observation_time: 2375
+  overhead_time: 575
+  phase_constraints: null
+  target: Target with id 29097
+  telescope_configurations:
+  - dither_pattern: null
+    guide_star: null
+    iterations: 1
+    payload_configurations:
+    - calibration_filter: None
+      guide_method: None
+      instruments:
+        bvit: null
+        hrs: null
+        rss: null
+        salticam:
+        - Salticam with id 1052
+      lamp: null
+      payload_configuration_type: Acquisition
+      use_calibration_screen: false
+    - calibration_filter: None
+      guide_method: HRS Probe
+      instruments:
+        bvit: null
+        hrs:
+        - HRS with id 639
+        rss: null
+        salticam: null
+      lamp: null
+      payload_configuration_type: Science
+      use_calibration_screen: false
+    position_angle: 0.0
+    use_parallactic_angle: 0
+  time_restrictions: null
+observing_conditions:
+  maximum_lunar_phase: 100.0
+  maximum_seeing: 3.0
+  minimum_lunar_distance: 30.0
+  minimum_seeing: 0.1
+  transparency: Thin cloud
+observing_windows: []
+overhead_time: 575
+priority: 2
+proposal_code: 2018-2-LSP-001
+ranking: High
+rejected_observations: 0
+requested_observations: 4
+semester: 2018-2
+status:
+  reason: switching to RSS
+  value: Completed
+submission_date: 2018-11-09 16:20:36+00:00
+wait_period: 3.0

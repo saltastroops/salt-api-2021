@@ -1,0 +1,92 @@
+accepted_observations: 0
+block_visits: []
+comment: 'BVIT observations of X-ray transient
+
+
+  Adjust ND and iris to suit and avoid over-counting'
+id: 73735
+name: MAXI_J1820-BVIT
+observation_probabilities:
+  average_ranking: null
+  competition: null
+  moon: null
+  observability: null
+  seeing: null
+  total: null
+observation_time: 3300
+observations:
+- finder_charts:
+  - comment: BVIT chart
+    id: 107666
+    valid_from: null
+    valid_until: null
+  observation_time: 3300
+  overhead_time: 1500
+  phase_constraints: null
+  target: Target with id 27984
+  telescope_configurations:
+  - dither_pattern: null
+    guide_star: null
+    iterations: 1
+    payload_configurations:
+    - calibration_filter: None
+      guide_method: None
+      instruments:
+        bvit: null
+        hrs: null
+        rss: null
+        salticam:
+        - Salticam with id 1052
+      lamp: null
+      payload_configuration_type: Acquisition
+      use_calibration_screen: false
+    - calibration_filter: None
+      guide_method: None
+      instruments:
+        bvit:
+        - BVIT with id 34
+        hrs: null
+        rss: null
+        salticam: null
+      lamp: null
+      payload_configuration_type: Instrument Acquisition
+      use_calibration_screen: false
+    position_angle: null
+    use_parallactic_angle: 0
+  - dither_pattern: null
+    guide_star: null
+    iterations: 1
+    payload_configurations:
+    - calibration_filter: None
+      guide_method: None
+      instruments:
+        bvit:
+        - BVIT with id 76
+        hrs: null
+        rss: null
+        salticam: null
+      lamp: null
+      payload_configuration_type: Science
+      use_calibration_screen: false
+    position_angle: 0.0
+    use_parallactic_angle: 0
+  time_restrictions: null
+observing_conditions:
+  maximum_lunar_phase: 14.6
+  maximum_seeing: 2.0
+  minimum_lunar_distance: 30.0
+  minimum_seeing: 0.1
+  transparency: Thin cloud
+observing_windows: []
+overhead_time: 1500
+priority: 0
+proposal_code: 2016-2-LSP-001
+ranking: High
+rejected_observations: 0
+requested_observations: 1
+semester: 2018-1
+status:
+  reason: BVIT not best option
+  value: Deleted
+submission_date: 2018-05-23 19:56:33+00:00
+wait_period: 0.0

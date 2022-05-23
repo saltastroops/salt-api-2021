@@ -1,0 +1,207 @@
+accepted_observations: 0
+block_visits:
+- id: 30217
+  night: 2021-07-10
+  rejection_reason: null
+  status: Accepted
+comment: 'GRB followup Repeat g, r, i, z filters and horizontal dithering.
+
+
+  A non-standard filter is requested for the acquisition: Fused silica clear
+
+  '
+id: 89445
+name: GRB210702A-SALTICAM
+observation_probabilities:
+  average_ranking: null
+  competition: null
+  moon: null
+  observability: null
+  seeing: null
+  total: null
+observation_time: 3547
+observations:
+- finder_charts:
+  - comment: null
+    id: 165936
+    valid_from: null
+    valid_until: null
+  observation_time: 3547
+  overhead_time: 1627
+  phase_constraints: null
+  target: Target with id 36123
+  telescope_configurations:
+  - dither_pattern: null
+    guide_star: null
+    iterations: 1
+    payload_configurations:
+    - calibration_filter: None
+      guide_method: None
+      instruments:
+        bvit: null
+        hrs: null
+        rss: null
+        salticam:
+        - Salticam with id 1106
+      lamp: null
+      payload_configuration_type: Acquisition
+      use_calibration_screen: false
+    position_angle: 0.0
+    use_parallactic_angle: 0
+  - dither_pattern:
+      description: 2 h.t. x 1 v.t., 10.0 arcsec, 2 dithers
+      horizontal_tiles: 2
+      offset_size: 10.0
+      steps: 2
+      vertical_tiles: 1
+    guide_star: null
+    iterations: 1
+    payload_configurations:
+    - calibration_filter: None
+      guide_method: RSS Probe
+      instruments:
+        bvit: null
+        hrs: null
+        rss: null
+        salticam:
+        - Salticam with id 1215
+      lamp: null
+      payload_configuration_type: Science
+      use_calibration_screen: false
+    - calibration_filter: None
+      guide_method: RSS Probe
+      instruments:
+        bvit: null
+        hrs: null
+        rss: null
+        salticam:
+        - Salticam with id 1215
+      lamp: null
+      payload_configuration_type: Science
+      use_calibration_screen: false
+    - calibration_filter: None
+      guide_method: RSS Probe
+      instruments:
+        bvit: null
+        hrs: null
+        rss: null
+        salticam:
+        - Salticam with id 1215
+      lamp: null
+      payload_configuration_type: Science
+      use_calibration_screen: false
+    - calibration_filter: None
+      guide_method: RSS Probe
+      instruments:
+        bvit: null
+        hrs: null
+        rss: null
+        salticam:
+        - Salticam with id 1215
+      lamp: null
+      payload_configuration_type: Science
+      use_calibration_screen: false
+    position_angle: 0.0
+    use_parallactic_angle: 0
+  time_restrictions: null
+observing_conditions:
+  maximum_lunar_phase: 14.6
+  maximum_seeing: 2.0
+  minimum_lunar_distance: 30.0
+  minimum_seeing: 0.1
+  transparency: Clear
+observing_windows:
+- end: 2021-05-04 22:33:51+00:00
+  start: 2021-05-04 21:29:09+00:00
+- end: 2021-05-05 22:29:55+00:00
+  start: 2021-05-05 21:25:13+00:00
+- end: 2021-05-06 22:25:59+00:00
+  start: 2021-05-06 21:21:17+00:00
+- end: 2021-05-07 22:22:03+00:00
+  start: 2021-05-07 21:17:21+00:00
+- end: 2021-05-08 22:18:07+00:00
+  start: 2021-05-08 21:13:26+00:00
+- end: 2021-05-09 22:14:11+00:00
+  start: 2021-05-09 21:09:30+00:00
+- end: 2021-05-10 22:10:15+00:00
+  start: 2021-05-10 21:05:34+00:00
+- end: 2021-05-11 22:06:19+00:00
+  start: 2021-05-11 21:01:38+00:00
+- end: 2021-05-12 22:02:23+00:00
+  start: 2021-05-12 20:57:42+00:00
+- end: 2021-05-13 21:58:28+00:00
+  start: 2021-05-13 20:53:46+00:00
+- end: 2021-05-14 21:54:32+00:00
+  start: 2021-05-14 20:49:50+00:00
+- end: 2021-05-15 21:50:36+00:00
+  start: 2021-05-15 20:45:54+00:00
+- end: 2021-05-16 21:46:40+00:00
+  start: 2021-05-16 20:41:58+00:00
+- end: 2021-05-17 21:42:44+00:00
+  start: 2021-05-17 20:38:02+00:00
+- end: 2021-05-31 20:47:41+00:00
+  start: 2021-05-31 19:43:00+00:00
+- end: 2021-06-01 20:43:45+00:00
+  start: 2021-06-01 19:39:04+00:00
+- end: 2021-06-02 20:39:49+00:00
+  start: 2021-06-02 19:35:08+00:00
+- end: 2021-06-03 20:35:53+00:00
+  start: 2021-06-03 19:31:12+00:00
+- end: 2021-06-04 20:31:58+00:00
+  start: 2021-06-04 19:27:16+00:00
+- end: 2021-06-05 20:28:02+00:00
+  start: 2021-06-05 19:23:20+00:00
+- end: 2021-06-06 20:24:06+00:00
+  start: 2021-06-06 19:19:24+00:00
+- end: 2021-06-07 20:20:10+00:00
+  start: 2021-06-07 19:15:28+00:00
+- end: 2021-06-08 20:16:14+00:00
+  start: 2021-06-08 19:11:32+00:00
+- end: 2021-06-09 20:12:18+00:00
+  start: 2021-06-09 19:07:36+00:00
+- end: 2021-06-10 20:08:22+00:00
+  start: 2021-06-10 19:03:41+00:00
+- end: 2021-06-11 20:04:26+00:00
+  start: 2021-06-11 18:59:45+00:00
+- end: 2021-06-12 20:00:30+00:00
+  start: 2021-06-12 18:55:49+00:00
+- end: 2021-06-13 19:56:34+00:00
+  start: 2021-06-13 18:51:53+00:00
+- end: 2021-06-28 18:57:36+00:00
+  start: 2021-06-28 17:52:54+00:00
+- end: 2021-06-29 18:53:40+00:00
+  start: 2021-06-29 17:48:58+00:00
+- end: 2021-06-30 18:49:44+00:00
+  start: 2021-06-30 17:45:02+00:00
+- end: 2021-07-01 18:45:48+00:00
+  start: 2021-07-01 17:41:06+00:00
+- end: 2021-07-02 18:41:52+00:00
+  start: 2021-07-02 17:37:11+00:00
+- end: 2021-07-03 18:37:56+00:00
+  start: 2021-07-03 17:33:15+00:00
+- end: 2021-07-04 18:34:00+00:00
+  start: 2021-07-04 17:29:19+00:00
+- end: 2021-07-05 18:30:04+00:00
+  start: 2021-07-05 17:25:23+00:00
+- end: 2021-07-06 18:26:08+00:00
+  start: 2021-07-06 17:21:27+00:00
+- end: 2021-07-07 18:22:13+00:00
+  start: 2021-07-07 17:17:31+00:00
+- end: 2021-07-08 18:18:17+00:00
+  start: 2021-07-08 17:13:35+00:00
+- end: 2021-07-09 18:14:21+00:00
+  start: 2021-07-09 17:09:39+00:00
+- end: 2021-07-10 18:10:25+00:00
+  start: 2021-07-10 17:08:44+00:00
+overhead_time: 1627
+priority: 0
+proposal_code: 2018-2-LSP-001
+ranking: High
+rejected_observations: 0
+requested_observations: 1
+semester: 2021-1
+status:
+  reason: null
+  value: Superseded
+submission_date: 2021-07-07 15:43:44+00:00
+wait_period: 0.0

@@ -10,7 +10,7 @@ os.environ["DOTENV_FILE"] = ".env.test"
 dotenv.load_dotenv(os.environ["DOTENV_FILE"])
 
 from pathlib import Path
-from typing import Any, Callable, Generator, List, Optional, cast
+from typing import Any, Callable, Dict, Generator, List, Optional, cast
 
 import pytest
 import yaml
@@ -24,6 +24,7 @@ from saltapi.main import app
 from saltapi.repository.user_repository import UserRepository
 from saltapi.service.user import User
 from saltapi.service.user_service import UserService
+from saltapi.web.schema.block import Block as _Block
 from saltapi.web.schema.user import User as _User
 
 engine: Optional[Engine] = None
@@ -154,7 +155,7 @@ def check_user(data_regression) -> Generator[Callable[[_User], None], None, None
     Returns
     -------
     function
-        The function for checking a finder chart.
+        The function for checking user details.
     """
 
     def _check_user(user_details: _User) -> None:
@@ -167,6 +168,169 @@ def check_user(data_regression) -> Generator[Callable[[_User], None], None, None
             np.random.seed()
 
     yield _check_user
+
+
+@pytest.fixture()
+def check_block(data_regression) -> Generator[Callable[[_Block], None], None, None]:
+    """
+    Return a function for checking a block.
+    In case you need to update the saved files, run ``pytest`` with the
+    ``--force-regen`` flag.
+    Parameters
+    ----------
+    data_regression: data regression fixture
+        The data regression fixture from the pytest-regressions plugin.
+    Returns
+    -------
+    function
+        The function for checking a block.
+    """
+
+    def _check_block(block: _Block) -> None:
+        np.random.seed(0)
+        try:
+            block_copy = dict(block).copy()
+            block_copy["observing_conditions"]["maximum_lunar_phase"] = float(
+                block_copy["observing_conditions"]["maximum_lunar_phase"]
+            )
+            block_copy["observing_conditions"]["minimum_lunar_distance"] = float(
+                block_copy["observing_conditions"]["minimum_lunar_distance"]
+            )
+            for observations in block_copy["observations"]:
+                for telescope_config in observations["telescope_configurations"]:
+                    if telescope_config["dither_pattern"]:
+                        telescope_config["dither_pattern"]["offset_size"] = float(
+                            telescope_config["dither_pattern"]["offset_size"]
+                        )
+                    if telescope_config["guide_star"]:
+                        telescope_config["guide_star"]["right_ascension"] = float(
+                            telescope_config["guide_star"]["right_ascension"]
+                        )
+                        telescope_config["guide_star"]["declination"] = float(
+                            telescope_config["guide_star"]["declination"]
+                        )
+            data_regression.check(
+                data_dict=block_copy, basename="{}".format(block_copy["id"])
+            )
+        finally:
+            np.random.seed()
+
+    yield _check_block
+
+
+@pytest.fixture()
+def check_instrument(
+    data_regression,
+) -> Generator[Callable[[Dict[str, Any]], None], None, None]:
+    """
+    Return a function for checking an instrument.
+    In case you need to update the saved files, run ``pytest`` with the
+    ``--force-regen`` flag.
+    Parameters
+    ----------
+    data_regression: data regression fixture
+        The data regression fixture from the pytest-regressions plugin.
+    Returns
+    -------
+    function
+        The function for checking an instrument.
+    """
+
+    def _check_instrument(instrument: Dict[str, Any]) -> None:
+        np.random.seed(0)
+        try:
+            if "iris_size" in instrument:
+                instrument["iris_size"] = float(instrument["iris_size"])
+            if "shutter_open_time" in instrument:
+                instrument["shutter_open_time"] = float(instrument["shutter_open_time"])
+            if "configuration" in instrument:
+                if "fiber_separation" in instrument["configuration"]:
+                    instrument["configuration"]["fiber_separation"] = float(
+                        instrument["configuration"]["fiber_separation"]
+                    )
+                if (
+                    "spectroscopy" in instrument["configuration"]
+                    and instrument["configuration"]["spectroscopy"] is not None
+                ):
+                    if "grating_angle" in instrument["configuration"]["spectroscopy"]:
+                        instrument["configuration"]["spectroscopy"][
+                            "grating_angle"
+                        ] = float(
+                            instrument["configuration"]["spectroscopy"]["grating_angle"]
+                        )
+
+                if "mask" in instrument["configuration"]:
+                    if instrument["configuration"]["mask"] is not None:
+                        if "equinox" in instrument["configuration"]["mask"]:
+                            instrument["configuration"]["mask"]["equinox"] = float(
+                                instrument["configuration"]["mask"]["equinox"]
+                            )
+            if "detector" in instrument:
+                instrument["detector"]["exposure_time"] = float(
+                    instrument["detector"]["exposure_time"]
+                )
+            if "procedure" in instrument:
+                if "blue_exposure_times" in instrument["procedure"]:
+                    for i in range(len(instrument["procedure"]["blue_exposure_times"])):
+                        instrument["procedure"]["blue_exposure_times"][i] = float(
+                            instrument["procedure"]["blue_exposure_times"][i]
+                        )
+
+                if "red_exposure_times" in instrument["procedure"]:
+                    for i in range(len(instrument["procedure"]["red_exposure_times"])):
+                        instrument["procedure"]["red_exposure_times"][i] = float(
+                            instrument["procedure"]["red_exposure_times"][i]
+                        )
+
+                if "exposures" in instrument["procedure"]:
+                    for i in range(len(instrument["procedure"]["exposures"])):
+                        instrument["procedure"]["exposures"][i][
+                            "exposure_time"
+                        ] = float(
+                            instrument["procedure"]["exposures"][i]["exposure_time"]
+                        )
+
+                if "etalon_wavelengths" in instrument["procedure"]:
+                    if instrument["procedure"]["etalon_wavelengths"] is not None:
+                        for i in range(
+                            len(instrument["procedure"]["etalon_wavelengths"])
+                        ):
+                            instrument["procedure"]["etalon_wavelengths"][i] = float(
+                                instrument["procedure"]["etalon_wavelengths"][i]
+                            )
+
+            if "observation_time" in instrument:
+                instrument["observation_time"] = float(instrument["observation_time"])
+
+            if "overhead_time" in instrument:
+                instrument["overhead_time"] = float(instrument["overhead_time"])
+
+            if "exposure_time" in instrument:
+                instrument["exposure_time"] = float(instrument["exposure_time"])
+
+            if "arc_bible_entries" in instrument:
+                if instrument["arc_bible_entries"] is not None:
+                    for i in range(len(instrument["arc_bible_entries"])):
+                        instrument["arc_bible_entries"][i][
+                            "original_exposure_time"
+                        ] = float(
+                            instrument["arc_bible_entries"][i]["original_exposure_time"]
+                        )
+                        instrument["arc_bible_entries"][i][
+                            "preferred_exposure_time"
+                        ] = float(
+                            instrument["arc_bible_entries"][i][
+                                "preferred_exposure_time"
+                            ]
+                        )
+
+            data_regression.check(
+                data_dict=instrument, basename="{}".format(instrument["id"])
+            )
+        finally:
+            np.random.seed()
+
+    yield _check_instrument
 
 
 def authenticate(username: str, client: TestClient) -> None:

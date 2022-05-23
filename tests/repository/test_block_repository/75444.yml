@@ -1,0 +1,93 @@
+accepted_observations: 0
+block_visits:
+- id: 21995
+  night: 2019-02-25
+  rejection_reason: null
+  status: Accepted
+comment: This is a RSS narrow band imaging of the galaxy merger J1100+1002, near the
+  H-alpha emission line, i.e. OFF line, to subtract the stellar continuum emission
+  from the H-alpha+[NII] narrow band image.
+id: 75444
+name: J1100+1002_near_Ha
+observation_probabilities:
+  average_ranking: null
+  competition: null
+  moon: null
+  observability: null
+  seeing: null
+  total: null
+observation_time: 1805
+observations:
+- finder_charts:
+  - comment: null
+    id: 117992
+    valid_from: null
+    valid_until: null
+  - comment: null
+    id: 117993
+    valid_from: null
+    valid_until: null
+  observation_time: 1805
+  overhead_time: 665
+  phase_constraints: null
+  target: Target with id 28466
+  telescope_configurations:
+  - dither_pattern: null
+    guide_star: null
+    iterations: 1
+    payload_configurations:
+    - calibration_filter: None
+      guide_method: None
+      instruments:
+        bvit: null
+        hrs: null
+        rss: null
+        salticam:
+        - Salticam with id 1052
+      lamp: null
+      payload_configuration_type: Acquisition
+      use_calibration_screen: false
+    position_angle: null
+    use_parallactic_angle: 0
+  - dither_pattern:
+      description: 1 h.t. x 2 v.t., 60.0 arcsec, 2 dithers
+      horizontal_tiles: 1
+      offset_size: 60.0
+      steps: 2
+      vertical_tiles: 2
+    guide_star: null
+    iterations: 1
+    payload_configurations:
+    - calibration_filter: None
+      guide_method: RSS Probe
+      instruments:
+        bvit: null
+        hrs: null
+        rss:
+        - RSS with id 20557
+        salticam: null
+      lamp: null
+      payload_configuration_type: Science
+      use_calibration_screen: false
+    position_angle: null
+    use_parallactic_angle: 0
+  time_restrictions: null
+observing_conditions:
+  maximum_lunar_phase: 85.4
+  maximum_seeing: 2.0
+  minimum_lunar_distance: 30.0
+  minimum_seeing: 0.1
+  transparency: Thin cloud
+observing_windows: []
+overhead_time: 665
+priority: 3
+proposal_code: 2018-2-SCI-024
+ranking: High
+rejected_observations: 0
+requested_observations: 1
+semester: 2018-2
+status:
+  reason: null
+  value: Superseded
+submission_date: 2018-10-18 15:26:38+00:00
+wait_period: 0.0

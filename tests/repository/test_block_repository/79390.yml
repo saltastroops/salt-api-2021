@@ -1,0 +1,201 @@
+accepted_observations: 1
+block_visits:
+- id: 24320
+  night: 2019-09-10
+  rejection_reason: Observing conditions not met
+  status: Rejected
+- id: 24389
+  night: 2019-09-17
+  rejection_reason: Instrument technical problems
+  status: Rejected
+- id: 24464
+  night: 2019-09-24
+  rejection_reason: null
+  status: Accepted
+comment: 'Target I-mag ~ 14.5 on 29 August
+
+
+  A non-standard filter is requested for the acquisition: SDSS i''
+
+  '
+id: 79390
+name: RSS OGLE-2019-BLG-0033 Visit 3
+observation_probabilities:
+  average_ranking: null
+  competition: null
+  moon: null
+  observability: null
+  seeing: null
+  total: null
+observation_time: 2999
+observations:
+- finder_charts:
+  - comment: RSS 2arcmin x 2arcmin field with -50.5 degree position angle and additional
+      details
+    id: 130603
+    valid_from: null
+    valid_until: null
+  - comment: RSS 10arcmin x 10arcmin field with -50.5 degree position angle
+    id: 130604
+    valid_from: null
+    valid_until: null
+  - comment: HRS 2arcmin x 2arcmin field with additional details
+    id: 130605
+    valid_from: null
+    valid_until: null
+  - comment: HRS 10arcmin x 10arcmin field
+    id: 130606
+    valid_from: null
+    valid_until: null
+  observation_time: 2999
+  overhead_time: 1625
+  phase_constraints: null
+  target: Target with id 30491
+  telescope_configurations:
+  - dither_pattern: null
+    guide_star: null
+    iterations: 1
+    payload_configurations:
+    - calibration_filter: None
+      guide_method: None
+      instruments:
+        bvit: null
+        hrs: null
+        rss: null
+        salticam:
+        - Salticam with id 644
+      lamp: null
+      payload_configuration_type: Acquisition
+      use_calibration_screen: false
+    - calibration_filter: None
+      guide_method: RSS Probe
+      instruments:
+        bvit: null
+        hrs: null
+        rss:
+        - RSS with id 17125
+        salticam: null
+      lamp: Ar
+      payload_configuration_type: Calibration
+      use_calibration_screen: true
+    - calibration_filter: Clear and UV
+      guide_method: RSS Probe
+      instruments:
+        bvit: null
+        hrs: null
+        rss:
+        - RSS with id 18911
+        salticam: null
+      lamp: QTH2
+      payload_configuration_type: Calibration
+      use_calibration_screen: true
+    - calibration_filter: None
+      guide_method: RSS Probe
+      instruments:
+        bvit: null
+        hrs: null
+        rss:
+        - RSS with id 19918
+        salticam: null
+      lamp: null
+      payload_configuration_type: Science
+      use_calibration_screen: false
+    - calibration_filter: None
+      guide_method: RSS Probe
+      instruments:
+        bvit: null
+        hrs: null
+        rss:
+        - RSS with id 19919
+        salticam: null
+      lamp: null
+      payload_configuration_type: Science
+      use_calibration_screen: false
+    - calibration_filter: None
+      guide_method: RSS Probe
+      instruments:
+        bvit: null
+        hrs: null
+        rss:
+        - RSS with id 16959
+        salticam: null
+      lamp: Ar
+      payload_configuration_type: Calibration
+      use_calibration_screen: true
+    - calibration_filter: None
+      guide_method: RSS Probe
+      instruments:
+        bvit: null
+        hrs: null
+        rss:
+        - RSS with id 17751
+        salticam: null
+      lamp: Ne
+      payload_configuration_type: Calibration
+      use_calibration_screen: true
+    - calibration_filter: None
+      guide_method: RSS Probe
+      instruments:
+        bvit: null
+        hrs: null
+        rss:
+        - RSS with id 19916
+        salticam: null
+      lamp: null
+      payload_configuration_type: Science
+      use_calibration_screen: false
+    - calibration_filter: None
+      guide_method: RSS Probe
+      instruments:
+        bvit: null
+        hrs: null
+        rss:
+        - RSS with id 19917
+        salticam: null
+      lamp: null
+      payload_configuration_type: Science
+      use_calibration_screen: false
+    - calibration_filter: None
+      guide_method: RSS Probe
+      instruments:
+        bvit: null
+        hrs: null
+        rss:
+        - RSS with id 18493
+        salticam: null
+      lamp: Ne
+      payload_configuration_type: Calibration
+      use_calibration_screen: true
+    - calibration_filter: Clear and UV
+      guide_method: RSS Probe
+      instruments:
+        bvit: null
+        hrs: null
+        rss:
+        - RSS with id 18494
+        salticam: null
+      lamp: QTH2
+      payload_configuration_type: Calibration
+      use_calibration_screen: true
+    position_angle: 309.5
+    use_parallactic_angle: 0
+  time_restrictions: null
+observing_conditions:
+  maximum_lunar_phase: 100.0
+  maximum_seeing: 2.0
+  minimum_lunar_distance: 30.0
+  minimum_seeing: 0.1
+  transparency: Thin cloud
+observing_windows: []
+overhead_time: 1625
+priority: 0
+proposal_code: 2018-1-SCI-012
+ranking: High
+rejected_observations: 2
+requested_observations: 1
+semester: 2019-1
+status:
+  reason: null
+  value: Completed
+submission_date: 2019-08-29 02:16:28+00:00
+wait_period: 0.0

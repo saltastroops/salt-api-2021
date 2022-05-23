@@ -1,0 +1,86 @@
+accepted_observations: 0
+block_visits: []
+comment: null
+id: 88042
+name: Block-6
+observation_probabilities:
+  average_ranking: null
+  competition: null
+  moon: null
+  observability: null
+  seeing: null
+  total: null
+observation_time: 1337
+observations:
+- finder_charts:
+  - comment: null
+    id: 161023
+    valid_from: null
+    valid_until: null
+  observation_time: 1337
+  overhead_time: 575
+  phase_constraints:
+  - end: 0.956
+    start: 0.912
+  target: Target with id 35729
+  telescope_configurations:
+  - dither_pattern: null
+    guide_star: null
+    iterations: 1
+    payload_configurations:
+    - calibration_filter: None
+      guide_method: None
+      instruments:
+        bvit: null
+        hrs: null
+        rss: null
+        salticam:
+        - Salticam with id 1052
+      lamp: null
+      payload_configuration_type: Acquisition
+      use_calibration_screen: false
+    - calibration_filter: None
+      guide_method: HRS Probe
+      instruments:
+        bvit: null
+        hrs:
+        - HRS with id 2287
+        rss: null
+        salticam: null
+      lamp: null
+      payload_configuration_type: Science
+      use_calibration_screen: false
+    position_angle: null
+    use_parallactic_angle: 0
+  time_restrictions:
+  - end: 2021-08-29 04:20:47+00:00
+    start: 2021-08-29 02:39:22+00:00
+  - end: 2021-09-30 03:38:00+00:00
+    start: 2021-09-30 01:01:00+00:00
+  - end: 2021-10-01 03:36:34+00:00
+    start: 2021-10-01 00:29:37+00:00
+observing_conditions:
+  maximum_lunar_phase: 100.0
+  maximum_seeing: 2.5
+  minimum_lunar_distance: 30.0
+  minimum_seeing: 0.1
+  transparency: Thin cloud
+observing_windows:
+- end: 2021-08-29 03:50:47+00:00
+  start: 2021-08-29 02:39:22+00:00
+- end: 2021-09-30 03:08:00+00:00
+  start: 2021-09-30 01:01:00+00:00
+- end: 2021-10-01 03:06:34+00:00
+  start: 2021-10-01 00:29:37+00:00
+overhead_time: 575
+priority: 2
+proposal_code: 2021-1-SCI-022
+ranking: High
+rejected_observations: 0
+requested_observations: 1
+semester: 2021-1
+status:
+  reason: null
+  value: Deleted
+submission_date: 2021-04-13 21:47:04+00:00
+wait_period: 0.0

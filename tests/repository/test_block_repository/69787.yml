@@ -1,0 +1,148 @@
+accepted_observations: 0
+block_visits: []
+comment: 'The usual 3 LINEAR spectropolarimetry observation.
+
+
+  '
+id: 69787
+name: WR42 P2-2
+observation_probabilities:
+  average_ranking: null
+  competition: null
+  moon: null
+  observability: null
+  seeing: null
+  total: null
+observation_time: 1798
+observations:
+- finder_charts:
+  - comment: null
+    id: 99611
+    valid_from: null
+    valid_until: null
+  observation_time: 1798
+  overhead_time: 814
+  phase_constraints:
+  - end: 0.69
+    start: 0.66
+  - end: 0.74
+    start: 0.71
+  - end: 0.99
+    start: 0.96
+  target: Target with id 26246
+  telescope_configurations:
+  - dither_pattern: null
+    guide_star: null
+    iterations: 1
+    payload_configurations:
+    - calibration_filter: None
+      guide_method: None
+      instruments:
+        bvit: null
+        hrs: null
+        rss: null
+        salticam:
+        - Salticam with id 1052
+      lamp: null
+      payload_configuration_type: Acquisition
+      use_calibration_screen: false
+    - calibration_filter: None
+      guide_method: RSS Probe
+      instruments:
+        bvit: null
+        hrs: null
+        rss:
+        - RSS with id 18846
+        salticam: null
+      lamp: null
+      payload_configuration_type: Science
+      use_calibration_screen: false
+    - calibration_filter: None
+      guide_method: RSS Probe
+      instruments:
+        bvit: null
+        hrs: null
+        rss:
+        - RSS with id 18270
+        salticam: null
+      lamp: Xe
+      payload_configuration_type: Calibration
+      use_calibration_screen: true
+    position_angle: 0.0
+    use_parallactic_angle: 0
+  time_restrictions:
+  - end: 2017-12-06 02:27:56+00:00
+    start: 2017-12-06 01:20:46+00:00
+  - end: 2017-12-08 02:27:43+00:00
+    start: 2017-12-08 01:12:54+00:00
+  - end: 2017-12-14 02:28:02+00:00
+    start: 2017-12-14 00:49:18+00:00
+  - end: 2017-12-16 02:28:29+00:00
+    start: 2017-12-16 00:41:27+00:00
+  - end: 2017-12-22 00:56:35+00:00
+    start: 2017-12-22 00:17:51+00:00
+  - end: 2018-01-22 00:34:12+00:00
+    start: 2018-01-21 23:08:30+00:00
+  - end: 2018-01-30 00:02:44+00:00
+    start: 2018-01-29 21:44:31+00:00
+  - end: 2018-02-06 23:31:17+00:00
+    start: 2018-02-06 21:13:03+00:00
+  - end: 2018-02-09 03:23:51+00:00
+    start: 2018-02-09 02:42:47+00:00
+  - end: 2018-02-15 03:31:00+00:00
+    start: 2018-02-15 01:15:10+00:00
+  - end: 2018-02-17 03:26:24+00:00
+    start: 2018-02-17 01:07:18+00:00
+  - end: 2018-02-23 03:02:49+00:00
+    start: 2018-02-23 00:43:43+00:00
+  - end: 2018-02-24 22:20:31+00:00
+    start: 2018-02-24 21:28:22+00:00
+  - end: 2018-02-25 02:54:57+00:00
+    start: 2018-02-25 00:35:51+00:00
+  - end: 2018-03-02 21:56:55+00:00
+    start: 2018-03-02 19:38:42+00:00
+  - end: 2018-03-03 01:21:24+00:00
+    start: 2018-03-03 00:12:15+00:00
+  - end: 2018-03-04 21:49:03+00:00
+    start: 2018-03-04 19:30:50+00:00
+  - end: 2018-03-05 00:42:08+00:00
+    start: 2018-03-05 00:04:24+00:00
+  - end: 2018-03-10 21:25:28+00:00
+    start: 2018-03-10 19:07:14+00:00
+  - end: 2018-03-12 21:17:36+00:00
+    start: 2018-03-12 18:59:23+00:00
+  - end: 2018-03-18 20:07:18+00:00
+    start: 2018-03-18 18:35:47+00:00
+  - end: 2018-03-20 19:28:04+00:00
+    start: 2018-03-20 18:27:55+00:00
+  - end: 2018-04-03 00:29:29+00:00
+    start: 2018-04-02 23:34:26+00:00
+  - end: 2018-04-10 23:58:01+00:00
+    start: 2018-04-10 21:38:55+00:00
+  - end: 2018-04-18 18:52:07+00:00
+    start: 2018-04-18 18:20:56+00:00
+  - end: 2018-04-18 23:26:34+00:00
+    start: 2018-04-18 21:07:28+00:00
+  - end: 2018-04-26 18:20:40+00:00
+    start: 2018-04-26 16:40:56+00:00
+  - end: 2018-04-26 21:35:12+00:00
+    start: 2018-04-26 20:36:00+00:00
+observing_conditions:
+  maximum_lunar_phase: 100.0
+  maximum_seeing: 3.0
+  minimum_lunar_distance: 1.0
+  minimum_seeing: 0.1
+  transparency: Thin cloud
+observing_windows: []
+overhead_time: 814
+priority: 2
+proposal_code: 2017-2-SCI-014
+ranking: High
+rejected_observations: 0
+requested_observations: 1
+semester: 2017-2
+status:
+  reason: awaiting opportunity
+  value: Superseded
+submission_date: 2018-02-26 15:59:50+00:00
+wait_period: 0.0

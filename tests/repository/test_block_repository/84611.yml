@@ -1,0 +1,95 @@
+accepted_observations: 1
+block_visits:
+- id: 26510
+  night: 2020-06-16
+  rejection_reason: null
+  status: Accepted
+comment: null
+id: 84611
+name: Block
+observation_probabilities:
+  average_ranking: null
+  competition: null
+  moon: null
+  observability: null
+  seeing: null
+  total: null
+observation_time: 2551
+observations:
+- finder_charts:
+  - comment: null
+    id: 143743
+    valid_from: null
+    valid_until: null
+  - comment: null
+    id: 143744
+    valid_from: null
+    valid_until: null
+  observation_time: 2551
+  overhead_time: 751
+  phase_constraints: null
+  target: Target with id 34317
+  telescope_configurations:
+  - dither_pattern: null
+    guide_star:
+      declination: 2.4482583333333334
+      equinox: 2000.0
+      magnitude: 17.5
+      right_ascension: 280.9764583333333
+    iterations: 1
+    payload_configurations:
+    - calibration_filter: None
+      guide_method: None
+      instruments:
+        bvit: null
+        hrs: null
+        rss: null
+        salticam:
+        - Salticam with id 1052
+      lamp: null
+      payload_configuration_type: Acquisition
+      use_calibration_screen: false
+    - calibration_filter: None
+      guide_method: RSS Probe
+      instruments:
+        bvit: null
+        hrs: null
+        rss:
+        - RSS with id 23215
+        salticam: null
+      lamp: null
+      payload_configuration_type: Science
+      use_calibration_screen: false
+    - calibration_filter: None
+      guide_method: RSS Probe
+      instruments:
+        bvit: null
+        hrs: null
+        rss:
+        - RSS with id 15945
+        salticam: null
+      lamp: ThAr
+      payload_configuration_type: Calibration
+      use_calibration_screen: true
+    position_angle: null
+    use_parallactic_angle: 0
+  time_restrictions: null
+observing_conditions:
+  maximum_lunar_phase: 85.4
+  maximum_seeing: 2.2
+  minimum_lunar_distance: 30.0
+  minimum_seeing: 0.1
+  transparency: Clear
+observing_windows: []
+overhead_time: 751
+priority: 2
+proposal_code: 2020-1-DDT-005
+ranking: Medium
+rejected_observations: 0
+requested_observations: 1
+semester: 2020-1
+status:
+  reason: null
+  value: Completed
+submission_date: 2020-06-16 19:39:50+00:00
+wait_period: 0.0

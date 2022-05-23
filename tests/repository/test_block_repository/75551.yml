@@ -1,0 +1,109 @@
+accepted_observations: 0
+block_visits: []
+comment: This is a narrow band observations around Lyman alpha halo detected in our
+  previous SALT observations.
+id: 75551
+name: J1244_NB
+observation_probabilities:
+  average_ranking: null
+  competition: null
+  moon: null
+  observability: null
+  seeing: null
+  total: null
+observation_time: 3505
+observations:
+- finder_charts:
+  - comment: null
+    id: 119814
+    valid_from: null
+    valid_until: null
+  - comment: Use this for PA = 12
+    id: 119815
+    valid_from: null
+    valid_until: null
+  - comment: Use this for PA = 111
+    id: 119816
+    valid_from: null
+    valid_until: null
+  observation_time: 3505
+  overhead_time: 1105
+  phase_constraints: null
+  target: Target with id 28948
+  telescope_configurations:
+  - dither_pattern: null
+    guide_star: null
+    iterations: 1
+    payload_configurations:
+    - calibration_filter: None
+      guide_method: None
+      instruments:
+        bvit: null
+        hrs: null
+        rss: null
+        salticam:
+        - Salticam with id 1052
+      lamp: null
+      payload_configuration_type: Acquisition
+      use_calibration_screen: false
+    position_angle: 0.0
+    use_parallactic_angle: 0
+  - dither_pattern:
+      description: 2 h.t. x 2 v.t., 25.0 arcsec, 4 dithers
+      horizontal_tiles: 2
+      offset_size: 25.0
+      steps: 4
+      vertical_tiles: 2
+    guide_star: null
+    iterations: 1
+    payload_configurations:
+    - calibration_filter: None
+      guide_method: RSS Probe
+      instruments:
+        bvit: null
+        hrs: null
+        rss:
+        - RSS with id 20631
+        salticam: null
+      lamp: null
+      payload_configuration_type: Science
+      use_calibration_screen: false
+    position_angle: 0.0
+    use_parallactic_angle: 0
+  - dither_pattern: null
+    guide_star: null
+    iterations: 1
+    payload_configurations:
+    - calibration_filter: ND and Clear
+      guide_method: RSS Probe
+      instruments:
+        bvit: null
+        hrs: null
+        rss:
+        - RSS with id 20632
+        salticam: null
+      lamp: QTH2
+      payload_configuration_type: Calibration
+      use_calibration_screen: true
+    position_angle: 0.0
+    use_parallactic_angle: 0
+  time_restrictions: null
+observing_conditions:
+  maximum_lunar_phase: 14.6
+  maximum_seeing: 2.0
+  minimum_lunar_distance: 30.0
+  minimum_seeing: 0.1
+  transparency: Clear
+observing_windows: []
+overhead_time: 1105
+priority: 3
+proposal_code: 2018-2-SCI-022
+ranking: High
+rejected_observations: 0
+requested_observations: 2
+semester: 2018-2
+status:
+  reason: null
+  value: Active
+submission_date: 2018-10-19 07:48:47+00:00
+wait_period: 0.0
