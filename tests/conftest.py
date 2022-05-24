@@ -151,6 +151,12 @@ def authenticate(username: str, client: TestClient) -> None:
     client.headers["Authorization"] = f"Bearer {token}"
 
 
+def get_authenticated_user_id(client: TestClient) -> int:
+    response = client.get("/user")
+    user = response.json()
+    return cast(int, user["id"])
+
+
 def not_authenticated(client: TestClient) -> None:
     if "Authorization" in client.headers:
         del client.headers["Authorization"]
