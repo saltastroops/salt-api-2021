@@ -31,7 +31,10 @@ def test_should_return_the_correct_user_details(
     for d in data:
         username = d["username"]
         expected_user_details = d
-        expected_user_details["roles"] = set(expected_user_details["roles"])
+        roles = set()
+        for role in expected_user_details["roles"]:
+            roles.add(role)
+        expected_user_details["roles"] = roles
 
         authenticate(username, client)
 
