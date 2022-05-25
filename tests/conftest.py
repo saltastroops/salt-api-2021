@@ -11,7 +11,7 @@ dotenv.load_dotenv(os.environ["DOTENV_FILE"])
 
 
 from pathlib import Path
-from typing import Any, Callable, Generator, Optional, cast
+from typing import Any, Callable, Dict, Generator, Optional, cast
 
 import pytest
 import yaml
@@ -170,7 +170,7 @@ def _random_string() -> str:
     return str(uuid.uuid4())[:8]
 
 
-def create_user(client: TestClient) -> str:
+def create_user(client: TestClient) -> Dict[str, Any]:
     username = _random_string()
     new_user_details = dict(
         username=username,
@@ -178,7 +178,7 @@ def create_user(client: TestClient) -> str:
         given_name=_random_string(),
         family_name=_random_string(),
         password="very_secret",
-        institute_id=5,
+        institution_id=5,
     )
     response = client.post("/users/", json=new_user_details)
-    return cast(str, response.json()["username"])
+    return dict(response.json())
