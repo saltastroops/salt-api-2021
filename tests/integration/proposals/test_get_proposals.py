@@ -67,6 +67,13 @@ def test_should_return_422_for_invalid_semesters(
     "username,from_semester,to_semester,proposal_count,proposal_codes",
     [
         [
+            find_username("TAC Chair", partner_code="RSA"),
+            "2020-1",
+            "2020-1",
+            34,
+            "many",
+        ],
+        [
             find_username("TAC Chair", partner_code="RU"),
             "2021-1",
             "2021-1",

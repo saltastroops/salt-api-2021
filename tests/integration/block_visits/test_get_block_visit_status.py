@@ -41,6 +41,7 @@ def test_should_return_404_when_requesting_status_of_non_existing_block_visit(
         find_username("Administrator"),
         find_username("SALT Astronomer"),
         find_username("TAC Member", partner_code="RSA"),
+        find_username("TAC Chair", partner_code="RSA"),
     ],
 )
 def test_should_return_block_visit_status_for_permitted_users(

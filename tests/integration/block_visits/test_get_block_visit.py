@@ -38,6 +38,7 @@ def test_should_return_404_when_requesting_block_visit_for_non_existing_block_vi
         find_username("Administrator"),
         find_username("SALT Astronomer"),
         find_username("TAC Member", partner_code="RSA"),
+        find_username("TAC Chair", partner_code="RSA"),
     ],
 )
 def test_should_return_block_visit_when_requesting_block_visit_for_permitted_users(

@@ -57,6 +57,7 @@ def test_should_return_404_when_requesting_non_existing_proposal(
         find_username("Administrator"),
         find_username("SALT Astronomer"),
         find_username("TAC Member", partner_code="RSA"),
+        find_username("TAC Chair", partner_code="RSA"),
     ],
 )
 def test_should_return_proposal_when_requesting_science_proposal_for_permitted_users(
