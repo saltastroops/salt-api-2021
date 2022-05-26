@@ -32,7 +32,7 @@ def test_get_submission(db_connection: Connection) -> None:
     submission = submission_repository.get("a63e548d-ffa5-4213-ad8a-b44b1ec8a01c")
     assert submission["proposal_code"] is None
     assert submission["submitter_id"] == 1243
-    assert submission["status"] == SubmissionStatus.IN_PROGRESS
+    assert submission["status"] == SubmissionStatus.FAILED
     assert submission["started_at"] == datetime(
         2022, 4, 25, 10, 7, 37, 0, tzinfo=pytz.utc
     )
