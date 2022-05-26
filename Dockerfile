@@ -40,6 +40,10 @@ RUN pip install salt_finder_charts
 
 COPY ./saltapi /app/saltapi
 
+RUN mkdir /var/www
+RUN mkdir /var/www/.astropy
+RUN chown www-data:www-data /var/www/.astropy
+
 USER www-data:www-data
 
 RUN mkdir /tmp/.PIPT
