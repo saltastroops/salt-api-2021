@@ -1288,7 +1288,7 @@ WHERE PC.Proposal_Code = :proposal_code;
         except NoResultFound:
             raise NotFoundError(f"No such proposal code: {proposal_code}")
 
-        return bool(cast(int, one) > 0)
+        return bool(cast(int, one) if one is not None else 0 > 0)
 
     def get_current_version(self, proposal_code: str) -> int:
         """
