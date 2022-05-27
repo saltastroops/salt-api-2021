@@ -41,6 +41,7 @@ class BlockRepository:
         stmt = text(
             """
 SELECT B.Block_Id                      AS block_id,
+       BC.BlockCode                    AS code,
        B.Block_Name                    AS name,
        PC.Proposal_Code                AS proposal_code,
        P.SubmissionDate                AS submission_date,
@@ -75,6 +76,7 @@ FROM Block B
          JOIN ProposalCode PC ON P.ProposalCode_Id = PC.ProposalCode_Id
          JOIN Semester S ON P.Semester_Id = S.Semester_Id
          LEFT JOIN BlockProbabilities BP ON B.Block_Id = BP.Block_Id
+         LEFT JOIN BlockCode BC ON B.BlockCode_Id = BC.BlockCode_Id
 WHERE B.Block_Id = :block_id;
         """
         )
@@ -100,6 +102,7 @@ WHERE B.Block_Id = :block_id;
 
         block = {
             "id": row.block_id,
+            "code": row.code,
             "name": row.name,
             "proposal_code": row.proposal_code,
             "submission_date": pytz.utc.localize(row.submission_date),

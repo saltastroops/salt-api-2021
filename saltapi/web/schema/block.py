@@ -85,6 +85,7 @@ class Block(BaseModel):
     """A block, i.e. a smallest schedulable unit in a proposal."""
 
     id: int = Field(..., title="Block id", description="Unique identifier of the block")
+    code: Optional[str] = Field(..., title="Code", description="Block code")
     name: Optional[str] = Field(..., title="Name", description="Block name")
     proposal_code: ProposalCode = Field(
         ..., title="Proposal code of the proposal to which the block belongs"
