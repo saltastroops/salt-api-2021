@@ -551,7 +551,6 @@ def test_get_user_roles_returns_correct_roles(
     for d in data:
         username = d["username"]
         expected_roles = set(d["roles"])
-        print(user_repository.get_user_roles(username))
         roles = set(role.value for role in user_repository.get_user_roles(username))
 
         assert (
