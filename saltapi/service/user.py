@@ -5,6 +5,7 @@ from typing import List, NamedTuple, Optional
 
 class Role(str, Enum):
     SALT_ASTRONOMER = "SALT Astronomer"
+    SALT_OPERATOR = "SALT Operator"
     ADMINISTRATOR = "Administrator"
     TAC_MEMBER = "TAC Member"
     TAC_CHAIR = "TAC Chair"

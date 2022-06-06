@@ -2,7 +2,7 @@ from saltapi.exceptions import AuthorizationError
 from saltapi.repository.block_repository import BlockRepository
 from saltapi.repository.proposal_repository import ProposalRepository
 from saltapi.repository.user_repository import UserRepository
-from saltapi.service.user import User
+from saltapi.service.user import User, Role
 
 
 class PermissionService:
@@ -292,3 +292,10 @@ class PermissionService:
 
         if not may_update:
             raise AuthorizationError()
+
+    @staticmethod
+    def check_user_has_role(user: User, role: Role) -> bool:
+        if role in user.roles:
+            return True
+        return False
+

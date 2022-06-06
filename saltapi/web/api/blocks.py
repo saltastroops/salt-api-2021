@@ -1,14 +1,33 @@
 from fastapi import APIRouter, Body, Depends, Path
 
+from saltapi.exceptions import AuthorizationError
 from saltapi.repository.unit_of_work import UnitOfWork
 from saltapi.service.authentication_service import get_current_user
 from saltapi.service.block import Block as _Block
 from saltapi.service.block import BlockStatus as _BlockStatus
-from saltapi.service.user import User
+from saltapi.service.user import User, Role
 from saltapi.web import services
 from saltapi.web.schema.block import Block, BlockStatus, BlockStatusValue
 
 router = APIRouter(prefix="/blocks", tags=["Block"])
+
+
+@router.get(
+    "/scheduled-block", summary="Scheduled block.", response_model=Block
+)
+def get_scheduled_block(user: User = Depends(get_current_user)) -> _Block:
+    """
+
+    """
+
+    with UnitOfWork() as unit_of_work:
+        permission_service = services.permission_service(unit_of_work.connection)
+        block_service = services.block_service(unit_of_work.connection)
+        if permission_service.check_user_has_role(user, Role.ADMINISTRATOR) \
+                or permission_service.check_user_has_role(user, Role.SALT_ASTRONOMER) \
+                or permission_service.check_user_has_role(user, Role.SALT_OPERATOR):
+            return block_service.get_block(30888)
+        raise AuthorizationError()
 
 
 @router.get("/{block_id}", summary="Get a block", response_model=Block)
