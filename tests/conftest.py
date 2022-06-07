@@ -41,7 +41,7 @@ def get_user_authentication_function() -> Callable[[str, str], User]:
         with cast(Engine, engine).connect() as connection:
             user_repository = UserRepository(connection)
             user_service = UserService(user_repository)
-            user = user_service.get_user(username)
+            user = user_service.get_user_by_username(username)
             return user
 
     return authenticate_user
@@ -64,7 +64,7 @@ ACCESS_TOKEN_LIFETIME_HOURS = 7 * 24
 
 
 @pytest.fixture(scope="function")
-def dbconnection() -> Generator[Connection, None, None]:
+def db_connection() -> Generator[Connection, None, None]:
     if not engine:
         raise ValueError(
             "No SQLAlchemy engine set. Have you defined the SDB_DSN environment "

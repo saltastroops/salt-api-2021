@@ -1,3 +1,5 @@
+from typing import Any, Dict, List, Optional
+
 from sqlalchemy.engine import Connection
 
 from saltapi.repository.bvit_repository import BvitRepository
@@ -29,3 +31,23 @@ class InstrumentRepository:
     def get_bvit(self, bvit_id: int) -> BVIT:
         """Return a BVIT setup."""
         return self.bvit_repository.get(bvit_id)
+
+    def get_rss_masks_in_magazine(self, mask_type: Optional[str]) -> List[str]:
+        """The list of masks in the magazine."""
+        return self.rss_repository.get_mask_in_magazine(mask_type)
+
+    def get_mos_masks_metadata(
+        self, from_semester: str, to_semester: str
+    ) -> List[Dict[str, Any]]:
+        """The list of MOS masks metadata."""
+        return self.rss_repository.get_mos_masks_metadata(from_semester, to_semester)
+
+    def update_mos_mask_metadata(
+        self, mos_mask_metadata: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Update MOS mask metadata"""
+        return self.rss_repository.update_mos_mask_metadata(mos_mask_metadata)
+
+    def get_obsolete_rss_masks_in_magazine(self, mask_type: Optional[str]) -> List[str]:
+        """The list of obsolete RSS masks."""
+        return self.rss_repository.get_obsolete_rss_masks_in_magazine(mask_type)

@@ -1,24 +1,51 @@
-# Dockerfile for creating the Web Manager server
+# Dockerfile for creating the SALT API server
 
 # WARNING: This Dockerfile is not suitable for production use.
 
-# Based on:
-# - https://github.com/tiangolo/uvicorn-gunicorn-docker/blob/master/docker-images/python3.8.dockerfile
-# - https://medium.com/@harpalsahota/dockerizing-python-poetry-applications-1aa3acb76287
+# Based on https://fastapi.tiangolo.com/deployment/docker/
 
-FROM python:3.9
+FROM python:3.9 as requirements-stage
 
-WORKDIR /web-manager
+WORKDIR /tmp
+
+RUN pip install poetry
+
+COPY ./pyproject.toml ./poetry.lock* /tmp/
+
+RUN poetry export -f requirements.txt --output requirements.txt --without-hashes
+
+FROM ubuntu:20.04
+
+# LABEL specifies the File Author / Organization
+LABEL author="SALT Software Team <saltsoftware@saao.ac.za>"
 
 EXPOSE 80
 
-# Copy all the required content.
-COPY saltapi saltapi
-COPY poetry.lock .
-COPY pyproject.toml .
+WORKDIR /app
 
-# Install
-RUN curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
-RUN ${HOME}/.poetry/bin/poetry export -f requirements.txt --output requirements.txt
-RUN pip install -r requirements.txt
-CMD uvicorn --port 80 --host 0.0.0.0 saltapi.main:app
+RUN apt-get update -y
+RUN export LANG=C.UTF-8
+RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt-get install -y python3.9 python3.9-dev python3.9-distutils python3-pip
+RUN apt-get install -y default-jre
+RUN apt-get install -y imagemagick
+
+# Give ImageMagick access to pdf files
+RUN sed -i "s@<policy domain=\"coder\" rights=\"none\" pattern=\"PDF\" />@<policy domain=\"coder\" rights=\"read|write\" pattern=\"PDF\" />@g" /etc/ImageMagick-6/policy.xml
+
+COPY --from=requirements-stage /tmp/requirements.txt /app/requirements.txt
+
+RUN pip install --no-cache-dir --upgrade -r /app/requirements.txt
+RUN pip install wheel
+RUN pip install salt_finder_charts
+
+COPY ./saltapi /app/saltapi
+
+RUN mkdir /var/www
+RUN mkdir /var/www/.astropy
+RUN chown www-data:www-data /var/www/.astropy
+
+USER www-data:www-data
+
+RUN mkdir /tmp/.PIPT
+
+CMD ["uvicorn", "saltapi.main:app", "--host", "0.0.0.0", "--port", "80"]

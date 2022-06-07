@@ -85,6 +85,7 @@ class Block(BaseModel):
     """A block, i.e. a smallest schedulable unit in a proposal."""
 
     id: int = Field(..., title="Block id", description="Unique identifier of the block")
+    code: Optional[str] = Field(..., title="Code", description="Block code")
     name: Optional[str] = Field(..., title="Name", description="Block name")
     proposal_code: ProposalCode = Field(
         ..., title="Proposal code of the proposal to which the block belongs"
@@ -156,6 +157,8 @@ class BlockSummary(BaseModel):
     id: int = Field(
         ..., title="Block id", description="Unique identifier for the block"
     )
+    semester: Semester = Field(..., title="Semester to which the block belongs")
+    status: BlockStatus = Field(..., title="Block status", description="Block status")
     name: str = Field(..., title="Name", description="Block name")
     observation_time: int = Field(
         ...,

@@ -11,11 +11,11 @@ from saltapi.repository.unit_of_work import UnitOfWork
 from saltapi.repository.user_repository import UserRepository
 from saltapi.service.authentication import AccessToken
 from saltapi.service.user import User
-from saltapi.settings import Settings
+from saltapi.settings import get_settings
 
 ALGORITHM = "HS256"
 ACCESS_TOKEN_LIFETIME_HOURS = 7 * 24
-SECRET_KEY = Settings().secret_key
+SECRET_KEY = get_settings().secret_key
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
@@ -70,22 +70,26 @@ class AuthenticationService:
         if not payload:
             raise JWTError("Token failed to decode.")
         try:
-            user = self.user_repository.get_by_id(payload["sub"])
+            user = self.user_repository.get(payload["sub"])
         except NotFoundError:
             raise ValueError("Token not valid.")
         return user
 
 
 def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
-    with UnitOfWork() as unit_of_work:
-        try:
-            user_repository = UserRepository(unit_of_work.connection)
-            authentication_repository = AuthenticationService(user_repository)
+    try:
+        return find_user_from_token(token)
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate token.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
-            return authentication_repository.validate_auth_token(token)
-        except Exception:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Could not validate token.",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
+
+def find_user_from_token(token: str) -> User:
+    with UnitOfWork() as unit_of_work:
+        user_repository = UserRepository(unit_of_work.connection)
+        authentication_repository = AuthenticationService(user_repository)
+
+        return authentication_repository.validate_auth_token(token)

@@ -234,7 +234,7 @@ class PermissionService:
         if not may_update:
             raise AuthorizationError()
 
-    def check_permission_to_view_user(self, user: User, updated_username: str) -> None:
+    def check_permission_to_view_user(self, user: User, updated_user_id: int) -> None:
         """
         Check whether the user may update a user.
 
@@ -245,25 +245,50 @@ class PermissionService:
         if self.user_repository.is_administrator(user.username):
             may_view = True
         else:
-            may_view = user.username == updated_username
+            may_view = user.id == updated_user_id
 
         if not may_view:
             raise AuthorizationError()
 
-    def check_permission_to_update_user(
-        self, user: User, updated_username: str
-    ) -> None:
+    def check_permission_to_update_user(self, user: User, updated_user_id: int) -> None:
         """
         Check whether the user may update a user.
 
         Administrators may update any users. Other users may only update their own user
         details.
         """
-
         if self.user_repository.is_administrator(user.username):
             may_update = True
         else:
-            may_update = user.username == updated_username
+            may_update = user.id == updated_user_id
+
+        if not may_update:
+            raise AuthorizationError()
+
+    def check_permission_to_view_mos_metadata(self, user: User) -> None:
+        """
+        Check whether the user may view MOS data.
+
+        Administrators and SALT Astronomers may view MOS data.
+        details.
+        """
+
+        may_view = self.user_repository.is_administrator(
+            user.username
+        ) or self.user_repository.is_salt_astronomer(user.username)
+
+        if not may_view:
+            raise AuthorizationError()
+
+    def check_permission_to_update_mos_mask_metadata(self, user: User) -> None:
+        """
+        Check whether the user can update a slit mask.
+        """
+        may_update = (
+            self.user_repository.is_administrator(user.username)
+            or self.user_repository.is_salt_astronomer(user.username)
+            or self.user_repository.is_engineer()
+        )
 
         if not may_update:
             raise AuthorizationError()

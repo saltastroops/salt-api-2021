@@ -2,11 +2,11 @@ import re
 from email.mime.multipart import MIMEMultipart
 from typing import Any
 
-from saltapi.service.mail_service import MailService
-from saltapi.service.user import User
-from saltapi.settings import Settings
+from pydantic import EmailStr
 
-settings = Settings()
+from saltapi.service.mail_service import MailService
+from saltapi.service.user import Institution, User
+from saltapi.settings import get_settings
 
 
 class MockSMTP:
@@ -25,8 +25,14 @@ user = User(
     username="valid",
     given_name="valid",
     family_name="valid",
-    email="valid@mail.com",
+    email=EmailStr("valid@mail.com"),
     password_hash="hashed_password",
+    alternative_emails=[EmailStr("anothervalid@gmail.com")],
+    affiliations=[
+        Institution(
+            institution_id=1, institution="Ins", department="Dept", partner_code="POL"
+        )
+    ],
     roles=[],
 )
 
@@ -40,6 +46,6 @@ def test_send_generate_email_returns_correct_message() -> None:
         to=to, plain_body=plain_body, html_body=html_body, subject=subject
     )
     assert msg["To"] == to
-    assert msg["From"] == f"SALT Team <{settings.from_email}>"
+    assert msg["From"] == f"SALT Team <{get_settings().from_email}>"
     assert msg["Subject"] == subject
     assert re.match(r"^(\btext/plain\.*\btext/html\b)?", msg.as_string())

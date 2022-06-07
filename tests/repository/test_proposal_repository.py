@@ -15,14 +15,14 @@ USER_TEST_DATA = "users.yaml"
 
 @nodatabase
 def test_list_returns_correct_content(
-    dbconnection: Connection, testdata: Callable[[str], Any]
+    db_connection: Connection, testdata: Callable[[str], Any]
 ) -> None:
     salt_astronomer = testdata(USER_TEST_DATA)["salt_astronomer"]
     data = testdata(TEST_DATA)["proposal_list_content"]
     for d in data:
         semester = d["semester"]
         expected_proposal = d["proposal"]
-        proposal_repository = ProposalRepository(dbconnection)
+        proposal_repository = ProposalRepository(db_connection)
         proposals = proposal_repository.list(salt_astronomer, semester, semester)
         proposal = [
             p
@@ -35,10 +35,10 @@ def test_list_returns_correct_content(
 
 @nodatabase
 def test_list_returns_correct_proposal_codes(
-    dbconnection: Connection, testdata: Callable[[str], Any]
+    db_connection: Connection, testdata: Callable[[str], Any]
 ) -> None:
     data = testdata(TEST_DATA)["proposal_list"]
-    proposal_repository = ProposalRepository(dbconnection)
+    proposal_repository = ProposalRepository(db_connection)
     for d in data:
         from_semester = d["from_semester"]
         to_semester = d["to_semester"]
@@ -58,9 +58,9 @@ def test_list_returns_correct_proposal_codes(
 
 @nodatabase
 def test_list_handles_omitted_semester_limits(
-    dbconnection: Connection, testdata: Callable[[str], Any]
+    db_connection: Connection, testdata: Callable[[str], Any]
 ) -> None:
-    proposal_repository = ProposalRepository(dbconnection)
+    proposal_repository = ProposalRepository(db_connection)
 
     salt_astronomer = testdata(USER_TEST_DATA)["salt_astronomer"]
     assert len(
@@ -82,7 +82,7 @@ def test_list_handles_omitted_semester_limits(
 
 @nodatabase
 def test_list_results_can_be_limited(
-    dbconnection: Connection, testdata: Callable[[str], Any]
+    db_connection: Connection, testdata: Callable[[str], Any]
 ) -> None:
     salt_astronomer = testdata(USER_TEST_DATA)["salt_astronomer"]
     data = testdata(TEST_DATA)["proposal_list_limit"]
@@ -90,7 +90,7 @@ def test_list_results_can_be_limited(
         semester = d["semester"]
         expected_proposal_codes = d["proposal_codes"]
         limit = len(expected_proposal_codes)
-        proposal_repository = ProposalRepository(dbconnection)
+        proposal_repository = ProposalRepository(db_connection)
         proposals = proposal_repository.list(
             username=salt_astronomer,
             from_semester=semester,
@@ -102,8 +102,8 @@ def test_list_results_can_be_limited(
 
 
 @nodatabase
-def test_list_handles_omitted_limit(dbconnection: Connection) -> None:
-    proposal_repository = ProposalRepository(dbconnection)
+def test_list_handles_omitted_limit(db_connection: Connection) -> None:
+    proposal_repository = ProposalRepository(db_connection)
     assert proposal_repository.list(
         username="someone", from_semester="2018-2", to_semester="2019-2"
     ) == proposal_repository.list(
@@ -111,9 +111,9 @@ def test_list_handles_omitted_limit(dbconnection: Connection) -> None:
     )
 
 
-def test_list_raises_error_for_negative_limit(dbconnection: Connection) -> None:
+def test_list_raises_error_for_negative_limit(db_connection: Connection) -> None:
     with pytest.raises(ValueError) as excinfo:
-        proposal_repository = ProposalRepository(dbconnection)
+        proposal_repository = ProposalRepository(db_connection)
         proposal_repository.list(username="someone", limit=-1)
 
     assert "negative" in str(excinfo)
@@ -125,9 +125,9 @@ def test_list_raises_error_for_negative_limit(dbconnection: Connection) -> None:
 )
 @nodatabase
 def test_list_raises_error_for_wrong_semester_format(
-    incorrect_semester: str, dbconnection: Connection
+    incorrect_semester: str, db_connection: Connection
 ) -> None:
-    proposal_repository = ProposalRepository(dbconnection)
+    proposal_repository = ProposalRepository(db_connection)
 
     with pytest.raises(ValueError) as excinfo:
         proposal_repository.list(username="someone", from_semester=incorrect_semester)
@@ -140,9 +140,9 @@ def test_list_raises_error_for_wrong_semester_format(
 
 @nodatabase
 def test_list_raises_error_for_wrong_semester_order(
-    dbconnection: Connection, testdata: Callable[[str], Any]
+    db_connection: Connection, testdata: Callable[[str], Any]
 ) -> None:
-    proposal_repository = ProposalRepository(dbconnection)
+    proposal_repository = ProposalRepository(db_connection)
     with pytest.raises(ValueError) as excinfo:
         username = testdata(USER_TEST_DATA)["salt_astronomer"]
         proposal_repository.list(
@@ -152,19 +152,19 @@ def test_list_raises_error_for_wrong_semester_order(
 
 
 @nodatabase
-def test_get_raises_error_for_wrong_proposal_code(dbconnection: Connection) -> None:
-    proposal_repository = ProposalRepository(dbconnection)
+def test_get_raises_error_for_wrong_proposal_code(db_connection: Connection) -> None:
+    proposal_repository = ProposalRepository(db_connection)
     with pytest.raises(NotFoundError):
         proposal_repository.get(proposal_code="idontexist")
 
 
 @nodatabase
 def test_get_returns_general_info(
-    dbconnection: Connection, testdata: Callable[[str], Any]
+    db_connection: Connection, testdata: Callable[[str], Any]
 ) -> None:
     data = testdata(TEST_DATA)["get"]
     proposal_code = data["proposal_code"]
-    proposal_repository = ProposalRepository(dbconnection)
+    proposal_repository = ProposalRepository(db_connection)
     proposal = proposal_repository.get(proposal_code)
     expected_general_info = data["general_info"]
     general_info = proposal["general_info"]
@@ -178,10 +178,10 @@ def test_get_returns_general_info(
 
 
 def test_get_returns_correct_value_for_is_self_activatable(
-    dbconnection: Connection, testdata: Callable[[str], Any]
+    db_connection: Connection, testdata: Callable[[str], Any]
 ) -> None:
     data = testdata(TEST_DATA)["is_self_activatable"]
-    proposal_repository = ProposalRepository(dbconnection)
+    proposal_repository = ProposalRepository(db_connection)
     for d in data:
         proposal_code = d["proposal_code"]
         expected_may_activate = d["self_activatable"]
@@ -192,12 +192,12 @@ def test_get_returns_correct_value_for_is_self_activatable(
 
 @nodatabase
 def test_get_returns_investigators(
-    dbconnection: Connection, testdata: Callable[[str], Any]
+    db_connection: Connection, testdata: Callable[[str], Any]
 ) -> None:
     data = testdata(TEST_DATA)["get"]
     proposal_code = data["proposal_code"]
     expected_investigators = data["investigators"]
-    proposal_repository = ProposalRepository(dbconnection)
+    proposal_repository = ProposalRepository(db_connection)
     proposal = proposal_repository.get(proposal_code)
     investigators = proposal["investigators"]
     assert len(investigators) == len(expected_investigators)
@@ -206,12 +206,12 @@ def test_get_returns_investigators(
 
 
 def test_get_returns_correct_proposal_approval(
-    dbconnection: Connection, testdata: Callable[[str], Any]
+    db_connection: Connection, testdata: Callable[[str], Any]
 ) -> None:
     data = testdata(TEST_DATA)["proposal_approval"]
     proposal_code = data["proposal_code"]
 
-    proposal_repository = ProposalRepository(dbconnection)
+    proposal_repository = ProposalRepository(db_connection)
     proposal = proposal_repository.get(proposal_code)
     investigators = proposal["investigators"]
 
@@ -239,12 +239,12 @@ def test_get_returns_correct_proposal_approval(
 
 @nodatabase
 def test_get_returns_blocks(
-    dbconnection: Connection, testdata: Callable[[str], Any]
+    db_connection: Connection, testdata: Callable[[str], Any]
 ) -> None:
     data = testdata(TEST_DATA)["get"]
     proposal_code = data["proposal_code"]
     expected_blocks = data["blocks"]
-    proposal_repository = ProposalRepository(dbconnection)
+    proposal_repository = ProposalRepository(db_connection)
     proposal = proposal_repository.get(proposal_code)
     blocks = proposal["blocks"]
     for expected_block in expected_blocks:
@@ -270,12 +270,12 @@ def test_get_returns_blocks(
 
 @nodatabase
 def test_get_returns_block_visits(
-    dbconnection: Connection, testdata: Callable[[str], Any]
+    db_connection: Connection, testdata: Callable[[str], Any]
 ) -> None:
     data = testdata(TEST_DATA)["get"]
     proposal_code = data["proposal_code"]
     expected_observations = data["block_visits"]
-    proposal_repository = ProposalRepository(dbconnection)
+    proposal_repository = ProposalRepository(db_connection)
     proposal = proposal_repository.get(proposal_code)
     observations = proposal["block_visits"]
 
@@ -286,7 +286,7 @@ def test_get_returns_block_visits(
 
 @nodatabase
 def test_get_returns_time_allocations(
-    dbconnection: Connection, testdata: Callable[[str], Any]
+    db_connection: Connection, testdata: Callable[[str], Any]
 ) -> None:
     data = testdata(TEST_DATA)["get_allocations"]
     proposal_code = data["proposal_code"]
@@ -294,7 +294,7 @@ def test_get_returns_time_allocations(
 
     expected_allocations = data["time_allocations"]
     expected_allocations.sort(key=lambda v: v["partner_code"])
-    proposal_repository = ProposalRepository(dbconnection)
+    proposal_repository = ProposalRepository(db_connection)
     proposal = proposal_repository.get(proposal_code, semester)
     allocations = proposal["time_allocations"]
     allocations.sort(key=lambda v: v["partner_code"])
@@ -323,13 +323,13 @@ def test_get_returns_time_allocations(
 
 @nodatabase
 def test_get_returns_charged_time(
-    dbconnection: Connection, testdata: Callable[[str], Any]
+    db_connection: Connection, testdata: Callable[[str], Any]
 ) -> None:
     data = testdata(TEST_DATA)["get_charged_time"]
     proposal_code = data["proposal_code"]
     semester = data["semester"]
 
-    proposal_repository = ProposalRepository(dbconnection)
+    proposal_repository = ProposalRepository(db_connection)
     proposal = proposal_repository.get(proposal_code, semester)
     charged_time = proposal["charged_time"]
 
@@ -341,10 +341,10 @@ def test_get_returns_charged_time(
 
 
 def test_get_returns_data_release_date(
-    dbconnection: Connection, testdata: Callable[[str], Any]
+    db_connection: Connection, testdata: Callable[[str], Any]
 ) -> None:
     data = testdata(TEST_DATA)["data_release_date"]
-    proposal_repository = ProposalRepository(dbconnection)
+    proposal_repository = ProposalRepository(db_connection)
     for d in data:
         proposal_code = d["proposal_code"]
         expected_release_date = d["release_date"]
@@ -354,7 +354,7 @@ def test_get_returns_data_release_date(
 
 
 def test_get_returns_block_observability(
-    dbconnection: Connection, testdata: Callable[[str], Any]
+    db_connection: Connection, testdata: Callable[[str], Any]
 ) -> None:
     for data in testdata(TEST_DATA)["observabilities"]:
         proposal_code = data["proposal_code"]
@@ -363,7 +363,7 @@ def test_get_returns_block_observability(
         expected_observabilities = data["observabilities"]
 
         with freezegun.freeze_time(now):
-            proposal_repository = ProposalRepository(dbconnection)
+            proposal_repository = ProposalRepository(db_connection)
             proposal = proposal_repository.get(proposal_code, semester)
             blocks = proposal["blocks"]
             for o in expected_observabilities:
@@ -374,13 +374,13 @@ def test_get_returns_block_observability(
 
 
 def test_get_returns_observation_comments(
-    dbconnection: Connection, testdata: Callable[[str], Any]
+    db_connection: Connection, testdata: Callable[[str], Any]
 ) -> None:
     data = testdata(TEST_DATA)["observation_comments"]
     proposal_code = data["proposal_code"]
     expected_comments = data["comments"]
 
-    proposal_repository = ProposalRepository(dbconnection)
+    proposal_repository = ProposalRepository(db_connection)
     proposal = proposal_repository.get(proposal_code)
     comments = proposal["observation_comments"]
 
@@ -392,10 +392,10 @@ def test_get_returns_observation_comments(
 
 
 def test_get_proposal_type_returns_the_correct_proposal_type(
-    dbconnection: Connection, testdata: Callable[[str], Any]
+    db_connection: Connection, testdata: Callable[[str], Any]
 ) -> None:
     data = testdata(TEST_DATA)["get_proposal_type"]
-    proposal_repository = ProposalRepository(dbconnection)
+    proposal_repository = ProposalRepository(db_connection)
     for d in data:
         proposal_code = d["proposal_code"]
         expected_proposal_type = d["proposal_type"]
@@ -403,60 +403,78 @@ def test_get_proposal_type_returns_the_correct_proposal_type(
         assert proposal_type == expected_proposal_type
 
 
-def test_get_proposal_type_raises_not_found_error(dbconnection: Connection) -> None:
-    proposal_repository = ProposalRepository(dbconnection)
+def test_get_proposal_type_raises_not_found_error(db_connection: Connection) -> None:
+    proposal_repository = ProposalRepository(db_connection)
     with pytest.raises(NotFoundError):
         proposal_repository.get_proposal_type("idontexist")
 
 
 def test_get_proposal_status(
-    dbconnection: Connection, testdata: Callable[[str], Any]
+    db_connection: Connection, testdata: Callable[[str], Any]
 ) -> None:
     data = testdata(TEST_DATA)["get_proposal_status"]
     for d in data:
         proposal_code = d["proposal_code"]
         expected_status = d["status"]
-        proposal_repository = ProposalRepository(dbconnection)
+        proposal_repository = ProposalRepository(db_connection)
         status = proposal_repository.get_proposal_status(proposal_code)
 
         assert expected_status == status
 
 
-def test_get_proposal_status_raises_error_for_wring_proposal_code(
-    dbconnection: Connection,
+def test_get_proposal_status_raises_error_for_wrong_proposal_code(
+    db_connection: Connection,
 ) -> None:
-    proposal_repository = ProposalRepository(dbconnection)
+    proposal_repository = ProposalRepository(db_connection)
     with pytest.raises(NotFoundError):
         proposal_repository.get_proposal_status("idontexist")
 
 
-def test_update_proposal_status(dbconnection: Connection) -> None:
+def test_update_proposal_status(db_connection: Connection) -> None:
     # Set the status to "Active"
-    proposal_repository = ProposalRepository(dbconnection)
+    proposal_repository = ProposalRepository(db_connection)
     proposal_code = "2020-2-SCI-043"
     proposal_repository.update_proposal_status(proposal_code, "Active")
-    assert proposal_repository.get_proposal_status(proposal_code) == "Active"
+    status = proposal_repository.get_proposal_status(proposal_code)
+    assert status["value"] == "Active"
+    assert status["reason"] is None
 
     # Now set it to "Under technical review"
     proposal_repository.update_proposal_status(proposal_code, "Under technical review")
     assert (
-        proposal_repository.get_proposal_status(proposal_code)
+        proposal_repository.get_proposal_status(proposal_code)["value"]
         == "Under technical review"
     )
 
 
-def test_update_proposal_status_raises_error_for_wrong_proposal_code(
-    dbconnection: Connection,
+def test_update_proposal_status_for_not_none_status_reason(
+    db_connection: Connection,
 ) -> None:
-    proposal_repository = ProposalRepository(dbconnection)
+    # Set the status to "Expired"
+    proposal_repository = ProposalRepository(db_connection)
+    proposal_code = "2019-1-SCI-010"
+    proposal_repository.update_proposal_status(proposal_code, "Expired")
+    status = proposal_repository.get_proposal_status(proposal_code)
+    assert status["value"] == "Expired"
+    assert status["reason"] == "Other"
+
+    # Now set it to "Deleted"
+    proposal_repository.update_proposal_status(proposal_code, "Deleted")
+    assert proposal_repository.get_proposal_status(proposal_code)["value"] == "Deleted"
+
+
+def test_update_proposal_status_raises_error_for_wrong_proposal_code(
+    db_connection: Connection,
+) -> None:
+    proposal_repository = ProposalRepository(db_connection)
     with pytest.raises(NotFoundError):
         proposal_repository.get_proposal_status("idontexist")
 
 
 def test_update_proposal_status_raises_error_for_wrong_status(
-    dbconnection: Connection,
+    db_connection: Connection,
 ) -> None:
-    proposal_repository = ProposalRepository(dbconnection)
+    proposal_repository = ProposalRepository(db_connection)
     with pytest.raises(ValueError) as excinfo:
         proposal_repository.update_proposal_status(
             "2020-2-SCIO-043", "Wrong proposal status"
@@ -466,10 +484,10 @@ def test_update_proposal_status_raises_error_for_wrong_status(
 
 
 def test_is_self_activatable(
-    dbconnection: Connection, testdata: Callable[[str], Any]
+    db_connection: Connection, testdata: Callable[[str], Any]
 ) -> None:
     data = testdata(TEST_DATA)["is_self_activatable"]
-    proposal_repository = ProposalRepository(dbconnection)
+    proposal_repository = ProposalRepository(db_connection)
     for d in data:
         proposal_code = d["proposal_code"]
         expected_self_activatable = d["self_activatable"]
@@ -478,3 +496,46 @@ def test_is_self_activatable(
             proposal_repository.is_self_activatable(proposal_code)
             == expected_self_activatable
         )
+
+
+@nodatabase
+def test_get_returns_additional_instrument_details(
+    db_connection: Connection, testdata: Callable[[str], Any]
+) -> None:
+    data = testdata(TEST_DATA)["get_instrument_additional_configurations"]
+    for d in data:
+        proposal_code = d["proposal_code"]
+        expected_blocks = d["blocks"]
+        proposal_repository = ProposalRepository(db_connection)
+        proposal = proposal_repository.get(proposal_code)
+        blocks = proposal["blocks"]
+        for expected_block in expected_blocks:
+            block = next(b for b in blocks if b["id"] == expected_block["block_id"])
+            expected_instruments = expected_block["instruments"]
+            instruments = block["instruments"]
+            for expected_instrument in expected_instruments:
+                instrument = next(
+                    i for i in instruments if i["name"] == expected_instrument["name"]
+                )
+                assert set(instrument["modes"]) == set(expected_instrument["modes"])
+                assert set(instrument["gratings"]) == set(
+                    expected_instrument["gratings"]
+                )
+                assert set(instrument["filters"]) == set(expected_instrument["filters"])
+
+
+@pytest.mark.parametrize(
+    "proposal_code,version",
+    [("2022-1-SCI-024", 1), ("2021-2-SCI-004", 2), ("2019-2-SCI-027", 19)],
+)
+def test_get_current_version_returns_correct_version(
+    proposal_code: str, version: int, db_connection: Connection
+) -> None:
+    proposal_repository = ProposalRepository(db_connection)
+    assert proposal_repository.get_current_version(proposal_code) == version
+
+
+def test_get_current_version_raises_not_found_error(db_connection: Connection) -> None:
+    proposal_repository = ProposalRepository(db_connection)
+    with pytest.raises(NotFoundError):
+        proposal_repository.get_current_version("idontexist")

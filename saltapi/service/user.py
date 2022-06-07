@@ -16,24 +16,46 @@ class ContactDetails:
     given_name: str
     family_name: str
     email: str
+    alternative_emails: List[str]
+
+
+@dataclass()
+class UserListItem:
+    id: int
+    family_name: str
+    given_name: str
+
+
+@dataclass()
+class Institution:
+    institution_id: int
+    institution: str
+    department: Optional[str]
+    partner_code: str
 
 
 @dataclass()
 class User:
     id: int
-    username: str
-    email: str
     given_name: str
     family_name: str
+    email: str
+    alternative_emails: List[str]
+    username: str
     password_hash: str
+    affiliations: List[Institution]
     roles: List[Role]
 
 
 @dataclass()
-class NewUserDetails(ContactDetails):
+class NewUserDetails:
+    given_name: str
+    family_name: str
+    email: str
+    alternative_emails: List[str]
     username: str
     password: str
-    institute_id: int
+    institution_id: int
 
 
 class UserUpdate(NamedTuple):

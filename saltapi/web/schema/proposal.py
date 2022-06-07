@@ -13,37 +13,13 @@ from saltapi.web.schema.common import (
     ProposalCode,
     Semester,
 )
+from saltapi.web.schema.institution import Institution
 from saltapi.web.schema.target import Phase1Target
+from saltapi.web.schema.user import FullName
 
 
-class Affiliation(BaseModel):
-    """An institute affiliation."""
-
-    partner_name: PartnerName = Field(
-        ...,
-        title="SALT partner name",
-        description="Name of the SALT Partner",
-    )
-    partner_code: PartnerCode = Field(
-        ...,
-        title="SALT partner code",
-        description="Code of the SALT Partner",
-    )
-    institute: str = Field(..., title="Institute", description="Institute")
-    department: Optional[str] = Field(
-        None, title="Department", description="Department of the institute"
-    )
-
-
-class ContactDetails(BaseModel):
-    given_name: str = Field(..., title="Given name", description='Given ("first") name')
-    family_name: str = Field(
-        ..., title="Family name", description='Family ("last") name'
-    )
+class ProposalUser(FullName):
     email: EmailStr = Field(..., title="Email address", description="Email address")
-
-    class Config:
-        orm_mode = True
 
 
 class ProposalStatusValue(str, Enum):
@@ -82,6 +58,7 @@ class ProposalType(str, Enum):
     GRAVITATIONAL_WAVE_EVENT = "Gravitational Wave Event"
     KEY_SCIENCE_PROGRAM = "Key Science Program"
     LARGE_SCIENCE_PROPOSAL = "Large Science Proposal"
+    OPTICON_RADIO_PILOT = "OPTICON-Radionet Pilot"
     SCIENCE = "Science"
     SCIENCE_LONG_TERM = "Science - Long Term"
     SCIENCE_VERIFICATION = "Science Verification"
@@ -133,7 +110,7 @@ class GeneralProposalInfo(BaseModel):
         title="Data release date",
         description="Date when the proposal data is scheduled to become public",
     )
-    liaison_salt_astronomer: Optional[ContactDetails] = Field(
+    liaison_salt_astronomer: Optional[FullName] = Field(
         ...,
         title="Liaison astronomer",
         description="SALT Astronomer who is the liaison astronomer for the proposal",
@@ -155,13 +132,10 @@ class GeneralProposalInfo(BaseModel):
     )
 
 
-class Investigator(ContactDetails):
+class Investigator(ProposalUser):
     """An investigator on a proposal."""
 
-    user_id: int = Field(
-        ..., title="User id", description="User id of the investigator"
-    )
-    affiliation: Affiliation = Field(
+    affiliation: Institution = Field(
         ..., title="Affiliation", description="Affiliation of the investigator"
     )
     is_pc: bool = Field(
@@ -487,13 +461,13 @@ class ProposalListItem(BaseModel):
     proposal_type: ProposalType = Field(
         ..., title="Proposal type", description="Proposal type"
     )
-    principal_investigator: ContactDetails = Field(
+    principal_investigator: ProposalUser = Field(
         ..., title="Principal Investigator", description="Principal Investigator"
     )
-    principal_contact: ContactDetails = Field(
+    principal_contact: ProposalUser = Field(
         ..., title="Principal Contact", description="Principal Contact"
     )
-    liaison_astronomer: Optional[ContactDetails] = Field(
+    liaison_astronomer: Optional[FullName] = Field(
         ..., title="Liaison Astronomer", description="Liaison Astronomer"
     )
 

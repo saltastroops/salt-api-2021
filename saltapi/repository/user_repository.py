@@ -1,7 +1,7 @@
 import hashlib
 import secrets
 import uuid
-from typing import List, cast
+from typing import Any, Dict, List, cast
 
 from passlib.context import CryptContext
 from sqlalchemy import text
@@ -18,56 +18,90 @@ pwd_context = CryptContext(
 class UserRepository:
     def __init__(self, connection: Connection) -> None:
         self.connection = connection
+        self._get_user_query = """
+SELECT PU.PiptUser_Id           AS id,
+       I1.Email                 AS email,
+       I0.Email                 AS alternative_email,
+       I0.Surname               AS family_name,
+       I0.FirstName             AS given_name,
+       PU.Password              AS password_hash,
+       PU.Username              AS username,
+       P.Partner_Code           AS partner_code,
+       P.Partner_Name           AS partner_name,
+       I.InstituteName_Name     AS institution_name,
+       I2.Institute_Id          AS institution_id,
+       I2.Department            AS department
+FROM PiptUser AS PU
+         JOIN Investigator AS I0 ON PU.PiptUser_Id = I0.PiptUser_Id
+         JOIN Investigator I1 ON PU.Investigator_Id = I1.Investigator_Id
+         JOIN Institute I2 ON I0.Institute_Id = I2.Institute_Id
+         JOIN Partner P ON I2.Partner_Id = P.Partner_Id
+         JOIN InstituteName I ON I2.InstituteName_Id = I.InstituteName_Id
+"""
 
-    def get(self, username: str) -> User:
+    def _get(self, rows: Any) -> User:
+        user = {}
+        for i, row in enumerate(rows):
+            if i == 0:
+                user = {
+                    "id": row.id,
+                    "username": row.username,
+                    "family_name": row.family_name,
+                    "given_name": row.given_name,
+                    "email": row.email,
+                    "alternative_emails": [row.alternative_email]
+                    if row.alternative_email != row.email
+                    else [],
+                    "password_hash": row.password_hash,
+                    "affiliations": [
+                        {
+                            "institution_id": row.institution_id,
+                            "name": row.institution_name,
+                            "department": row.department,
+                            "partner_code": row.partner_code,
+                            "partner_name": row.partner_name,
+                        }
+                    ],
+                }
+            else:
+                if row.alternative_email != row.email:
+                    user["alternative_emails"].append(row.alternative_email)
+                user["affiliations"].append(
+                    {
+                        "institution_id": row.institution_id,
+                        "name": row.institution_name,
+                        "department": row.department,
+                        "partner_code": row.partner_code,
+                        "partner_name": row.partner_name,
+                    }
+                )
+        if not user:
+            raise NotFoundError("Unknown username")
+        return User(**user, roles=self.get_user_roles(user["username"]))
+
+    def get_by_username(self, username: str) -> User:
         """
         Returns the user with a given username.
 
         If the username does not exist, a NotFoundError is raised.
         """
-        stmt = text(
-            """
-SELECT PU.PiptUser_Id  AS id,
-       Email           AS email,
-       Surname         AS family_name,
-       FirstName       AS given_name,
-       Password        AS password_hash,
-       Username        AS username
-FROM PiptUser AS PU
-         JOIN Investigator AS I ON (PU.Investigator_Id = I.Investigator_Id)
-WHERE PU.Username = :username
-        """
-        )
+        query = self._get_user_query + """WHERE PU.Username = :username"""
+        stmt = text(query)
         result = self.connection.execute(stmt, {"username": username})
-        user = result.one_or_none()
-        if not user:
-            raise NotFoundError("Unknown username")
-        return User(**user, roles=self.get_user_roles(username))
+        user = self._get(result)
+        return user
 
-    def get_by_id(self, user_id: str) -> User:
+    def get(self, user_id: int) -> User:
         """
         Returns the user with a given user id.
 
         If there is no such user, a NotFoundError is raised.
         """
-        stmt = text(
-            """
-SELECT PU.PiptUser_Id  AS id,
-       Email           AS email,
-       Surname         AS family_name,
-       FirstName       AS given_name,
-       Password        AS password_hash,
-       Username        AS username
-FROM PiptUser PU
-         JOIN Investigator I ON (PU.Investigator_Id = I.Investigator_Id)
-WHERE PU.PiptUser_Id = :pipt_user_id
-        """
-        )
-        result = self.connection.execute(stmt, {"pipt_user_id": user_id})
-        user = result.one_or_none()
-        if not user:
-            raise NotFoundError("Unknown email address")
-        return User(**user, roles=self.get_user_roles(user.username))
+        query = self._get_user_query + """\nWHERE PU.PiptUser_Id = :user_id"""
+        stmt = text(query)
+        result = self.connection.execute(stmt, {"user_id": user_id})
+        user = self._get(result)
+        return user
 
     def get_by_email(self, email: str) -> User:
         """
@@ -75,24 +109,39 @@ WHERE PU.PiptUser_Id = :pipt_user_id
 
         If there is no such user, a NotFoundError is raised.
         """
+        query = self._get_user_query + """\nWHERE I1.Email = :email"""
+        stmt = text(query)
+        result = self.connection.execute(stmt, {"email": email})
+        user = self._get(result)
+        return user
+
+    def get_users(self) -> List[Dict[str, Any]]:
+        """
+        Returns a list of users information
+        """
         stmt = text(
             """
-SELECT PU.PiptUser_Id  AS id,
-       Email           AS email,
-       Surname         AS family_name,
-       FirstName       AS given_name,
-       Password        AS password_hash,
-       Username        AS username
+SELECT DISTINCT PU.PiptUser_Id          AS id,
+                I.FirstName             AS given_name,
+                I.Surname               AS family_name
 FROM PiptUser PU
-         JOIN Investigator I ON (PU.PiptUser_Id = I.PiptUser_Id)
-WHERE I.Email = :email
+         JOIN Investigator I ON I.Investigator_Id = PU.Investigator_Id
+WHERE I.FirstName != 'Guest'
+ORDER BY I.Surname, I.FirstName
         """
         )
-        result = self.connection.execute(stmt, {"email": email})
-        user = result.one_or_none()
-        if not user:
-            raise NotFoundError("Unknown email address")
-        return User(**user, roles=self.get_user_roles(user.username))
+
+        result = self.connection.execute(stmt)
+
+        users = [
+            {
+                "id": row.id,
+                "given_name": row.given_name,
+                "family_name": row.family_name,
+            }
+            for row in result
+        ]
+        return users
 
     def create(self, new_user_details: NewUserDetails) -> None:
         """Creates a new user."""
@@ -117,13 +166,13 @@ WHERE I.Email = :email
         stmt = text(
             """
 INSERT INTO Investigator (Institute_Id, FirstName, Surname, Email)
-VALUES (:institute_id, :given_name, :family_name, :email)
+VALUES (:institution_id, :given_name, :family_name, :email)
         """
         )
         result = self.connection.execute(
             stmt,
             {
-                "institute_id": new_user_details.institute_id,
+                "institution_id": new_user_details.institution_id,
                 "given_name": new_user_details.given_name,
                 "family_name": new_user_details.family_name,
                 "email": new_user_details.email,
@@ -175,38 +224,39 @@ WHERE Investigator_Id = :investigator_id
     def _does_username_exist(self, username: str) -> bool:
         """Check whether a username exists already."""
         try:
-            self.get(username)
+            self.get_by_username(username)
         except NotFoundError:
             return False
 
         return True
 
-    def update(self, username: str, user_update: UserUpdate) -> None:
+    def update(self, user_id: int, user_update: UserUpdate) -> None:
         """Updates a user's details."""
         if user_update.password:
-            self._update_password(username, user_update.password)
-        new_user_details = self._new_user_details(username, user_update)
+            self._update_password(user_id, user_update.password)
+        new_user_details = self._new_user_details(user_id, user_update)
         new_username = cast(str, new_user_details.username)
-        self._update_username(old_username=username, new_username=new_username)
+        self._update_username(user_id=user_id, new_username=new_username)
 
-    def _new_user_details(self, username: str, user_update: UserUpdate) -> UserUpdate:
+    def _new_user_details(self, user_id: int, user_update: UserUpdate) -> UserUpdate:
         """
         Returns the new user details of a user.
 
         If the given user update has a non-None value for a property, that value should
         replace the existing value; otherwise the existing value is kept.
         """
-        user = self.get(username)
+        user = self.get(user_id)
         return UserUpdate(
             username=user_update.username if user_update.username else user.username,
             password=user_update.password,
         )
 
-    def _update_username(self, old_username: str, new_username: str) -> None:
+    def _update_username(self, user_id: int, new_username: str) -> None:
         """
         Updates the username of a user.
         """
-        if new_username == old_username:
+        user = self.get(user_id)
+        if new_username == user.username:
             return
 
         # Check that the new username isn't in use already
@@ -217,11 +267,11 @@ WHERE Investigator_Id = :investigator_id
             """
 UPDATE PiptUser
 SET Username = :new_username
-WHERE Username = :old_username
+WHERE PiptUser_Id = :user_id
         """
         )
         self.connection.execute(
-            stmt, {"new_username": new_username, "old_username": old_username}
+            stmt, {"new_username": new_username, "user_id": user_id}
         )
 
     def is_investigator(self, username: str, proposal_code: str) -> bool:
@@ -457,6 +507,13 @@ WHERE PS.PiptSetting_Name = 'RightAdmin'
         result = self.connection.execute(stmt, {"username": username})
         return cast(int, result.scalar()) > 0
 
+    def is_engineer(self) -> bool:
+        """
+        Should check whether the user is an engineer
+        """
+        # TODO Method need to be implemented.
+        return False
+
     @staticmethod
     def get_password_hash(password: str) -> str:
         """Hash a plain text password."""
@@ -475,7 +532,7 @@ ON DUPLICATE KEY UPDATE Password = :password
             stmt, {"username": username, "password": new_password_hash}
         )
 
-    def _update_password(self, username: str, password: str) -> None:
+    def _update_password(self, user_id: int, password: str) -> None:
         # TODO: Uncomment once the Password table exists.
         # self._update_password_hash(username, password)
         password_hash = self.get_password_hash(password)
@@ -483,10 +540,10 @@ ON DUPLICATE KEY UPDATE Password = :password
             """
 UPDATE PiptUser
 SET Password = :password
-WHERE Username = :username
+WHERE PiptUser_Id = :user_id
         """
         )
-        self.connection.execute(stmt, {"username": username, "password": password_hash})
+        self.connection.execute(stmt, {"user_id": user_id, "password": password_hash})
 
     @staticmethod
     def get_new_password_hash(password: str) -> str:
@@ -510,7 +567,7 @@ WHERE Username = :username
         If the combination of username and password is valid, then the corresponding
         user is returned. Otherwise a NotFoundError is raised.
         """
-        user = self.get(username)
+        user = self.get_by_username(username)
         if not user:
             raise NotFoundError()
         if not self.verify_password(password, user.password_hash):
