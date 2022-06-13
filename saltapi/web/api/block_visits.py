@@ -41,36 +41,6 @@ def get_block_visit(
         return block_visit
 
 
-@router.get(
-    "/{block_visit_id}/status",
-    summary="Get the status of a block visit",
-    response_model=BlockVisitStatus,
-)
-def get_block_visit_status(
-    block_visit_id: int = Path(
-        ..., title="Block visit id", description="Unique identifier for a block visit"
-    ),
-    user: User = Depends(get_current_user),
-) -> _BlockVisitStatus:
-    """
-    Returns the status of a block visit.
-
-    The following status values are possible.
-
-    Status | Description
-    --- | ---
-    Accepted | The observations are accepted.
-    In queue | The observations are in a queue.
-    Rejected | The observations are rejected.
-    """
-    with UnitOfWork() as unit_of_work:
-        permission_service = services.permission_service(unit_of_work.connection)
-        permission_service.check_permission_to_view_block_visit(user, block_visit_id)
-
-        block_service = services.block_service(unit_of_work.connection)
-        return block_service.get_block_visit_status(block_visit_id)
-
-
 @router.patch("/{block_visit_id}/status", summary="Update the status of a block visit")
 def update_block_visit_status(
     block_visit_id: int = Path(
@@ -92,7 +62,21 @@ def update_block_visit_status(
 ) -> None:
     """
     Updates the status of a block visit with the given the block visit id.
-    See the corresponding GET request for a description of the available status values.
+    The following status and rejection_reason values are accepted.
+
+    Status | Description
+    --- | ---
+    Accepted | The observations are accepted.
+    In queue | The observations are in a queue.
+    Rejected | The observations are rejected.
+
+    Rejection reason
+    ---
+    Instrument technical problems
+    Observing conditions not met
+    Phase 2 problems
+    Telescope technical problems
+    Other
     """
 
     with UnitOfWork() as unit_of_work:

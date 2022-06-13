@@ -235,25 +235,6 @@ WHERE BV.BlockVisit_Id = :block_visit_id
         except NoResultFound:
             raise NotFoundError("Unknown block visit id")
 
-    def get_block_visit_status(self, block_visit_id: int) -> str:
-        """
-        Return the block visit status for a block visit id.
-        """
-        stmt = text(
-            """
-SELECT BVS.BlockVisitStatus
-FROM BlockVisitStatus BVS
-         JOIN BlockVisit BV ON BVS.BlockVisitStatus_Id = BV.BlockVisitStatus_Id
-WHERE BV.BlockVisit_Id = :block_visit_id
-  AND BVS.BlockVisitStatus NOT IN ('Deleted');
-        """
-        )
-        try:
-            result = self.connection.execute(stmt, {"block_visit_id": block_visit_id})
-            return cast(str, result.scalar_one())
-        except NoResultFound:
-            raise NotFoundError(f"Unknown block visit id: {block_visit_id}")
-
     def update_block_visit_status(
         self, block_visit_id: int, status: str, rejection_reason: Optional[str]
     ) -> None:

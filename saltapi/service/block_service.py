@@ -37,13 +37,6 @@ class BlockService:
 
         return self.block_repository.get_block_visit(block_visit_id)
 
-    def get_block_visit_status(self, block_visit_id: int) -> BlockVisitStatus:
-        """
-        Return the block visit status for a block visit id.
-        """
-
-        return self.block_repository.get_block_visit_status(block_visit_id)
-
     def update_block_visit_status(
         self,
         block_visit_id: int,
