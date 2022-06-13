@@ -16,6 +16,16 @@ class BlockVisitStatus(str, Enum):
     REJECTED = "Rejected"
 
 
+class BlockRejectionReason(str, Enum):
+    """Block rejection reason."""
+
+    INSTRUMENT_TECHNICAL_PROBLEMS = "Instrument technical problems"
+    OBSERVING_CONDITIONS_NOT_MET = "Observing conditions not met"
+    PHASE_2_PROBLEMS = "Phase 2 problems"
+    TELESCOPE_TECHNICAL_PROBLEMS = "Telescope technical problems"
+    OTHER = "Other"
+
+
 class BaseBlockVisit(BaseModel):
     """A block visit, without block details."""
 
@@ -32,7 +42,7 @@ class BaseBlockVisit(BaseModel):
         title="Block visit status",
         description="Status of the block visit",
     )
-    rejection_reason: Optional[str] = Field(
+    rejection_reason: Optional[BlockRejectionReason] = Field(
         None,
         title="Rejection reason",
         description="Reason why the block visit has been rejected",

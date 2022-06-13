@@ -1,7 +1,8 @@
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from saltapi.repository.block_repository import BlockRepository
 from saltapi.service.block import Block, BlockVisit, BlockVisitStatus
+from saltapi.web.schema.common import BlockRejectionReason
 
 
 class BlockService:
@@ -43,9 +44,16 @@ class BlockService:
 
         return self.block_repository.get_block_visit_status(block_visit_id)
 
-    def update_block_visit_status(self, block_visit_id: int, status: str) -> None:
+    def update_block_visit_status(
+        self,
+        block_visit_id: int,
+        status: BlockVisitStatus,
+        reason: Optional[BlockRejectionReason],
+    ) -> None:
         """
         Set the block visit status for a block visit id.
         """
 
-        return self.block_repository.update_block_visit_status(block_visit_id, status)
+        return self.block_repository.update_block_visit_status(
+            block_visit_id, status, reason
+        )

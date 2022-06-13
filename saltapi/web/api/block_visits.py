@@ -1,3 +1,5 @@
+from typing import Optional
+
 from fastapi import APIRouter, Body, Depends, Path
 
 from saltapi.repository.unit_of_work import UnitOfWork
@@ -6,7 +8,11 @@ from saltapi.service.block import BlockVisit as _BlockVisit
 from saltapi.service.block import BlockVisitStatus as _BlockVisitStatus
 from saltapi.service.user import User
 from saltapi.web import services
-from saltapi.web.schema.common import BaseBlockVisit, BlockVisitStatus
+from saltapi.web.schema.common import (
+    BaseBlockVisit,
+    BlockRejectionReason,
+    BlockVisitStatus,
+)
 
 router = APIRouter(prefix="/block-visits", tags=["Block visit"])
 
@@ -65,7 +71,7 @@ def get_block_visit_status(
         return block_service.get_block_visit_status(block_visit_id)
 
 
-@router.put("/{block_visit_id}/status", summary="Update the status of a block visit")
+@router.patch("/{block_visit_id}/status", summary="Update the status of a block visit")
 def update_block_visit_status(
     block_visit_id: int = Path(
         ..., title="Block visit id", description="Unique identifier for a block visit"
@@ -75,6 +81,12 @@ def update_block_visit_status(
         alias="status",
         title="Block visit status",
         description="New block visit status.",
+    ),
+    rejection_reason: Optional[BlockRejectionReason] = Body(
+        None,
+        alias="reason",
+        title="Block visit rejection  reason",
+        description="New block visit rejection reason.",
     ),
     user: User = Depends(get_current_user),
 ) -> None:
@@ -89,5 +101,5 @@ def update_block_visit_status(
 
         block_service = services.block_service(unit_of_work.connection)
         return block_service.update_block_visit_status(
-            block_visit_id, block_visit_status
+            block_visit_id, block_visit_status, rejection_reason
         )
