@@ -272,7 +272,7 @@ WHERE RPP.RssPolarimetryPattern_Id = :pattern_id
         return {row.order: row.station_name.split("_")[1] for row in result}
 
     def _quarter_wave_plate_angles(
-        self, polarimetry_pattern_id: int
+            self, polarimetry_pattern_id: int
     ) -> Dict[int, float]:
         """
         Return a dictionary of order (step number) and corresponding quarter-wave
@@ -294,7 +294,7 @@ WHERE RPP.RssPolarimetryPattern_Id = :pattern_id
         return {row.order: row.station_name.split("_")[1] for row in result}
 
     def _wave_plate_angles(
-        self, polarimetry_pattern_id: int
+            self, polarimetry_pattern_id: int
     ) -> List[Dict[str, Optional[float]]]:
         """
         Return the sequence of half-wave plate and quarter-wave plate angles in a
@@ -403,7 +403,7 @@ ORDER BY is_preferred_lamp DESC
         ]
         return entries
 
-    def get_mask_in_magazine(self, mask_type: Optional[str] = None) -> List[str]:
+    def get_mask_in_magazine(self, mask_types: List[str]) -> List[str]:
         """
         The list of masks in the magazine, optionally filtered by a mask type.
         """
@@ -414,10 +414,10 @@ FROM RssCurrentMasks AS RCM
     JOIN RssMask AS RM ON RCM.RssMask_Id = RM.RssMask_Id
     JOIN RssMaskType AS RMT ON RM.RssMaskType_Id = RMT.RssMaskType_Id
         """
-        if mask_type:
-            stmt += " WHERE RssMaskType = :mask_type"
+        if len(mask_types) > 0:
+            stmt += " WHERE RssMaskType IN :mask_type"
 
-        results = self.connection.execute(text(stmt), {"mask_type": mask_type})
+        results = self.connection.execute(text(stmt), {"mask_type": mask_types})
 
         return [row.barcode for row in results]
 
@@ -442,7 +442,7 @@ FROM RssCurrentMasks AS RCM
         return liaison_astronomers
 
     def _get_barcodes_for_encoded_contents(
-        self, encoded_contents: Set[str]
+            self, encoded_contents: Set[str]
     ) -> Dict[str, List[str]]:
         """
         Get the barcodes for a set of encoded mask contents.
@@ -463,7 +463,7 @@ WHERE EncodedContent IN :encoded_contents
         )
         ec = defaultdict(list)
         for row in self.connection.execute(
-            stmt, {"encoded_contents": tuple(encoded_contents)}
+                stmt, {"encoded_contents": tuple(encoded_contents)}
         ):
             ec[row.encoded_content].append(row.barcode)
         return ec
@@ -489,13 +489,13 @@ GROUP BY B.Block_Id
 
         remaining_nights = dict()
         for n in self.connection.execute(
-            stmt, {"block_ids": tuple(block_ids), "start": start, "end": end}
+                stmt, {"block_ids": tuple(block_ids), "start": start, "end": end}
         ):
             remaining_nights[n.block_id] = n.nights
         return remaining_nights
 
     def get_mos_masks_metadata(
-        self, from_semester: str, to_semester: str
+            self, from_semester: str, to_semester: str
     ) -> List[Dict[str, Any]]:
 
         stmt = text(
@@ -598,7 +598,7 @@ WHERE Barcode = :barcode
         return {**row}
 
     def update_mos_mask_metadata(
-        self, mos_mask_metadata: Dict[str, Any]
+            self, mos_mask_metadata: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Update MOS mask metadata"""
         stmt = text(
@@ -612,7 +612,7 @@ WHERE RssMask_Id = ( SELECT RssMask_Id FROM RssMask WHERE Barcode = :barcode )
 
         return self.get_mos_mask_metadata(mos_mask_metadata["barcode"])
 
-    def get_obsolete_rss_masks_in_magazine(self, mask_type: Optional[str]) -> List[str]:
+    def get_obsolete_rss_masks_in_magazine(self, mask_types: List[str]) -> List[str]:
         """
         The list of obsolete RSS masks, optionally filtered by a mask type.
         """
@@ -635,21 +635,21 @@ WHERE CONCAT(S.Year, '-', S.Semester) >= :semester
     AND (BlockStatus = "Active" OR BlockStatus = "On Hold")
     AND NVisits >= NDone
 """
-        if mask_type:
-            stmt += " AND RssMaskType = :mask_type"
+        if len(mask_types) > 0:
+            stmt += " AND RssMaskType IN :mask_type"
         needed_masks = [
             m["barcode"]
             for m in self.connection.execute(
                 text(stmt),
                 {
                     "semester": semester_of_datetime(datetime.now().astimezone()),
-                    "mask_type": mask_type,
+                    "mask_types": mask_types,
                 },
             )
         ]
 
         obsolete_masks = []
-        for m in self.get_mask_in_magazine(mask_type):
+        for m in self.get_mask_in_magazine(mask_types):
             if m not in needed_masks:
                 obsolete_masks.append(m)
         return obsolete_masks

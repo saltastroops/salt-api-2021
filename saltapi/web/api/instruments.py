@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List
 
 from fastapi import APIRouter, Body, Depends, Path, Query
 
@@ -22,16 +22,33 @@ router = APIRouter(tags=["Instrument"])
     response_model=List[str],
 )
 def get_rss_masks_in_magazine(
-    mask_type: Optional[str] = Query(
-        None, title="Mask type", description="The mask type."
-    ),
+    mask_types: List[str] = Query([], title="Mask type", description="The mask type."),
 ) -> List[str]:
     """
-    Returns the list of masks in the magazine, optionally filtered by mask type.
+    Returns the list of masks in the magazine, optionally filtered by mask types.
+
+    The following mask types values are possible.
+
+    Mask Type | Description
+    --- | ---
+    Longslit | Single, 8 arcmin long, 0.6/1.0/1.25/1.5/2.0/3.0/4.0 arcsec wide slit (- version 2).
+               Single, 4 arcmin long, 0.6/1.25 arcsec wide slit.
+               Single, frame transfer, 1.5 arcsec wide slit.
+    MOS | N/A.
+    Imaging | Open, 8 arcmin diameter circular mask.
+              8'x144 rows imaging slot mode mask.
+              8x4 arcmin imaging frame transfer mask.
+              Open, 4'x8' rectangular polarimetric imaging mask.
+    Engineering | 1/3" x 10" slitlets in a single 8' long column.
+                  BLANK mask.
+                  Carbon fiber 80 micron pinholes in a grid with 5x5mm spacings, similar to P000000N99.
+                  OCKERT mask - 5x5 grid of pinholes.
+                  Geometry mask - small holes spaced 5mm apart along the 8' vertical axis.
+                  Fabry-Perot ghost pinholes.
     """
     with UnitOfWork() as unit_of_work:
         instrument_service = services.instrument_service(unit_of_work.connection)
-        return instrument_service.get_rss_masks_in_magazine(mask_type)
+        return instrument_service.get_rss_masks_in_magazine(mask_types)
 
 
 @router.get(
@@ -103,8 +120,8 @@ def update_mos_mask_metadata(
     response_model=List[str],
 )
 def get_obsolete_rss_masks_in_magazine(
-    mask_type: Optional[str] = Query(
-        None, title="Mask type", description="The mask type."
+    mask_types: List[str] = Query(
+        [], title="Mask types", description="The mask types."
     ),
 ) -> List[str]:
     """
@@ -112,4 +129,4 @@ def get_obsolete_rss_masks_in_magazine(
     """
     with UnitOfWork() as unit_of_work:
         instrument_service = services.instrument_service(unit_of_work.connection)
-        return instrument_service.get_obsolete_rss_masks_in_magazine(mask_type)
+        return instrument_service.get_obsolete_rss_masks_in_magazine(mask_types)
