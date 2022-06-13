@@ -1,4 +1,5 @@
 import smtplib
+import warnings
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from typing import List
@@ -10,6 +11,12 @@ class MailService:
     @staticmethod
     def send_email(to: List[str], message: MIMEMultipart) -> None:
         settings = get_settings()
+        if not settings.smtp_server:
+            warnings.warn(
+                "No email is sent as no SMTP server is defined. Set the environment "
+                "variable SMTP_SERVER to define the server."
+            )
+            return
         smtp_obj = smtplib.SMTP(settings.smtp_server)
         smtp_obj.sendmail(
             msg=message.as_string(), from_addr=settings.from_email, to_addrs=to
