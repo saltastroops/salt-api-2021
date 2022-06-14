@@ -36,7 +36,6 @@ def get_scheduled_block(user: User = Depends(get_current_user)) -> _Block:
             for els in models:
                 # This will give a NodeList item
                 name = els.getElementsByTagName('Name')
-                print(name.item(0).firstChild.data)
                 # Which needs to be converted to a DOM Element by calling item(0)
                 if name.item(0).firstChild.data == "block id":
                     value = els.getElementsByTagName('Val')
