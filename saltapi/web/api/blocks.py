@@ -1,4 +1,6 @@
+import requests
 from fastapi import APIRouter, Body, Depends, Path
+from xml.dom import minidom
 
 from saltapi.exceptions import AuthorizationError
 from saltapi.repository.unit_of_work import UnitOfWork
@@ -6,6 +8,7 @@ from saltapi.service.authentication_service import get_current_user
 from saltapi.service.block import Block as _Block
 from saltapi.service.block import BlockStatus as _BlockStatus
 from saltapi.service.user import User, Role
+from saltapi.settings import get_settings
 from saltapi.web import services
 from saltapi.web.schema.block import Block, BlockStatus, BlockStatusValue
 
@@ -26,7 +29,40 @@ def get_scheduled_block(user: User = Depends(get_current_user)) -> _Block:
         if permission_service.check_user_has_role(user, Role.ADMINISTRATOR) \
                 or permission_service.check_user_has_role(user, Role.SALT_ASTRONOMER) \
                 or permission_service.check_user_has_role(user, Role.SALT_OPERATOR):
-            return block_service.get_block(30888)
+            file = requests.get(get_settings().tcs_icd)
+            xml_file = minidom.parseString(file.text)
+            models = xml_file.getElementsByTagName('String')
+            block_id = None
+            for els in models:
+                # This will give a NodeList item
+                name = els.getElementsByTagName('Name')
+                print(name.item(0).firstChild.data)
+                # Which needs to be converted to a DOM Element by calling item(0)
+                if name.item(0).firstChild.data == "block id":
+                    value = els.getElementsByTagName('Val')
+                    block_id = value.item(0).firstChild.data
+            if not block_id:
+                raise FileNotFoundError()
+            return block_service.get_block(block_id)
+        raise AuthorizationError()
+
+
+@router.get(
+    "/next-scheduled-block", summary="Scheduled block.", response_model=Block
+)
+def get_next_scheduled_block(user: User = Depends(get_current_user)) -> _Block:
+    """
+    Get next scheduled block.
+    """
+
+    with UnitOfWork() as unit_of_work:
+        permission_service = services.permission_service(unit_of_work.connection)
+        block_service = services.block_service(unit_of_work.connection)
+        if permission_service.check_user_has_role(user, Role.ADMINISTRATOR) \
+                or permission_service.check_user_has_role(user, Role.SALT_ASTRONOMER) \
+                or permission_service.check_user_has_role(user, Role.SALT_OPERATOR):
+
+            return block_service.get_next_scheduled_block()
         raise AuthorizationError()
 
 

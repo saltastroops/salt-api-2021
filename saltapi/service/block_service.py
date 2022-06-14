@@ -49,3 +49,9 @@ class BlockService:
         """
 
         return self.block_repository.update_block_visit_status(block_visit_id, status)
+
+    def get_next_scheduled_block(self) -> Block:
+        """
+        Get next scheduled block.
+        """
+        return self.block_repository.get_next_scheduled_block()
