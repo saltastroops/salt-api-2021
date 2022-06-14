@@ -19,6 +19,7 @@ from saltapi.web.api.proposals import router as proposals_router
 from saltapi.web.api.submissions import router as submissions_router
 from saltapi.web.api.user import router as user_router
 from saltapi.web.api.users import router as users_router
+from saltapi.web.api.proposal_progress import router as progress_router
 
 app = FastAPI()
 
@@ -54,6 +55,7 @@ async def authorization_error_handler(
     return JSONResponse(status_code=403, content={"message": "Forbidden"})
 
 
+app.include_router(progress_router)
 app.include_router(blocks_router)
 app.include_router(proposals_router)
 app.include_router(authentication_router)

@@ -7,7 +7,7 @@ from saltapi.repository.proposal_repository import ProposalRepository
 from saltapi.service.create_html import create_html
 from saltapi.service.proposal import Proposal, ProposalListItem
 from saltapi.service.user import User
-from saltapi.settings import get_settings, next_semester
+from saltapi.settings import get_settings
 from saltapi.util import semester_start, next_semester
 from saltapi.web.schema.common import Semester, ProposalCode
 

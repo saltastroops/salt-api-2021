@@ -1,5 +1,4 @@
 from datetime import date
-from pprint import pprint
 from typing import List, Optional
 
 from fastapi import (
