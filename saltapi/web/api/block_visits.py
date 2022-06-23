@@ -5,7 +5,6 @@ from fastapi import APIRouter, Body, Depends, Path
 from saltapi.repository.unit_of_work import UnitOfWork
 from saltapi.service.authentication_service import get_current_user
 from saltapi.service.block import BlockVisit as _BlockVisit
-from saltapi.service.block import BlockVisitStatus as _BlockVisitStatus
 from saltapi.service.user import User
 from saltapi.web import services
 from saltapi.web.schema.common import (
@@ -55,7 +54,7 @@ def update_block_visit_status(
     rejection_reason: Optional[BlockRejectionReason] = Body(
         None,
         alias="reason",
-        title="Block visit rejection  reason",
+        title="Block visit rejection reason",
         description="New block visit rejection reason.",
     ),
     user: User = Depends(get_current_user),
