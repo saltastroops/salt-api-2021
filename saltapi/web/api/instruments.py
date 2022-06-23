@@ -31,20 +31,13 @@ def get_rss_masks_in_magazine(
 
     Mask Type | Description
     --- | ---
-    Longslit | Single, 8 arcmin long, 0.6/1.0/1.25/1.5/2.0/3.0/4.0 arcsec wide slit (- version 2).
-               Single, 4 arcmin long, 0.6/1.25 arcsec wide slit.
-               Single, frame transfer, 1.5 arcsec wide slit.
-    MOS | N/A.
-    Imaging | Open, 8 arcmin diameter circular mask.
-              8'x144 rows imaging slot mode mask.
-              8x4 arcmin imaging frame transfer mask.
-              Open, 4'x8' rectangular polarimetric imaging mask.
-    Engineering | 1/3" x 10" slitlets in a single 8' long column.
-                  BLANK mask.
-                  Carbon fiber 80 micron pinholes in a grid with 5x5mm spacings, similar to P000000N99.
-                  OCKERT mask - 5x5 grid of pinholes.
-                  Geometry mask - small holes spaced 5mm apart along the 8' vertical axis.
-                  Fabry-Perot ghost pinholes.
+    Longslit | Single slit of a given size – {length} and {width}.
+
+    MOS | Usually a prepared list of slits.
+
+    Imaging | Open, circular/rectangular mask of a given size.
+
+    Engineering | A mask type (BLANK, Carbon fiber, Geometry and Fabry-Perot) with pinholes of a given size and spacings.
     """
     with UnitOfWork() as unit_of_work:
         instrument_service = services.instrument_service(unit_of_work.connection)
@@ -121,7 +114,7 @@ def update_mos_mask_metadata(
 )
 def get_obsolete_rss_masks_in_magazine(
     mask_types: List[str] = Query(
-        [], title="Mask types", description="The mask types."
+        [], title="Mask types", description="The mask to types to include."
     ),
 ) -> List[str]:
     """
