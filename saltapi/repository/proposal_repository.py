@@ -1613,13 +1613,16 @@ WHERE PC.Proposal_Code = "2020-1-MLT-005"
         stmt = text(
             """
 SELECT *,
-    P1MinimumUsefulTime 						AS requested_time,
+    P1MinimumUsefulTime 				AS requested_time,
     MaxSeeing							AS maximum_seeing,
     Transparency						AS transparency,
     ObservingConditionsDescription		AS description_of_observing_constraints,
     TimeRequestChangeReasons			AS why_time_request_changed,
     StatusSummary						AS summary_of_proposal_status,
-    StrategyChanges						AS strategy_changes
+    StrategyChanges						AS strategy_changes,
+    CONCAT(S.`Year`, '-', S.Semester)   AS semester,
+    ReportPath                          AS proposal_progress_pdf,
+    SupplementaryPath                   AS additional_pdf
 FROM P1ObservingConditions OC
     JOIN Transparency T ON (OC.Transparency_Id = T.Transparency_Id)
     JOIN ProposalCode PC ON (OC.ProposalCode_Id = PC.ProposalCode_Id)
@@ -1633,7 +1636,7 @@ FROM P1ObservingConditions OC
         AND OC.Semester_Id = PP.Semester_Id
     )
 WHERE PC.Proposal_Code = :proposal_code
-    AND CONCAT(S.`Year`, "-", S.Semester) = :semester
+    AND CONCAT(S.`Year`, '-', S.Semester) = :semester
     """
         )
         try:
@@ -1660,7 +1663,7 @@ WHERE PC.Proposal_Code = :proposal_code
                     progress_report["strategy_changes"] = row.strategy_changes
                 progress_report["previous_time_requests"] = \
                     self.get_previous_time_requests(proposal_code)
-                progress_report["observing_constraints"] = \
+                progress_report["last_observing_constraints"] = \
                     self.get_observing_conditions(proposal_code, semester)
                 progress_report["requested_amount"] = \
                     self._get_partner_requested_percentage(proposal_code, semester)

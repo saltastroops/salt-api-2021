@@ -383,7 +383,7 @@ class PartnerRequestedPercentage(BaseModel):
         ..., title="Partner name ",
         description="Name of the partner."
     ),
-    percentage: float = Field(
+    requested_percentage: float = Field(
         ..., title="Percentage",
         description="Percentage requested from a partner."
     )
@@ -584,7 +584,7 @@ class ProposalProgress(BaseModel):
         title="Previous tim requests",
         description="The request from previous semesters"
     )
-    observing_constraints: ObservingConstraints = Field(
+    last_observing_constraints: ObservingConstraints = Field(
         ...,
         title="Last requested observing conditions",
         description="The last observing conditions."

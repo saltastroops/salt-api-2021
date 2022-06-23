@@ -137,5 +137,5 @@ def semester_of_datetime(t: datetime) -> str:
     return f"{year}-{semester}"
 
 
-def next_semester() -> Semester:
-    return Semester(semester_of_datetime(datetime.now() + relativedelta(months=+6)))
+def next_semester() -> str:
+    return Semester(semester_of_datetime(datetime.now() + relativedelta(months=+6, hours=12)))
