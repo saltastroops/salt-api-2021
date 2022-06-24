@@ -7,29 +7,38 @@ RSS_MASKS_IN_MAGAZINE_URL = "/rss/masks-in-magazine"
 def test_should_return_list_of_rss_masks_in_magazine(
     client: TestClient,
 ) -> None:
-    response = client.get(
+    response_all_masks = client.get(
         RSS_MASKS_IN_MAGAZINE_URL + "/",
     )
-    assert response.status_code == status.HTTP_200_OK
-    assert len(response.json()) > 1
+    assert response_all_masks.status_code == status.HTTP_200_OK
 
-
-def test_should_return_list_of_longslit_rss_masks_in_magazine(
-    client: TestClient,
-) -> None:
-    response = client.get(
+    response_longslit_masks = client.get(
         RSS_MASKS_IN_MAGAZINE_URL + "/", params={"mask_types": ["Longslit"]}
     )
-    assert response.status_code == status.HTTP_200_OK
-    assert len(response.json()) > 1
+    assert response_longslit_masks.status_code == status.HTTP_200_OK
 
-
-def test_should_return_list_of_rss_masks_in_magazine_filtered_by_mask_types(
-    client: TestClient,
-) -> None:
-    response = client.get(
+    response_mos_masks = client.get(
         RSS_MASKS_IN_MAGAZINE_URL + "/",
-        params={"mask_types": ["MOS", "Imaging", "Engineering"]},
+        params={"mask_types": ["MOS"]},
     )
-    assert response.status_code == status.HTTP_200_OK
-    assert len(response.json()) > 1
+    assert response_mos_masks.status_code == status.HTTP_200_OK
+
+    response_imaging_masks = client.get(
+        RSS_MASKS_IN_MAGAZINE_URL + "/",
+        params={"mask_types": ["Imaging"]},
+    )
+    assert response_imaging_masks.status_code == status.HTTP_200_OK
+
+    response_engineering_masks = client.get(
+        RSS_MASKS_IN_MAGAZINE_URL + "/",
+        params={"mask_types": ["Engineering"]},
+    )
+    assert response_engineering_masks.status_code == status.HTTP_200_OK
+    assert len(response_all_masks.json()) == sum(
+        [
+            len(response_longslit_masks.json()),
+            len(response_mos_masks.json()),
+            len(response_imaging_masks.json()),
+            len(response_engineering_masks.json()),
+        ]
+    )

@@ -272,7 +272,7 @@ WHERE RPP.RssPolarimetryPattern_Id = :pattern_id
         return {row.order: row.station_name.split("_")[1] for row in result}
 
     def _quarter_wave_plate_angles(
-            self, polarimetry_pattern_id: int
+        self, polarimetry_pattern_id: int
     ) -> Dict[int, float]:
         """
         Return a dictionary of order (step number) and corresponding quarter-wave
@@ -294,7 +294,7 @@ WHERE RPP.RssPolarimetryPattern_Id = :pattern_id
         return {row.order: row.station_name.split("_")[1] for row in result}
 
     def _wave_plate_angles(
-            self, polarimetry_pattern_id: int
+        self, polarimetry_pattern_id: int
     ) -> List[Dict[str, Optional[float]]]:
         """
         Return the sequence of half-wave plate and quarter-wave plate angles in a
@@ -418,7 +418,7 @@ FROM RssCurrentMasks AS RCM
             stmt += " WHERE RssMaskType IN :mask_type"
 
         results = self.connection.execute(text(stmt), {"mask_type": mask_types})
-
+        print([row.barcode for row in results])
         return [row.barcode for row in results]
 
     def _get_liaison_astronomers(self, proposal_code_ids: Set[int]) -> Dict[int, str]:
@@ -442,7 +442,7 @@ FROM RssCurrentMasks AS RCM
         return liaison_astronomers
 
     def _get_barcodes_for_encoded_contents(
-            self, encoded_contents: Set[str]
+        self, encoded_contents: Set[str]
     ) -> Dict[str, List[str]]:
         """
         Get the barcodes for a set of encoded mask contents.
@@ -463,7 +463,7 @@ WHERE EncodedContent IN :encoded_contents
         )
         ec = defaultdict(list)
         for row in self.connection.execute(
-                stmt, {"encoded_contents": tuple(encoded_contents)}
+            stmt, {"encoded_contents": tuple(encoded_contents)}
         ):
             ec[row.encoded_content].append(row.barcode)
         return ec
@@ -489,13 +489,13 @@ GROUP BY B.Block_Id
 
         remaining_nights = dict()
         for n in self.connection.execute(
-                stmt, {"block_ids": tuple(block_ids), "start": start, "end": end}
+            stmt, {"block_ids": tuple(block_ids), "start": start, "end": end}
         ):
             remaining_nights[n.block_id] = n.nights
         return remaining_nights
 
     def get_mos_masks_metadata(
-            self, from_semester: str, to_semester: str
+        self, from_semester: str, to_semester: str
     ) -> List[Dict[str, Any]]:
 
         stmt = text(
@@ -598,7 +598,7 @@ WHERE Barcode = :barcode
         return {**row}
 
     def update_mos_mask_metadata(
-            self, mos_mask_metadata: Dict[str, Any]
+        self, mos_mask_metadata: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Update MOS mask metadata"""
         stmt = text(

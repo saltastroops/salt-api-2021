@@ -10,6 +10,7 @@ from saltapi.web.schema.common import Semester
 from saltapi.web.schema.rss import (
     MosBlock,
     MosMaskMetadata,
+    RssMaskType,
     UpdateMosMaskMetadata,
 )
 
@@ -22,7 +23,9 @@ router = APIRouter(tags=["Instrument"])
     response_model=List[str],
 )
 def get_rss_masks_in_magazine(
-    mask_types: List[str] = Query([], title="Mask type", description="The mask type."),
+    mask_types: List[RssMaskType] = Query(
+        [], title="Mask type", description="The mask type."
+    ),
 ) -> List[str]:
     """
     Returns the list of masks in the magazine, optionally filtered by mask types.
@@ -31,13 +34,10 @@ def get_rss_masks_in_magazine(
 
     Mask Type | Description
     --- | ---
-    Longslit | Single slit of a given size – {length} and {width}.
-
-    MOS | Usually a prepared list of slits.
-
-    Imaging | Open, circular/rectangular mask of a given size.
-
-    Engineering | A mask type (BLANK, Carbon fiber, Geometry and Fabry-Perot) with pinholes of a given size and spacings.
+    Longslit | Longslit
+    Imaging | Imaging mask
+    MOS | Mask for multi-object spectroscopy
+    Engineering | Engineering mask.
     """
     with UnitOfWork() as unit_of_work:
         instrument_service = services.instrument_service(unit_of_work.connection)
@@ -113,7 +113,7 @@ def update_mos_mask_metadata(
     response_model=List[str],
 )
 def get_obsolete_rss_masks_in_magazine(
-    mask_types: List[str] = Query(
+    mask_types: List[RssMaskType] = Query(
         [], title="Mask types", description="The mask to types to include."
     ),
 ) -> List[str]:
