@@ -37,7 +37,7 @@ class Settings(BaseSettings):
     from_email: str
 
     # SMTP server for sending emails
-    smtp_server: str
+    smtp_server: Optional[str]
 
     # Directory containing the jar file MappingService.jar for mapping proposals to the
     # database

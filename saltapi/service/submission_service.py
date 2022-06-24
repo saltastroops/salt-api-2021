@@ -175,7 +175,9 @@ class SubmissionService:
             "MAPPING_TOOL_SSDA_USERNAME": settings.mapping_tool_ssda_username,
             "MAPPING_TOOL_SSDA_PASSWORD": settings.mapping_tool_ssda_password,
             "MAPPING_TOOL_SSDA_URL": settings.mapping_tool_ssda_url,
-            "MAPPING_TOOL_SMTP_SERVER": settings.smtp_server,
+            "MAPPING_TOOL_SMTP_SERVER": settings.smtp_server
+            if settings.smtp_server
+            else "",
             "MAPPING_TOOL_FROM_EMAIL": settings.from_email,
             "MAPPING_TOOL_MAILCHIMP_API_KEY": settings.mapping_tool_mailchimp_api_key,
             "MAPPING_TOOL_MAILCHIMP_LIST_ID": settings.mapping_tool_mailchimp_list_id,
@@ -213,6 +215,7 @@ class SubmissionService:
              -submissionIdentifier {submission_identifier}
              -log {settings.mapping_tool_log_dir}/{log_name}
              -user {submitter.username}
+             {'-emails' if settings.smtp_server else ''}
              -convert {settings.mapping_tool_image_conversion_command}
              -save {settings.proposals_dir}
              -file {saved_file.absolute()}
