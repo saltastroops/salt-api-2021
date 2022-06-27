@@ -3,9 +3,17 @@ from typing import Dict, List, Any
 from saltapi.web.schema.common import Semester
 
 
-def create_html(
+"""
+TODO: 
+"create_progress_report_html" is too generic; "create_progress_report_html" might be better.
+
+You might also consider two changes:
+    1. Include this function in the proposal progress module file.
+    2. Move the HTML content into a Jinja2 template file.
+"""
+def create_progress_report_html(
         proposal_code: str,
-        semester: Semester,
+        semester: str,
         previous_requests: List[Dict[str, Any]],
         previous_conditions: Dict[str, Any],
         new_request: Dict[str, any]
@@ -220,6 +228,8 @@ def create_html(
     </body>
 </html>  
     '''
-
+    # "TODO: The result should not be written into a file in the same directory,
+    #         and in production this should even be forbidden.
+    #         The better solution would be to pass a file as a function argument.
     with open('./pdf_report.html', 'w') as f:
         f.write(html_content)

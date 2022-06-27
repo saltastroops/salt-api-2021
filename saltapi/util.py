@@ -138,4 +138,8 @@ def semester_of_datetime(t: datetime) -> str:
 
 
 def next_semester() -> str:
+    """
+    Get the next semester from the current date and time.
+    """
+    # Semesters ends at noon hence +12 hours is necessary.
     return Semester(semester_of_datetime(datetime.now() + relativedelta(months=+6, hours=12)))

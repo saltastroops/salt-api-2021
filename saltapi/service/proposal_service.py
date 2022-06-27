@@ -8,7 +8,7 @@ from dateutil.relativedelta import relativedelta
 
 from saltapi.exceptions import NotFoundError
 from saltapi.repository.proposal_repository import ProposalRepository
-from saltapi.service.create_html import create_html
+from saltapi.service.create_html import create_progress_report_html
 from saltapi.service.proposal import Proposal, ProposalListItem
 from saltapi.service.user import User
 from saltapi.settings import get_settings
@@ -94,7 +94,7 @@ class ProposalService:
             progress_report_data: Dict[str, Any]
     ):
         semester = next_semester()
-        self.repository.insert_progress_report(
+        self.repository.insert_proposal_progress(
             progress_report_data, proposal_code, semester)
 
         requested_time = progress_report_data["requested_time"]
@@ -102,7 +102,7 @@ class ProposalService:
             partner_code = rp["partner_code"]
             partner_percentage = rp["partner_percentage"]
             time_requested_per_partner = requested_time * (partner_percentage / 100)
-            self.repository.insert_progress_report_requested_time(
+            self.repository._insert_progress_report_requested_time(
                 proposal_code=proposal_code,
                 semester=semester,
                 partner_code=partner_code,
@@ -124,7 +124,7 @@ class ProposalService:
             new_request: Dict["str", Any]
     ):
 
-        previous_allocated_requested = self.repository.get_allocated_requested_time(
+        previous_allocated_requested = self.repository.get_allocated_and_requested_time(
             proposal_code)
         previous_observed_time = self.repository.get_observed_time(proposal_code)
         previous_requests = []
@@ -137,7 +137,7 @@ class ProposalService:
                         "allocated_time": ar["allocated_time"],
                         "observed_time": ot["observed_time"]
                     })
-        create_html(
+        create_progress_report_html(
             proposal_code=proposal_code,
             semester=semester,
             previous_requests=previous_requests,
@@ -145,6 +145,8 @@ class ProposalService:
             new_request=new_request
         )
         output_file = "ProposalProgressReport.pdf"
+        # TODO: This should not not be hardcoded (and it should fail in production).
+        #  Rather pass a file as a function argument.
         with open('./pdf_report.html') as f:
             options = {
                 'page-size': 'A4',

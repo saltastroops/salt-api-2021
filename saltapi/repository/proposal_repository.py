@@ -1323,6 +1323,8 @@ WHERE PC.Proposal_Code = :proposal_code
         return cast(int, version)
 
     def _get_proposal_progress_path(self, proposal_code: str, semester: str) -> str:
+        # TODO: This method doesn't seem to do what the name claims it does, and it
+        #  doesn't seem to be used anywhere.
         """
         Returns the next available name for the proposal progress filename.
         """
@@ -1337,14 +1339,14 @@ WHERE PC.Proposal_Code = :proposal_code;
         result = self.connection.execute(stmt, {"proposal_code": proposal_code})
         one_or_none = result.scalar_one_or_none()
 
-    def insert_progress_report(
+    def insert_proposal_progress(
             self,
             progress_report_data: Dict[str, Any],
             proposal_code: str,
             semester: str
     ) -> None:
         """
-        Insert the progress report.
+        Insert the proposal progress information.
         """
         stmt = text(
             """
@@ -1384,7 +1386,7 @@ VALUES(
         if not result.rowcount:
             raise NotFoundError()
 
-    def insert_progress_report_requested_time(
+    def _insert_progress_report_requested_time(
             self,
             proposal_code: ProposalCode,
             semester: str,
@@ -1473,30 +1475,30 @@ VALUES
         stmt = text(
             """
 SELECT
-    MaxSeeing						AS seeing,
-    Transparency					AS transparency,
-    ObservingConditionsDescription	AS description
+    CONCAT(S.`Year`, "-", S.Semester)   AS semester,
+    MaxSeeing						    AS seeing,
+    Transparency					    AS transparency,
+    ObservingConditionsDescription	    AS description
 FROM P1ObservingConditions AS OC
     JOIN Transparency AS T ON (OC.Transparency_Id = T.Transparency_Id)
     JOIN ProposalCode AS PC ON (OC.ProposalCode_Id = PC.ProposalCode_Id)
     JOIN Semester AS S ON (OC.Semester_Id = S.Semester_Id)
 WHERE PC.Proposal_Code = :proposal_code
-    AND CONCAT(S.`Year`, "-", S.Semester) = :semester
     """
         )
-        result = self.connection.execute(stmt, {
-            "proposal_code": proposal_code,
-            "semester": semester
+        results = self.connection.execute(stmt, {
+            "proposal_code": proposal_code
         })
-        try:
-            row = result.one()
-            return {
-                "seeing": row.seeing,
-                "transparency": row.transparency,
-                "description": row.description
-            }
-        except NoResultFound:
-            raise NotFoundError()
+        last_oc = defaultdict(lambda : None)
+
+        for row in results:
+            if not last_oc["semester"] or row.semester > last_oc["semester"]:
+                last_oc = row
+
+        if not last_oc["semester"]:
+            raise NotFoundError (f"Last requested observation condition for proposal "
+                                 f"{proposal_code} was not found")
+        return last_oc
 
     def get_observed_time(self, proposal_code: str):
         stmt = text(
@@ -1528,7 +1530,7 @@ WHERE BlockVisitStatus = 'Accepted'
         except NoResultFound:
             raise NotFoundError()
 
-    def get_allocated_requested_time(
+    def get_allocated_and_requested_time(
             self,
             proposal_code: str
     ) -> List[Dict[str, Any]]:
@@ -1562,7 +1564,7 @@ WHERE Proposal_Code=:proposal_code
             raise NotFoundError()
 
     def get_previous_time_requests(self, proposal_code: str) -> List[Dict[str, Any]]:
-        previous_allocated_requested = self.get_allocated_requested_time(
+        previous_allocated_requested = self.get_allocated_and_requested_time(
             proposal_code)
         previous_observed_time = self.get_observed_time(proposal_code)
         previous_time_requests = []
@@ -1584,29 +1586,33 @@ WHERE Proposal_Code=:proposal_code
 SELECT
     Partner_Code 						AS partner_code,
     Partner_Name 						AS partner_name,
-    ReqTimePercent						AS requested_percentage
+    ReqTimePercent						AS requested_percentage,
+    CONCAT(S.Year, '-', S.Semester)     AS semester
 FROM MultiPartner MP
     JOIN ProposalCode PC ON MP.ProposalCode_Id = PC.ProposalCode_Id
     JOIN Semester S ON MP.Semester_Id = S.Semester_Id
     JOIN Partner AS P ON (MP.Partner_Id = P.Partner_Id)
-WHERE PC.Proposal_Code = "2020-1-MLT-005"
-    AND CONCAT(S.`Year`, "-", S.Semester) = "2020-1"
+WHERE PC.Proposal_Code = :proposal_code
     """
         )
         result = self.connection.execute(stmt, {
             "proposal_code": proposal_code
         })
-        try:
-            return [
-                {
-                    "partner_code": row.partner_code,
-                    "partner_name": row.partner_name,
-                    "requested_percentage": row.requested_percentage
-                }
-                for row in result
-            ]
-        except NoResultFound:
-            raise NotFoundError()
+        tmp = dict()
+
+        for row in result:
+            tmp[row.partner_code] = {
+                "partner_name": row.partner_name,
+                "partner_code": row.partner_code,
+            }
+            if semester == row.semester:
+                tmp["requested_percentage"]: row.requested_percentage
+        prp = []
+        for pc in tmp:
+            if "requested_percentage" not in pc:
+                tmp[pc]["requested_percentage"] = None
+            prp.append(tmp[pc])
+        return prp
 
     def get_progress_report(self, proposal_code: str, semester: str) -> \
             Dict[str, any]:
@@ -1617,7 +1623,7 @@ SELECT *,
     MaxSeeing							AS maximum_seeing,
     Transparency						AS transparency,
     ObservingConditionsDescription		AS description_of_observing_constraints,
-    TimeRequestChangeReasons			AS why_time_request_changed,
+    TimeRequestChangeReasons			AS change_reason,
     StatusSummary						AS summary_of_proposal_status,
     StrategyChanges						AS strategy_changes,
     CONCAT(S.`Year`, '-', S.Semester)   AS semester,
@@ -1639,53 +1645,50 @@ WHERE PC.Proposal_Code = :proposal_code
     AND CONCAT(S.`Year`, '-', S.Semester) = :semester
     """
         )
-        try:
-            result = self.connection.execute(stmt, {
-                "proposal_code": proposal_code,
-                "semester": semester
-            })
+        result = self.connection.execute(stmt, {
+            "proposal_code": proposal_code,
+            "semester": semester
+        })
 
-            if result.rowcount > 0:
-                progress_report = {}
-                for row in result:
-                    progress_report["requested_time"] = row.requested_time
-                    progress_report["semester"] = row.semester
-                    progress_report["maximum_seeing"] = row.maximum_seeing
-                    progress_report["transparency"] = row.transparency
-                    progress_report["additional_pdf"] = row.additional_pdf
-                    progress_report["proposal_progress_pdf"] = row.proposal_progress_pdf
-                    progress_report["description_of_observing_constraints"] = \
-                        row.description_of_observing_constraints
-                    progress_report["why_time_request_changed"] = \
-                        row.why_time_request_changed
-                    progress_report["summary_of_proposal_status"] = \
-                        row.summary_of_proposal_status
-                    progress_report["strategy_changes"] = row.strategy_changes
-                progress_report["previous_time_requests"] = \
-                    self.get_previous_time_requests(proposal_code)
-                progress_report["last_observing_constraints"] = \
+        if result.rowcount > 0:
+            progress_report = {}
+            for row in result:
+                progress_report["requested_time"] = row.requested_time
+                progress_report["semester"] = row.semester
+                progress_report["maximum_seeing"] = row.maximum_seeing
+                progress_report["transparency"] = row.transparency
+                progress_report["additional_pdf"] = row.additional_pdf
+                progress_report["proposal_progress_pdf"] = row.proposal_progress_pdf
+                progress_report["description_of_observing_constraints"] = \
+                    row.description_of_observing_constraints
+                progress_report["change_reason"] = \
+                    row.change_reason
+                progress_report["summary_of_proposal_status"] = \
+                    row.summary_of_proposal_status
+                progress_report["strategy_changes"] = row.strategy_changes
+            progress_report["previous_time_requests"] = \
+                self.get_previous_time_requests(proposal_code)
+            progress_report["last_observing_constraints"] = \
+                self.get_observing_conditions(proposal_code, semester)
+            progress_report["partner_requested_percentage"] = \
+                self._get_partner_requested_percentage(proposal_code, semester)
+            return progress_report
+        else:
+            return {
+                "requested_time": None,
+                "semester": None,
+                "maximum_seeing": None,
+                "transparency": None,
+                "additional_pdf": None,
+                "proposal_progress_pdf": None,
+                "description_of_observing_constraints": None,
+                "change_reason": None,
+                "summary_of_proposal_status": None,
+                "strategy_changes": None,
+                "partner_requested_percentage":
+                    self._get_partner_requested_percentage(proposal_code, semester),
+                "previous_time_requests":
+                    self.get_previous_time_requests(proposal_code),
+                "last_observing_constraints":
                     self.get_observing_conditions(proposal_code, semester)
-                progress_report["requested_amount"] = \
-                    self._get_partner_requested_percentage(proposal_code, semester)
-                return progress_report
-            else:
-                return {
-                    "requested_time": None,
-                    "semester": None,
-                    "maximum_seeing": None,
-                    "transparency": None,
-                    "additional_pdf": None,
-                    "proposal_progress_pdf": None,
-                    "description_of_observing_constraints": None,
-                    "why_time_request_changed": None,
-                    "summary_of_proposal_status": None,
-                    "strategy_changes": None,
-                    "requested_amount": [],
-                    "previous_time_requests":
-                        self.get_previous_time_requests(proposal_code),
-                    "observing_constraints":
-                        self.get_observing_conditions(proposal_code, semester)
-                }
-
-        except NoResultFound:
-            raise NotFoundError()
+            }

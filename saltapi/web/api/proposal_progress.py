@@ -53,6 +53,7 @@ def get_progress_report(
     Returned object | `Accept` HTTP header value
     --- | ---
     JSON string | application/json
+    TODO: I've changed my mind regarding this... There should be a separate endpoint for getting the pdf.
     pdf file | application/pdf
 
     A pdf file is returned if no `Accept` header is included in the request. In the
@@ -100,9 +101,6 @@ def put_progress_report(
     The optional pdf file is intended for additional details regarding the progress with
     the proposal.
     """
-
-    # TODO Ask about what to do with the requested times for partners?
-    # * how to add the requested times correctly to the database.
     with UnitOfWork() as unit_of_work:
         permission_service = services.permission_service(unit_of_work.connection)
         permission_service.check_permission_to_view_proposal(user, proposal_code)

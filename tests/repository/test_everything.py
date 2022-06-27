@@ -22,7 +22,7 @@ def test_get_allocated_requested_time_return_correct_allocated_time(dbconnection
                                                testdata: Callable[[str], Any]) -> None:
     data = testdata(TEST_DATA)["allocated_requested_time"]
     proposal_repository = ProposalRepository(dbconnection)
-    allocated_requested_times = proposal_repository.get_allocated_requested_time(
+    allocated_requested_times = proposal_repository.get_allocated_and_requested_time(
         ProposalCode("2020-1-MLT-005")
     )
     for d in data:
@@ -47,15 +47,15 @@ def test_get_progress_report_return_correct_report(dbconnection: Connection,
     assert progress_report["transparency"] == e_progress_report["transparency"]
     assert progress_report["description_of_observing_constraints"] == \
            e_progress_report["description_of_observing_constraints"]
-    assert progress_report["why_time_request_changed"] == \
-           e_progress_report["why_time_request_changed"]
+    assert progress_report["change_reason"] == \
+           e_progress_report["change_reason"]
     assert progress_report["summary_of_proposal_status"] == \
            e_progress_report["summary_of_proposal_status"]
     assert progress_report["strategy_changes"] == e_progress_report["strategy_changes"]
-    for p in progress_report["requested_amount"]:
+    for p in progress_report["partner_requested_percentage"]:
         partner_code = p["code"]
         requester_amount = [
-            r for r in e_progress_report["requested_amount"]
+            r for r in e_progress_report["partner_requested_percentage"]
             if r["code"] == partner_code
         ][0]
         assert  p == requester_amount

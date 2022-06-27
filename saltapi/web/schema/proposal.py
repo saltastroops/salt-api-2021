@@ -383,7 +383,7 @@ class PartnerRequestedPercentage(BaseModel):
         ..., title="Partner name ",
         description="Name of the partner."
     ),
-    requested_percentage: float = Field(
+    requested_percentage: Optional[float] = Field(
         ..., title="Percentage",
         description="Percentage requested from a partner."
     )
@@ -544,7 +544,7 @@ class ProposalProgress(BaseModel):
         title="Semester",
         description="The semester for this progress report.",
     )
-    requested_amount: List[PartnerRequestedPercentage] = Field(
+    partner_requested_percentage: List[PartnerRequestedPercentage] = Field(
         ...,
         title="Partner",
         description="The partner requesting time from.",
@@ -562,9 +562,9 @@ class ProposalProgress(BaseModel):
     description_of_observing_constraints: Optional[str] = Field(
         ...,
         title="Description of observing constraints",
-        description="The escription of observing constraints.",
+        description="The description of observing constraints.",
     )
-    why_time_request_changed: Optional[str] = Field(
+    change_reason: Optional[str] = Field(
         ...,
         title="Time request change reasons",
         description="The reason why the time request has changed.",
@@ -581,7 +581,7 @@ class ProposalProgress(BaseModel):
     )
     previous_time_requests: List[TimeStatistics] = Field(
         ...,
-        title="Previous tim requests",
+        title="Previous time requests",
         description="The request from previous semesters"
     )
     last_observing_constraints: ObservingConstraints = Field(
