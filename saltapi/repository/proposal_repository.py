@@ -1323,8 +1323,6 @@ WHERE PC.Proposal_Code = :proposal_code
         return cast(int, version)
 
     def _get_proposal_progress_path(self, proposal_code: str, semester: str) -> str:
-        # TODO: This method doesn't seem to do what the name claims it does, and it
-        #  doesn't seem to be used anywhere.
         """
         Returns the next available name for the proposal progress filename.
         """
@@ -1336,8 +1334,6 @@ FROM ProposalSelfActivation PSA
 WHERE PC.Proposal_Code = :proposal_code;
         """
         )
-        result = self.connection.execute(stmt, {"proposal_code": proposal_code})
-        one_or_none = result.scalar_one_or_none()
 
     def insert_proposal_progress(
             self,
@@ -1415,17 +1411,6 @@ VALUES (
 )
         """
         )
-        result = self.connection.execute(
-            stmt, {
-                "proposal_code": proposal_code,
-                "semester": semester,
-                "partner_code": partner_code,
-                "requested_time_percent": requested_time_percent,
-                "requested_time_amount": requested_time_amount
-            }
-        )
-        if not result.rowcount:
-            raise NotFoundError()
 
     def insert_observing_conditions(
             self,
@@ -1470,7 +1455,7 @@ VALUES
         if not result.rowcount:
             raise NotFoundError()
 
-    def get_observing_conditions(self, proposal_code: str, semester: str)\
+    def get_last_observing_conditions(self, proposal_code: str, semester: str)\
             -> Dict[str, Any]:
         stmt = text(
             """
@@ -1669,8 +1654,8 @@ WHERE PC.Proposal_Code = :proposal_code
             progress_report["previous_time_requests"] = \
                 self.get_previous_time_requests(proposal_code)
             progress_report["last_observing_constraints"] = \
-                self.get_observing_conditions(proposal_code, semester)
-            progress_report["partner_requested_percentage"] = \
+                self.get_last_observing_conditions(proposal_code, semester)
+            progress_report["partner_requested_percentages"] = \
                 self._get_partner_requested_percentage(proposal_code, semester)
             return progress_report
         else:
@@ -1685,10 +1670,10 @@ WHERE PC.Proposal_Code = :proposal_code
                 "change_reason": None,
                 "summary_of_proposal_status": None,
                 "strategy_changes": None,
-                "partner_requested_percentage":
+                "partner_requested_percentages":
                     self._get_partner_requested_percentage(proposal_code, semester),
                 "previous_time_requests":
                     self.get_previous_time_requests(proposal_code),
                 "last_observing_constraints":
-                    self.get_observing_conditions(proposal_code, semester)
+                    self.get_last_observing_conditions(proposal_code, semester)
             }

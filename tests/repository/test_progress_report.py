@@ -52,10 +52,10 @@ def test_get_progress_report_return_correct_report(dbconnection: Connection,
     assert progress_report["summary_of_proposal_status"] == \
            e_progress_report["summary_of_proposal_status"]
     assert progress_report["strategy_changes"] == e_progress_report["strategy_changes"]
-    for p in progress_report["partner_requested_percentage"]:
+    for p in progress_report["partner_requested_percentages"]:
         partner_code = p["code"]
         requester_amount = [
-            r for r in e_progress_report["partner_requested_percentage"]
+            r for r in e_progress_report["partner_requested_percentages"]
             if r["code"] == partner_code
         ][0]
         assert  p == requester_amount

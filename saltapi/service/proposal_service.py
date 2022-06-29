@@ -141,23 +141,9 @@ class ProposalService:
             proposal_code=proposal_code,
             semester=semester,
             previous_requests=previous_requests,
-            previous_conditions=self.repository.get_observing_conditions(proposal_code, semester),
+            previous_conditions=self.repository.get_last_observing_conditions(proposal_code, semester),
             new_request=new_request
         )
-        output_file = "ProposalProgressReport.pdf"
-        # TODO: This should not not be hardcoded (and it should fail in production).
-        #  Rather pass a file as a function argument.
-        with open('./pdf_report.html') as f:
-            options = {
-                'page-size': 'A4',
-                'margin-top': '20mm',
-                'margin-right': '20mm',
-                'margin-bottom': '20mm',
-                'margin-left': '20mm',
-                'encoding': "UTF-8",
-                'no-outline': None
-            }
-            pdfkit.from_file(f, output_file, options=options)
 
     def get_progress_report(self, proposal_code: ProposalCode, semester: Semester) -> \
             Dict[str, any]:

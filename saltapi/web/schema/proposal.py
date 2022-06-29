@@ -389,48 +389,6 @@ class PartnerRequestedPercentage(BaseModel):
     )
 
 
-class ProgressReportData(BaseModel):
-    """
-    Progress report data for a proposal and semester.
-    """
-    requested_time: int = Field(
-        ..., title="Requested time", description="A time requested for this semester"
-    ),
-    requested_percentages: List[PartnerRequestedPercentage] = Field(
-        ...,
-        title="Requested percentages",
-        description="Percentage requested from partners."
-    ),
-    maximum_seeing: Optional[float] = Field(
-        ...,
-        title="Seeing probability",
-        description="Seeing probability, which is derived from the cumulative "
-                    "distribution function of seeing measurements taken in Sutherland",
-        ge=0,
-        le=1,
-    ),
-    transparency: str = Field(
-        ...,
-        title="Transparency",
-        description="The transparency."
-    ),
-    observing_constraints: str = Field(
-        ..., title="Observing constraints",
-        description="Observing constraints."
-    )
-    change_reason: str = Field(
-        ..., title="Reasons time request changed",
-        description="Reason(s) why the time request has changed."
-    ),
-    summary_of_proposal_status: str = Field(
-        ..., title="Summary of the proposal status",
-        description="Summary of the proposal status"
-    ),
-    strategy_changes: str = Field(
-        ..., title="Strategy changes", description="A strategy changes"
-    )
-
-
 class ProposalContentType(str, Enum):
     """Content type for a proposal."""
 
@@ -544,7 +502,7 @@ class ProposalProgress(BaseModel):
         title="Semester",
         description="The semester for this progress report.",
     )
-    partner_requested_percentage: List[PartnerRequestedPercentage] = Field(
+    partner_requested_percentages: List[PartnerRequestedPercentage] = Field(
         ...,
         title="Partner",
         description="The partner requesting time from.",
@@ -588,14 +546,4 @@ class ProposalProgress(BaseModel):
         ...,
         title="Last requested observing conditions",
         description="The last observing conditions."
-    )
-    proposal_progress_pdf: Optional[str] = Field(
-        ...,
-        title="Proposal progress file",
-        description="The PDF file of the progress report"
-    )
-    additional_pdf: Optional[str] = Field(
-        ...,
-        title="Additional file",
-        description="The supplementary PDF file"
     )

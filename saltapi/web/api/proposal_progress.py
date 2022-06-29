@@ -15,7 +15,7 @@ from saltapi.repository.unit_of_work import UnitOfWork
 from saltapi.service.authentication_service import get_current_user
 from saltapi.service.user import User
 from saltapi.web.schema.common import Semester, ProposalCode
-from saltapi.web.schema.proposal import ProposalProgress, ProgressReportData
+from saltapi.web.schema.proposal import ProposalProgress
 from saltapi.web import services
 
 
@@ -43,22 +43,10 @@ def get_progress_report(
     2021-1, the report covers the observations up to and including the 2021-1
     semester and it requests time for the 2021-2 semester.
 
-    The progress report can be requested in either of two formats:
-
-    * As a JSON string.
-    * As a pdf file. This is the default.
-
-    You can choose the format by supplying its content type in the `Accept` HTTP header:
-
-    Returned object | `Accept` HTTP header value
+    Returned object
     --- | ---
     JSON string | application/json
-    TODO: I've changed my mind regarding this... There should be a separate endpoint for getting the pdf.
-    pdf file | application/pdf
 
-    A pdf file is returned if no `Accept` header is included in the request. In the
-    case of the pdf file the response contains an `Content-Disposition` HTTP header
-    with a filename of the form "ProgressReport_{proposal_code}_{semester}.pdf".
     """
     with UnitOfWork() as unit_of_work:
         permission_service = services.permission_service(unit_of_work.connection)
@@ -84,7 +72,7 @@ def put_progress_report(
                     " updated.",
     ),
     semester: Semester = Path(..., title="Semester", description="Semester"),
-    progress_report: ProgressReportData = Body(
+    proposal_progress: ProposalProgress = Body(
         ...,
         title="Progress report",
         description="Progress report for a proposal."
@@ -105,10 +93,4 @@ def put_progress_report(
         permission_service = services.permission_service(unit_of_work.connection)
         permission_service.check_permission_to_view_proposal(user, proposal_code)
 
-        proposal_service = services.proposal_service(unit_of_work.connection)
-
-
-
-    # TODO Save the pdfs. Both the supplementary PDF and the newly created file.
-    # * Where to save the created files.
     raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED)

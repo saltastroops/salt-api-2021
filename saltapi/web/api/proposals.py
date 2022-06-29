@@ -14,9 +14,7 @@ from fastapi import (
     status,
 )
 from fastapi.responses import FileResponse
-from pydantic import Field
 
-from saltapi.repository.proposal_repository import ProposalRepository
 from saltapi.repository.unit_of_work import UnitOfWork
 from saltapi.service.authentication_service import get_current_user
 from saltapi.service.proposal import Proposal as _Proposal
@@ -34,8 +32,7 @@ from saltapi.web.schema.proposal import (
     Proposal,
     ProposalListItem,
     ProposalStatusContent,
-    SubmissionAcknowledgment,
-    ProgressReportData
+    SubmissionAcknowledgment
 )
 
 router = APIRouter(prefix="/proposals", tags=["Proposals"])
@@ -442,7 +439,7 @@ def put_progress_report(
         description="Proposal code of the proposal whose progress report is created or updated.",
     ),
     semester: Semester = Path(..., title="Semester", description="Semester"),
-    progress_report: ProgressReportData = Body(
+    progress_report: ProposalProgress = Body(
         ...,
         title="Progress report",
         description="Progress report for a proposal."
