@@ -25,7 +25,7 @@ router = APIRouter(prefix="/progress", tags=["Proposals"])
 @router.get(
     "/{proposal_code}/{semester}",
     summary="Get a progress report",
-    response_model=Optional[ProposalProgress],
+    response_model=ProposalProgress,
     responses={200: {"content": {"application/pdf": {}}}},
 )
 def get_progress_report(
@@ -41,7 +41,12 @@ def get_progress_report(
     Returns the progress report for a proposal and semester. The semester is the
     semester for which the progress is reported. For example, if the semester is
     2021-1, the report covers the observations up to and including the 2021-1
-    semester and it requests time for the 2021-2 semester.
+    semester, and it requests time for the 2021-2 semester.
+
+    The progress report is returned as JSON string; and it does not include the
+    additional file uploaded by the user when creating the report. There is another
+    endpoint for returning the report as a pdf, including the additional file and the
+    original scientific justification.
 
     Returned object
     --- | ---

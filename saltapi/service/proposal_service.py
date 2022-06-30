@@ -1,10 +1,5 @@
 import pathlib
-from datetime import datetime
-
-import pdfkit
 from typing import Dict, List, Any
-
-from dateutil.relativedelta import relativedelta
 
 from saltapi.exceptions import NotFoundError
 from saltapi.repository.proposal_repository import ProposalRepository
@@ -92,7 +87,7 @@ class ProposalService:
             self,
             proposal_code: ProposalCode,
             progress_report_data: Dict[str, Any]
-    ):
+    ) -> None:
         semester = next_semester()
         self.repository.insert_proposal_progress(
             progress_report_data, proposal_code, semester)
@@ -122,21 +117,23 @@ class ProposalService:
             proposal_code: str,
             semester: str,
             new_request: Dict["str", Any]
-    ):
+    ) -> None:
 
         previous_allocated_requested = self.repository.get_allocated_and_requested_time(
             proposal_code)
         previous_observed_time = self.repository.get_observed_time(proposal_code)
-        previous_requests = []
+        time_statistics = []
         for ar in previous_allocated_requested:
+            tmp = {
+                "semester": ar["semester"],
+                "requested_time": ar["requested_time"],
+                "allocated_time": ar["allocated_time"],
+                "observed_time": 0
+            }
             for ot in previous_observed_time:
                 if ot["semester"] == ar["semester"]:
-                    previous_requests.append({
-                        "semester": ar["semester"],
-                        "requested_time": ar["requested_time"],
-                        "allocated_time": ar["allocated_time"],
-                        "observed_time": ot["observed_time"]
-                    })
+                    tmp["observed_time"] = ot["observed_time"]
+            time_statistics.append(tmp)
         create_progress_report_html(
             proposal_code=proposal_code,
             semester=semester,
@@ -146,9 +143,5 @@ class ProposalService:
         )
 
     def get_progress_report(self, proposal_code: ProposalCode, semester: Semester) -> \
-            Dict[str, any]:
+            Dict[str, Any]:
         return self.repository.get_progress_report(proposal_code, semester)
-
-    def get_previous_time_requests(self, proposal_code: ProposalCode) -> \
-            List[Dict[str, any]]:
-        return self.repository.get_previous_time_statistics(proposal_code)

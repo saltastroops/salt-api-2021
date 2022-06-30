@@ -1,5 +1,5 @@
 """Utility functions."""
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta
 from typing import NamedTuple
 
 import pytz
@@ -46,7 +46,7 @@ def partner_name(partner_code: str) -> str:
 
 def tonight() -> TimeInterval:
     """
-    Return the date interval corresponding to the "night" in which the current time time
+    Return the date interval corresponding to the "night" in which the current time
     lies.
 
     A night is defined to run from noon to noon.
@@ -141,4 +141,8 @@ def next_semester() -> str:
     """
     Get the next semester from the current date and time.
     """
-    return Semester(semester_of_datetime(datetime.now(tz=pytz.utc) + relativedelta(months=+6)))
+    # The of semester_of_datetime is handling time so there is no need to include it
+    # here. That the semester start at noon.
+    return Semester(
+        semester_of_datetime(datetime.now(tz=pytz.utc) + relativedelta(months=+6))
+    )

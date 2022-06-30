@@ -5,13 +5,12 @@ from typing import Any, DefaultDict, Dict, List, Optional, cast
 
 import pytz
 from dateutil.relativedelta import relativedelta
-from jinja2 import Template
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
 from sqlalchemy.exc import NoResultFound
 
 from saltapi.exceptions import NotFoundError
-from saltapi.service.proposal import Proposal, ProposalListItem, ProposalCode
+from saltapi.service.proposal import Proposal, ProposalListItem
 from saltapi.service.user import User
 from saltapi.util import (
     TimeInterval,
@@ -1322,19 +1321,6 @@ WHERE PC.Proposal_Code = :proposal_code
 
         return cast(int, version)
 
-    def _get_proposal_progress_path(self, proposal_code: str, semester: str) -> str:
-        """
-        Returns the next available name for the proposal progress filename.
-        """
-        stmt = text(
-            """
-        SELECT PSA.PiPcMayActivate
-FROM ProposalSelfActivation PSA
-         JOIN ProposalCode PC ON PSA.ProposalCode_Id = PC.ProposalCode_Id
-WHERE PC.Proposal_Code = :proposal_code;
-        """
-        )
-
     def insert_proposal_progress(
             self,
             progress_report_data: Dict[str, Any],
@@ -1382,9 +1368,9 @@ VALUES(
         if not result.rowcount:
             raise NotFoundError()
 
+    @staticmethod
     def _insert_progress_report_requested_time(
-            self,
-            proposal_code: ProposalCode,
+            proposal_code: str,
             semester: str,
             partner_code: str,
             requested_time_percent: int,
@@ -1474,7 +1460,7 @@ WHERE PC.Proposal_Code = :proposal_code
         results = self.connection.execute(stmt, {
             "proposal_code": proposal_code
         })
-        last_oc = defaultdict(lambda : None)
+        last_oc = defaultdict(lambda: None)
 
         for row in results:
             if not last_oc["semester"] or row.semester > last_oc["semester"]:
@@ -1485,7 +1471,7 @@ WHERE PC.Proposal_Code = :proposal_code
                                  f"{proposal_code} was not found")
         return last_oc
 
-    def get_observed_time(self, proposal_code: str):
+    def get_observed_time(self, proposal_code: str) -> List[Dict[str, Any]]:
         stmt = text(
             """
 SELECT  
@@ -1515,14 +1501,13 @@ WHERE BlockVisitStatus = 'Accepted'
         except NoResultFound:
             raise NotFoundError()
 
-    def get_allocated_and_requested_time(
-            self,
-            proposal_code: str
-    ) -> List[Dict[str, Any]]:
+    def get_allocated_and_requested_time(self, proposal_code: str) -> \
+            List[Dict[str, Any]]:
+        # ReqTimeAmount is the total amount of time requested by a proposal per semester
         stmt = text(
             """
 SELECT
-    CONCAT(S.`Year`, "-", S.Semester) AS semester,
+    CONCAT(S.`Year`, '-', S.Semester) AS semester,
     ReqTimeAmount 	AS requested_time,
     SUM(TimeAlloc) 	AS allocated_time
 FROM MultiPartner 	AS MP
@@ -1554,14 +1539,16 @@ WHERE Proposal_Code=:proposal_code
         previous_observed_time = self.get_observed_time(proposal_code)
         time_statistics = []
         for ar in previous_allocated_requested:
+            tmp = {
+                "semester": ar["semester"],
+                "requested_time": ar["requested_time"],
+                "allocated_time": ar["allocated_time"],
+                "observed_time": 0
+            }
             for ot in previous_observed_time:
                 if ot["semester"] == ar["semester"]:
-                    time_statistics.append({
-                        "semester": ar["semester"],
-                        "requested_time": ar["requested_time"],
-                        "allocated_time": ar["allocated_time"],
-                        "observed_time": ot["observed_time"]
-                    })
+                    tmp["observed_time"] = ot["observed_time"]
+            time_statistics.append(tmp)
         return time_statistics
 
     def _get_partner_requested_percentage(self, proposal_code:str, semester: str) -> \
@@ -1591,7 +1578,7 @@ WHERE PC.Proposal_Code = :proposal_code
                 "partner_code": row.partner_code,
             }
             if semester == row.semester:
-                tmp["requested_percentage"]: row.requested_percentage
+                tmp["requested_percentage"] = row.requested_percentage
         prp = []
         for pc in tmp:
             if "requested_percentage" not in pc:
@@ -1600,7 +1587,7 @@ WHERE PC.Proposal_Code = :proposal_code
         return prp
 
     def get_progress_report(self, proposal_code: str, semester: str) -> \
-            Dict[str, any]:
+            Dict[str, Any]:
         stmt = text(
             """
 SELECT *,
@@ -1635,7 +1622,7 @@ WHERE PC.Proposal_Code = :proposal_code
             "semester": semester
         })
 
-        if result.rowcount > 0:
+        if int(result.rowcount()) > 0:
             progress_report = {}
             for row in result:
                 progress_report["requested_time"] = row.requested_time
