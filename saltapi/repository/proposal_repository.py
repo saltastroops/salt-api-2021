@@ -1548,21 +1548,21 @@ WHERE Proposal_Code=:proposal_code
         except NoResultFound:
             raise NotFoundError()
 
-    def get_previous_time_requests(self, proposal_code: str) -> List[Dict[str, Any]]:
+    def get_previous_time_statistics(self, proposal_code: str) -> List[Dict[str, Any]]:
         previous_allocated_requested = self.get_allocated_and_requested_time(
             proposal_code)
         previous_observed_time = self.get_observed_time(proposal_code)
-        previous_time_requests = []
+        time_statistics = []
         for ar in previous_allocated_requested:
             for ot in previous_observed_time:
                 if ot["semester"] == ar["semester"]:
-                    previous_time_requests.append({
+                    time_statistics.append({
                         "semester": ar["semester"],
                         "requested_time": ar["requested_time"],
                         "allocated_time": ar["allocated_time"],
                         "observed_time": ot["observed_time"]
                     })
-        return previous_time_requests
+        return time_statistics
 
     def _get_partner_requested_percentage(self, proposal_code:str, semester: str) -> \
             List[Dict[str, Any]]:
@@ -1652,7 +1652,7 @@ WHERE PC.Proposal_Code = :proposal_code
                     row.summary_of_proposal_status
                 progress_report["strategy_changes"] = row.strategy_changes
             progress_report["previous_time_requests"] = \
-                self.get_previous_time_requests(proposal_code)
+                self.get_previous_time_statistics(proposal_code)
             progress_report["last_observing_constraints"] = \
                 self.get_last_observing_conditions(proposal_code, semester)
             progress_report["partner_requested_percentages"] = \
@@ -1673,7 +1673,7 @@ WHERE PC.Proposal_Code = :proposal_code
                 "partner_requested_percentages":
                     self._get_partner_requested_percentage(proposal_code, semester),
                 "previous_time_requests":
-                    self.get_previous_time_requests(proposal_code),
+                    self.get_previous_time_statistics(proposal_code),
                 "last_observing_constraints":
                     self.get_last_observing_conditions(proposal_code, semester)
             }

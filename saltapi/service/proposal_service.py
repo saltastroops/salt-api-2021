@@ -151,4 +151,4 @@ class ProposalService:
 
     def get_previous_time_requests(self, proposal_code: ProposalCode) -> \
             List[Dict[str, any]]:
-        return self.repository.get_previous_time_requests(proposal_code)
+        return self.repository.get_previous_time_statistics(proposal_code)
