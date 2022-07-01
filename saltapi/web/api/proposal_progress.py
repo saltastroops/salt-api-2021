@@ -43,7 +43,7 @@ def get_progress_report(
     2021-1, the report covers the observations up to and including the 2021-1
     semester, and it requests time for the 2021-2 semester.
 
-    The progress report is returned as JSON string; and it does not include the
+    The progress report is returned as a JSON string, and it does not include the
     additional file uploaded by the user when creating the report. There is another
     endpoint for returning the report as a pdf, including the additional file and the
     original scientific justification.

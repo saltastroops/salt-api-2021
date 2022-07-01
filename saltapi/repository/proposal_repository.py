@@ -1504,6 +1504,7 @@ WHERE BlockVisitStatus = 'Accepted'
     def get_allocated_and_requested_time(self, proposal_code: str) -> \
             List[Dict[str, Any]]:
         # ReqTimeAmount is the total amount of time requested by a proposal per semester
+        # for all partners combined; hence there is no need to sum its value.
         stmt = text(
             """
 SELECT
@@ -1533,7 +1534,7 @@ WHERE Proposal_Code=:proposal_code
         except NoResultFound:
             raise NotFoundError()
 
-    def get_previous_time_statistics(self, proposal_code: str) -> List[Dict[str, Any]]:
+    def get_time_statistics(self, proposal_code: str) -> List[Dict[str, Any]]:
         previous_allocated_requested = self.get_allocated_and_requested_time(
             proposal_code)
         previous_observed_time = self.get_observed_time(proposal_code)
@@ -1622,7 +1623,7 @@ WHERE PC.Proposal_Code = :proposal_code
             "semester": semester
         })
 
-        if int(result.rowcount()) > 0:
+        if result.rowcount > 0:
             progress_report = {}
             for row in result:
                 progress_report["requested_time"] = row.requested_time
@@ -1639,7 +1640,7 @@ WHERE PC.Proposal_Code = :proposal_code
                     row.summary_of_proposal_status
                 progress_report["strategy_changes"] = row.strategy_changes
             progress_report["previous_time_requests"] = \
-                self.get_previous_time_statistics(proposal_code)
+                self.get_time_statistics(proposal_code)
             progress_report["last_observing_constraints"] = \
                 self.get_last_observing_conditions(proposal_code, semester)
             progress_report["partner_requested_percentages"] = \
@@ -1660,7 +1661,7 @@ WHERE PC.Proposal_Code = :proposal_code
                 "partner_requested_percentages":
                     self._get_partner_requested_percentage(proposal_code, semester),
                 "previous_time_requests":
-                    self.get_previous_time_statistics(proposal_code),
+                    self.get_time_statistics(proposal_code),
                 "last_observing_constraints":
                     self.get_last_observing_conditions(proposal_code, semester)
             }

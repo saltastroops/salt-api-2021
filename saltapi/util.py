@@ -141,8 +141,9 @@ def next_semester() -> str:
     """
     Get the next semester from the current date and time.
     """
-    # The of semester_of_datetime is handling time so there is no need to include it
-    # here. That the semester start at noon.
+    # Adding a month never crosses the month boundary. For example, 31 November plus 6
+    # months is 30 April, not 1 May. The semester_of_datetime function takes care of the
+    # fact that a semester starts at noon rather than at midnight.
     return Semester(
         semester_of_datetime(datetime.now(tz=pytz.utc) + relativedelta(months=+6))
     )
