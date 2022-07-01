@@ -1464,18 +1464,23 @@ WHERE PC.Proposal_Code = :proposal_code
 
         for row in results:
             if not last_oc["semester"] or row.semester > last_oc["semester"]:
-                last_oc = row
+                last_oc = {
+                    "semester": row["semester"],
+                    "seeing": row["seeing"],
+                    "transparency": row["transparency"],
+                    "description": row["description"]
+                }
 
         if not last_oc["semester"]:
-            raise NotFoundError (f"Last requested observation condition for proposal "
-                                 f"{proposal_code} was not found")
+            raise NotFoundError(f"Last requested observation condition for proposal "
+                                f"{proposal_code} was not found")
         return last_oc
 
     def get_observed_time(self, proposal_code: str) -> List[Dict[str, Any]]:
         stmt = text(
             """
 SELECT  
-    CONCAT(S.`Year`, "-", S.Semester) AS semester,
+    CONCAT(S.`Year`, '-', S.Semester) AS semester,
     SUM(Obstime)                AS observed_time
 FROM Proposal		    AS P
     JOIN ProposalCode 	AS PC USING (ProposalCode_Id)
@@ -1552,7 +1557,7 @@ WHERE Proposal_Code=:proposal_code
             time_statistics.append(tmp)
         return time_statistics
 
-    def _get_partner_requested_percentage(self, proposal_code:str, semester: str) -> \
+    def _get_partner_requested_percentage(self, proposal_code: str, semester: str) -> \
             List[Dict[str, Any]]:
         stmt = text(
             """
@@ -1572,18 +1577,16 @@ WHERE PC.Proposal_Code = :proposal_code
             "proposal_code": proposal_code
         })
         tmp = dict()
-
         for row in result:
             tmp[row.partner_code] = {
                 "partner_name": row.partner_name,
                 "partner_code": row.partner_code,
             }
             if semester == row.semester:
-                tmp["requested_percentage"] = row.requested_percentage
+                tmp[row.partner_code]["requested_percentage"] = row.requested_percentage
         prp = []
         for pc in tmp:
-            if "requested_percentage" not in pc:
-                tmp[pc]["requested_percentage"] = None
+
             prp.append(tmp[pc])
         return prp
 

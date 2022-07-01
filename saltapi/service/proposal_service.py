@@ -134,13 +134,6 @@ class ProposalService:
                 if ot["semester"] == ar["semester"]:
                     tmp["observed_time"] = ot["observed_time"]
             time_statistics.append(tmp)
-        create_progress_report_html(
-            proposal_code=proposal_code,
-            semester=semester,
-            previous_requests=previous_requests,
-            previous_conditions=self.repository.get_last_observing_conditions(proposal_code, semester),
-            new_request=new_request
-        )
 
     def get_progress_report(self, proposal_code: ProposalCode, semester: Semester) -> \
             Dict[str, Any]:
