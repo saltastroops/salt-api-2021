@@ -48,5 +48,5 @@ class BlockService:
         """
 
         return self.block_repository.update_block_visit_status(
-            block_visit_id, status, reason
+            block_visit_id, status.value, reason
         )

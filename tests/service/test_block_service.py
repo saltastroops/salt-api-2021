@@ -4,9 +4,9 @@ import pytest
 
 from saltapi.exceptions import NotFoundError
 from saltapi.repository.block_repository import BlockRepository
-from saltapi.service.block import Block, BlockStatus, BlockVisitStatus
+from saltapi.service.block import Block, BlockStatus
 from saltapi.service.block_service import BlockService
-from saltapi.web.schema.common import BlockRejectionReason
+from saltapi.web.schema.common import BlockVisitStatus
 
 
 class FakeBlockRepository:
@@ -40,11 +40,6 @@ class FakeBlockRepository:
     def get_block_status(self, block_id: int) -> BlockStatus:
         if block_id == VALID_BLOCK_ID:
             return self.block_status
-        raise NotFoundError()
-
-    def get_block_visit_status(self, block_visit_id: int) -> BlockVisitStatus:
-        if block_visit_id == BLOCK_VISIT_ID:
-            return self.block_visit_status
         raise NotFoundError()
 
     def update_block_status(
@@ -143,29 +138,28 @@ def test_get_block_visit() -> None:
 def test_update_block_visit_status() -> None:
     block_service = create_block_service()
 
-    old_status = block_service.get_block_visit_status(BLOCK_VISIT_ID)
+    old_status = block_service.get_block_visit(BLOCK_VISIT_ID)["status"]
     assert old_status != "Accepted"
 
-    block_service.update_block_visit_status(BLOCK_VISIT_ID, "Accepted", None)
+    status_update = BlockVisitStatus("Accepted")
+    block_service.update_block_visit_status(BLOCK_VISIT_ID, status_update, None)
 
-    new_status = block_service.get_block_visit_status(BLOCK_VISIT_ID)
+    new_status = block_service.get_block_visit(BLOCK_VISIT_ID)
     assert new_status["status"] == "Accepted"
 
 
-def test_update_block_visit_status_and_rejection_reason() -> None:
+def test_cannot_update_with_a_wrong_block_visit_type() -> None:
     block_service = create_block_service()
 
     block_visit = block_service.get_block_visit(BLOCK_VISIT_ID)
     assert block_visit["status"] != "Not set"
-    rejected_reason = BlockRejectionReason("Other").value
-    block_service.update_block_visit_status(BLOCK_VISIT_ID, "Not set", rejected_reason)
 
-    new_block_visit = block_service.get_block_visit(BLOCK_VISIT_ID)
-    assert new_block_visit["status"] == "Not set"
-    assert new_block_visit["rejected_reason"] == "Other"
+    with pytest.raises(AttributeError):
+        block_service.update_block_visit_status(BLOCK_VISIT_ID, "Status", "Reason")
 
 
 def test_update_block_visit_status_raises_error_for_wrong_block_id() -> None:
     block_service = create_block_service()
+    status = BlockVisitStatus("In queue")
     with pytest.raises(NotFoundError):
-        block_service.update_block_visit_status(0, "In queue", None)
+        block_service.update_block_visit_status(0, status, None)
