@@ -383,7 +383,7 @@ class PartnerRequestedPercentage(BaseModel):
         ..., title="Partner name ",
         description="Name of the partner."
     ),
-    requested_percentage: Optional[float] = Field(
+    requested_percentage: float = Field(
         ..., title="Percentage",
         description="Percentage requested from a partner."
     )

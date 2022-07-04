@@ -104,36 +104,13 @@ class ProposalService:
                 requested_time_percent=partner_percentage,
                 requested_time_amount=time_requested_per_partner
             )
-        self.repository.insert_observing_conditions(
+        self.repository._insert_observing_conditions(
             proposal_code=proposal_code,
             semester=semester,
             seeing=progress_report_data["maximum_seeing"],
             transparency=progress_report_data["transparency"],
             observing_conditions_description=progress_report_data["observing_constraints"]
         )
-
-    def create_progress_report_pdf(
-            self,
-            proposal_code: str,
-            semester: str,
-            new_request: Dict["str", Any]
-    ) -> None:
-
-        previous_allocated_requested = self.repository.get_allocated_and_requested_time(
-            proposal_code)
-        previous_observed_time = self.repository.get_observed_time(proposal_code)
-        time_statistics = []
-        for ar in previous_allocated_requested:
-            tmp = {
-                "semester": ar["semester"],
-                "requested_time": ar["requested_time"],
-                "allocated_time": ar["allocated_time"],
-                "observed_time": 0
-            }
-            for ot in previous_observed_time:
-                if ot["semester"] == ar["semester"]:
-                    tmp["observed_time"] = ot["observed_time"]
-            time_statistics.append(tmp)
 
     def get_progress_report(self, proposal_code: ProposalCode, semester: Semester) -> \
             Dict[str, Any]:

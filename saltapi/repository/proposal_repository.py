@@ -1398,7 +1398,7 @@ VALUES (
         """
         )
 
-    def insert_observing_conditions(
+    def _insert_observing_conditions(
             self,
             proposal_code: str,
             semester: str,
@@ -1441,8 +1441,7 @@ VALUES
         if not result.rowcount:
             raise NotFoundError()
 
-    def get_last_observing_conditions(self, proposal_code: str, semester: str)\
-            -> Dict[str, Any]:
+    def get_latest_observing_conditions(self, proposal_code: str) -> Dict[str, Any]:
         stmt = text(
             """
 SELECT
@@ -1455,26 +1454,19 @@ FROM P1ObservingConditions AS OC
     JOIN ProposalCode AS PC ON (OC.ProposalCode_Id = PC.ProposalCode_Id)
     JOIN Semester AS S ON (OC.Semester_Id = S.Semester_Id)
 WHERE PC.Proposal_Code = :proposal_code
+ORDER BY semester DESC;
     """
         )
         results = self.connection.execute(stmt, {
             "proposal_code": proposal_code
         })
-        last_oc = defaultdict(lambda: None)
+        last = results.first()
 
-        for row in results:
-            if not last_oc["semester"] or row.semester > last_oc["semester"]:
-                last_oc = {
-                    "semester": row["semester"],
-                    "seeing": row["seeing"],
-                    "transparency": row["transparency"],
-                    "description": row["description"]
-                }
-
-        if not last_oc["semester"]:
-            raise NotFoundError(f"Last requested observation condition for proposal "
-                                f"{proposal_code} was not found")
-        return last_oc
+        return {
+            "seeing": last.seeing,
+            "transparency": last.transparency,
+            "description": last.description
+        }
 
     def get_observed_time(self, proposal_code: str) -> List[Dict[str, Any]]:
         stmt = text(
@@ -1540,24 +1532,24 @@ WHERE Proposal_Code=:proposal_code
             raise NotFoundError()
 
     def get_time_statistics(self, proposal_code: str) -> List[Dict[str, Any]]:
-        previous_allocated_requested = self.get_allocated_and_requested_time(
+        allocated_requested = self.get_allocated_and_requested_time(
             proposal_code)
-        previous_observed_time = self.get_observed_time(proposal_code)
+        observed_time = self.get_observed_time(proposal_code)
         time_statistics = []
-        for ar in previous_allocated_requested:
+        for ar in allocated_requested:
             tmp = {
                 "semester": ar["semester"],
                 "requested_time": ar["requested_time"],
                 "allocated_time": ar["allocated_time"],
                 "observed_time": 0
             }
-            for ot in previous_observed_time:
+            for ot in observed_time:
                 if ot["semester"] == ar["semester"]:
                     tmp["observed_time"] = ot["observed_time"]
             time_statistics.append(tmp)
         return time_statistics
 
-    def _get_partner_requested_percentage(self, proposal_code: str, semester: str) -> \
+    def _get_partner_requested_percentages(self, proposal_code: str, semester: str) -> \
             List[Dict[str, Any]]:
         stmt = text(
             """
@@ -1586,7 +1578,7 @@ WHERE PC.Proposal_Code = :proposal_code
                 tmp[row.partner_code]["requested_percentage"] = row.requested_percentage
         prp = []
         for pc in tmp:
-
+            tmp[pc].setdefault("requested_percentage", 0)
             prp.append(tmp[pc])
         return prp
 
@@ -1625,7 +1617,7 @@ WHERE PC.Proposal_Code = :proposal_code
             "proposal_code": proposal_code,
             "semester": semester
         })
-
+        print(">>: ", result.rowcount)
         if result.rowcount > 0:
             progress_report = {}
             for row in result:
@@ -1645,9 +1637,9 @@ WHERE PC.Proposal_Code = :proposal_code
             progress_report["previous_time_requests"] = \
                 self.get_time_statistics(proposal_code)
             progress_report["last_observing_constraints"] = \
-                self.get_last_observing_conditions(proposal_code, semester)
+                self.get_latest_observing_conditions(proposal_code)
             progress_report["partner_requested_percentages"] = \
-                self._get_partner_requested_percentage(proposal_code, semester)
+                self._get_partner_requested_percentages(proposal_code, semester)
             return progress_report
         else:
             return {
@@ -1662,9 +1654,9 @@ WHERE PC.Proposal_Code = :proposal_code
                 "summary_of_proposal_status": None,
                 "strategy_changes": None,
                 "partner_requested_percentages":
-                    self._get_partner_requested_percentage(proposal_code, semester),
+                    self._get_partner_requested_percentages(proposal_code, semester),
                 "previous_time_requests":
                     self.get_time_statistics(proposal_code),
                 "last_observing_constraints":
-                    self.get_last_observing_conditions(proposal_code, semester)
+                    self.get_latest_observing_conditions(proposal_code)
             }

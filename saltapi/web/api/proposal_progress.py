@@ -47,11 +47,6 @@ def get_progress_report(
     additional file uploaded by the user when creating the report. There is another
     endpoint for returning the report as a pdf, including the additional file and the
     original scientific justification.
-
-    Returned object
-    --- | ---
-    JSON string | application/json
-
     """
     with UnitOfWork() as unit_of_work:
         permission_service = services.permission_service(unit_of_work.connection)

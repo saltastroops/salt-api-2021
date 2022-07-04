@@ -101,36 +101,18 @@ def test_semester_end_raises_error_for_incorrect_semester() -> None:
         ("2022-1", "2022-02-01T12:00:00Z"),
         ("2022-1", "2022-03-11T12:00:00Z"),
         ("2022-2", "2022-06-23T12:00:00Z"),
-        ("2023-1", "2023-04-30T12:00:00Z")
-    ],
-)
-def test_next_semester_returns_correct_semester(semester: str, d: str) -> None:
-    with freezegun.freeze_time(d):
-        assert next_semester() == semester
-
-
-@pytest.mark.parametrize(
-    "semester,d",
-    [
+        ("2023-1", "2023-04-30T12:00:00Z"),
+        # Test if the start of the first semester is correct
         ("2022-1", "2022-05-01T00:00:00Z"),
         ("2022-1", "2022-05-01T11:59:59Z"),
         ("2022-2", "2022-05-01T12:00:00Z"),
         ("2022-2", "2022-05-01T12:00:01Z"),
+        # Test if start of the second  semester is correct.
         ("2022-2", "2022-11-01T00:00:01Z"),
         ("2022-2", "2022-11-01T11:59:59Z"),
         ("2023-1", "2022-11-01T12:00:00Z"),
         ("2023-1", "2022-11-01T12:00:01Z"),
-    ],
-)
-def test_next_semester_returns_correct_semester_on_start_semester_date(
-        semester: str, d: str) -> None:
-    with freezegun.freeze_time(d):
-        assert next_semester() == semester
-
-
-@pytest.mark.parametrize(
-    "semester,d",
-    [
+        # Test the edge cases
         ("2022-2", "2022-05-31T00:00:00Z"),
         ("2022-2", "2022-05-31T11:59:59Z"),
         ("2022-2", "2022-05-31T12:00:00Z"),
@@ -141,7 +123,6 @@ def test_next_semester_returns_correct_semester_on_start_semester_date(
         ("2022-2", "2022-10-31T12:00:01Z"),
     ],
 )
-def test_next_semester_returns_correct_semester_on_edge_cases(
-        semester: str, d: str) -> None:
+def test_next_semester_returns_correct_semester(semester: str, d: str) -> None:
     with freezegun.freeze_time(d):
         assert next_semester() == semester
