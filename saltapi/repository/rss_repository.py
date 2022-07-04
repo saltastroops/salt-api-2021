@@ -418,7 +418,6 @@ FROM RssCurrentMasks AS RCM
             stmt += " WHERE RssMaskType IN :mask_type"
 
         results = self.connection.execute(text(stmt), {"mask_type": mask_types})
-        print([row.barcode for row in results])
         return [row.barcode for row in results]
 
     def _get_liaison_astronomers(self, proposal_code_ids: Set[int]) -> Dict[int, str]:
