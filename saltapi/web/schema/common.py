@@ -6,7 +6,7 @@ from typing import Any, Callable, Dict, Generator, List, Optional
 from pydantic import BaseModel, Field
 
 
-class BlockVisitStatus(str, Enum):
+class BlockVisitStatusValue(str, Enum):
     """Block visit status."""
 
     # The SDB also contains a status "Deleted", but the API should ignore block visits
@@ -37,7 +37,7 @@ class BaseBlockVisit(BaseModel):
         title="Observation night",
         description="Start date of the night when the observation was made (or the block visit was queued).",
     )
-    status: BlockVisitStatus = Field(
+    status: BlockVisitStatusValue = Field(
         ...,
         title="Block visit status",
         description="Status of the block visit",

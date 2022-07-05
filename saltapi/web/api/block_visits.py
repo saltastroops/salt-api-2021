@@ -10,7 +10,7 @@ from saltapi.web import services
 from saltapi.web.schema.common import (
     BaseBlockVisit,
     BlockRejectionReason,
-    BlockVisitStatus,
+    BlockVisitStatusValue,
 )
 
 router = APIRouter(prefix="/block-visits", tags=["Block visit"])
@@ -45,7 +45,7 @@ def update_block_visit_status(
     block_visit_id: int = Path(
         ..., title="Block visit id", description="Unique identifier for a block visit"
     ),
-    block_visit_status: BlockVisitStatus = Body(
+    block_visit_status: BlockVisitStatusValue = Body(
         ...,
         alias="status",
         title="Block visit status",

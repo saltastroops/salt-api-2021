@@ -6,7 +6,7 @@ from saltapi.exceptions import NotFoundError
 from saltapi.repository.block_repository import BlockRepository
 from saltapi.service.block import Block, BlockStatus
 from saltapi.service.block_service import BlockService
-from saltapi.web.schema.common import BlockVisitStatus
+from saltapi.web.schema.common import BlockVisitStatusValue
 
 
 class FakeBlockRepository:
@@ -51,11 +51,15 @@ class FakeBlockRepository:
             raise NotFoundError()
 
     def update_block_visit_status(
-        self, block_id: int, value: str, rejection_reason: Optional[str]
+        self, block_visit_id: int, status: str, rejection_reason: Optional[str]
     ) -> None:
-        if block_id == BLOCK_VISIT_ID:
+        if block_visit_id == BLOCK_VISIT_ID:
+            if status not in [
+                status_value.value for status_value in BlockVisitStatusValue
+            ]:
+                raise NotFoundError(f"Unknown block visit status: {status}")
             self.block_visit_status = {
-                "status": value,
+                "status": status,
                 "rejected_reason": rejection_reason,
             }
         else:
@@ -141,7 +145,7 @@ def test_update_block_visit_status() -> None:
     old_status = block_service.get_block_visit(BLOCK_VISIT_ID)["status"]
     assert old_status != "Accepted"
 
-    status_update = BlockVisitStatus("Accepted")
+    status_update = BlockVisitStatusValue("Accepted")
     block_service.update_block_visit_status(BLOCK_VISIT_ID, status_update, None)
 
     new_status = block_service.get_block_visit(BLOCK_VISIT_ID)
@@ -154,12 +158,15 @@ def test_cannot_update_with_a_wrong_block_visit_type() -> None:
     block_visit = block_service.get_block_visit(BLOCK_VISIT_ID)
     assert block_visit["status"] != "Not set"
 
-    with pytest.raises(AttributeError):
-        block_service.update_block_visit_status(BLOCK_VISIT_ID, "Status", "Reason")
+    with pytest.raises(ValueError) as excinfo:
+        block_service.update_block_visit_status(
+            BLOCK_VISIT_ID, "Wrong block visit status", None
+        )
+    assert "block visit status" in str(excinfo.value)
 
 
 def test_update_block_visit_status_raises_error_for_wrong_block_id() -> None:
     block_service = create_block_service()
-    status = BlockVisitStatus("In queue")
+    status = BlockVisitStatusValue("In queue")
     with pytest.raises(NotFoundError):
         block_service.update_block_visit_status(0, status, None)
