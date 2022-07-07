@@ -10,28 +10,28 @@ from saltapi.service.user import User as _User
 from saltapi.settings import get_settings
 from saltapi.web import services
 
-router = APIRouter(prefix="/finding-charts", tags=["Finding charts"])
+router = APIRouter(prefix="/finder-charts", tags=["Finding charts"])
 
-finding_charts_directory = get_settings().finding_charts_dir
+finder_charts_directory = get_settings().finding_charts_dir
 
 
-@router.get("/{finding_chart_id}", summary="Get a finding chart")
+@router.get("/{finder_chart_id}", summary="Get a finding chart")
 def get_finding_charts(
-    finding_chart_id: int = Path(
-        ..., title="Finding chart id", description="Unique identifier for finding chart"
+    finder_chart_id: int = Path(
+        ..., title="Finder chart id", description="Unique identifier for a finder chart"
     ),
     user: _User = Depends(get_current_user),
 ) -> Any:
     with UnitOfWork() as unit_of_work:
         permission_service = services.permission_service(unit_of_work.connection)
-        finding_chart_service = services.finding_chart_service(unit_of_work.connection)
+        finding_chart_service = services.finder_chart_service(unit_of_work.connection)
 
-        [proposal_code, finding_chart_path] = finding_chart_service.get_finding_chart(
-            finding_chart_id
+        [proposal_code, finder_chart_path] = finding_chart_service.get_finder_chart(
+            finder_chart_id
         )
 
         permission_service.check_permission_to_view_proposal(user, proposal_code)
 
-        filename = osp.join(finding_charts_directory, proposal_code, finding_chart_path)
+        filename = osp.join(finder_charts_directory, proposal_code, finder_chart_path)
 
         return FileResponse(osp.abspath(filename))

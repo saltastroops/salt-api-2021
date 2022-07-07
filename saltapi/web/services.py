@@ -1,7 +1,7 @@
 from sqlalchemy.engine import Connection
 
 from saltapi.repository.block_repository import BlockRepository
-from saltapi.repository.finding_chart_repository import FindingChartRepository
+from saltapi.repository.finder_chart_repository import FinderChartRepository
 from saltapi.repository.institution_repository import InstitutionRepository
 from saltapi.repository.instrument_repository import InstrumentRepository
 from saltapi.repository.proposal_repository import ProposalRepository
@@ -10,7 +10,7 @@ from saltapi.repository.target_repository import TargetRepository
 from saltapi.repository.user_repository import UserRepository
 from saltapi.service.authentication_service import AuthenticationService
 from saltapi.service.block_service import BlockService
-from saltapi.service.finding_chart_service import FindingChartService
+from saltapi.service.finder_chart_service import FinderChartService
 from saltapi.service.institution_service import InstitutionService
 from saltapi.service.instrument_service import InstrumentService
 from saltapi.service.mail_service import MailService
@@ -84,7 +84,7 @@ def submission_service(
     return SubmissionService(submission_repository)
 
 
-def finding_chart_service(connection: Connection) -> FindingChartService:
+def finder_chart_service(connection: Connection) -> FinderChartService:
     """Return a finding chart service instance."""
-    finding_chart_repository = FindingChartRepository(connection)
-    return FindingChartService(finding_chart_repository)
+    finding_chart_repository = FinderChartRepository(connection)
+    return FinderChartService(finding_chart_repository)

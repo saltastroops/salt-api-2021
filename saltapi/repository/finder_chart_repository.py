@@ -8,35 +8,35 @@ from saltapi.exceptions import NotFoundError
 from saltapi.service.proposal import ProposalCode
 
 
-class FindingChartRepository:
+class FinderChartRepository:
     def __init__(self, connection: Connection) -> None:
         self.connection = connection
 
-    def get(self, finding_chart_id: int) -> Any:
+    def get(self, finder_chart_id: int) -> Any:
         stmt = text(
             """
 SELECT FC.Path AS finding_chart_path
 FROM FindingChart FC
-WHERE FC.FindingChart_Id = :finding_chart_id
+WHERE FC.FindingChart_Id = :finder_chart_id
         """
         )
         try:
             result = self.connection.execute(
-                stmt, {"finding_chart_id": finding_chart_id}
+                stmt, {"finder_chart_id": finder_chart_id}
             )
-            proposal_code = self.get_proposal_code_for_finding_chart_id(
-                finding_chart_id
+            proposal_code = self.get_proposal_code_for_finder_chart_id(
+                finder_chart_id
             )
             finding_chart_path = result.one()
             return [proposal_code, finding_chart_path[0]]
         except NoResultFound:
             raise NotFoundError()
 
-    def get_proposal_code_for_finding_chart_id(
-        self, finding_chart_id: int
+    def get_proposal_code_for_finder_chart_id(
+        self, finder_chart_id: int
     ) -> ProposalCode:
         """
-        Return proposal code for a finding chart id:
+        Return proposal code for a finder chart id:
         """
         stmt = text(
             """
@@ -45,12 +45,12 @@ FROM ProposalCode PC
      JOIN Block B ON PC.ProposalCode_Id = B.ProposalCode_Id
      JOIN Pointing P ON B.Block_Id = P.Block_Id
      JOIN FindingChart FC ON P.Pointing_Id = FC.Pointing_Id
-WHERE FC.FindingChart_Id = :finding_chart_id;
+WHERE FC.FindingChart_Id = :finder_chart_id;
         """
         )
         result = self.connection.execute(
             stmt,
-            {"finding_chart_id": finding_chart_id},
+            {"finder_chart_id": finder_chart_id},
         )
 
         try:
@@ -60,6 +60,6 @@ WHERE FC.FindingChart_Id = :finding_chart_id;
                 proposal_codes = [codes[0] for codes in proposal_codes]
                 return cast(ProposalCode, list(set(proposal_codes))[0])
             else:
-                raise NotFoundError(f"Unknown block visit id: {finding_chart_id}")
+                raise NotFoundError(f"Unknown finder chart id: {finder_chart_id}")
         except NoResultFound:
             raise NotFoundError()
