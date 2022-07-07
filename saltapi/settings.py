@@ -94,6 +94,9 @@ class Settings(BaseSettings):
     # Command for converting images
     mapping_tool_image_conversion_command: str
 
+    # Finding charts directory
+    finding_charts_dir: str
+
     class Config:
         env_file = os.getenv("DOTENV_FILE", ".env")
 
