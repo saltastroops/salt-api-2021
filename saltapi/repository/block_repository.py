@@ -235,40 +235,29 @@ WHERE BV.BlockVisit_Id = :block_visit_id
         except NoResultFound:
             raise NotFoundError("Unknown block visit id")
 
-    def get_block_visit_status(self, block_visit_id: int) -> str:
-        """
-        Return the block visit status for a block visit id.
-        """
-        stmt = text(
-            """
-SELECT BVS.BlockVisitStatus
-FROM BlockVisitStatus BVS
-         JOIN BlockVisit BV ON BVS.BlockVisitStatus_Id = BV.BlockVisitStatus_Id
-WHERE BV.BlockVisit_Id = :block_visit_id
-  AND BVS.BlockVisitStatus NOT IN ('Deleted');
-        """
-        )
-        try:
-            result = self.connection.execute(stmt, {"block_visit_id": block_visit_id})
-            return cast(str, result.scalar_one())
-        except NoResultFound:
-            raise NotFoundError(f"Unknown block visit id: {block_visit_id}")
-
-    def update_block_visit_status(self, block_visit_id: int, status: str) -> None:
+    def update_block_visit_status(
+        self, block_visit_id: int, status: str, rejection_reason: Optional[str]
+    ) -> None:
         """
         Update the status of a block visit.
         """
+
         if not self._block_visit_exists(block_visit_id):
             raise NotFoundError(f"Unknown block visit id: {block_visit_id}")
         try:
             block_visit_status_id = self._block_visit_status_id(status)
+            block_rejected_reason_id = (
+                self._block_rejection_reason_id(rejection_reason)
+                if rejection_reason
+                else None
+            )
         except NoResultFound:
             raise ValueError(f"Unknown block visit status: {status}")
-
         stmt = text(
             """
 UPDATE BlockVisit BV
-SET BV.BlockVisitStatus_Id = :block_visit_status_id
+SET BV.BlockVisitStatus_Id = :block_visit_status_id,
+    BV.BlockRejectedReason_Id = :block_rejected_reason_id
 WHERE BV.BlockVisit_Id = :block_visit_id
 AND BV.BlockVisitStatus_Id NOT IN (SELECT BVS2.BlockVisitStatus_Id
                                     FROM BlockVisitStatus AS BVS2
@@ -280,6 +269,7 @@ AND BV.BlockVisitStatus_Id NOT IN (SELECT BVS2.BlockVisitStatus_Id
             {
                 "block_visit_id": block_visit_id,
                 "block_visit_status_id": block_visit_status_id,
+                "block_rejected_reason_id": block_rejected_reason_id,
             },
         )
 
@@ -292,6 +282,17 @@ WHERE BVS.BlockVisitStatus = :status
         """
         )
         result = self.connection.execute(stmt, {"status": status})
+        return cast(int, result.scalar_one())
+
+    def _block_rejection_reason_id(self, rejection_reason: str) -> int:
+        stmt = text(
+            """
+SELECT BRR.BlockRejectedReason_Id AS id
+FROM BlockRejectedReason BRR
+WHERE BRR.RejectedReason = :rejected_reason
+        """
+        )
+        result = self.connection.execute(stmt, {"rejected_reason": rejection_reason})
         return cast(int, result.scalar_one())
 
     def _block_visit_exists(self, block_visit_id: int) -> bool:

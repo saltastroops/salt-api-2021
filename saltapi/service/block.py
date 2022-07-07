@@ -6,4 +6,4 @@ BlockStatus = Any
 
 BlockVisit = Any
 
-BlockVisitStatus = Any
+BlockVisitStatus: Any

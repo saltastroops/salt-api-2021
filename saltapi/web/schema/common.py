@@ -6,7 +6,7 @@ from typing import Any, Callable, Dict, Generator, List, Optional
 from pydantic import BaseModel, Field
 
 
-class BlockVisitStatus(str, Enum):
+class BlockVisitStatusValue(str, Enum):
     """Block visit status."""
 
     # The SDB also contains a status "Deleted", but the API should ignore block visits
@@ -14,6 +14,16 @@ class BlockVisitStatus(str, Enum):
     ACCEPTED = "Accepted"
     IN_QUEUE = "In queue"
     REJECTED = "Rejected"
+
+
+class BlockRejectionReason(str, Enum):
+    """Block rejection reason."""
+
+    INSTRUMENT_TECHNICAL_PROBLEMS = "Instrument technical problems"
+    OBSERVING_CONDITIONS_NOT_MET = "Observing conditions not met"
+    PHASE_2_PROBLEMS = "Phase 2 problems"
+    TELESCOPE_TECHNICAL_PROBLEMS = "Telescope technical problems"
+    OTHER = "Other"
 
 
 class BaseBlockVisit(BaseModel):
@@ -27,12 +37,12 @@ class BaseBlockVisit(BaseModel):
         title="Observation night",
         description="Start date of the night when the observation was made (or the block visit was queued).",
     )
-    status: BlockVisitStatus = Field(
+    status: BlockVisitStatusValue = Field(
         ...,
         title="Block visit status",
         description="Status of the block visit",
     )
-    rejection_reason: Optional[str] = Field(
+    rejection_reason: Optional[BlockRejectionReason] = Field(
         None,
         title="Rejection reason",
         description="Reason why the block visit has been rejected",

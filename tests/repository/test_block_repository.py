@@ -430,18 +430,18 @@ def test_get_block_visit_status(
         block_visit_id = d["id"]
         expected_status = d["status"]
         block_repository = create_block_repository(db_connection)
-        status = block_repository.get_block_visit_status(block_visit_id)
+        status = block_repository.get_block_visit(block_visit_id)["status"]
 
         assert expected_status == status
 
 
 @nodatabase
-def test_get_block_visit_status_raises_error_for_wrong_block_id(
+def test_get_block_visit_status_raises_error_for_wrong_block_visit_id(
     db_connection: Connection,
 ) -> None:
     block_repository = create_block_repository(db_connection)
     with pytest.raises(NotFoundError):
-        block_repository.get_block_visit_status(0)
+        block_repository.get_block_visit(0)
 
 
 @nodatabase
@@ -450,7 +450,7 @@ def test_get_block_visit_status_raises_error_for_deleted_status(
 ) -> None:
     block_repository = create_block_repository(db_connection)
     with pytest.raises(NotFoundError):
-        block_repository.get_block_visit_status(829)
+        block_repository.get_block_visit(829)
 
 
 @nodatabase
@@ -458,12 +458,37 @@ def test_update_block_visit_status(db_connection: Connection) -> None:
     # Set the status to "Accepted"
     block_repository = create_block_repository(db_connection)
     block_visit_id = 2300  # The status for this block visit is "In queue"
-    block_repository.update_block_visit_status(block_visit_id, "Accepted")
-    assert block_repository.get_block_visit_status(block_visit_id) == "Accepted"
+    block_repository.update_block_visit_status(block_visit_id, "Accepted", None)
+    block_visit = block_repository.get_block_visit(block_visit_id)
+    assert block_visit["status"] == "Accepted"
+    assert block_visit["rejection_reason"] is None
 
     # Now set it to "Rejected"
-    block_repository.update_block_visit_status(block_visit_id, "Rejected")
-    assert block_repository.get_block_visit_status(block_visit_id) == "Rejected"
+    block_repository.update_block_visit_status(block_visit_id, "Rejected", None)
+    block_visit = block_repository.get_block_visit(block_visit_id)
+    assert block_visit["status"] == "Rejected"
+    assert block_visit["rejection_reason"] is None
+
+
+@nodatabase
+def test_update_block_visit_status_with_rejection_reason(
+    db_connection: Connection,
+) -> None:
+    # Set the status to "Accepted"
+    block_repository = create_block_repository(db_connection)
+    block_visit_id = 2300  # The status for this block visit is "In queue"
+    block_repository.update_block_visit_status(block_visit_id, "Accepted", None)
+    block_visit = block_repository.get_block_visit(block_visit_id)
+    assert block_visit["status"] == "Accepted"
+    assert block_visit["rejection_reason"] is None
+
+    # Now set it to "Rejected"
+    block_repository.update_block_visit_status(
+        block_visit_id, "Rejected", "Telescope technical problems"
+    )
+    block_visit = block_repository.get_block_visit(block_visit_id)
+    assert block_visit["status"] == "Rejected"
+    assert block_visit["rejection_reason"] == "Telescope technical problems"
 
 
 @nodatabase
@@ -471,12 +496,16 @@ def test_update_block_visit_status_can_be_repeated(db_connection: Connection) ->
     # Set the status to "Accepted"
     block_repository = create_block_repository(db_connection)
     block_visit_id = 2300  # The status for this block visit is "In queue"
-    block_repository.update_block_visit_status(block_visit_id, "Accepted")
-    assert block_repository.get_block_visit_status(block_visit_id) == "Accepted"
+    block_repository.update_block_visit_status(block_visit_id, "Accepted", None)
+    block_visit = block_repository.get_block_visit(block_visit_id)
+    assert block_visit["status"] == "Accepted"
+    assert block_visit["rejection_reason"] is None
 
     # Now set it to "Accepted" again
-    block_repository.update_block_visit_status(block_visit_id, "Accepted")
-    assert block_repository.get_block_visit_status(block_visit_id) == "Accepted"
+    block_repository.update_block_visit_status(block_visit_id, "Accepted", None)
+    block_visit = block_repository.get_block_visit(block_visit_id)
+    assert block_visit["status"] == "Accepted"
+    assert block_visit["rejection_reason"] is None
 
 
 @nodatabase
@@ -485,7 +514,7 @@ def test_update_block_visit_status_raises_error_for_wrong_block_id(
 ) -> None:
     block_repository = create_block_repository(db_connection)
     with pytest.raises(NotFoundError):
-        block_repository.update_block_visit_status(0, "Accepted")
+        block_repository.update_block_visit_status(0, "Accepted", None)
 
 
 @nodatabase
@@ -494,7 +523,7 @@ def test_update_block_visit_status_raises_error_for_deleted_block_status(
 ) -> None:
     block_repository = create_block_repository(db_connection)
     with pytest.raises(NotFoundError):
-        block_repository.update_block_visit_status(1234567890, "Deleted")
+        block_repository.update_block_visit_status(1234567890, "Deleted", None)
 
 
 @nodatabase
@@ -503,5 +532,5 @@ def test_update_block_visit_status_raises_error_for_wrong_status(
 ) -> None:
     block_repository = create_block_repository(db_connection)
     with pytest.raises(ValueError) as excinfo:
-        block_repository.update_block_visit_status(1, "Wrong block visit status")
+        block_repository.update_block_visit_status(1, "Wrong block visit status", None)
     assert "block visit status" in str(excinfo.value)
