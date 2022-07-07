@@ -94,6 +94,8 @@ The Makefile provides various rules for formatting and testing.
 - Running formatting and other tests: `make test`
 - Running tox: `make tox`
 
+For convenience, two simple scripts are provided in the project directory for linting (`lint.sh`) and for running checks before pushing (`check.sh`).
+
 ## Making use of the git pre-commit hook
 
 As forgetting to format code or run tests is human, but having to deal with failing GitHub actions is not fun, it is advisable to use git hooks to ensure whatever should be in place is in place before pushing your changes.

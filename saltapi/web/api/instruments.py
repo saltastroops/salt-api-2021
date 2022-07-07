@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, cast
 
 from fastapi import APIRouter, Body, Depends, Path, Query
 
@@ -41,7 +41,7 @@ def get_rss_masks_in_magazine(
     """
     with UnitOfWork() as unit_of_work:
         instrument_service = services.instrument_service(unit_of_work.connection)
-        return instrument_service.get_rss_masks_in_magazine(mask_types)
+        return instrument_service.get_rss_masks_in_magazine(cast(List[str], mask_types))
 
 
 @router.get(
@@ -122,4 +122,6 @@ def get_obsolete_rss_masks_in_magazine(
     """
     with UnitOfWork() as unit_of_work:
         instrument_service = services.instrument_service(unit_of_work.connection)
-        return instrument_service.get_obsolete_rss_masks_in_magazine(mask_types)
+        return instrument_service.get_obsolete_rss_masks_in_magazine(
+            cast(List[str], mask_types)
+        )

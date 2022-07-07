@@ -80,7 +80,7 @@ def update_block_status(
         title="Block status reason",
         description="New block status reason.",
     ),
-    user: User = Depends(),
+    user: User = Depends(get_current_user),
 ) -> _BlockStatus:
     """
     Updates the status of the block with the given the block id.
