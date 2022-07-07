@@ -34,4 +34,4 @@ def get_finding_charts(
 
         filename = osp.join(finding_charts_directory, proposal_code, finding_chart_path)
 
-        return FileResponse(filename)
+        return FileResponse(osp.abspath(filename))
