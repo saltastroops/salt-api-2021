@@ -27,7 +27,7 @@ WHERE FC.FindingChart_Id = :finder_chart_id
         try:
             result = self.connection.execute(stmt, {"finder_chart_id": finder_chart_id})
 
-            finding_chart_details: Tuple[str, Path] = result.one()
-            return finding_chart_details
+            finding_chart_details = result.one()
+            return finding_chart_details[0], Path(finding_chart_details[1])
         except NoResultFound:
             raise NotFoundError(f"Unknown finder chart id: {finder_chart_id}")

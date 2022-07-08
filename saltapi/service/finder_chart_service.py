@@ -18,7 +18,5 @@ class FinderChartService:
         proposal_code, finder_chart_path = self.finder_chart_repository.get(
             finder_chart_id
         )
-        finder_chart_relative_path = (
-            proposals_directory / proposal_code / finder_chart_path
-        )
-        return proposal_code, Path(finder_chart_relative_path).resolve()
+        full_finder_chart_path = proposals_directory / proposal_code / finder_chart_path
+        return proposal_code, Path(full_finder_chart_path).resolve()
