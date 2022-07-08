@@ -1,4 +1,6 @@
 import os
+import re
+import pathlib
 import uuid
 
 import dotenv
@@ -31,6 +33,42 @@ sdb_dsn = os.environ.get("SDB_DSN")
 if sdb_dsn:
     echo_sql = True if os.environ.get("ECHO_SQL") else False  # SQLAlchemy needs a bool
     engine = create_engine(sdb_dsn, echo=echo_sql, future=True)
+
+
+class PreviousDataFixture:
+    def __init__(self, data_regression, request):
+        self._data_regression = data_regression
+        self._request = request
+
+    def check(self, data_dict):
+        # Find the directory and filename for the datafile
+        cwd = pathlib.Path.cwd()
+        filepath = Path(self._request.module.__file__)
+        relative_filepath = filepath.relative_to(cwd)
+
+        # We need a directory with the same name as the test file, but without the file
+        # extension
+        relative_data_dir = relative_filepath.parent / os.path.splitext(filepath.name)[0]
+        base_data_dir = Path(os.environ["TEST_DATA_DIR"])
+        data_dir = base_data_dir / relative_data_dir
+        data_dir.mkdir(parents=True, exist_ok=True)
+
+        # Get the filepath for the data file
+        # Taken from pytest-datadir
+        data_file_basename = re.sub(r"[\W]", "_", self._request.node.name)
+        data_file = data_dir / f"{data_file_basename}.yml"
+        self._data_regression.check(data_dict, fullpath=str(data_file))
+
+
+@pytest.fixture()
+def previous_data(data_regression, request):
+    """
+    Check a dict against previously saved version.
+
+    The data will be stored in a subdirectory of the directory specified with the
+    TEST_DATA_DIR environment variable.
+    """
+    yield PreviousDataFixture(data_regression, request)
 
 
 def get_user_authentication_function() -> Callable[[str, str], User]:
