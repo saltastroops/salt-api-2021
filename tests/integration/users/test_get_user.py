@@ -25,7 +25,7 @@ def test_get_user_should_return_401_for_unauthenticated_user(
     client: TestClient,
 ) -> None:
     not_authenticated(client)
-    user_id = 1602
+    user_id = 1
     response = client.get(_url(user_id))
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
@@ -34,7 +34,7 @@ def test_get_user_should_return_401_for_user_with_invalid_auth_token(
     client: TestClient,
 ) -> None:
     misauthenticate(client)
-    user_id = 1602
+    user_id = 2
     response = client.get(_url(user_id))
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 

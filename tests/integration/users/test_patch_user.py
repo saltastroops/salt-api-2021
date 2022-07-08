@@ -71,62 +71,62 @@ def test_patch_user_should_return_403_if_non_admin_tries_to_update_other_user(
 
 
 def test_patch_user_should_keep_existing_values_by_default(client: TestClient) -> None:
-    new_user = create_user(client)
-    authenticate(new_user["username"], client)
-    current_user_details = client.get(_url(new_user["id"])).json()
-    client.patch(_url(new_user["id"]), json={})
-    updated_user_details = client.get(_url(new_user["id"])).json()
+    user = create_user(client)
+    authenticate(user["username"], client)
+    current_user_details = client.get(_url(user["id"])).json()
+    client.patch(_url(user["id"]), json={})
+    updated_user_details = client.get(_url(user["id"])).json()
 
     assert updated_user_details == current_user_details
 
 
 def test_patch_user_should_update_with_new_values(client: TestClient) -> None:
-    new_user = create_user(client)
+    user = create_user(client)
     new_username = str(uuid.uuid4())[:8]
-    authenticate(new_user["username"], client)
+    authenticate(user["username"], client)
 
     user_update = {"username": new_username, "password": "very_very_secret"}
-    expected_updated_user_details = new_user.copy()
+    expected_updated_user_details = user.copy()
     expected_updated_user_details.update(user_update)
     del expected_updated_user_details["password"]
 
     # the endpoint returns the correct response...
-    response = client.patch(_url(new_user["id"]), json=user_update)
+    response = client.patch(_url(user["id"]), json=user_update)
     assert response.status_code == status.HTTP_200_OK
     assert response.json() == expected_updated_user_details
 
     # ... and the user is indeed updated
-    updated_user_details = client.get(_url(new_user["id"])).json()
+    updated_user_details = client.get(_url(user["id"])).json()
     assert updated_user_details == expected_updated_user_details
 
 
 def test_patch_user_should_be_idempotent(client: TestClient) -> None:
-    new_user = create_user(client)
+    user = create_user(client)
     new_username = str(uuid.uuid4())[:8]
-    authenticate(new_user["username"], client)
+    authenticate(user["username"], client)
 
     user_update = {"username": new_username, "password": "very_very_secret"}
-    expected_updated_user_details = new_user.copy()
+    expected_updated_user_details = user.copy()
     expected_updated_user_details.update(user_update)
     del expected_updated_user_details["password"]
 
-    client.patch(_url(new_user["id"]), json=user_update)
-    client.patch(_url(new_user["id"]), json=user_update)
+    client.patch(_url(user["id"]), json=user_update)
+    client.patch(_url(user["id"]), json=user_update)
 
-    updated_user_details = client.get(_url(new_user["id"])).json()
+    updated_user_details = client.get(_url(user["id"])).json()
     assert updated_user_details == expected_updated_user_details
 
 
 def test_patch_user_should_allow_admin_to_update_other_user(client: TestClient) -> None:
-    new_user = create_user(client)
+    user = create_user(client)
     new_username = str(uuid.uuid4())[:8]
     authenticate(find_username("Administrator"), client)
 
     user_update = {"username": new_username, "password": "very_very_secret"}
-    expected_updated_user_details = new_user.copy()
+    expected_updated_user_details = user.copy()
     expected_updated_user_details.update(user_update)
     del expected_updated_user_details["password"]
 
-    response = client.patch(_url(new_user["id"]), json=user_update)
+    response = client.patch(_url(user["id"]), json=user_update)
     assert response.status_code == status.HTTP_200_OK
     assert response.json() == expected_updated_user_details

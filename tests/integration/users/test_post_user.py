@@ -91,7 +91,7 @@ def test_post_user_should_create_a_new_user(client: TestClient) -> None:
     response = client.post(USERS_URL, json=new_user_details)
     assert response.status_code == status.HTTP_201_CREATED
 
-    # check properties other than the password and username
+    # check properties other than the user id
     created_user = response.json()
     del created_user["id"]
     assert created_user == expected_user
