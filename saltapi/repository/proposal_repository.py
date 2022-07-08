@@ -1586,7 +1586,7 @@ WHERE PC.Proposal_Code = :proposal_code
             Dict[str, Any]:
         stmt = text(
             """
-SELECT *,
+SELECT 
     P1MinimumUsefulTime 				AS requested_time,
     MaxSeeing							AS maximum_seeing,
     Transparency						AS transparency,
@@ -1617,7 +1617,6 @@ WHERE PC.Proposal_Code = :proposal_code
             "proposal_code": proposal_code,
             "semester": semester
         })
-        print(">>: ", result.rowcount)
         if result.rowcount > 0:
             progress_report = {}
             for row in result:
