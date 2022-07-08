@@ -13,7 +13,7 @@ def test_get_finding_chart_returns_correct_content(db_connection: Connection) ->
     finding_chart = finding_chart_repository.get(finding_chart_id)
 
     assert finding_chart[0] == proposal_code
-    assert expected_finder_chart_path == finding_chart[1]
+    assert expected_finder_chart_path == str(finding_chart[1])
 
 
 def test_raises_an_error_for_non_existing_finder_chart(

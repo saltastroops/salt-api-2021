@@ -1,4 +1,5 @@
-from typing import List
+from pathlib import Path
+from typing import Tuple
 
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
@@ -11,10 +12,10 @@ class FinderChartRepository:
     def __init__(self, connection: Connection) -> None:
         self.connection = connection
 
-    def get(self, finder_chart_id: int) -> List[str]:
+    def get(self, finder_chart_id: int) -> Tuple[str, Path]:
         stmt = text(
             """
-SELECT DISTINCT PC.Proposal_code AS proposa_code,
+SELECT DISTINCT PC.Proposal_code AS proposal_code,
                 FC.Path AS finding_chart_path
 FROM FindingChart FC
      JOIN Pointing P ON FC.Pointing_Id = P.Pointing_Id
@@ -26,7 +27,7 @@ WHERE FC.FindingChart_Id = :finder_chart_id
         try:
             result = self.connection.execute(stmt, {"finder_chart_id": finder_chart_id})
 
-            finding_chart_path: List[str] = result.one()
-            return finding_chart_path
+            finding_chart_details: Tuple[str, Path] = result.one()
+            return finding_chart_details
         except NoResultFound:
             raise NotFoundError(f"Unknown finder chart id: {finder_chart_id}")

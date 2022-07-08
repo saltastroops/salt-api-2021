@@ -6,12 +6,9 @@ from fastapi.responses import FileResponse
 from saltapi.repository.unit_of_work import UnitOfWork
 from saltapi.service.authentication_service import get_current_user
 from saltapi.service.user import User as _User
-from saltapi.settings import get_settings
 from saltapi.web import services
 
 router = APIRouter(prefix="/finder-charts", tags=["Finding charts"])
-
-finder_charts_directory = get_settings().finding_charts_dir
 
 
 @router.get("/{finder_chart_id}", summary="Get a finding chart")

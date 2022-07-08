@@ -1,7 +1,6 @@
 from fastapi.testclient import TestClient
 from starlette import status
 
-from saltapi.exceptions import NotFoundError
 from tests.conftest import authenticate, not_authenticated
 
 FINDER_CHART_URL = "/finder-charts"
@@ -40,7 +39,7 @@ def test_get_returns_finder_chart_for_authorised_user(client: TestClient) -> Non
 
         assert response.status_code == status.HTTP_200_OK
         assert response.content.__sizeof__() > 0
-    except NotFoundError as excinfo:
+    except RuntimeError as excinfo:
         assert expected_finder_chart_path in excinfo.__str__()
 
 
