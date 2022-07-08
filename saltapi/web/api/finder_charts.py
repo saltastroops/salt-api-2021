@@ -1,4 +1,3 @@
-import os.path as osp
 from typing import Any
 
 from fastapi import APIRouter, Depends, Path
@@ -26,12 +25,10 @@ def get_finding_charts(
         permission_service = services.permission_service(unit_of_work.connection)
         finding_chart_service = services.finder_chart_service(unit_of_work.connection)
 
-        [proposal_code, finder_chart_path] = finding_chart_service.get_finder_chart(
+        proposal_code, finder_chart_path = finding_chart_service.get_finder_chart(
             finder_chart_id
         )
 
         permission_service.check_permission_to_view_proposal(user, proposal_code)
 
-        filename = osp.join(finder_charts_directory, proposal_code, finder_chart_path)
-
-        return FileResponse(osp.abspath(filename))
+        return FileResponse(finder_chart_path)
