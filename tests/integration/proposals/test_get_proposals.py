@@ -70,7 +70,7 @@ def test_should_return_422_for_invalid_semesters(
             find_username("TAC Chair", partner_code="RSA"),
             "2020-1",
             "2020-1",
-            32,
+            34,
             "many",
         ],
         [

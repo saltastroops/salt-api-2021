@@ -253,9 +253,8 @@ def test_guide_star(db_connection: Connection, testdata: Callable[[str], Any]) -
         assert pytest.approx(guide_star["right_ascension"]) == pytest.approx(
             expected_guide_star["right_ascension"]
         )
-        assert pytest.approx(
-            guide_star["declination"]
-            == pytest.approx(expected_guide_star["declination"])
+        assert guide_star["declination"] == pytest.approx(
+            expected_guide_star["declination"]
         )
         assert guide_star["equinox"] == expected_guide_star["equinox"]
         assert guide_star["magnitude"] == expected_guide_star["magnitude"]

@@ -11,7 +11,7 @@ dotenv.load_dotenv(os.environ["DOTENV_FILE"])
 
 
 from pathlib import Path
-from typing import Any, Callable, Generator, Optional, cast
+from typing import Any, Callable, Dict, Generator, Optional, cast
 
 import pytest
 import yaml
@@ -151,6 +151,12 @@ def authenticate(username: str, client: TestClient) -> None:
     client.headers["Authorization"] = f"Bearer {token}"
 
 
+def get_authenticated_user_id(client: TestClient) -> int:
+    response = client.get("/user")
+    user = response.json()
+    return cast(int, user["id"])
+
+
 def not_authenticated(client: TestClient) -> None:
     if "Authorization" in client.headers:
         del client.headers["Authorization"]
@@ -164,7 +170,7 @@ def _random_string() -> str:
     return str(uuid.uuid4())[:8]
 
 
-def create_user(client: TestClient) -> str:
+def create_user(client: TestClient) -> Dict[str, Any]:
     username = _random_string()
     new_user_details = dict(
         username=username,
@@ -172,7 +178,7 @@ def create_user(client: TestClient) -> str:
         given_name=_random_string(),
         family_name=_random_string(),
         password="very_secret",
-        institute_id=5,
+        institution_id=5,
     )
     response = client.post("/users/", json=new_user_details)
-    return cast(str, response.json()["username"])
+    return dict(response.json())
