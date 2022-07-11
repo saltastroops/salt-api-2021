@@ -3,6 +3,9 @@ from datetime import datetime, timedelta
 from typing import NamedTuple
 
 import pytz
+from dateutil.relativedelta import relativedelta
+
+from saltapi.web.schema.common import Semester
 
 
 class TimeInterval(NamedTuple):
@@ -43,7 +46,7 @@ def partner_name(partner_code: str) -> str:
 
 def tonight() -> TimeInterval:
     """
-    Return the date interval corresponding to the "night" in which the current time time
+    Return the date interval corresponding to the "night" in which the current time
     lies.
 
     A night is defined to run from noon to noon.
@@ -132,3 +135,15 @@ def semester_of_datetime(t: datetime) -> str:
         semester = 2
 
     return f"{year}-{semester}"
+
+
+def next_semester() -> str:
+    """
+    Get the next semester from the current date and time.
+    """
+    # Adding a month never crosses the month boundary. For example, 31 November plus 6
+    # months is 30 April, not 1 May. The semester_of_datetime function takes care of the
+    # fact that a semester starts at noon rather than at midnight.
+    return Semester(
+        semester_of_datetime(datetime.now(tz=pytz.utc) + relativedelta(months=+6))
+    )

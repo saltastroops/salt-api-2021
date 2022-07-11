@@ -236,7 +236,7 @@ class Comment(BaseModel):
         }
 
 
-class PartnerPercentage(BaseModel):
+class PartnerPercentage(BaseModel):  # TODO There is a similar class to this just missing a partner code
     """A percentage (for example of the requested time) for a partner."""
 
     partner: PartnerName = Field(..., title="SALT partner", description="SALT partner")
@@ -371,15 +371,22 @@ class Proposal(BaseModel):
     )
 
 
-class ProgressReport(BaseModel):
+class PartnerRequestedPercentage(BaseModel):
     """
-    Progress report for a proposal and semester. The semester is the semester for which
-    the progress is reported. For example, if the semester is 2021-1, the report covers
-    the observations up to and including the 2021-1 semester and it requests time for
-    the 2021-2 semester.
+    Requested Percentage for a partner
     """
-
-    dummy: str
+    partner_code: PartnerCode = Field(
+        ..., title="Partner code",
+        description="Partner code, such as IUCAA."
+    ),
+    partner_name: PartnerName = Field(
+        ..., title="Partner name ",
+        description="Name of the partner."
+    ),
+    requested_percentage: float = Field(
+        ..., title="Percentage",
+        description="Percentage requested from a partner."
+    )
 
 
 class ProposalContentType(str, Enum):
@@ -442,3 +449,101 @@ class SubmissionAcknowledgment(BaseModel):
 
     class Config:
         schema_extra = {"example": {"submission_id": 41318}}
+
+
+class ObservingConstraints(BaseModel):
+    seeing: float = Field(..., title="Seeing", description="The seeing")
+    transparency: str = Field(..., title="Transparency",
+                              description="The transparency"),
+    description: str = Field(
+        ...,
+        title="Description",
+        description="The brief description of observing constraints"
+    )
+
+
+class TimeStatistics(BaseModel):
+    """Time statistics for a proposal."""
+
+    semester: str = Field(..., title="Semester", description="The semester")
+    requested_time: int = Field(..., title="Requested time",
+                                description="Requested time for the semester.")
+    allocated_time: int = Field(..., title="Allocated time",
+                                description="Allocated time for the semester")
+    observed_time: int = Field(..., title="Observed time",
+                               description="Observed time for the semester")
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "semester": "2022-1",
+                "requested_time": 19000,
+                "allocated_time": 18000,
+                "observed_time": 17000
+            }
+        }
+
+
+class ProposalProgress(BaseModel):
+    """
+    Progress report for a proposal and semester. The semester is the semester for which
+    the progress is reported. For example, if the semester is 2021-1, the report covers
+    the observations up to and including the 2021-1 semester and it requests time for
+    the 2021-2 semester.
+    """
+
+    requested_time: Optional[int] = Field(
+        ...,
+        title="Requested time",
+        description="Requested time per partner.",
+    )
+    semester: Optional[str] = Field(
+        ...,
+        title="Semester",
+        description="The semester for this progress report.",
+    )
+    partner_requested_percentages: List[PartnerRequestedPercentage] = Field(
+        ...,
+        title="Partner",
+        description="The partner requesting time from.",
+    )
+    maximum_seeing: Optional[float] = Field(
+        ...,
+        title="Seeing",
+        description="The maximum seeing.",
+    )
+    transparency: Optional[str] = Field(
+        ...,
+        title="Transparency",
+        description="The transparency.",
+    )
+    description_of_observing_constraints: Optional[str] = Field(
+        ...,
+        title="Description of observing constraints",
+        description="The description of observing constraints.",
+    )
+    change_reason: Optional[str] = Field(
+        ...,
+        title="Time request change reasons",
+        description="The reason why the time request has changed.",
+    )
+    summary_of_proposal_status: Optional[str] = Field(
+        ...,
+        title="Summary of proposal status",
+        description="The summary of proposal status.",
+    )
+    strategy_changes: Optional[str] = Field(
+        ...,
+        title="Strategy changes",
+        description="The strategy changes.",
+    )
+    previous_time_requests: List[TimeStatistics] = Field(
+        ...,
+        title="Previous time requests",
+        description="The request from previous semesters"
+    )
+    last_observing_constraints: ObservingConstraints = Field(
+        ...,
+        title="Last requested observing conditions",
+        description="The last observing conditions."
+    )

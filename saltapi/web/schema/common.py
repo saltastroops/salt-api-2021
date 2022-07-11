@@ -299,3 +299,11 @@ class TimeInterval(BaseModel):
 
 class Message(BaseModel):
     message: str = Field(..., title="Message", description="Message")
+
+
+class Transparency(str, Enum):
+    ANY = "Any"
+    CLEAR = "Clear"
+    THICK_CLOUD= "Thick cloud"
+    THIN_CLOUD= "Thin cloud"
+

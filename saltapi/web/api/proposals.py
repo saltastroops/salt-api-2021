@@ -28,11 +28,11 @@ from saltapi.web.schema.proposal import (
     DataReleaseDate,
     DataReleaseDateUpdate,
     ObservationComment,
-    ProgressReport,
+    ProposalProgress,
     Proposal,
     ProposalListItem,
     ProposalStatusContent,
-    SubmissionAcknowledgment,
+    SubmissionAcknowledgment
 )
 
 router = APIRouter(prefix="/proposals", tags=["Proposals"])
@@ -63,7 +63,7 @@ def get_proposals(
 ) -> List[_ProposalListItem]:
     """
     Lists all proposals the user may view. The proposals returned can be limited to
-    those with submissions within a semester range by supplying a from or a to
+    those with submissions within a semester range by supplying a from or to a
     semester (or both). The maximum number of results can be set with the limit
     parameter; the default is 1000.
 
@@ -218,7 +218,7 @@ def resubmit_proposal(
     zip file if these conditions aren't met for your resubmission.
 
     If you resubmit a whole proposal (rather than just blocks), the proposal must
-    contain the same proposal code as the one specified as path parameter. Otherwise
+    contain the same proposal code as the one specified as path parameter. Otherwise,
     the request will fail with an error.
 
     The request does not wait for the submission to finish. Instead it returns an
@@ -379,9 +379,9 @@ def post_observation_comment(
 
 
 @router.get(
-    "{proposal_code}/progress-reports/{semester}",
+    "/{proposal_code}/progress-report/{semester}",
     summary="Get a progress report",
-    response_model=ProgressReport,
+    response_model=Optional[ProposalProgress],
     responses={200: {"content": {"application/pdf": {}}}},
 )
 def get_progress_report(
@@ -391,12 +391,13 @@ def get_progress_report(
         description="Proposal code of the proposal whose progress report is requested.",
     ),
     semester: Semester = Path(..., title="Semester", description="Semester"),
-) -> Response:
+    user: User = Depends(get_current_user)
+) -> ProposalProgress:
     """
     Returns the progress report for a proposal and semester. The semester is the
     semester for which the progress is reported. For example, if the semester is
     2021-1, the report covers the observations up to and including the 2021-1
-    semester and it requests time for the 2021-2 semester.
+    semester, and it requests time for the 2021-2 semester.
 
     The progress report can be requested in either of two formats:
 
@@ -414,22 +415,39 @@ def get_progress_report(
     case of the pdf file the response contains an `Content-Disposition` HTTP header
     with a filename of the form "ProgressReport_{proposal_code}_{semester}.pdf".
     """
-    raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED)
+    with UnitOfWork() as unit_of_work:
+        permission_service = services.permission_service(unit_of_work.connection)
+        permission_service.check_permission_to_view_proposal(user, proposal_code)
+
+        proposal_service = services.proposal_service(unit_of_work.connection)
+        progress_report = proposal_service.get_progress_report(proposal_code, semester)
+
+        return ProposalProgress(
+            **progress_report
+        )
 
 
 @router.put(
     "/{proposal_code}/progress-reports/{semester}",
     summary="Create or update a progress report",
-    response_model=ProgressReport,
+    response_model=ProposalProgress,
 )
 def put_progress_report(
     proposal_code: ProposalCode = Path(
         ...,
         title="Proposal code",
-        description="Proposal code of the proposal whose progress report is created or updated.",
+        description="Proposal code of the proposal whose progress report is created or "
+                    "updated.",
     ),
     semester: Semester = Path(..., title="Semester", description="Semester"),
-) -> ProgressReport:
+    progress_report: ProposalProgress = Body(
+        ...,
+        title="Progress report",
+        description="Progress report for a proposal."
+    ),
+    file: Optional[UploadFile] = File(...),
+    user: User = Depends(get_current_user),
+) -> ProposalProgress:
     """
     Creates or updates the progress report for a proposal and semester. The semester
     is the semester for which the progress is reported. For example, if the semester
@@ -439,6 +457,17 @@ def put_progress_report(
     The optional pdf file is intended for additional details regarding the progress with
     the proposal.
     """
+
+    # TODO Ask about what to do with the requested times for partners?
+    # * how to add the requested times correctly to the database.
+    with UnitOfWork() as unit_of_work:
+        permission_service = services.permission_service(unit_of_work.connection)
+        permission_service.check_permission_to_view_proposal(user, proposal_code)
+
+        proposal_service = services.proposal_service(unit_of_work.connection)
+
+    # TODO Save the pdfs. Both the supplementary PDF and the newly created file.
+    # * Where to save the created files.
     raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED)
 
 
@@ -513,7 +542,8 @@ def get_data_release_date(
     ),
 ) -> date:
     """
-    Returns the date when the observation data for the proposal is scheduled to become public.
+    Returns the date when the observation data for the proposal is scheduled to become
+    public.
     """
     raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED)
 
@@ -534,7 +564,7 @@ def update_data_release_date(
     """
     Requests a new date when the observation data can become public. It depends on
     the requested date and the proposal whether the request is granted immediately.
-    Otherwise the request needs to be approved based on the requested date and the
+    Otherwise, the request needs to be approved based on the requested date and the
     submitted motivation.
 
     As data is released at the beginning of a month, the updated release date may be

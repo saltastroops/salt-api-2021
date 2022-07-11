@@ -181,7 +181,7 @@ WHERE B.Block_Id = :block_id;
         if not result.rowcount:
             raise NotFoundError("Unknown block id")
 
-    def get_proposal_code_for_block_id(self, block_id: int) -> ProposalCode:
+    def get_proposal_code_for_block_id(self, block_id: int) -> str:
         """
         Return proposal code for a block id:
         """
@@ -199,7 +199,7 @@ WHERE B.Block_Id = :block_id;
         )
 
         try:
-            return cast(ProposalCode, result.scalar_one())
+            return result.scalar_one()
         except NoResultFound:
             raise NotFoundError()
 

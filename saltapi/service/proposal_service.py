@@ -1,12 +1,14 @@
 import pathlib
-from typing import Dict, List
+from typing import Dict, List, Any
 
 from saltapi.exceptions import NotFoundError
 from saltapi.repository.proposal_repository import ProposalRepository
+from saltapi.service.create_html import create_progress_report_html
 from saltapi.service.proposal import Proposal, ProposalListItem
 from saltapi.service.user import User
 from saltapi.settings import get_settings
-from saltapi.util import semester_start
+from saltapi.util import semester_start, next_semester
+from saltapi.web.schema.common import Semester, ProposalCode
 
 
 class ProposalService:
@@ -80,3 +82,36 @@ class ProposalService:
         self, proposal_code: str, comment: str, user: User
     ) -> Dict[str, str]:
         return self.repository.add_observation_comment(proposal_code, comment, user)
+
+    def insert_proposal_progress(
+            self,
+            proposal_code: ProposalCode,
+            progress_report_data: Dict[str, Any]
+    ) -> None:
+        semester = next_semester()
+        self.repository.insert_proposal_progress(
+            progress_report_data, proposal_code, semester)
+
+        requested_time = progress_report_data["requested_time"]
+        for rp in progress_report_data["requested_percentages"]:
+            partner_code = rp["partner_code"]
+            partner_percentage = rp["partner_percentage"]
+            time_requested_per_partner = requested_time * (partner_percentage / 100)
+            self.repository._insert_progress_report_requested_time(
+                proposal_code=proposal_code,
+                semester=semester,
+                partner_code=partner_code,
+                requested_time_percent=partner_percentage,
+                requested_time_amount=time_requested_per_partner
+            )
+        self.repository._insert_observing_conditions(
+            proposal_code=proposal_code,
+            semester=semester,
+            seeing=progress_report_data["maximum_seeing"],
+            transparency=progress_report_data["transparency"],
+            observing_conditions_description=progress_report_data["observing_constraints"]
+        )
+
+    def get_progress_report(self, proposal_code: ProposalCode, semester: Semester) -> \
+            Dict[str, Any]:
+        return self.repository.get_progress_report(proposal_code, semester)

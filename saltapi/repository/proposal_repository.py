@@ -64,9 +64,10 @@ FROM Proposal P
          JOIN ProposalStatus PS ON PGI.ProposalStatus_Id = PS.ProposalStatus_Id
          JOIN ProposalType T ON PGI.ProposalType_Id = T.ProposalType_Id
          JOIN ProposalContact C ON PC.ProposalCode_Id = C.ProposalCode_Id
-         LEFT JOIN ProposalInactiveReason PIR ON PGI.ProposalInactiveReason_Id = PIR.ProposalInactiveReason_Id
+         LEFT JOIN ProposalInactiveReason PIR 
+            ON PGI.ProposalInactiveReason_Id = PIR.ProposalInactiveReason_Id
          LEFT JOIN Investigator Astronomer
-                   ON C.Astronomer_Id = Astronomer.Investigator_Id
+            ON C.Astronomer_Id = Astronomer.Investigator_Id
          JOIN Investigator Contact ON C.Contact_Id = Contact.Investigator_Id
          JOIN Investigator Leader ON C.Leader_Id = Leader.Investigator_Id
          JOIN ProposalInvestigator PI ON PC.ProposalCode_Id = PI.ProposalCode_Id
@@ -182,8 +183,8 @@ LIMIT :limit;
         """
         Return a list of proposal summaries.
 
-        The from and to semester are inclusive. The from semester must not be later than
-        the to semester.
+        The from and to semester are inclusive. The "from" semester must not be later
+        than the "to" semester.
         """
 
         if not re.match(r"^\d{4}-\d$", from_semester):
@@ -456,7 +457,8 @@ FROM Proposal P
          JOIN ProposalType T ON PGI.ProposalType_Id = T.ProposalType_Id
          JOIN ProposalStatus PS ON PGI.ProposalStatus_Id = PS.ProposalStatus_Id
          JOIN ProposalContact C ON PC.ProposalCode_Id = C.ProposalCode_Id
-         LEFT JOIN ProposalInactiveReason PIR ON PGI.ProposalInactiveReason_Id = PIR.ProposalInactiveReason_Id
+         LEFT JOIN ProposalInactiveReason PIR 
+            ON PGI.ProposalInactiveReason_Id = PIR.ProposalInactiveReason_Id
          LEFT JOIN Investigator I ON C.Astronomer_Id = I.Investigator_Id
          LEFT JOIN ProposalSelfActivation PSA ON P.ProposalCode_Id = PSA.ProposalCode_Id
 WHERE PC.Proposal_Code = :proposal_code
@@ -1318,3 +1320,353 @@ WHERE PC.Proposal_Code = :proposal_code
             raise NotFoundError(f"No such proposal code: {proposal_code}")
 
         return cast(int, version)
+
+    def insert_proposal_progress(
+            self,
+            progress_report_data: Dict[str, Any],
+            proposal_code: str,
+            semester: str
+    ) -> None:
+        """
+        Insert the proposal progress information.
+        """
+        stmt = text(
+            """
+INSERT INTO ProposalProgress (
+    ProposalCode_Id,
+    Semester_Id,
+    TimeRequestChangeReasons,
+    StatusSummary,
+    StrategyChanges,
+    ReportPath,
+    SupplementaryPath,
+    SubmissionDate
+)
+VALUES(
+    (SELECT ProposalCode_Id FROM ProposalCode WHERE Proposal_Code = :proposal_code),
+    (SELECT Semester_Id FROM Semester WHERE CONCAT(`Year`, "-", Semester) = :semester),
+    :time_request_reason,
+    :status_summary,
+    :strategy_changes,
+    :report_path,
+    :supplementary_path,
+    NOW()
+);
+        """
+        )
+        result = self.connection.execute(
+            stmt, {
+                "proposal_code": proposal_code,
+                "semester": semester,
+                "time_request_reason": progress_report_data["time_request_reason"],
+                "status_summary": progress_report_data["status_summary"],
+                "strategy_changes": progress_report_data["strategy_changes"],
+                "report_path": progress_report_data["report_path"],
+                "supplementary_path": progress_report_data["supplementary_path"]
+            }
+        )
+        if not result.rowcount:
+            raise NotFoundError()
+
+    @staticmethod
+    def _insert_progress_report_requested_time(
+            proposal_code: str,
+            semester: str,
+            partner_code: str,
+            requested_time_percent: int,
+            requested_time_amount: int
+    ) -> None:
+        """
+
+        """
+        stmt = text(
+            """
+INSERT INTO MultiPartner(
+    ProposalCode_Id, 
+    Partner_Id, 
+    Semester_Id, 
+    ReqTimePercent, 
+    ReqTimeAmount
+)
+VALUES (
+    (SELECT ProposalCode_Id FROM ProposalCode WHERE Proposal_Code = :proposal_code),
+    (SELECT Partner_Id FROM Partner WHERE PartnerCode = :partner_code),
+    (SELECT Semester_Id FROM Semester WHERE CONCAT(`Year`, "-", Semester) = :semester),
+    :requested_time_percent,
+    :requested_time_amount
+)
+        """
+        )
+
+    def _insert_observing_conditions(
+            self,
+            proposal_code: str,
+            semester: str,
+            seeing: float,
+            transparency: str,
+            observing_conditions_description: str
+    ) -> None:
+        """
+
+        """
+        stmt = text(
+            """
+INSERT INTO P1ObservingConditions (
+    ProposalCode_Id,
+    Semester_Id,
+    MaxSeeing,
+    Transparency_Id,
+    ObservingConditionsDescription
+)
+VALUES
+(
+    (SELECT ProposalCode_Id FROM ProposalCode WHERE Proposal_Code = :proposal_code),
+    (SELECT Semester_Id FROM Semester WHERE CONCAT(`Year`, "-", Semester) = :semester),
+    :maximum_seeing,
+    (SELECT Transparency_Id FROM Transparency WHERE Transparency = :transparency),
+    :observing_conditions_description
+)
+
+        """
+        )
+        result = self.connection.execute(
+            stmt, {
+                "proposal_code": proposal_code,
+                "semester": semester,
+                "seeing": seeing,
+                "transparency": transparency,
+                "observing_conditions_description": observing_conditions_description
+            }
+        )
+        if not result.rowcount:
+            raise NotFoundError()
+
+    def _get_latest_observing_conditions(self, proposal_code: str, semester: str) ->\
+            Dict[str, Any]:
+        stmt = text(
+            """
+SELECT
+    CONCAT(S.`Year`, "-", S.Semester)   AS semester,
+    MaxSeeing						    AS seeing,
+    Transparency					    AS transparency,
+    ObservingConditionsDescription	    AS description
+FROM P1ObservingConditions AS OC
+    JOIN Transparency AS T ON (OC.Transparency_Id = T.Transparency_Id)
+    JOIN ProposalCode AS PC ON (OC.ProposalCode_Id = PC.ProposalCode_Id)
+    JOIN Semester AS S ON (OC.Semester_Id = S.Semester_Id)
+WHERE PC.Proposal_Code = :proposal_code
+    AND semester <= :semester
+ORDER BY semester DESC;
+    """
+        )
+        results = self.connection.execute(stmt, {
+            "proposal_code": proposal_code,
+            "semester": semester
+        })
+        last = results.first()
+
+        return {
+            "seeing": last.seeing,
+            "transparency": last.transparency,
+            "description": last.description
+        }
+
+    def _get_observed_time(self, proposal_code: str) -> List[Dict[str, Any]]:
+        stmt = text(
+            """
+SELECT  
+    CONCAT(S.`Year`, '-', S.Semester) AS semester,
+    SUM(Obstime)                AS observed_time
+FROM Proposal		    AS P
+    JOIN ProposalCode 	AS PC USING (ProposalCode_Id)
+    JOIN `Block` 		AS B USING (Proposal_Id)
+    JOIN BlockVisit 	AS BV USING (Block_Id)
+    JOIN BlockVisitStatus AS BVS USING (BlockVisitStatus_Id)
+    JOIN Semester 		AS S ON (P.Semester_Id = S.Semester_Id)
+WHERE BlockVisitStatus = 'Accepted'
+    AND Proposal_Code = :proposal_code
+    GROUP BY S.Semester_Id
+    """
+        )
+        result = self.connection.execute(stmt, {
+            "proposal_code": proposal_code
+        })
+        try:
+            return [{
+                "semester": row.semester,
+                "observed_time": row.observed_time
+            }
+                for row in result
+            ]
+        except NoResultFound:
+            raise NotFoundError()
+
+    def _get_allocated_and_requested_time(self, proposal_code: str) -> \
+            List[Dict[str, Any]]:
+        # ReqTimeAmount is the total amount of time requested by a proposal per semester
+        # for all partners combined; hence there is no need to sum its value.
+        stmt = text(
+            """
+SELECT
+    CONCAT(S.`Year`, '-', S.Semester) AS semester,
+    ReqTimeAmount 	AS requested_time,
+    SUM(TimeAlloc) 	AS allocated_time
+FROM MultiPartner 	AS MP
+    JOIN PriorityAlloc 	AS PA ON (MP.MultiPartner_Id = PA.MultiPartner_Id)
+    JOIN ProposalCode 	AS PC ON (MP.ProposalCode_Id = PC.ProposalCode_Id)
+    JOIN Semester 		AS S ON (MP.Semester_Id = S.Semester_Id)
+WHERE Proposal_Code=:proposal_code
+    GROUP BY S.Semester_Id
+    """
+        )
+        result = self.connection.execute(stmt, {
+            "proposal_code": proposal_code
+        })
+        try:
+            return [
+                {
+                    "semester": row.semester,
+                    "requested_time": row.requested_time,
+                    "allocated_time": row.allocated_time
+                }
+                for row in result
+                    ]
+        except NoResultFound:
+            raise NotFoundError()
+
+    def _get_time_statistics(self, proposal_code: str) -> List[Dict[str, Any]]:
+        allocated_requested = self._get_allocated_and_requested_time(
+            proposal_code)
+        observed_time = self._get_observed_time(proposal_code)
+        time_statistics = []
+        for ar in allocated_requested:
+            tmp = {
+                "semester": ar["semester"],
+                "requested_time": ar["requested_time"],
+                "allocated_time": ar["allocated_time"],
+                "observed_time": 0
+            }
+            for ot in observed_time:
+                if ot["semester"] == ar["semester"]:
+                    tmp["observed_time"] = ot["observed_time"]
+            time_statistics.append(tmp)
+        return time_statistics
+
+    def _get_partner_requested_percentages(self, proposal_code: str, semester: str) -> \
+            List[Dict[str, Any]]:
+        stmt = text(
+            """
+SELECT
+    Partner_Code 						AS partner_code,
+    Partner_Name 						AS partner_name,
+    ReqTimePercent						AS requested_percentage,
+    CONCAT(S.Year, '-', S.Semester)     AS semester
+FROM MultiPartner MP
+    JOIN ProposalCode PC ON MP.ProposalCode_Id = PC.ProposalCode_Id
+    JOIN Semester S ON MP.Semester_Id = S.Semester_Id
+    JOIN Partner AS P ON (MP.Partner_Id = P.Partner_Id)
+WHERE PC.Proposal_Code = :proposal_code
+    """
+        )
+        result = self.connection.execute(stmt, {
+            "proposal_code": proposal_code
+        })
+        tmp = dict()
+        # Some partners may have a time request for other semesters, but not for the
+        # one under consideration. We therefore collect the partners for which there
+        # is a time request percentage in any semester, and if a partner has a time
+        # request for the semester under consideration, we store that request.
+        for row in result:
+            tmp[row.partner_code] = {
+                "partner_name": row.partner_name,
+                "partner_code": row.partner_code,
+            }
+            if semester == row.semester:
+                tmp[row.partner_code]["requested_percentage"] = row.requested_percentage
+        prp = []
+        # Afterwards we set the percentage to 0 for all those partners who don't
+        # have a request for the semester under consideration.
+        for pc in tmp:
+            tmp[pc].setdefault("requested_percentage", 0)
+            prp.append(tmp[pc])
+        return prp
+
+    def get_progress_report(self, proposal_code: str, semester: str) -> \
+            Dict[str, Any]:
+        stmt = text(
+            """
+SELECT 
+    MaxSeeing							AS maximum_seeing,
+    Transparency						AS transparency,
+    ObservingConditionsDescription		AS description_of_observing_constraints,
+    TimeRequestChangeReasons			AS change_reason,
+    StatusSummary						AS summary_of_proposal_status,
+    StrategyChanges						AS strategy_changes,
+    CONCAT(S.`Year`, '-', S.Semester)   AS semester,
+    ReportPath                          AS proposal_progress_pdf,
+    SupplementaryPath                   AS additional_pdf
+FROM P1ObservingConditions OC
+    JOIN Transparency T ON (OC.Transparency_Id = T.Transparency_Id)
+    JOIN ProposalCode PC ON (OC.ProposalCode_Id = PC.ProposalCode_Id)
+    JOIN Semester S ON (OC.Semester_Id = S.Semester_Id)
+    JOIN P1MinTime MT ON (
+        OC.ProposalCode_Id = MT.ProposalCode_Id 
+        AND OC.Semester_Id = MT.Semester_Id
+    )
+    LEFT JOIN ProposalProgress PP ON (
+        OC.ProposalCode_Id = PP.ProposalCode_Id
+        AND OC.Semester_Id = PP.Semester_Id
+    )
+WHERE PC.Proposal_Code = :proposal_code
+    AND CONCAT(S.`Year`, '-', S.Semester) = :semester
+    """
+        )
+        result = self.connection.execute(stmt, {
+            "proposal_code": proposal_code,
+            "semester": semester
+        })
+        time_statistics = self._get_time_statistics(proposal_code)
+        requested_time = None
+        for t in time_statistics:
+            if semester == t["semester"]:
+                requested_time = t["requested_time"]
+        if result.rowcount > 0:
+            progress_report = {}
+            for row in result:
+                progress_report["requested_time"] = requested_time
+                progress_report["semester"] = row.semester
+                progress_report["maximum_seeing"] = row.maximum_seeing
+                progress_report["transparency"] = row.transparency
+                progress_report["additional_pdf"] = row.additional_pdf
+                progress_report["proposal_progress_pdf"] = row.proposal_progress_pdf
+                progress_report["description_of_observing_constraints"] = \
+                    row.description_of_observing_constraints
+                progress_report["change_reason"] = \
+                    row.change_reason
+                progress_report["summary_of_proposal_status"] = \
+                    row.summary_of_proposal_status
+                progress_report["strategy_changes"] = row.strategy_changes
+            progress_report["previous_time_requests"] = time_statistics
+            progress_report["last_observing_constraints"] = \
+                self._get_latest_observing_conditions(proposal_code, semester)
+            progress_report["partner_requested_percentages"] = \
+                self._get_partner_requested_percentages(proposal_code, semester)
+            return progress_report
+        else:
+            return {
+                "requested_time": requested_time,
+                "semester": None,
+                "maximum_seeing": None,
+                "transparency": None,
+                "additional_pdf": None,
+                "proposal_progress_pdf": None,
+                "description_of_observing_constraints": None,
+                "change_reason": None,
+                "summary_of_proposal_status": None,
+                "strategy_changes": None,
+                "partner_requested_percentages":
+                    self._get_partner_requested_percentages(proposal_code, semester),
+                "previous_time_requests": time_statistics,
+                "last_observing_constraints":
+                    self._get_latest_observing_conditions(proposal_code, semester)
+            }
