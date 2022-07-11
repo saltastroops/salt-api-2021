@@ -112,7 +112,7 @@ def test_semester_end_raises_error_for_incorrect_semester() -> None:
         ("2022-2", "2022-11-01T11:59:59Z"),
         ("2023-1", "2022-11-01T12:00:00Z"),
         ("2023-1", "2022-11-01T12:00:01Z"),
-        # Test the edge cases
+        # Test the last date of the start/end semester month
         ("2022-2", "2022-05-31T00:00:00Z"),
         ("2022-2", "2022-05-31T11:59:59Z"),
         ("2022-2", "2022-05-31T12:00:00Z"),
