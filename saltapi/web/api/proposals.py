@@ -22,17 +22,16 @@ from saltapi.service.proposal import ProposalListItem as _ProposalListItem
 from saltapi.service.user import User
 from saltapi.util import semester_start
 from saltapi.web import services
-from saltapi.web.schema.common import BlockVisit, ProposalCode, Semester
+from saltapi.web.schema.common import ProposalCode, Semester
 from saltapi.web.schema.proposal import (
     Comment,
     DataReleaseDate,
     DataReleaseDateUpdate,
     ObservationComment,
-    ProposalProgress,
     Proposal,
     ProposalListItem,
     ProposalStatusContent,
-    SubmissionAcknowledgment
+    SubmissionAcknowledgment,
 )
 
 router = APIRouter(prefix="/proposals", tags=["Proposals"])
@@ -376,145 +375,6 @@ def post_observation_comment(
         )
         unit_of_work.connection.commit()
         return ObservationComment(**observation_comment)
-
-
-@router.get(
-    "/{proposal_code}/progress-report/{semester}",
-    summary="Get a progress report",
-    response_model=Optional[ProposalProgress],
-    responses={200: {"content": {"application/pdf": {}}}},
-)
-def get_progress_report(
-    proposal_code: ProposalCode = Path(
-        ...,
-        title="Proposal code",
-        description="Proposal code of the proposal whose progress report is requested.",
-    ),
-    semester: Semester = Path(..., title="Semester", description="Semester"),
-    user: User = Depends(get_current_user)
-) -> ProposalProgress:
-    """
-    Returns the progress report for a proposal and semester. The semester is the
-    semester for which the progress is reported. For example, if the semester is
-    2021-1, the report covers the observations up to and including the 2021-1
-    semester, and it requests time for the 2021-2 semester.
-
-    The progress report can be requested in either of two formats:
-
-    * As a JSON string.
-    * As a pdf file. This is the default.
-
-    You can choose the format by supplying its content type in the `Accept` HTTP header:
-
-    Returned object | `Accept` HTTP header value
-    --- | ---
-    JSON string | application/json
-    pdf file | application/pdf
-
-    A pdf file is returned if no `Accept` header is included in the request. In the
-    case of the pdf file the response contains an `Content-Disposition` HTTP header
-    with a filename of the form "ProgressReport_{proposal_code}_{semester}.pdf".
-    """
-    with UnitOfWork() as unit_of_work:
-        permission_service = services.permission_service(unit_of_work.connection)
-        permission_service.check_permission_to_view_proposal(user, proposal_code)
-
-        proposal_service = services.proposal_service(unit_of_work.connection)
-        progress_report = proposal_service.get_progress_report(proposal_code, semester)
-
-        return ProposalProgress(
-            **progress_report
-        )
-
-
-@router.put(
-    "/{proposal_code}/progress-reports/{semester}",
-    summary="Create or update a progress report",
-    response_model=ProposalProgress,
-)
-def put_progress_report(
-    proposal_code: ProposalCode = Path(
-        ...,
-        title="Proposal code",
-        description="Proposal code of the proposal whose progress report is created or "
-                    "updated.",
-    ),
-    semester: Semester = Path(..., title="Semester", description="Semester"),
-    progress_report: ProposalProgress = Body(
-        ...,
-        title="Progress report",
-        description="Progress report for a proposal."
-    ),
-    file: Optional[UploadFile] = File(...),
-    user: User = Depends(get_current_user),
-) -> ProposalProgress:
-    """
-    Creates or updates the progress report for a proposal and semester. The semester
-    is the semester for which the progress is reported. For example, if the semester
-    is 2021-1, the report covers the observations up to and including the 2021-1
-    semester and it requests time for the 2021-2 semester.
-
-    The optional pdf file is intended for additional details regarding the progress with
-    the proposal.
-    """
-
-    # TODO Ask about what to do with the requested times for partners?
-    # * how to add the requested times correctly to the database.
-    with UnitOfWork() as unit_of_work:
-        permission_service = services.permission_service(unit_of_work.connection)
-        permission_service.check_permission_to_view_proposal(user, proposal_code)
-
-        proposal_service = services.proposal_service(unit_of_work.connection)
-
-    # TODO Save the pdfs. Both the supplementary PDF and the newly created file.
-    # * Where to save the created files.
-    raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED)
-
-
-@router.get(
-    "/{proposal_code}/block_visits",
-    summary="List block visits",
-    response_model=List[BlockVisit],
-)
-def get_block_visits(
-    proposal_code: ProposalCode = Path(
-        ...,
-        title="Proposal code",
-        description="Proposal code of the proposal whose observations are requested.",
-    ),
-    from_date: Optional[date] = Query(
-        date(2000, 1, 1),
-        alias="from",
-        title="From date",
-        description="Only include observations for this night and later.",
-    ),
-    to_date: Optional[date] = Query(
-        date(2099, 12, 31),
-        alias="to",
-        title="From date",
-        description="Only include observations for this night and earlier.",
-    ),
-) -> List[BlockVisit]:
-    """
-    Returns the list of block visits for a proposal. The list of block visits can be
-    filtered by a from date or a to date or both. These dates refer to observation
-    nights, and they are inclusive. So for example, if the from date is 1 July 2021
-    and the to date is 31 July 2021, the request returns block visits made between 1
-    July 2021 noon (UTC) and 1 August 2021 noon (UTC).
-
-    The following information is included for each block visit:
-
-    * The unique block visit identifier. This can be used to update the block visit status.
-    * The time charged for the block visit.
-    * The unique identifier of the observed block. This can be used to access the full block details.
-    * The priority of the observed block.
-    * The maximum lunar phase allowed for the block visit. This the percentage of lunar illumination. It is only relevant if the Moon is above the horizon.
-    * The list of observed targets. With the exception of some old proposals, this list contains a single target only. The unique target identifier and the target name are given for each target.
-    * The start date of the night when the block visit was done. For example, if the date is 3 July 2021, the block visit was done between 3 July 2021 noon (UTC) and 4 July 2021 noon (UTC).
-    * The block visit status. This can be `Accepted`, `Rejected` or `In queue`.
-    * The reason why the block visit has been rejected. This is relevant only for rejected block visits.
-    """
-    raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED)
 
 
 @router.get(
