@@ -4,11 +4,12 @@ from dateutil.parser import parse
 
 from saltapi.util import (
     TimeInterval,
+    next_semester,
     partner_name,
     semester_end,
     semester_of_datetime,
     semester_start,
-    tonight, next_semester,
+    tonight,
 )
 
 
