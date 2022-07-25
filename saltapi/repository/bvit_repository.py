@@ -1,5 +1,5 @@
 from sqlalchemy import text
-from sqlalchemy.engine import Connection
+from sqlalchemy.engine.base import Connection
 
 from saltapi.service.instrument import BVIT
 

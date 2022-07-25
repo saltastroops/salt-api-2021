@@ -16,11 +16,11 @@ from saltapi.web.api.blocks import router as blocks_router
 from saltapi.web.api.finder_charts import router as finder_charts_router
 from saltapi.web.api.institutions import router as institution_router
 from saltapi.web.api.instruments import router as instruments_router
+from saltapi.web.api.proposal_progress import router as progress_router
 from saltapi.web.api.proposals import router as proposals_router
 from saltapi.web.api.submissions import router as submissions_router
 from saltapi.web.api.user import router as user_router
 from saltapi.web.api.users import router as users_router
-from saltapi.web.api.proposal_progress import router as progress_router
 
 app = FastAPI()
 

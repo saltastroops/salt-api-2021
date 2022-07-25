@@ -5,7 +5,7 @@ from typing import Any, Dict, List, cast
 
 from passlib.context import CryptContext
 from sqlalchemy import text
-from sqlalchemy.engine import Connection
+from sqlalchemy.engine.base import Connection
 
 from saltapi.exceptions import NotFoundError
 from saltapi.service.user import NewUserDetails, Role, User, UserUpdate

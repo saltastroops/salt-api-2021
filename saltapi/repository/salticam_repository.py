@@ -1,7 +1,7 @@
 from typing import Any, Dict, List, Optional
 
 from sqlalchemy import text
-from sqlalchemy.engine import Connection
+from sqlalchemy.engine.base import Connection
 
 from saltapi.service.instrument import Salticam
 

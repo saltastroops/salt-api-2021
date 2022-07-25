@@ -1,16 +1,14 @@
-from typing import Dict, List, Any
-
-from saltapi.web.schema.common import Semester
+from typing import Any, Dict, List
 
 
 def create_progress_report_html(
-        proposal_code: str,
-        semester: str,
-        previous_requests: List[Dict[str, Any]],
-        previous_conditions: Dict[str, Any],
-        new_request: Dict[str, any]
+    proposal_code: str,
+    semester: str,
+    previous_requests: List[Dict[str, Any]],
+    previous_conditions: Dict[str, Any],
+    new_request: Dict[str, any],
 ):
-    html_content = '''
+    html_content = """
 <!DOCTYPE html>
 <html lang="en">
     <head>
@@ -65,8 +63,8 @@ def create_progress_report_html(
             <h2>
                 Multisemester Proposal Progress Report: 
             </h2>
-    '''
-    html_content += f'''
+    """
+    html_content += f"""
             <h2>
                 {proposal_code}
             </h2>
@@ -95,9 +93,9 @@ def create_progress_report_html(
                         <th>Observed Time</th>
                         <th>Completion</th>
                       </tr>
-'''
-    for p in sorted(previous_requests, key = lambda i: i['semester']):
-        html_content += f'''
+"""
+    for p in sorted(previous_requests, key=lambda i: i["semester"]):
+        html_content += f"""
                       <tr>
                         <td>{p['semester']}</td>
                         <td>{p['requested']} seconds</td> 
@@ -105,8 +103,8 @@ def create_progress_report_html(
                         <td>{p['observed']} seconds</td> 
                         <td>{round((p['observed']/p['allocated'])*100, 1)} %</td>
                       </tr>
-        '''
-    html_content += f'''
+        """
+    html_content += f"""
                     </table>
                     <h4>Previously requested observing conditions</h4>
                     <div>
@@ -219,4 +217,4 @@ def create_progress_report_html(
         </div>
     </body>
 </html>  
-    '''
+    """

@@ -236,7 +236,9 @@ class Comment(BaseModel):
         }
 
 
-class PartnerPercentage(BaseModel):  # TODO There is a similar class to this just missing a partner code
+class PartnerPercentage(
+    BaseModel
+):  # TODO There is a similar class to this just missing a partner code
     """A percentage (for example of the requested time) for a partner."""
 
     partner: PartnerName = Field(..., title="SALT partner", description="SALT partner")
@@ -375,17 +377,15 @@ class PartnerRequestedPercentage(BaseModel):
     """
     Requested Percentage for a partner
     """
-    partner_code: PartnerCode = Field(
-        ..., title="Partner code",
-        description="Partner code, such as IUCAA."
-    ),
-    partner_name: PartnerName = Field(
-        ..., title="Partner name ",
-        description="Name of the partner."
-    ),
+
+    partner_code: PartnerCode = (
+        Field(..., title="Partner code", description="Partner code, such as IUCAA."),
+    )
+    partner_name: PartnerName = (
+        Field(..., title="Partner name ", description="Name of the partner."),
+    )
     requested_percentage: float = Field(
-        ..., title="Percentage",
-        description="Percentage requested from a partner."
+        ..., title="Percentage", description="Percentage requested from a partner."
     )
 
 
@@ -453,12 +453,13 @@ class SubmissionAcknowledgment(BaseModel):
 
 class ObservingConstraints(BaseModel):
     seeing: float = Field(..., title="Seeing", description="The seeing")
-    transparency: str = Field(..., title="Transparency",
-                              description="The transparency"),
+    transparency: str = (
+        Field(..., title="Transparency", description="The transparency"),
+    )
     description: str = Field(
         ...,
         title="Description",
-        description="The brief description of observing constraints"
+        description="The brief description of observing constraints",
     )
 
 
@@ -466,12 +467,15 @@ class TimeStatistics(BaseModel):
     """Time statistics for a proposal."""
 
     semester: str = Field(..., title="Semester", description="The semester")
-    requested_time: int = Field(..., title="Requested time",
-                                description="Requested time for the semester.")
-    allocated_time: int = Field(..., title="Allocated time",
-                                description="Allocated time for the semester")
-    observed_time: int = Field(..., title="Observed time",
-                               description="Observed time for the semester")
+    requested_time: int = Field(
+        ..., title="Requested time", description="Requested time for the semester."
+    )
+    allocated_time: int = Field(
+        ..., title="Allocated time", description="Allocated time for the semester"
+    )
+    observed_time: int = Field(
+        ..., title="Observed time", description="Observed time for the semester"
+    )
 
     class Config:
         schema_extra = {
@@ -479,7 +483,7 @@ class TimeStatistics(BaseModel):
                 "semester": "2022-1",
                 "requested_time": 19000,
                 "allocated_time": 18000,
-                "observed_time": 17000
+                "observed_time": 17000,
             }
         }
 
@@ -540,10 +544,10 @@ class ProposalProgress(BaseModel):
     previous_time_requests: List[TimeStatistics] = Field(
         ...,
         title="Previous time requests",
-        description="The request from previous semesters"
+        description="The request from previous semesters",
     )
     last_observing_constraints: ObservingConstraints = Field(
         ...,
         title="Last requested observing conditions",
-        description="The last observing conditions."
+        description="The last observing conditions.",
     )

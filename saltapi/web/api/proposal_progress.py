@@ -1,23 +1,22 @@
 from typing import Optional
 
 from fastapi import (
-    Path,
-    Depends,
     APIRouter,
     Body,
-    UploadFile,
+    Depends,
     File,
     HTTPException,
-    status
+    Path,
+    UploadFile,
+    status,
 )
 
 from saltapi.repository.unit_of_work import UnitOfWork
 from saltapi.service.authentication_service import get_current_user
 from saltapi.service.user import User
-from saltapi.web.schema.common import Semester, ProposalCode
-from saltapi.web.schema.proposal import ProposalProgress
 from saltapi.web import services
-
+from saltapi.web.schema.common import ProposalCode, Semester
+from saltapi.web.schema.proposal import ProposalProgress
 
 router = APIRouter(prefix="/progress", tags=["Proposals"])
 
@@ -35,7 +34,7 @@ def get_progress_report(
         description="Proposal code of the proposal whose progress report is requested.",
     ),
     semester: Semester = Path(..., title="Semester", description="Semester"),
-    user: User = Depends(get_current_user)
+    user: User = Depends(get_current_user),
 ) -> ProposalProgress:
     """
     Returns the progress report for a proposal and semester. The semester is the
@@ -54,9 +53,7 @@ def get_progress_report(
 
         proposal_service = services.proposal_service(unit_of_work.connection)
         progress_report = proposal_service.get_progress_report(proposal_code, semester)
-        return ProposalProgress(
-            **progress_report
-        )
+        return ProposalProgress(**progress_report)
 
 
 @router.put(
@@ -69,13 +66,11 @@ def put_progress_report(
         ...,
         title="Proposal code",
         description="Proposal code of the proposal whose progress report is created or"
-                    " updated.",
+        " updated.",
     ),
     semester: Semester = Path(..., title="Semester", description="Semester"),
     proposal_progress: ProposalProgress = Body(
-        ...,
-        title="Progress report",
-        description="Progress report for a proposal."
+        ..., title="Progress report", description="Progress report for a proposal."
     ),
     file: Optional[UploadFile] = File(...),
     user: User = Depends(get_current_user),

@@ -4,8 +4,8 @@ from typing import Any, Dict, List, Optional
 
 import pytz
 from sqlalchemy import text
-from sqlalchemy.engine import Connection
-from sqlalchemy.exc import NoResultFound
+from sqlalchemy.engine.base import Connection
+from sqlalchemy.orm.exc import NoResultFound
 
 from saltapi.exceptions import NotFoundError
 from saltapi.service.submission import SubmissionMessageType, SubmissionStatus

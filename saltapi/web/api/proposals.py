@@ -28,11 +28,11 @@ from saltapi.web.schema.proposal import (
     DataReleaseDate,
     DataReleaseDateUpdate,
     ObservationComment,
-    ProposalProgress,
     Proposal,
     ProposalListItem,
+    ProposalProgress,
     ProposalStatusContent,
-    SubmissionAcknowledgment
+    SubmissionAcknowledgment,
 )
 
 router = APIRouter(prefix="/proposals", tags=["Proposals"])
@@ -391,7 +391,7 @@ def get_progress_report(
         description="Proposal code of the proposal whose progress report is requested.",
     ),
     semester: Semester = Path(..., title="Semester", description="Semester"),
-    user: User = Depends(get_current_user)
+    user: User = Depends(get_current_user),
 ) -> ProposalProgress:
     """
     Returns the progress report for a proposal and semester. The semester is the
@@ -422,9 +422,7 @@ def get_progress_report(
         proposal_service = services.proposal_service(unit_of_work.connection)
         progress_report = proposal_service.get_progress_report(proposal_code, semester)
 
-        return ProposalProgress(
-            **progress_report
-        )
+        return ProposalProgress(**progress_report)
 
 
 @router.put(
@@ -437,13 +435,11 @@ def put_progress_report(
         ...,
         title="Proposal code",
         description="Proposal code of the proposal whose progress report is created or "
-                    "updated.",
+        "updated.",
     ),
     semester: Semester = Path(..., title="Semester", description="Semester"),
     progress_report: ProposalProgress = Body(
-        ...,
-        title="Progress report",
-        description="Progress report for a proposal."
+        ..., title="Progress report", description="Progress report for a proposal."
     ),
     file: Optional[UploadFile] = File(...),
     user: User = Depends(get_current_user),

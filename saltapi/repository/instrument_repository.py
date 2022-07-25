@@ -1,6 +1,6 @@
 from typing import Any, Dict, List
 
-from sqlalchemy.engine import Connection
+from sqlalchemy.engine.base import Connection
 
 from saltapi.repository.bvit_repository import BvitRepository
 from saltapi.repository.hrs_repository import HrsRepository

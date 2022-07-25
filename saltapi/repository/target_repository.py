@@ -3,7 +3,7 @@ from typing import Any, Dict, Optional
 import pytz
 from astropy.coordinates import Angle
 from sqlalchemy import text
-from sqlalchemy.engine import Connection
+from sqlalchemy.engine.base import Connection
 
 from saltapi.service.target import Target
 

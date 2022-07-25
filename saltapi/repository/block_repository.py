@@ -4,8 +4,9 @@ from typing import Any, Dict, Iterable, List, Optional, cast
 import pytz
 from astropy.coordinates import Angle
 from sqlalchemy import text
-from sqlalchemy.engine import Connection
-from sqlalchemy.exc import IntegrityError, NoResultFound
+from sqlalchemy.engine.base import Connection
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm.exc import NoResultFound
 
 from saltapi.exceptions import NotFoundError
 from saltapi.repository.instrument_repository import InstrumentRepository
