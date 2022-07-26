@@ -24,7 +24,6 @@ router = APIRouter(prefix="/progress", tags=["Proposals"])
 @router.get(
     "/{proposal_code}/{semester}",
     summary="Get a progress report",
-    response_model=ProposalProgress,
     responses={200: {"content": {"application/pdf": {}}}},
 )
 def get_progress_report(
@@ -59,7 +58,6 @@ def get_progress_report(
 @router.put(
     "/{proposal_code}/{semester}",
     summary="Create or update a progress report",
-    response_model=ProposalProgress,
 )
 def put_progress_report(
     proposal_code: ProposalCode = Path(
@@ -69,9 +67,10 @@ def put_progress_report(
         " updated.",
     ),
     semester: Semester = Path(..., title="Semester", description="Semester"),
-    proposal_progress: ProposalProgress = Body(
-        ..., title="Progress report", description="Progress report for a proposal."
-    ),
+    # TODO Handle ProposalProgress schema correctly
+    # progress_report: ProposalProgress = Body(
+    #     ..., title="Progress report", description="Progress report for a proposal."
+    # ),
     file: Optional[UploadFile] = File(...),
     user: User = Depends(get_current_user),
 ) -> ProposalProgress:

@@ -379,10 +379,7 @@ def post_observation_comment(
 
 
 @router.get(
-    "/{proposal_code}/progress-report/{semester}",
-    summary="Get a progress report",
-    response_model=Optional[ProposalProgress],
-    responses={200: {"content": {"application/pdf": {}}}},
+    "/{proposal_code}/progress-report/{semester}", summary="Get a progress report"
 )
 def get_progress_report(
     proposal_code: ProposalCode = Path(
@@ -428,7 +425,6 @@ def get_progress_report(
 @router.put(
     "/{proposal_code}/progress-reports/{semester}",
     summary="Create or update a progress report",
-    response_model=ProposalProgress,
 )
 def put_progress_report(
     proposal_code: ProposalCode = Path(
@@ -438,12 +434,13 @@ def put_progress_report(
         "updated.",
     ),
     semester: Semester = Path(..., title="Semester", description="Semester"),
-    progress_report: ProposalProgress = Body(
-        ..., title="Progress report", description="Progress report for a proposal."
-    ),
+    # TODO Handle ProposalProgress schema correctly
+    # progress_report: ProposalProgress = Body(
+    #     ..., title="Progress report", description="Progress report for a proposal."
+    # ),
     file: Optional[UploadFile] = File(...),
     user: User = Depends(get_current_user),
-) -> ProposalProgress:
+) -> None:
     """
     Creates or updates the progress report for a proposal and semester. The semester
     is the semester for which the progress is reported. For example, if the semester
