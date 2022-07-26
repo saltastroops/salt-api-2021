@@ -67,7 +67,6 @@ def put_progress_report(
         " updated.",
     ),
     semester: Semester = Path(..., title="Semester", description="Semester"),
-    # TODO Handle ProposalProgress schema correctly
     progress_report: ProposalProgress = Body(
         ..., title="Progress report", description="Progress report for a proposal."
     ),
