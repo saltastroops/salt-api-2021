@@ -378,12 +378,14 @@ class PartnerRequestedPercentage(BaseModel):
     Requested Percentage for a partner
     """
 
-    partner_code: PartnerCode = (
-        Field(..., title="Partner code", description="Partner code, such as IUCAA."),
+    partner_code: PartnerCode = Field(
+        ..., title="Partner code", description="Partner code, such as IUCAA."
     )
-    partner_name: PartnerName = (
-        Field(..., title="Partner name ", description="Name of the partner."),
+
+    partner_name: PartnerName = Field(
+        ..., title="Partner name ", description="Name of the partner."
     )
+
     requested_percentage: float = Field(
         ..., title="Percentage", description="Percentage requested from a partner."
     )
@@ -453,9 +455,7 @@ class SubmissionAcknowledgment(BaseModel):
 
 class ObservingConstraints(BaseModel):
     seeing: float = Field(..., title="Seeing", description="The seeing")
-    transparency: str = (
-        Field(..., title="Transparency", description="The transparency"),
-    )
+    transparency: str = Field(..., title="Transparency", description="The transparency")
     description: str = Field(
         ...,
         title="Description",
