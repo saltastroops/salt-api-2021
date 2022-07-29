@@ -1,41 +1,40 @@
-from typing import Optional
+from typing import Any, Dict, Optional
 
 from fastapi import (
-    Path,
-    Depends,
     APIRouter,
     Body,
-    UploadFile,
+    Depends,
     File,
     HTTPException,
-    status
+    Path,
+    UploadFile,
+    status,
 )
 
 from saltapi.repository.unit_of_work import UnitOfWork
 from saltapi.service.authentication_service import get_current_user
 from saltapi.service.user import User
-from saltapi.web.schema.common import Semester, ProposalCode
-from saltapi.web.schema.proposal import ProposalProgress
 from saltapi.web import services
-
+from saltapi.web.schema.common import ProposalCode, Semester
+from saltapi.web.schema.proposal import ProposalProgress
 
 router = APIRouter(prefix="/progress", tags=["Proposals"])
 
 
 @router.get(
     "/{proposal_code}/{semester}",
-    summary="Get a progress report",
+    summary="Get a proposal progress report",
     response_model=ProposalProgress,
     responses={200: {"content": {"application/pdf": {}}}},
 )
-def get_progress_report(
+def get_proposal_progress_report(
     proposal_code: ProposalCode = Path(
         ...,
         title="Proposal code",
         description="Proposal code of the proposal whose progress report is requested.",
     ),
     semester: Semester = Path(..., title="Semester", description="Semester"),
-    user: User = Depends(get_current_user)
+    user: User = Depends(get_current_user),
 ) -> ProposalProgress:
     """
     Returns the progress report for a proposal and semester. The semester is the
@@ -43,7 +42,7 @@ def get_progress_report(
     2021-1, the report covers the observations up to and including the 2021-1
     semester, and it requests time for the 2021-2 semester.
 
-    The progress report is returned as a JSON string, and it does not include the
+    The proposal progress report is returned as a JSON string, and it does not include the
     additional file uploaded by the user when creating the report. There is another
     endpoint for returning the report as a pdf, including the additional file and the
     original scientific justification.
@@ -53,29 +52,26 @@ def get_progress_report(
         permission_service.check_permission_to_view_proposal(user, proposal_code)
 
         proposal_service = services.proposal_service(unit_of_work.connection)
-        progress_report = proposal_service.get_progress_report(proposal_code, semester)
-        return ProposalProgress(
-            **progress_report
+        proposal_progress_report = proposal_service.get_progress_report(
+            proposal_code, semester
         )
+        return ProposalProgress(**proposal_progress_report)
 
 
 @router.put(
     "/{proposal_code}/{semester}",
     summary="Create or update a progress report",
-    response_model=ProposalProgress,
 )
 def put_progress_report(
     proposal_code: ProposalCode = Path(
         ...,
         title="Proposal code",
         description="Proposal code of the proposal whose progress report is created or"
-                    " updated.",
+        " updated.",
     ),
     semester: Semester = Path(..., title="Semester", description="Semester"),
-    proposal_progress: ProposalProgress = Body(
-        ...,
-        title="Progress report",
-        description="Progress report for a proposal."
+    progress_report: ProposalProgress = Body(
+        ..., title="Progress report", description="Progress report for a proposal."
     ),
     file: Optional[UploadFile] = File(...),
     user: User = Depends(get_current_user),

@@ -304,6 +304,5 @@ class Message(BaseModel):
 class Transparency(str, Enum):
     ANY = "Any"
     CLEAR = "Clear"
-    THICK_CLOUD= "Thick cloud"
-    THIN_CLOUD= "Thin cloud"
-
+    THICK_CLOUD = "Thick cloud"
+    THIN_CLOUD = "Thin cloud"
