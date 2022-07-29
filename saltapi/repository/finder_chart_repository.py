@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Tuple
 
 from sqlalchemy import text
-from sqlalchemy.engine.base import Connection
+from sqlalchemy.engine import Connection
 from sqlalchemy.orm.exc import NoResultFound
 
 from saltapi.exceptions import NotFoundError

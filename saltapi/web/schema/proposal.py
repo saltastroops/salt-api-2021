@@ -1,3 +1,4 @@
+import pathlib
 from datetime import date, datetime
 from enum import Enum
 from typing import List, Literal, Optional
@@ -550,4 +551,16 @@ class ProposalProgress(BaseModel):
         ...,
         title="Last requested observing conditions",
         description="The last observing conditions.",
+    )
+
+    proposal_progress_pdf: Optional[pathlib.Path] = Field(
+        ...,
+        title="Proposal progress report pdf",
+        description="Proposal progress report pdf",
+    )
+
+    additional_pdf: Optional[pathlib.Path] = Field(
+        ...,
+        title="Proposal progress report pdf",
+        description="Proposal progress report pdf",
     )

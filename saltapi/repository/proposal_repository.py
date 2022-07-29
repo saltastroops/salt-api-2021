@@ -6,7 +6,7 @@ from typing import Any, DefaultDict, Dict, List, Optional, cast
 import pytz
 from dateutil.relativedelta import relativedelta
 from sqlalchemy import text
-from sqlalchemy.engine.base import Connection
+from sqlalchemy.engine import Connection
 from sqlalchemy.orm.exc import NoResultFound
 
 from saltapi.exceptions import NotFoundError

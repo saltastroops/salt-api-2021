@@ -1,7 +1,7 @@
 from typing import Any, Dict, List
 
 from sqlalchemy import text
-from sqlalchemy.engine.base import Connection
+from sqlalchemy.engine import Connection
 
 
 class InstitutionRepository:

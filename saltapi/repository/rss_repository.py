@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional, Set
 
 from sqlalchemy import text
-from sqlalchemy.engine.base import Connection
+from sqlalchemy.engine import Connection
 
 from saltapi.service.instrument import RSS
 from saltapi.util import semester_end, semester_of_datetime
